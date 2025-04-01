@@ -1,0 +1,4 @@
+.animationManagerContainer {
+    display: grid;
+    grid-template-columns: 20px auto 3fr 1fr 15px;
+}
