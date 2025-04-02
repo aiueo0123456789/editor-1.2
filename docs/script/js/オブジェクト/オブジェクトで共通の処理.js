@@ -1,5 +1,5 @@
 import { GPU,device } from "../webGPU.js";
-import { c_srw,c_srw_sr,adaptAllAnimationToVerticesPipeline,modifierTransformPipeline,rotateModifierTransformPipeline,bezierModifierTransformPipeline, v_sr_sr_sr, c_sr, setModifierWeightToGraphicMeshPipeline, v_u_f_ts, sampler, renderPipeline, setBezierModifierWeightToGraphicMeshPipeline, updateCenterPositionPipeline, c_u, calculateBoneModifierLocalMatrixPipeline, calculateBoneModifierMatrixPropagatePipeline, calculateBoneModifierWeightToVerticesPipeline, adaptBoneModifierToVerticesPipeline, calculateBoneVerticesPipeline, v_sr_sr } from "../GPUObject.js";
+import { adaptAllAnimationToVerticesPipeline,modifierTransformPipeline,rotateModifierTransformPipeline,bezierModifierTransformPipeline, setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, updateCenterPositionPipeline, calculateBoneModifierLocalMatrixPipeline, calculateBoneModifierMatrixPropagatePipeline, calculateBoneModifierWeightToVerticesPipeline, adaptBoneModifierToVerticesPipeline, calculateBoneVerticesPipeline } from "../GPUObject.js";
 import { calculateBBoxFromAllVertices } from "../BBox.js";
 import { vec2 } from "../ベクトル計算.js";
 import { managerForDOMs } from "../UI/制御.js";
@@ -241,20 +241,20 @@ export function setParentModifierWeight(object) {
         object.isChange = true;
         if (object.parent.type == "モディファイア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (4 + 4) * 4, undefined, ["f32"]);
-            const setParentModifierWeightGroup = GPU.createGroup(c_srw_sr, [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
+            const setParentModifierWeightGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
             GPU.runComputeShader(setModifierWeightToGraphicMeshPipeline, [setParentModifierWeightGroup, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
         } else if (object.parent.type == "ベジェモディファイア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (1 + 1) * 4, undefined, ["f32"]);
-            const setParentModifierWeightGroup = GPU.createGroup(c_srw_sr, [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
+            const setParentModifierWeightGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
             GPU.runComputeShader(setBezierModifierWeightToGraphicMeshPipeline, [setParentModifierWeightGroup, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
         } else if (object.parent.type == "ボーンモディファイア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (4 + 4) * 4, undefined, ["f32"]);
-            const setParentModifierWeightGroup = GPU.createGroup(c_srw_sr, [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
+            const setParentModifierWeightGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
             GPU.runComputeShader(calculateBoneModifierWeightToVerticesPipeline, [setParentModifierWeightGroup, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
             // GPU.consoleBufferData(object.parentWeightBuffer, ["u32","u32","u32","u32","f32","f32","f32","f32"]);
         }
-        object.renderWegihtGroup = GPU.createGroup(v_sr_sr, [{item: object.RVrt_coBuffer, type: 'b'}, {item: object.parentWeightBuffer, type: 'b'}]);
-        object.modifierTransformGroup = GPU.createGroup(c_srw_sr, [{item: object.RVrt_coBuffer, type: 'b'}, {item: object.parentWeightBuffer, type: 'b'}]);
+        object.renderWegihtGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [{item: object.RVrt_coBuffer, type: 'b'}, {item: object.parentWeightBuffer, type: 'b'}]);
+        object.modifierTransformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.RVrt_coBuffer, type: 'b'}, {item: object.parentWeightBuffer, type: 'b'}]);
     }
 }
 
@@ -273,13 +273,13 @@ export function baseTransform(object, transformDataGroup) {
 }
 
 const centerPositionBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
-const updateCenterPositionGroup2 = GPU.createGroup(c_u, [{item: centerPositionBuffer, type: 'b'}]);
+const updateCenterPositionGroup2 = GPU.createGroup(GPU.getGroupLayout("Cu"), [{item: centerPositionBuffer, type: 'b'}]);
 export function updateCenterPosition(object, centerPosition) {
     if (object.type == "回転モディファイア") {
         object.updateBaseData([...centerPosition,1,0]);
     } else {
         GPU.writeBuffer(centerPositionBuffer, new Float32Array(centerPosition));
-        const baseTransformGroup1 = GPU.createGroup(c_srw_sr, [{item: object.s_baseVerticesPositionBuffer, type: 'b'}, {item: object.baseBBoxBuffer, type: 'b'}]);
+        const baseTransformGroup1 = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.s_baseVerticesPositionBuffer, type: 'b'}, {item: object.baseBBoxBuffer, type: 'b'}]);
         GPU.runComputeShader(updateCenterPositionPipeline, [baseTransformGroup1, updateCenterPositionGroup2], Math.ceil(object.verticesNum / 64));
         setBaseBBox(object);
         setParentModifierWeight(object);

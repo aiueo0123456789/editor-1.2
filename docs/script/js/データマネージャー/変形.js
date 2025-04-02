@@ -1,4 +1,3 @@
-import { c_srw_sr_sr, c_u_u_u, c_srw_sr_sr_sr_u_u, c_srw_sr_sr_u, c_srw_sr_sr_sr_sr_u, c_srw_srw_sr_sr_sr_u_u_u, c_srw_sr_u } from "../GPUObject.js";
 import { loadFile } from "../utility.js";
 import { GPU } from "../webGPU.js";
 import { setBaseBBox, setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
@@ -7,7 +6,7 @@ import { setBaseBBox, setParentModifierWeight } from "../オブジェクト/オ�
 //     graphicMesh: {rotate: },
 // };
 
-const updateUV = GPU.createComputePipeline([c_srw_sr_u], `
+const updateUV = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu")], `
 struct BBox {
     min: vec2<f32>,
     max: vec2<f32>,
@@ -26,108 +25,20 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     uv[index] = vec2<f32>(a.x, 1.0 - a.y);
 }
 `);
-const verticesAndUVTranslatePipeline = GPU.createComputePipeline([c_srw_srw_sr_sr_sr_u_u_u], `
-struct BBox {
-    min: vec2<f32>,
-    max: vec2<f32>,
-};
-@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
-@group(0) @binding(1) var<storage, read_write> outputUV: array<vec2<f32>>;
-@group(0) @binding(2) var<storage, read> originalVertices: array<vec2<f32>>;
-@group(0) @binding(3) var<storage, read> baseData: array<vec2<f32>>; // 基準
-@group(0) @binding(4) var<storage, read> weigth: array<f32>;
-@group(0) @binding(5) var<uniform> pointOfEffort: vec2<f32>;
-@group(0) @binding(6) var<uniform> value: vec2<f32>;
-@group(0) @binding(7) var<uniform> imageBBox: BBox;
 
-@compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let index = global_id.x;
-    if (arrayLength(&weigth) <= index) {
-        return;
-    }
-    let sub = (originalVertices[index] - pointOfEffort) + (value) * (weigth[index]);
-    output[index] = sub + pointOfEffort - baseData[index];
-    let uv = (output[index] - imageBBox.min) / (imageBBox.max - imageBBox.min);
-    outputUV[index] = vec2<f32>(uv.x, 1.0 - uv.y);
-}
-`);
-const verticesAndUVResizePipeline = GPU.createComputePipeline([c_srw_srw_sr_sr_sr_u_u_u], `
-struct BBox {
-    min: vec2<f32>,
-    max: vec2<f32>,
-};
-@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
-@group(0) @binding(1) var<storage, read_write> outputUV: array<vec2<f32>>;
-@group(0) @binding(2) var<storage, read> originalVertices: array<vec2<f32>>;
-@group(0) @binding(3) var<storage, read> baseData: array<vec2<f32>>; // 基準
-@group(0) @binding(4) var<storage, read> weigth: array<f32>;
-@group(0) @binding(5) var<uniform> pointOfEffort: vec2<f32>;
-@group(0) @binding(6) var<uniform> value: vec2<f32>;
-@group(0) @binding(7) var<uniform> imageBBox: BBox;
+const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/データマネージャー/GPU/vertices/translate.wgsl"));
 
-@compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let index = global_id.x;
-    if (arrayLength(&weigth) <= index) {
-        return;
-    }
-    let sub = (originalVertices[index] - pointOfEffort);
-    output[index] = ((sub * (value) + pointOfEffort) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index])) - baseData[index];
-    let uv = (output[index] - imageBBox.min) / (imageBBox.max - imageBBox.min);
-    outputUV[index] = vec2<f32>(uv.x, 1.0 - uv.y);
-}
-`);
-const verticesAndUVRotatePipeline = GPU.createComputePipeline([c_srw_srw_sr_sr_sr_u_u_u], `
-struct BBox {
-    min: vec2<f32>,
-    max: vec2<f32>,
-};
-@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
-@group(0) @binding(1) var<storage, read_write> outputUV: array<vec2<f32>>;
-@group(0) @binding(2) var<storage, read> originalVertices: array<vec2<f32>>;
-@group(0) @binding(3) var<storage, read> baseData: array<vec2<f32>>; // 基準
-@group(0) @binding(4) var<storage, read> weigth: array<f32>;
-@group(0) @binding(5) var<uniform> pointOfEffort: vec2<f32>;
-@group(0) @binding(6) var<uniform> value: vec2<f32>;
-@group(0) @binding(7) var<uniform> imageBBox: BBox;
+const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/データマネージャー/GPU/vertices/resize.wgsl"));
 
+const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/データマネージャー/GPU/vertices/rotate.wgsl"));
 
-fn rotate(p: vec2<f32>, angle: f32) -> vec2<f32> {
-    let c = cos(angle);
-    let s = sin(angle);
-    return vec2<f32>(
-        p.x * c - p.y * s,
-        p.x * s + p.y * c,
-    );
-}
+const boneAnimationTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/translate.wgsl"));
 
-@compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let index = global_id.x;
-    if (arrayLength(&weigth) <= index) {
-        return;
-    }
-    let sub = rotate(originalVertices[index] - pointOfEffort, value.x * (weigth[index]));
-    output[index] = sub + pointOfEffort - baseData[index];
-    let uv = (output[index] - imageBBox.min) / (imageBBox.max - imageBBox.min);
-    outputUV[index] = vec2<f32>(uv.x, 1.0 - uv.y);
-}
-`);
+const boneAnimationRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/rotate.wgsl"));
 
-const verticesTranslatePipeline = GPU.createComputePipeline([c_srw_sr_sr_sr_u_u], await loadFile("./script/js/データマネージャー/GPU/vertices/translate.wgsl"));
+const boneAnimationResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/resize.wgsl"));
 
-const verticesResizePipeline = GPU.createComputePipeline([c_srw_sr_sr_sr_u_u], await loadFile("./script/js/データマネージャー/GPU/vertices/resize.wgsl"));
-
-const verticesRotatePipeline = GPU.createComputePipeline([c_srw_sr_sr_sr_u_u], await loadFile("./script/js/データマネージャー/GPU/vertices/rotate.wgsl"));
-
-const boneAnimationTranslatePipeline = GPU.createComputePipeline([c_srw_sr_sr_sr_sr_u], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/translate.wgsl"));
-
-const boneAnimationRotatePipeline = GPU.createComputePipeline([c_srw_sr_sr_sr_sr_u], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/rotate.wgsl"));
-
-const boneAnimationResizePipeline = GPU.createComputePipeline([c_srw_sr_sr_sr_sr_u], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/resize.wgsl"));
-
-const createInitDataPipeline = GPU.createComputePipeline([c_srw_sr_sr, c_u_u_u], `
+const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], `
 @group(0) @binding(0) var<storage, read_write> weight: array<f32>;
 @group(0) @binding(1) var<storage, read> verticesIndexs: array<u32>;
 @group(0) @binding(2) var<storage, read> vertices: array<vec2<f32>>;
@@ -182,8 +93,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 }
 `);
 
-// const Csrw_Csr_Csr = GPU.createGroupLayout();
-
 export class Transform {
     constructor() {
         this.target = null;
@@ -192,7 +101,7 @@ export class Transform {
         this.pointOfEffortBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32","f32"]);
         this.proportionalEditTypeBuffer = GPU.createUniformBuffer(4, undefined, ["u32"]);
         this.proportionalSizeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
-        this.configGroup = GPU.createGroup(c_u_u_u, [{item: this.proportionalEditTypeBuffer, type: "b"}, {item: this.proportionalSizeBuffer, type: "b"}, {item: this.pointOfEffortBuffer, type: "b"}]);
+        this.configGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu_Cu"), [{item: this.proportionalEditTypeBuffer, type: "b"}, {item: this.proportionalSizeBuffer, type: "b"}, {item: this.pointOfEffortBuffer, type: "b"}]);
     }
 
     // 基準となるデータを作る
@@ -216,7 +125,7 @@ export class Transform {
                 this.selectIndexs = minDepthIndex;
                 this.targetBuffer = target.s_verticesAnimationBuffer;
                 this.worldOriginalBuffer = GPU.copyBufferToNewBuffer(target.s_verticesAnimationBuffer); // ターゲットの頂点のワールド座標を取得
-                this.transformGroup = GPU.createGroup(c_srw_sr_sr_sr_sr_u,  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: target.getWorldVerticesMatrixBuffer(), type: "b"}, {item: target.belongObject.parentsBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
+                this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: target.getWorldVerticesMatrixBuffer(), type: "b"}, {item: target.belongObject.parentsBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
                 this.workNumX = Math.ceil(this.target.belongObject.boneNum / 64);
                 this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer); // ターゲットのオリジナル状態を保持
             } else {
@@ -237,8 +146,8 @@ export class Transform {
                 this.workNumX = Math.ceil(this.target.verticesNum / 64);
                 this.weightBuffer = GPU.createStorageBuffer(target.verticesNum * 4, undefined, ["f32"]);
             }
-            this.weightAndIndexsGroup = GPU.createGroup(c_srw_sr_sr,  [{item: this.weightBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}]);
-            this.transformGroup = GPU.createGroup(c_srw_sr_sr_sr_u_u,  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.pointOfEffortBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
+            this.weightAndIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"),  [{item: this.weightBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}]);
+            this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.pointOfEffortBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
             this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer); // ターゲットのオリジナル状態を保持
         }
     }
@@ -264,7 +173,7 @@ export class Transform {
             if (this.target.type == "ボーンモディファイア") {
                 this.target.calculateBaseBoneData();
             } else if (this.target.type == "グラフィックメッシュ") {
-                GPU.runComputeShader(updateUV,[GPU.createGroup(c_srw_sr_u, [this.target.s_baseVerticesUVBuffer,this.target.s_baseVerticesPositionBuffer,this.target.editor.imageBBoxBuffer])],this.workNumX);
+                GPU.runComputeShader(updateUV,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu"), [this.target.s_baseVerticesUVBuffer,this.target.s_baseVerticesPositionBuffer,this.target.editor.imageBBoxBuffer])],this.workNumX);
                 this.target.editor.createMesh();
             }
             if (this.target.type == "頂点アニメーション") {
@@ -331,7 +240,7 @@ export class Transform {
         if (object.type == "ボーンモディファイア") {
             object.calculateBaseBoneData();
         } else if (object.type == "グラフィックメッシュ") {
-            GPU.runComputeShader(updateUV,[GPU.createGroup(c_srw_sr_u, [object.s_baseVerticesUVBuffer,object.s_baseVerticesPositionBuffer,object.editor.imageBBoxBuffer])],this.workNumX);
+            GPU.runComputeShader(updateUV,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu"), [object.s_baseVerticesUVBuffer,object.s_baseVerticesPositionBuffer,object.editor.imageBBoxBuffer])],this.workNumX);
             object.editor.createMesh();
         }
     }

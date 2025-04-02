@@ -1,9 +1,9 @@
 import { GPU, device, format } from '../webGPU.js';
-import { graphicMeshsMeshRenderPipeline, modifierMeshRenderPipeline, renderPipeline,circlesFromAllVerticesRenderPipeline,circlesFromLimitedVerticesRenderPipeline,bezierRenderPipeline,BBoxRenderPipeline,sampler, v_u_u_f_ts, maskRenderPipeline, boneRenderPipeline, LimitedBoneRenderPipeline, rotateModifierRenderPipeline, v_sr_sr, v_sr, modifierFrameRenderPipeline, modifierFrame2RenderPipeline, screenCirclesFromAllVerticesRenderPipeline, f_u } from "../GPUObject.js";
+import { graphicMeshsMeshRenderPipeline, modifierMeshRenderPipeline, renderPipeline,circlesFromAllVerticesRenderPipeline,circlesFromLimitedVerticesRenderPipeline,bezierRenderPipeline,BBoxRenderPipeline,sampler, maskRenderPipeline, boneRenderPipeline, LimitedBoneRenderPipeline, rotateModifierRenderPipeline,  modifierFrameRenderPipeline, modifierFrame2RenderPipeline, screenCirclesFromAllVerticesRenderPipeline } from "../GPUObject.js";
 import { hierarchy } from '../ヒエラルキー.js';
 import { renderObjectManager, stateMachine, editorParameters } from '../main.js';
 
-const weigthRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_sr, v_sr], `
+const weigthRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vsr")], `
 struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -67,12 +67,12 @@ fn main(
 }
 `, [["u"]], "2d", "t");
 
-const renderGridPipeline = GPU.createRenderPipeline([v_u_u_f_ts], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
+const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 
-const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([v_u_u_f_ts, v_sr_sr], await fetch('./script/wgsl/レンダー/ボーン/関係/点線.wgsl').then(x => x.text()), [], "2d", "s");
-const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([v_u_u_f_ts, v_sr, f_u], await fetch('./script/wgsl/レンダー/ボーン/v_ボーン頂点の表示.wgsl').then(x => x.text()), [], "2d", "t");
+const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr")], await fetch('./script/wgsl/レンダー/ボーン/関係/点線.wgsl').then(x => x.text()), [], "2d", "s");
+const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], await fetch('./script/wgsl/レンダー/ボーン/v_ボーン頂点の表示.wgsl').then(x => x.text()), [], "2d", "t");
 
-const edgesFromVerticesAndEdgesRenderPipeline = GPU.createRenderPipelineFromOneFile([v_u_u_f_ts, v_sr_sr, f_u], await fetch('./script/wgsl/レンダー/グラフィックメッシュ/特定の辺の表示.wgsl').then(x => x.text()), [], "2d", "s");
+const edgesFromVerticesAndEdgesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Fu")], await fetch('./script/wgsl/レンダー/グラフィックメッシュ/特定の辺の表示.wgsl').then(x => x.text()), [], "2d", "s");
 
 export class Render {
     constructor(cvs, camera, gizmoConfig) {
@@ -86,7 +86,7 @@ export class Render {
         this.cvsAspectBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
         this.resizeCVS();
         this.camera = camera;
-        this.staticGroup = GPU.createGroup(v_u_u_f_ts, [{item: this.cvsAspectBuffer, type: 'b'}, {item: camera.cameraDataBuffer, type: 'b'}, {item: sampler, type: 'ts'}]);
+        this.staticGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Fts"), [{item: this.cvsAspectBuffer, type: 'b'}, {item: camera.cameraDataBuffer, type: 'b'}, {item: sampler, type: 'ts'}]);
         this.gizmoConfig = gizmoConfig;
     }
 

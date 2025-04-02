@@ -1,5 +1,4 @@
 import { calculateBBoxFromLimitedVertices } from "../../../../../BBox.js";
-import { c_srw_sr, v_sr } from "../../../../../GPUObject.js";
 import { activeView, editorParameters, keysDown, stateMachine } from "../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
 import { GPU } from "../../../../../webGPU.js";
@@ -31,9 +30,9 @@ export class StateModel_AnimationEditForGraphicMesh {
             selectBBoxForCenterPoint: [0,0],
             selectBBoxBuffer: {isInclude: "&-", not: {GPU: true, type: "buffer", byteSize: 2 * 2 * 4}},
             referenceCoordinatesBuffer: {isInclude: "&-", not: {GPU: true, type: "buffer", byteSize: 2 * 4}},
-            selectBBoxRenderGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: v_sr, items: ["&selectBBoxBuffer"]}},
-            referenceCoordinatesRenderGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: v_sr, items: ["&referenceCoordinatesBuffer"]}},
-            calculateSelectVerticesBBoxCenterGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: c_srw_sr, items: ["&referenceCoordinatesBuffer","&selectBBoxBuffer"]}},
+            selectBBoxRenderGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: GPU.getGroupLayout("Vsr"), items: ["&selectBBoxBuffer"]}},
+            referenceCoordinatesRenderGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: GPU.getGroupLayout("Vsr"), items: ["&referenceCoordinatesBuffer"]}},
+            calculateSelectVerticesBBoxCenterGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: GPU.getGroupLayout("Csrw_Csr"), items: ["&referenceCoordinatesBuffer","&selectBBoxBuffer"]}},
         };
         this.遷移ステート = [
             createNextStateData([["/r"]], "頂点回転"),
@@ -65,8 +64,8 @@ export class StateModel_AnimationEditForGraphicMesh {
                 stateData.selectIndexsGroup = null;
             } else {
                 stateData.selectIndexBuffer = GPU.createStorageBuffer(stateData.selectIndexs.length * 4, stateData.selectIndexs, ["u32"]);
-                stateData.selectBBoxGroup = GPU.createGroup(c_srw_sr, [stateData.selectBBoxBuffer, stateData.selectIndexBuffer]);
-                stateData.selectIndexsGroup = GPU.createGroup(v_sr, [stateData.selectIndexBuffer]);
+                stateData.selectBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [stateData.selectBBoxBuffer, stateData.selectIndexBuffer]);
+                stateData.selectIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [stateData.selectIndexBuffer]);
             }
             managerForDOMs.update("モーダル-選択情報-選択数");
         }

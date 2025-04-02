@@ -139,6 +139,12 @@ export class FunctionTranceShelfe {
     }
 }
 
+function setNumberInputOption(DOM, option) {
+    DOM.step = option.step;
+    DOM.min = option.min;
+    DOM.max = option.max;
+}
+
 export class TranceShelfe {
     constructor(groupID, DOM, targetObject, argumentArray) {
         if (Array.isArray(targetObject)) {
@@ -189,18 +195,18 @@ export class TranceShelfe {
                 } else if (argumentType.type == "入力") {
                     const inputType = argumentType.inputType;
                     if (inputType == "文字") {
-                        this.targetObject.push("入力なし");
                         const input = createLabeledInput(this.DOM, argument.name, "text");
                         input.value = this.targetObject[argumentIndex];
                         createEvent(input, argumentIndex);
                     } else if (inputType == "数字") {
-                        this.targetObject.push(NaN);
                         const input = createLabeledInput(this.DOM, argument.name, "number");
                         input.value = this.targetObject[argumentIndex];
+                        if (argumentType.option) {
+                            setNumberInputOption(input, argumentType.option);
+                        }
                         createEvent(input, argumentIndex, "number");
                     } else if (inputType == "ベクトル") {
                         const vec = this.targetObject[argumentIndex];
-                        this.targetObject.push(vec);
                         const {container: container, axis0: inputForAxis0, axis1: inputForAxis1} = createLabeledVecInput(this.DOM, container,argumentType.option.axis);
                         createEvent(inputForAxis0, 0, "number", vec);
                         createEvent(inputForAxis1, 1, "number", vec);
@@ -210,18 +216,23 @@ export class TranceShelfe {
                         }
                     }
                 } else if (argumentType.type == "選択") {
-                    this.targetObject.push("選択なし");
                     const select = createLabeledSelect(this.DOM, argument.name);
                     for (const item of argumentType.choices) {
                         if (IsString(item)) {
                             const option = document.createElement("option");
                             option.textContent = item;
                             option.value = item;
+                            if (item == this.targetObject[argumentIndex]) {
+                                option.selected = true;
+                            }
                             select.append(option);
                         } else if (isPlainObject(item)) {
                             const option = document.createElement("option");
                             option.textContent = item.text;
                             option.value = item.value;
+                            if (item.value == this.targetObject[argumentIndex]) {
+                                option.selected = true;
+                            }
                             select.append(option);
                         }
                     }

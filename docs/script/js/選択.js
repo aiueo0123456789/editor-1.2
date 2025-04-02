@@ -1,5 +1,5 @@
 import { GPU } from "./webGPU.js";
-import { c_srw_u,circleSelectVerticesPipeline,boxSelectVerticesPipeline, collisionMeshPipeline, collisionBonePipeline, collisionModifierPipeline, collisionBezierModifierPipeline } from "./GPUObject.js";
+import { circleSelectVerticesPipeline,boxSelectVerticesPipeline, collisionMeshPipeline, collisionBonePipeline, collisionModifierPipeline, collisionBezierModifierPipeline } from "./GPUObject.js";
 import { vec2 } from "./ベクトル計算.js";
 import { hitTestPointTriangle } from "./utility.js";
 
@@ -11,7 +11,7 @@ export class Select {
     // async selectBone(object, point) {
     //     const resultBuffer = GPU.createStorageBuffer(object.verticesNum * (1) * 4, undefined, ["f32"]);
     //     const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-    //     const collisionVerticesGroup = GPU.createGroup(c_srw_u, [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
+    //     const collisionVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
 
     //     GPU.runComputeShader(circleSelectVerticesPipeline, [collisionVerticesGroup, object.collisionVerticesGroup], Math.ceil(object.verticesNum / 64));
 
@@ -33,7 +33,7 @@ export class Select {
         radius = this.convertCoordinate.GPUSizeFromCPU(radius);
         const resultBuffer = GPU.createStorageBuffer(object.verticesNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-        const collisionGroup = GPU.createGroup(c_srw_u, [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
+        const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
 
         GPU.runComputeShader(circleSelectVerticesPipeline, [collisionGroup, object.collisionVerticesGroup], Math.ceil(object.verticesNum / 64));
 
@@ -56,7 +56,7 @@ export class Select {
         radius = this.convertCoordinate.GPUSizeFromCPU(radius);
         const resultBuffer = GPU.createStorageBuffer(object.verticesNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-        const collisionGroup = GPU.createGroup(c_srw_u, [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
+        const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
 
         GPU.runComputeShader(circleSelectVerticesPipeline, [collisionGroup, object.collisionVerticesGroup], Math.ceil(object.verticesNum / 64));
 
@@ -76,7 +76,7 @@ export class Select {
     async selectBones(object, point) {
         const resultBuffer = GPU.createStorageBuffer(object.boneNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-        const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+        const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
         GPU.runComputeShader(collisionBonePipeline, [collisionGroup, object.collisionBoneGroup], Math.ceil(object.boneNum / 64));
 
@@ -95,7 +95,7 @@ export class Select {
     async selectBone(object, point) {
         const resultBuffer = GPU.createStorageBuffer(object.boneNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-        const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+        const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
         GPU.runComputeShader(collisionBonePipeline, [collisionGroup, object.collisionBoneGroup], Math.ceil(object.boneNum / 64));
 
@@ -118,7 +118,7 @@ export class Select {
             if (object.type == "グラフィックメッシュ") {
                 const resultBuffer = GPU.createStorageBuffer(object.meshesNum * (1) * 4, undefined, ["f32"]);
                 const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-                const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+                const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
                 GPU.runComputeShader(collisionMeshPipeline, [collisionGroup, object.collisionMeshGroup], Math.ceil(object.meshesNum / 64));
 
@@ -133,7 +133,7 @@ export class Select {
             } else if (object.type == "ボーンモディファイア") {
                 const resultBuffer = GPU.createStorageBuffer(object.boneNum * (1) * 4, undefined, ["f32"]);
                 const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-                const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+                const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
                 GPU.runComputeShader(collisionBonePipeline, [collisionGroup, object.collisionBoneGroup], Math.ceil(object.boneNum / 64));
 
@@ -148,7 +148,7 @@ export class Select {
             } else if (object.type == "モディファイア") {
                 const resultBuffer = GPU.createStorageBuffer(4 * (1) * 4, undefined, ["f32"]);
                 const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-                const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+                const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
                 GPU.runComputeShader(collisionModifierPipeline, [collisionGroup, object.collisionSilhouetteGroup], Math.ceil(4 / 64));
 
@@ -175,7 +175,7 @@ export class Select {
             } else if (object.type == "ベジェモディファイア") {
                 const resultBuffer = GPU.createStorageBuffer(object.pointNum * 4, undefined, ["f32"]);
                 const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-                const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+                const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
                 GPU.runComputeShader(collisionBezierModifierPipeline, [collisionGroup, object.collisionVerticesGroup], Math.ceil(object.pointNum / 64));
 
@@ -195,7 +195,7 @@ export class Select {
     async selectMesh(object, point) {
         const resultBuffer = GPU.createStorageBuffer(object.meshesNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-        const collisionGroup = GPU.createGroup(c_srw_u, [resultBuffer, pointBuffer]);
+        const collisionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [resultBuffer, pointBuffer]);
 
         GPU.runComputeShader(collisionMeshPipeline, [collisionGroup, object.collisionMeshGroup], Math.ceil(object.meshesNum / 64));
 
@@ -215,7 +215,7 @@ export class Select {
     async pointToVerticesDistance(object, point) {
         const resultBuffer = GPU.createStorageBuffer(object.verticesNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, point, ["f32","f32"]);
-        const collisionVerticesGroup = GPU.createGroup(c_srw_u, [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
+        const collisionVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
 
         GPU.runComputeShader(circleSelectVerticesPipeline, [collisionVerticesGroup, object.collisionVerticesGroup], Math.ceil(object.verticesNum / 64));
 
@@ -227,7 +227,7 @@ export class Select {
     async boxSelectVertices(object, boundingBox) {
         const resultBuffer = GPU.createStorageBuffer(object.verticesNum * (1) * 4, undefined, ["f32"]);
         const pointBuffer = GPU.createUniformBuffer(4 * 4, boundingBox.max.concat(boundingBox.min), ["f32","f32"]);
-        const collisionBoxGroup = GPU.createGroup(c_srw_u, [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
+        const collisionBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Cu"), [{item: resultBuffer, type: "b"},{item: pointBuffer, type: "b"}]);
 
         GPU.runComputeShader(boxSelectVerticesPipeline, [collisionBoxGroup, object.collisionVerticesGroup], Math.ceil(object.verticesNum / 64));
 

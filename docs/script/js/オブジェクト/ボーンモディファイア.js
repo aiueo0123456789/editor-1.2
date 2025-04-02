@@ -1,7 +1,7 @@
 import { device,GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
 import { AnimationBlock, BoneAnimation, VerticesAnimation } from "../アニメーション.js";
-import { v_sr,c_sr_sr,c_sr,c_srw,c_srw_sr, c_sr_u, calculateBaseBoneDataPipeline, c_srw_srw_sr_sr, c_srw_sr_sr, v_sr_sr } from "../GPUObject.js";
+import { calculateBaseBoneDataPipeline } from "../GPUObject.js";
 import { createID } from "../UI/制御.js";
 import { setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { Color } from "../エディタ設定.js";
@@ -75,14 +75,14 @@ class Editor {
         roop(this.struct);
         for (const data of tmpData) {
             const buffer = GPU.createStorageBuffer(data.length * 4, data, ["u32","u32"]);
-            const group = GPU.createGroup(c_sr, [buffer]);
+            const group = GPU.createGroup(GPU.getGroupLayout("Csr"), [buffer]);
             this.boneModifier.propagateBuffers.push({boneNum: data.length / 2, buffer: buffer, group: group});
             for (let i = 0; i < data.length; i += 2) {
                 parentsData[data[i]] = data[i + 1];
             }
         }
         this.boneModifier.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
-        this.boneModifier.relationshipRenderGroup = GPU.createGroup(v_sr_sr, [this.boneModifier.RVrt_coBuffer, this.boneModifier.parentsBuffer]);
+        this.boneModifier.relationshipRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.boneModifier.RVrt_coBuffer, this.boneModifier.parentsBuffer]);
     }
 
     destroy() {
@@ -228,7 +228,7 @@ export class BoneModifier {
 
         this.BBox = {min: [0,0], max: [0,0]};
         this.BBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-        this.BBoxRenderGroup = GPU.createGroup(v_sr, [this.BBoxBuffer]);
+        this.BBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.BBoxBuffer]);
 
         this.baseBBox = [0,0,0,0];
         this.baseBBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
@@ -302,7 +302,7 @@ export class BoneModifier {
     }
 
     calculateBaseBoneData() {
-        GPU.runComputeShader(calculateBaseBoneDataPipeline, [GPU.createGroup(c_srw_srw_sr_sr, [this.baseBoneBuffer, this.baseBoneMatrixBuffer, this.s_baseVerticesPositionBuffer, this.parentsBuffer])], Math.ceil(this.boneNum / 64));
+        GPU.runComputeShader(calculateBaseBoneDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr"), [this.baseBoneBuffer, this.baseBoneMatrixBuffer, this.s_baseVerticesPositionBuffer, this.parentsBuffer])], Math.ceil(this.boneNum / 64));
     }
 
     // updatePropagateDataForGPU() {
@@ -310,7 +310,7 @@ export class BoneModifier {
     //     const parentsData = Array.from({ length: this.boneNum }, (_, i) => i);
     //     for (const data of this.propagateDatas) {
     //         const buffer = GPU.createStorageBuffer(data.length * 4, data, ["u32","u32"]);
-    //         const group = GPU.createGroup(c_sr, [buffer]);
+    //         const group = GPU.createGroup(GPU.getGroupLayout("Csr"), [buffer]);
     //         this.propagateBuffers.push({boneNum: data.length / 2, buffer: buffer, group: group});
     //         for (let i = 0; i < data.length; i += 2) {
     //             parentsData[data[i]] = data[i + 1];
@@ -318,24 +318,24 @@ export class BoneModifier {
     //     }
     //     console.log(parentsData)
     //     this.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
-    //     this.relationshipRenderGroup = GPU.createGroup(v_sr_sr, [this.RVrt_coBuffer, this.parentsBuffer]);
+    //     this.relationshipRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.RVrt_coBuffer, this.parentsBuffer]);
     // }
 
     setGroup() {
-        this.calculateBoneVerticesGroup = GPU.createGroup(c_srw_sr_sr, [this.RVrt_coBuffer, this.boneMatrixBuffer, this.boneBuffer]);
-        this.calculateLocalMatrixGroup = GPU.createGroup(c_srw_sr, [this.boneMatrixBuffer, this.boneBuffer]);
-        this.boneMatrixBufferGroup = GPU.createGroup(c_srw, [this.boneMatrixBuffer]);
-        this.modifierDataGroup = GPU.createGroup(c_sr_u, [this.s_baseVerticesPositionBuffer, GPU.createUniformBuffer(4, [20], ["f32"])]);
-        this.modifierTransformDataGroup = GPU.createGroup(c_sr_sr, [this.baseBoneMatrixBuffer, this.boneMatrixBuffer]);
-        this.adaptAnimationGroup1 = GPU.createGroup(c_srw, [this.boneBuffer]);
-        this.collisionVerticesGroup = GPU.createGroup(c_sr, [this.RVrt_coBuffer]);
-        this.collisionBoneGroup = GPU.createGroup(c_sr, [this.RVrt_coBuffer]);
+        this.calculateBoneVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.RVrt_coBuffer, this.boneMatrixBuffer, this.boneBuffer]);
+        this.calculateLocalMatrixGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [this.boneMatrixBuffer, this.boneBuffer]);
+        this.boneMatrixBufferGroup = GPU.createGroup(GPU.getGroupLayout("Csrw"), [this.boneMatrixBuffer]);
+        this.modifierDataGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [this.s_baseVerticesPositionBuffer, GPU.createUniformBuffer(4, [20], ["f32"])]);
+        this.modifierTransformDataGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [this.baseBoneMatrixBuffer, this.boneMatrixBuffer]);
+        this.adaptAnimationGroup1 = GPU.createGroup(GPU.getGroupLayout("Csrw"), [this.boneBuffer]);
+        this.collisionVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [this.RVrt_coBuffer]);
+        this.collisionBoneGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [this.RVrt_coBuffer]);
 
-        this.modifierTransformGroup = GPU.createGroup(c_srw_sr, [this.boneBuffer, this.parentWeightBuffer]);
+        this.modifierTransformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [this.boneBuffer, this.parentWeightBuffer]);
 
-        this.calculateAllBBoxGroup = GPU.createGroup(c_srw_sr, [this.BBoxBuffer, this.RVrt_coBuffer]);
-        this.calculateAllBaseBBoxGroup = GPU.createGroup(c_srw_sr, [this.baseBBoxBuffer, this.s_baseVerticesPositionBuffer]);
-        this.GUIrenderGroup = GPU.createGroup(v_sr, [this.RVrt_coBuffer]);
+        this.calculateAllBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [this.BBoxBuffer, this.RVrt_coBuffer]);
+        this.calculateAllBaseBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [this.baseBBoxBuffer, this.s_baseVerticesPositionBuffer]);
+        this.GUIrenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.RVrt_coBuffer]);
     }
 
     async getSaveData() {

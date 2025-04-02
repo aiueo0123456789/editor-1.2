@@ -7,6 +7,30 @@ export function IsString(value) {
 class WebGPU {
     constructor() {
         this.structures = new Map();
+        this.groupLayouts = new Map();
+    }
+
+    getGroupLayout(groupLayout) {
+        let result = this.groupLayouts.get(groupLayout);
+        if (result) {
+            return result;
+        } else {
+            const items = [];
+            for (const item of groupLayout.split("_")) {
+                const useShaderTypes = item[0];
+                const type = item.slice(1);
+                if (useShaderTypes === "V") {
+                    items.push({useShaderTypes: ["v"], type: type});
+                } else if (useShaderTypes === "F") {
+                    items.push({useShaderTypes: ["f"], type: type});
+                } else if (useShaderTypes === "C") {
+                    items.push({useShaderTypes: ["c"], type: type});
+                }
+            }
+            result = this.createGroupLayout(items);
+            this.groupLayouts.set(result);
+            return result;
+        }
     }
 
     codeToStructures() {

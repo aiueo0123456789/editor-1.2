@@ -1,8 +1,7 @@
-import { c_srw_sr_sr_u } from "../../../GPUObject.js";
 import { loadFile } from "../../../utility.js";
 import { GPU } from "../../../webGPU.js";
 
-const pipeline = GPU.createComputePipeline([c_srw_sr_sr_u],await loadFile("./script/js/オブジェクト/アタッチメント/followBone/compute.wgsl"));
+const pipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Cu")],await loadFile("./script/js/オブジェクト/アタッチメント/followBone/compute.wgsl"));
 
 class Editor {
     constructor(aff) {
@@ -12,7 +11,7 @@ class Editor {
     async setSourceBone(bone) {
         this.aff.sourceBone = bone;
         GPU.writeBuffer(this.aff.indexBuffer, new Uint32Array([this.aff.targetBone.index, this.aff.sourceBone.index]));
-        this.aff.group = GPU.createGroup(c_srw_sr_sr_u, [this.aff.targetBone.armature.boneMatrixBuffer, this.aff.sourceBone.armature.boneMatrixBuffer, this.aff.sourceBone.armature.baseBoneMatrixBuffer, this.aff.indexBuffer]);
+        this.aff.group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Cu"), [this.aff.targetBone.armature.boneMatrixBuffer, this.aff.sourceBone.armature.boneMatrixBuffer, this.aff.sourceBone.armature.baseBoneMatrixBuffer, this.aff.indexBuffer]);
     }
 }
 

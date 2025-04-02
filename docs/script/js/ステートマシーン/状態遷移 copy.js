@@ -1,5 +1,4 @@
 import { calculateLimitBBox } from "../BBox.js";
-import { c_sr, c_srw_sr, c_srw_sr_sr_sr_u, c_u_u_sr, v_sr, v_u, v_u_f_u, v_u_u } from "../GPUObject.js";
 import { keysDown, activeView } from "../main.js";
 import { GPU } from "../webGPU.js";
 import { baseTransform } from "../オブジェクト/オブジェクトで共通の処理.js";
@@ -39,12 +38,12 @@ export class StateMachine {
         this.transform = transform;
         this.selectVerticesBBoxBuffer = GPU.createStorageBuffer(2 * 2 * 4, undefined, ["f32"]);
         this.referenceCoordinatesBuffer = GPU.createStorageBuffer(2 * 4, undefined, ["f32"]);
-        this.calculateSelectVerticesBBoxCenterGroup = GPU.createGroup(c_srw_sr, [{item: this.referenceCoordinatesBuffer, type: 'b'}, {item: this.selectVerticesBBoxBuffer, type: 'b'}]); // BBoxから中心点を計算するためのグループ
-        this.selectVerticesBBoxRenderGroup = GPU.createGroup(v_sr, [{item: this.selectVerticesBBoxBuffer, type: 'b'}]);
-        this.referenceCoordinatesRenderGroup = GPU.createGroup(v_sr, [{item: this.referenceCoordinatesBuffer, type: 'b'}]);
+        this.calculateSelectVerticesBBoxCenterGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.referenceCoordinatesBuffer, type: 'b'}, {item: this.selectVerticesBBoxBuffer, type: 'b'}]); // BBoxから中心点を計算するためのグループ
+        this.selectVerticesBBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.selectVerticesBBoxBuffer, type: 'b'}]);
+        this.referenceCoordinatesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.referenceCoordinatesBuffer, type: 'b'}]);
 
         this.mouseBuffer = GPU.createStorageBuffer(2 * 4, undefined, ["f32"]);
-        this.mouseRenderGroup = GPU.createGroup(v_sr, [{item: this.mouseBuffer, type: 'b'}]);
+        this.mouseRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.mouseBuffer, type: 'b'}]);
 
         this.selectBBoxForCenterPoint = [0,0];
 
@@ -217,8 +216,8 @@ export class StateMachine {
                 selectVerticesIndexBuffer: {isInclude: "&-", not: null},
                 selectVerticesBBoxGroup: {isInclude: "&-", not: null},
                 selectVerticesIndexsGroup: {isInclude: "&-", not: null},
-                selectVerticesBBoxRenderGroup: GPU.createGroup(v_sr, [{item: this.selectVerticesBBoxBuffer, type: 'b'}]),
-                referenceCoordinatesRenderGroup: GPU.createGroup(v_sr, [{item: this.referenceCoordinatesBuffer, type: 'b'}]),
+                selectVerticesBBoxRenderGroup: GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.selectVerticesBBoxBuffer, type: 'b'}]),
+                referenceCoordinatesRenderGroup: GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.referenceCoordinatesBuffer, type: 'b'}]),
             }, 更新関数: [this.updateSelectState.bind(this),this.updateActiveAnimation.bind(this)], ステートの更新: [
                 {条件: [["/Tab"]], 次のステート: "オブジェクト選択-ベジェモディファイア", データの初期化: false},
                 {条件: [["/e"]], 次のステート: "ベジェモディファイア編集-頂点追加", ステート変更後ループさせるか: true},
@@ -284,8 +283,8 @@ export class StateMachine {
                 selectVerticesIndexBuffer: {isInclude: "&-", not: null},
                 selectVerticesBBoxGroup: {isInclude: "&-", not: null},
                 selectVerticesIndexsGroup: {isInclude: "&-", not: null},
-                selectVerticesBBoxRenderGroup: GPU.createGroup(v_sr, [{item: this.selectVerticesBBoxBuffer, type: 'b'}]),
-                referenceCoordinatesRenderGroup: GPU.createGroup(v_sr, [{item: this.referenceCoordinatesBuffer, type: 'b'}]),
+                selectVerticesBBoxRenderGroup: GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.selectVerticesBBoxBuffer, type: 'b'}]),
+                referenceCoordinatesRenderGroup: GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.referenceCoordinatesBuffer, type: 'b'}]),
             }, 更新関数: [this.updateSelectState.bind(this),this.updateActiveAnimation.bind(this)], ステートの更新: [
                 {条件: [["/Tab"]], 次のステート: "オブジェクト選択-ボーンモディファイア", データの初期化: false},
                 {条件: [["/e"]], 次のステート: "ボーンモディファイア編集-頂点追加", ステート変更後ループさせるか: true},
@@ -367,7 +366,7 @@ export class StateMachine {
 
     async updateWeightPaintAwaitInit() {
         this.state.data.weightTargetBuffer = GPU.createStorageBuffer(4, undefined, ["u32"]);
-        this.state.data.weightTargetGroup = GPU.createGroup(v_sr, [{item: this.state.data.weightTargetBuffer, type: "b"}]);
+        this.state.data.weightTargetGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.state.data.weightTargetBuffer, type: "b"}]);
         GPU.writeBuffer(this.state.data.weightTargetBuffer, new Uint32Array([this.state.data.weightPaintTarget]));
     }
 
@@ -459,8 +458,8 @@ export class StateMachine {
             this.state.data.selectVerticesIndexsGroup = null;
         } else {
             this.state.data.selectVerticesIndexBuffer = GPU.createStorageBuffer(this.state.data.selectVerticesIndexs.length * 4, this.state.data.selectVerticesIndexs, ["u32"]);
-            this.state.data.selectVerticesBBoxGroup = GPU.createGroup(c_srw_sr, [{item: this.selectVerticesBBoxBuffer, type: "b"}, {item: this.state.data.selectVerticesIndexBuffer, type: "b"}]);
-            this.state.data.selectVerticesIndexsGroup = GPU.createGroup(v_sr, [{item: this.state.data.selectVerticesIndexBuffer, type: "b"}]);
+            this.state.data.selectVerticesBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.selectVerticesBBoxBuffer, type: "b"}, {item: this.state.data.selectVerticesIndexBuffer, type: "b"}]);
+            this.state.data.selectVerticesIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.state.data.selectVerticesIndexBuffer, type: "b"}]);
         }
         managerForDOMs.update("モーダル-選択情報-選択数");
     }

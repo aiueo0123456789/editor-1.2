@@ -1,7 +1,6 @@
 import { device,GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
-import { v_sr,c_sr_sr,c_sr,c_srw,c_srw_sr } from "../GPUObject.js";
 import { setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { createID } from "../UI/制御.js";
 
@@ -43,7 +42,7 @@ export class BezierModifier {
 
         this.BBox = {min: [0,0], max: [0,0]};
         this.BBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-        this.BBoxRenderGroup = GPU.createGroup(v_sr, [{item: this.BBoxBuffer, type: 'b'}]);
+        this.BBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.BBoxBuffer, type: 'b'}]);
 
         this.baseBBox = [0,0,0,0];
         this.baseBBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
@@ -160,16 +159,16 @@ export class BezierModifier {
     }
 
     setGroup() {
-        this.modifierDataGroup = GPU.createGroup(c_sr, [{item: this.s_baseVerticesPositionBuffer, type: "b"}]);
-        this.modifierTransformDataGroup = GPU.createGroup(c_sr_sr, [{item: this.s_baseVerticesPositionBuffer, type: "b"}, {item: this.RVrt_coBuffer, type: "b"}]);
-        this.adaptAnimationGroup1 = GPU.createGroup(c_srw, [{item: this.RVrt_coBuffer, type: 'b'}]);
-        this.collisionVerticesGroup = GPU.createGroup(c_sr, [{item: this.RVrt_coBuffer, type: 'b'}]);
+        this.modifierDataGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [{item: this.s_baseVerticesPositionBuffer, type: "b"}]);
+        this.modifierTransformDataGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [{item: this.s_baseVerticesPositionBuffer, type: "b"}, {item: this.RVrt_coBuffer, type: "b"}]);
+        this.adaptAnimationGroup1 = GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: this.RVrt_coBuffer, type: 'b'}]);
+        this.collisionVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [{item: this.RVrt_coBuffer, type: 'b'}]);
 
-        this.modifierTransformGroup = GPU.createGroup(c_srw_sr, [{item: this.RVrt_coBuffer, type: "b"}, {item: this.parentWeightBuffer, type: "b"}]);
+        this.modifierTransformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.RVrt_coBuffer, type: "b"}, {item: this.parentWeightBuffer, type: "b"}]);
 
-        this.calculateAllBBoxGroup = GPU.createGroup(c_srw_sr, [{item: this.BBoxBuffer, type: 'b'}, {item: this.RVrt_coBuffer, type: 'b'}]);
-        this.calculateAllBaseBBoxGroup = GPU.createGroup(c_srw_sr, [{item: this.baseBBoxBuffer, type: 'b'}, {item: this.s_baseVerticesPositionBuffer, type: 'b'}]);
-        this.GUIrenderGroup = GPU.createGroup(v_sr, [{item: this.RVrt_coBuffer, type: 'b'}]);
+        this.calculateAllBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.BBoxBuffer, type: 'b'}, {item: this.RVrt_coBuffer, type: 'b'}]);
+        this.calculateAllBaseBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.baseBBoxBuffer, type: 'b'}, {item: this.s_baseVerticesPositionBuffer, type: 'b'}]);
+        this.GUIrenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.RVrt_coBuffer, type: 'b'}]);
     }
 
     async getSaveData() {

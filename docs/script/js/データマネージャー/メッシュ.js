@@ -1,4 +1,3 @@
-import { c_sr_u, c_srw_sr, v_sr_sr } from "../GPUObject.js";
 import { GPU } from "../webGPU.js";
 import { GraphicMesh } from "../オブジェクト/グラフィックメッシュ.js";
 import { setBaseBBox, setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
@@ -81,7 +80,7 @@ export class Mesh {
         // アニメーションデータを更新
         for (const anmaiton of target.animationBlock.animationBlock) {
             anmaiton.s_verticesAnimationBuffer = GPU.appendDataToStorageBuffer(anmaiton.s_verticesAnimationBuffer, new Float32Array([0,0,0,0,0,0]));
-            anmaiton.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [anmaiton.s_verticesAnimationBuffer, anmaiton.u_animationWeightBuffer]);
+            anmaiton.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [anmaiton.s_verticesAnimationBuffer, anmaiton.u_animationWeightBuffer]);
         }
         target.boneNum ++;
         target.verticesNum = target.boneNum * 2;
@@ -121,7 +120,7 @@ export class Mesh {
         // アニメーションデータを更新
         for (const anmaiton of target.animationBlock.animationBlock) {
             anmaiton.s_verticesAnimationBuffer = GPU.deleteIndexsToBuffer(anmaiton.s_verticesAnimationBuffer, indexs, 24);
-            anmaiton.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: anmaiton.s_verticesAnimationBuffer, type: 'b'}, {item: anmaiton.u_animationWeightBuffer, type: 'b'}]);
+            anmaiton.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: anmaiton.s_verticesAnimationBuffer, type: 'b'}, {item: anmaiton.u_animationWeightBuffer, type: 'b'}]);
         }
         target.boneNum -= deleteIndexs.length;
         target.verticesNum = target.boneNum * 2;
@@ -157,9 +156,7 @@ export class Mesh {
     }
 }
 
-const Csrw_Csr_Csrw_Csr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'},{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}]);
-const Cu_Cu = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}]);
-const weightPaintPipeline = GPU.createComputePipeline([Csrw_Csr_Csrw_Csr,Cu_Cu],`
+const weightPaintPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csrw_Csr"),GPU.getGroupLayout("Cu_Cu")],`
 struct Output {
     indexs: vec4<u32>,
     weights: vec4<f32>,
@@ -220,7 +217,7 @@ export class WeightPaint {
     constructor() {
         this.configBuffer = GPU.createUniformBuffer(32, undefined, ["u32","f32","u32","f32"]);
         this.pointBuffer = GPU.createUniformBuffer(8, undefined, ["f32","f32"]);
-        this.configGroup = GPU.createGroup(Cu_Cu, [{item: this.configBuffer, type: "b"}, {item: this.pointBuffer, type: "b"}]);
+        this.configGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu"), [{item: this.configBuffer, type: "b"}, {item: this.pointBuffer, type: "b"}]);
     }
 
     init(target, paintTargetIndex, weight, decayType, radius) {
@@ -231,7 +228,7 @@ export class WeightPaint {
         this.maxWeightBuffer = GPU.createStorageBuffer(target.verticesNum * 4, undefined, ["f32"]);
         this.originalVerticesBuffer = GPU.copyBufferToNewBuffer(target.RVrt_coBuffer);
         this.workNum = Math.ceil(target.verticesNum / 64);
-        this.group = GPU.createGroup(Csrw_Csr_Csrw_Csr, [{item: this.targetBuffer, type: "b"}, {item: this.originalBuffer, type: "b"}, {item: this.maxWeightBuffer, type: "b"}, {item: this.originalVerticesBuffer, type: "b"}]);
+        this.group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csrw_Csr"), [{item: this.targetBuffer, type: "b"}, {item: this.originalBuffer, type: "b"}, {item: this.maxWeightBuffer, type: "b"}, {item: this.originalVerticesBuffer, type: "b"}]);
     }
 
     paint(point) {

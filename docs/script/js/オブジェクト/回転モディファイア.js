@@ -1,5 +1,4 @@
 import { device,GPU } from "../webGPU.js";
-import { v_u, c_u_u } from "../GPUObject.js";
 import { Children } from "../子要素.js";
 import { AnimationBlock, RotateAnimation } from "../アニメーション.js";
 import { createID } from "../UI/制御.js";
@@ -33,9 +32,9 @@ export class RotateModifier {
         this.baseDataBuffer = GPU.createUniformBuffer((2 + 1 + 1) * 4, undefined, ["f32"]);
         GPU.writeBuffer(this.baseDataBuffer, new Float32Array(this.baseData));
         this.rotateDataBuffer = GPU.createUniformBuffer((2 + 1 + 1) * 4, undefined, ["f32"]);
-        this.modifierTransformDataGroup = GPU.createGroup(c_u_u, [{item: this.baseDataBuffer, type: "b"},{item: this.rotateDataBuffer, type: "b"}]);
+        this.modifierTransformDataGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu"), [{item: this.baseDataBuffer, type: "b"},{item: this.rotateDataBuffer, type: "b"}]);
 
-        this.BBoxRenderGroup = GPU.createGroup(v_u, [{item: this.rotateDataBuffer, type: "b"}]);
+        this.BBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [{item: this.rotateDataBuffer, type: "b"}]);
 
         this.BBox = [this.rotateData[0],this.rotateData[1],this.rotateData[0],this.rotateData[1]];
         this.baseBBox = [this.baseData[0],this.baseData[1],this.baseData[0],this.baseData[1]];

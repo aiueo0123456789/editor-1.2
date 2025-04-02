@@ -1,4 +1,3 @@
-import { v_sr } from "../GPUObject.js";
 import { keysDown, activeView } from "../main.js";
 import { GPU } from "../webGPU.js";
 import { vec2 } from "../ベクトル計算.js";
@@ -43,7 +42,7 @@ export class StateMachine {
         this.useTool = "選択";
 
         this.mouseBuffer = GPU.createStorageBuffer(2 * 4, undefined, ["f32"]);
-        this.mouseRenderGroup = GPU.createGroup(v_sr, [{item: this.mouseBuffer, type: 'b'}]);
+        this.mouseRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.mouseBuffer, type: 'b'}]);
 
         this.undoList = [];
         this.undoDepth = 0;

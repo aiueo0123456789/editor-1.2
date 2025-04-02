@@ -1,9 +1,9 @@
 import { GPU } from "./webGPU.js";
-import { calculateAllBBoxPipeline,calculateLimitBBoxPipeline,c_srw, calculateLimitedBoneBBoxPipeline } from "./GPUObject.js";
+import { calculateAllBBoxPipeline,calculateLimitBBoxPipeline, calculateLimitedBoneBBoxPipeline } from "./GPUObject.js";
 import { vec2 } from "./ベクトル計算.js";
 
 const aaaBuffer = GPU.createStorageBuffer((2 + 2) * 4, undefined, ["f32"]);
-const aaaGroup = GPU.createGroup(c_srw, [{item: aaaBuffer, type: "b"}]);
+const aaaGroup = GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: aaaBuffer, type: "b"}]);
 export function calculateBBoxFromAllVertices(group, verticesNum) {
     GPU.runComputeShader(calculateAllBBoxPipeline, [group, aaaGroup], Math.ceil(verticesNum / 20 / 64));
 }

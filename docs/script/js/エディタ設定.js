@@ -1,4 +1,3 @@
-import { f_u, v_u_f_u } from "./GPUObject.js";
 import { GPU } from "./webGPU.js";
 
 export class ColorAnddWidth {
@@ -9,7 +8,7 @@ export class ColorAnddWidth {
         this.width = width;
         this.widthBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
-        this.group = GPU.createGroup(v_u_f_u, [this.widthBuffer,this.colorBuffer]);
+        this.group = GPU.createGroup(GPU.getGroupLayout("Vu_Fu"), [this.widthBuffer,this.colorBuffer]);
     }
 
     setColor(r,g,b,a = 1) {
@@ -35,7 +34,7 @@ export class Color {
         this.color = color;
         this.colorBuffer = GPU.createUniformBuffer(16, undefined, ["f32"]);
         GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
-        this.group = GPU.createGroup(f_u, [this.colorBuffer]);
+        this.group = GPU.createGroup(GPU.getGroupLayout("Fu"), [this.colorBuffer]);
     }
 
     setColor(r,g,b,a = 1) {

@@ -1,134 +1,110 @@
+import { loadFile } from "./utility.js";
 import { GPU } from "./webGPU.js";
 
-GPU.setBaseStruct(await fetch('./script/wgsl/baseStructes.wgsl').then(x => x.text()));
+const loadURLs = [
+    {fileName: "v_render.wgsl", type: "v"},
+    {fileName: "f_render.wgsl", type: "f"},
+];
+const loadTextList = {};
+const results = await Promise.all(
+    loadURLs.map(async (url) => {
+        let type;
+        if (url.type == "v" || url.type == "f") {
+            type = "レンダー";
+        } else if (url.type == "c") {
+            type = "compute";
+        }
+        const text = await loadFile(`./script/wgsl/${type}/${url.fileName}`);
+        return { fileName: url, text };
+    })
+);
 
-export const v_renderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_render.wgsl').then(x => x.text()));
-export const f_renderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/f_render.wgsl').then(x => x.text()));
-export const v_maskRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/マスク/v.wgsl').then(x => x.text()));
-export const f_maskRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/マスク/f.wgsl').then(x => x.text()));
-export const v_screenAllSquareRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_全ての頂点をスクーリン座標に四角として表示.wgsl').then(x => x.text()));
-export const v_allSquareRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_全ての頂点を四角として表示.wgsl').then(x => x.text()));
-// export const f_textureRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/f_テクスチャ表示.wgsl').then(x => x.text()));
-// export const v_PSRSquareRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_座標・回転・スケールを四角として表示.wgsl').then(x => x.text()));
-export const v_partSquareRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_限られた頂点を四角として表示.wgsl').then(x => x.text()));
-export const f_squareRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/f_円塗りつぶし.wgsl').then(x => x.text()));
-export const v_lineRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_線分.wgsl').then(x => x.text()));
-export const v_modifierMeshRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/モディファイア/v_メッシュ.wgsl').then(x => x.text()));
-export const v_modifierFrameRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/モディファイア/v_枠の表示.wgsl').then(x => x.text()));
-export const v_modifierFrame2RenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/モディファイア/v_枠2の表示 .wgsl').then(x => x.text()));
-export const v_graphicMeshsMeshRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/グラフィックメッシュ/v_メッシュ.wgsl').then(x => x.text()));
-export const f_fillRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/f_単色塗りつぶし.wgsl').then(x => x.text()));
-export const f_strokeRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/f_枠線.wgsl').then(x => x.text()));
-export const v_BBoxRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/v_BBox.wgsl').then(x => x.text()));
-export const v_bezierRenderShaderModule = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/ベジェモディファイア/v_ベジェ.wgsl').then(x => x.text()));
-export const v_cvsDraw = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/テクスチャのcvs表示/v_canvasDraw.wgsl').then(x => x.text()));
-export const f_cvsDraw = GPU.createShaderModule(await fetch('./script/wgsl/レンダー/テクスチャのcvs表示/f_canvasDraw.wgsl').then(x => x.text()));
+results.forEach(({ fileName, text }) => {
+    loadTextList[fileName] = text;
+});
 
-const circleSelectVertices = GPU.createShaderModule(await fetch('./script/wgsl/compute/頂点の円選択.wgsl').then(x => x.text()));
-const boxSelectVertices = GPU.createShaderModule(await fetch('./script/wgsl/compute/頂点のボックス選択.wgsl').then(x => x.text()));
-const calculateAllBBox = GPU.createShaderModule(await fetch('./script/wgsl/compute/全ての頂点からBBoxを計算.wgsl').then(x => x.text()));
-const calculateLimitBBox = GPU.createShaderModule(await fetch('./script/wgsl/compute/限られた頂点からBBoxを計算.wgsl').then(x => x.text()));
-const calculateLimitedBoneBBox = GPU.createShaderModule(await fetch('./script/wgsl/compute/限られたボーンからBBoxを計算.wgsl').then(x => x.text()));
-const modifierTransform = GPU.createShaderModule(await fetch('./script/wgsl/compute/モディファイア/モディファイアの変形を適応.wgsl').then(x => x.text()));
-const rotateModifierTransform = GPU.createShaderModule(await fetch('./script/wgsl/compute/回転モディファイアの変形を適応.wgsl').then(x => x.text()));
-const bezierModifierTransform = GPU.createShaderModule(await fetch('./script/wgsl/compute/ベジェモディファイア/ベジェモディファイアの変形を適応.wgsl').then(x => x.text()));
-const adaptAllAnimationToVertices = GPU.createShaderModule(await fetch('./script/wgsl/compute/全ての頂点にアニメーションを適応.wgsl').then(x => x.text()));
-const setModifierWeightToGraphicMesh = GPU.createShaderModule(await fetch('./script/wgsl/compute/モディファイア/頂点にモディファイアとの関係を作る.wgsl').then(x => x.text()));
-const setBezierModifierWeightToGraphicMesh = GPU.createShaderModule(await fetch('./script/wgsl/compute/ベジェモディファイア/頂点にベジェモディファイアとの関係を作る.wgsl').then(x => x.text()));
-const calculateAllAverage = GPU.createShaderModule(await fetch('./script/wgsl/compute/全ての頂点の平均.wgsl').then(x => x.text()));
-const updateCenterPosition = GPU.createShaderModule(await fetch('./script/wgsl/compute/中心位置を変更.wgsl').then(x => x.text()));
+GPU.setBaseStruct(await loadFile('./script/wgsl/baseStructes.wgsl'));
 
-// グループレイアウトの宣言
-export const f_ts_t = GPU.createGroupLayout([{useShaderTypes: ['f'], type: 'ts'}, {useShaderTypes: ['f'], type: 't'}]);
-export const v_u_f_t = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'u'}, {useShaderTypes: ['f'], type: 't'}]);
-export const v_u_u_f_ts = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'u'}, {useShaderTypes: ['v'], type: 'u'}, {useShaderTypes: ['f'], type: 'ts'}]);
-export const v_u_f_ts = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'u'}, {useShaderTypes: ['f'], type: 'ts'}]);
-export const v_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'u'}]);
-export const v_u_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'u'},{useShaderTypes: ['v'], type: 'u'}]);
-export const v_u_f_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'u'},{useShaderTypes: ['f'], type: 'u'}]);
-export const v_sr = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'}]);
-export const v_sr_sr_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'},{useShaderTypes: ['v'], type: 'sr'},{useShaderTypes: ['v'], type: 'u'}]);
-export const v_sr_sr_sr = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'},{useShaderTypes: ['v'], type: 'sr'},{useShaderTypes: ['v'], type: 'sr'}]);
-export const v_sr_sr_f_t = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'}, {useShaderTypes: ['v'], type: 'sr'}, {useShaderTypes: ['f'], type: 't'}]);
-export const v_sr_sr_f_t_t_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'}, {useShaderTypes: ['v'], type: 'sr'}, {useShaderTypes: ['f'], type: 't'}, {useShaderTypes: ['f'], type: 't'}, {useShaderTypes: ['f'], type: 'u'}]);
-export const v_sr_sr = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'}, {useShaderTypes: ['v'], type: 'sr'}]);
-export const v_sr_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'}, {useShaderTypes: ['v'], type: 'u'}]);
-export const v_sr_u_u = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'},{useShaderTypes: ['v'], type: 'u'},{useShaderTypes: ['v'], type: 'u'}]);
-export const v_sr_u_sr = GPU.createGroupLayout([{useShaderTypes: ['v'], type: 'sr'},{useShaderTypes: ['v'], type: 'u'},{useShaderTypes: ['v'], type: 'sr'}]);
-export const c_srw_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'},{useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'},{useShaderTypes: ['c'], type: 'u'},{useShaderTypes: ['c'], type: 'u'}]);
-export const c_sr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'sr'}]);
-export const f_str = GPU.createGroupLayout([{useShaderTypes: ['f'], type: 'str'}]);
-export const f_u = GPU.createGroupLayout([{useShaderTypes: ['f'], type: 'u'}]);
-export const c_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'u'}]);
-export const c_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'u'},{useShaderTypes: ['c'], type: 'u'}]);
-export const c_sr_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'sr'},{useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}]);
-export const c_sr_sr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'sr'},{useShaderTypes: ['c'], type: 'sr'}]);
-export const c_sr_sr_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'sr'},{useShaderTypes: ['c'], type: 'sr'},{useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_sr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'},{useShaderTypes: ['c'], type: 'sr'}]);
-export const c_srw_sr_sr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}]);
-export const c_srw_sr_sr_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_sr_sr_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_sr_sr_sr_sr_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_sr_sr_sr_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_srw_sr_sr_sr_u_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_srw_sr_sr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}]);
-export const c_srw_sr_sr_sr_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_srw_sr_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_u_u_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}]);
-export const c_u_u_sr = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'u'}, {useShaderTypes: ['c'], type: 'sr'}]);
-export const c_srw_t = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 't'}]);
-export const c_stw_t = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'stw'}, {useShaderTypes: ['c'], type: 't'}]);
-export const c_srw_sr_u = GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'srw'}, {useShaderTypes: ['c'], type: 'sr'}, {useShaderTypes: ['c'], type: 'u'}]);
+export const v_renderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/v_render.wgsl'));
+export const f_renderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/f_render.wgsl'));
+export const v_maskRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/マスク/v.wgsl'));
+export const f_maskRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/マスク/f.wgsl'));
+export const v_screenAllSquareRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/v_全ての頂点をスクーリン座標に四角として表示.wgsl'));
+export const v_allSquareRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/v_全ての頂点を四角として表示.wgsl'));
+export const v_partSquareRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/v_限られた頂点を四角として表示.wgsl'));
+export const f_squareRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/f_円塗りつぶし.wgsl'));
+export const v_lineRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/v_線分.wgsl'));
+export const v_modifierMeshRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/モディファイア/v_メッシュ.wgsl'));
+export const v_modifierFrameRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/モディファイア/v_枠の表示.wgsl'));
+export const v_modifierFrame2RenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/モディファイア/v_枠2の表示 .wgsl'));
+export const v_graphicMeshsMeshRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/グラフィックメッシュ/v_メッシュ.wgsl'));
+export const f_fillRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/f_単色塗りつぶし.wgsl'));
+export const f_strokeRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/f_枠線.wgsl'));
+export const v_BBoxRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/v_BBox.wgsl'));
+export const v_bezierRenderShaderModule = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/ベジェモディファイア/v_ベジェ.wgsl'));
+export const v_cvsDraw = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/テクスチャのcvs表示/v_canvasDraw.wgsl'));
+export const f_cvsDraw = GPU.createShaderModule(await loadFile('./script/wgsl/レンダー/テクスチャのcvs表示/f_canvasDraw.wgsl'));
 
-export const collisionMeshPipeline = GPU.createComputePipeline([c_srw_u, c_sr_sr], await fetch('./script/wgsl/compute/選択/collisionMesh.wgsl').then(x => x.text()));
-export const collisionBonePipeline = GPU.createComputePipeline([c_srw_u, c_sr], await fetch('./script/wgsl/compute/ボーンモディファイア/当たり判定.wgsl').then(x => x.text()));
+const circleSelectVertices = GPU.createShaderModule(await loadFile('./script/wgsl/compute/頂点の円選択.wgsl'));
+const boxSelectVertices = GPU.createShaderModule(await loadFile('./script/wgsl/compute/頂点のボックス選択.wgsl'));
+const calculateAllBBox = GPU.createShaderModule(await loadFile('./script/wgsl/compute/全ての頂点からBBoxを計算.wgsl'));
+const calculateLimitBBox = GPU.createShaderModule(await loadFile('./script/wgsl/compute/限られた頂点からBBoxを計算.wgsl'));
+const calculateLimitedBoneBBox = GPU.createShaderModule(await loadFile('./script/wgsl/compute/限られたボーンからBBoxを計算.wgsl'));
+const modifierTransform = GPU.createShaderModule(await loadFile('./script/wgsl/compute/モディファイア/モディファイアの変形を適応.wgsl'));
+const rotateModifierTransform = GPU.createShaderModule(await loadFile('./script/wgsl/compute/回転モディファイアの変形を適応.wgsl'));
+const bezierModifierTransform = GPU.createShaderModule(await loadFile('./script/wgsl/compute/ベジェモディファイア/ベジェモディファイアの変形を適応.wgsl'));
+const adaptAllAnimationToVertices = GPU.createShaderModule(await loadFile('./script/wgsl/compute/全ての頂点にアニメーションを適応.wgsl'));
+const setModifierWeightToGraphicMesh = GPU.createShaderModule(await loadFile('./script/wgsl/compute/モディファイア/頂点にモディファイアとの関係を作る.wgsl'));
+const setBezierModifierWeightToGraphicMesh = GPU.createShaderModule(await loadFile('./script/wgsl/compute/ベジェモディファイア/頂点にベジェモディファイアとの関係を作る.wgsl'));
+const calculateAllAverage = GPU.createShaderModule(await loadFile('./script/wgsl/compute/全ての頂点の平均.wgsl'));
+const updateCenterPosition = GPU.createShaderModule(await loadFile('./script/wgsl/compute/中心位置を変更.wgsl'));
 
-export const collisionModifierPipeline = GPU.createComputePipeline([c_srw_u, c_sr_u], await fetch('./script/wgsl/compute/モディファイア/当たり判定.wgsl').then(x => x.text()));
+export const collisionMeshPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Cu"), GPU.getGroupLayout("Csr_Csr")], await loadFile('./script/wgsl/compute/選択/collisionMesh.wgsl'));
+export const collisionBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Cu"), GPU.getGroupLayout("Csr")], await loadFile('./script/wgsl/compute/ボーンモディファイア/当たり判定.wgsl'));
 
-export const collisionBezierModifierPipeline = GPU.createComputePipeline([c_srw_u, c_sr], await fetch('./script/wgsl/compute/ベジェモディファイア/当たり判定.wgsl').then(x => x.text()));
+export const collisionModifierPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Cu"), GPU.getGroupLayout("Csr_Cu")], await loadFile('./script/wgsl/compute/モディファイア/当たり判定.wgsl'));
 
-export const calculateBoneModifierLocalMatrixPipeline = GPU.createComputePipeline([c_srw_sr], GPU.createShaderModule(await fetch('./script/wgsl/compute/ボーンモディファイア/適応.wgsl').then(x => x.text())));
-export const calculateBoneModifierMatrixPropagatePipeline = GPU.createComputePipeline([c_srw,c_sr], GPU.createShaderModule(await fetch('./script/wgsl/compute/ボーンモディファイア/伝播.wgsl').then(x => x.text())));
-export const calculateBoneModifierWeightToVerticesPipeline = GPU.createComputePipeline([c_srw_sr, c_sr_u], GPU.createShaderModule(await fetch('./script/wgsl/compute/ボーンモディファイア/ウェイト付与.wgsl').then(x => x.text())));
-export const adaptBoneModifierToVerticesPipeline = GPU.createComputePipeline([c_srw_sr, c_sr_sr], GPU.createShaderModule(await fetch('./script/wgsl/compute/ボーンモディファイア/子の変形.wgsl').then(x => x.text())));
-export const calculateBaseBoneDataPipeline = GPU.createComputePipeline([c_srw_srw_sr_sr], GPU.createShaderModule(await fetch('./script/wgsl/compute/ボーンモディファイア/ベースボーンのデータを作る.wgsl').then(x => x.text())));
-export const calculateBoneVerticesPipeline = GPU.createComputePipeline([c_srw_sr_sr], GPU.createShaderModule(await fetch('./script/wgsl/compute/ボーンモディファイア/表示頂点を計算.wgsl').then(x => x.text())));
+export const collisionBezierModifierPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Cu"), GPU.getGroupLayout("Csr")], await loadFile('./script/wgsl/compute/ベジェモディファイア/当たり判定.wgsl'));
 
-export const circleSelectVerticesPipeline = GPU.createComputePipeline([c_srw_u,c_sr], circleSelectVertices);
-export const boxSelectVerticesPipeline = GPU.createComputePipeline([c_srw_u,c_sr], boxSelectVertices);
-export const calculateAllBBoxPipeline = GPU.createComputePipeline([c_srw_sr,c_srw], calculateAllBBox);
-export const calculateLimitBBoxPipeline = GPU.createComputePipeline([c_srw_sr,c_sr,c_srw], calculateLimitBBox);
-export const calculateLimitedBoneBBoxPipeline = GPU.createComputePipeline([c_srw_sr,c_sr,c_srw], calculateLimitedBoneBBox);
-export const modifierTransformPipeline = GPU.createComputePipeline([c_srw_sr, c_sr_sr], modifierTransform);
-export const rotateModifierTransformPipeline = GPU.createComputePipeline([c_srw, c_u_u], rotateModifierTransform);
-export const bezierModifierTransformPipeline = GPU.createComputePipeline([c_srw_sr, c_sr_sr], bezierModifierTransform);
-export const adaptAllAnimationToVerticesPipeline = GPU.createComputePipeline([c_srw, c_sr_u], adaptAllAnimationToVertices);
-export const setModifierWeightToGraphicMeshPipeline = GPU.createComputePipeline([c_srw_sr, c_u_u], setModifierWeightToGraphicMesh);
-export const setBezierModifierWeightToGraphicMeshPipeline = GPU.createComputePipeline([c_srw_sr, c_sr], setBezierModifierWeightToGraphicMesh);
-export const calculateAllAveragePipeline = GPU.createComputePipeline([c_srw_sr,c_srw], calculateAllAverage);
-export const MarchingSquaresPipeline = GPU.createComputePipeline([c_srw_t], GPU.createShaderModule(await fetch('script/wgsl/compute/MarchingSquares.wgsl').then(x => x.text())));
-export const updateCenterPositionPipeline = GPU.createComputePipeline([c_srw_sr, c_u], updateCenterPosition);
+export const calculateBoneModifierLocalMatrixPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/適応.wgsl')));
+export const calculateBoneModifierMatrixPropagatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw"),GPU.getGroupLayout("Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/伝播.wgsl')));
+export const calculateBoneModifierWeightToVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Csr_Cu")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/ウェイト付与.wgsl')));
+export const adaptBoneModifierToVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Csr_Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/子の変形.wgsl')));
+export const calculateBaseBoneDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csr_Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/ベースボーンのデータを作る.wgsl')));
+export const calculateBoneVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/表示頂点を計算.wgsl')));
+
+export const circleSelectVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Cu"),GPU.getGroupLayout("Csr")], circleSelectVertices);
+export const boxSelectVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Cu"),GPU.getGroupLayout("Csr")], boxSelectVertices);
+export const calculateAllBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"),GPU.getGroupLayout("Csrw")], calculateAllBBox);
+export const calculateLimitBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"),GPU.getGroupLayout("Csr"),GPU.getGroupLayout("Csrw")], calculateLimitBBox);
+export const calculateLimitedBoneBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"),GPU.getGroupLayout("Csr"),GPU.getGroupLayout("Csrw")], calculateLimitedBoneBBox);
+export const modifierTransformPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Csr_Csr")], modifierTransform);
+export const rotateModifierTransformPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw"), GPU.getGroupLayout("Cu_Cu")], rotateModifierTransform);
+export const bezierModifierTransformPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Csr_Csr")], bezierModifierTransform);
+export const adaptAllAnimationToVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw"), GPU.getGroupLayout("Csr_Cu")], adaptAllAnimationToVertices);
+export const setModifierWeightToGraphicMeshPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Cu_Cu")], setModifierWeightToGraphicMesh);
+export const setBezierModifierWeightToGraphicMeshPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Csr")], setBezierModifierWeightToGraphicMesh);
+export const calculateAllAveragePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"),GPU.getGroupLayout("Csrw")], calculateAllAverage);
+export const MarchingSquaresPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Ct")], GPU.createShaderModule(await loadFile('script/wgsl/compute/MarchingSquares.wgsl')));
+export const updateCenterPositionPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Cu")], updateCenterPosition);
 
 // レンダーパイプライン
-export const pipelineFortextureToCVS = GPU.createRenderPipeline([f_ts_t], v_cvsDraw, f_cvsDraw, [], "cvsCopy");
-export const renderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_sr_f_t_t_u], v_renderShaderModule, f_renderShaderModule, [["u"]], "2d", "t");
-export const maskRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_sr_f_t], v_maskRenderShaderModule, f_maskRenderShaderModule, [["u"]], "mask", "t");
-export const screenCirclesFromAllVerticesRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, v_u_f_u], v_screenAllSquareRenderShaderModule, f_squareRenderShaderModule, [], "2d", "s");
-export const circlesFromAllVerticesRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, v_u_f_u], v_allSquareRenderShaderModule, f_squareRenderShaderModule, [], "2d", "s");
-export const circlesFromLimitedVerticesRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, v_u_f_u, v_sr], v_partSquareRenderShaderModule, f_squareRenderShaderModule, [], "2d", "s");
-export const BBoxRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, f_u], v_BBoxRenderShaderModule, f_strokeRenderShaderModule, [], "2d", "s");
-// export const lineRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, f_u], v_lineRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
-export const graphicMeshsMeshRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_sr, f_u], v_graphicMeshsMeshRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
-export const modifierMeshRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_u, f_u], v_modifierMeshRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
-export const modifierFrameRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_u, f_u], v_modifierFrameRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
-export const modifierFrame2RenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr_u, f_u], v_modifierFrame2RenderShaderModule, f_fillRenderShaderModule, [], "2d", "t");
-export const bezierRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, f_u], v_bezierRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
-// export const textureRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_u, v_u_f_t, f_u], v_PSRSquareRenderShaderModule, f_textureRenderShaderModule, [], "2d", "s");
-export const rotateModifierRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_u, f_u], await fetch('script/wgsl/レンダー/回転モディファイア/v_表示.wgsl').then(x => x.text()), f_fillRenderShaderModule, [], "2d", "t");
-export const boneRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, f_u], await fetch('script/wgsl/レンダー/ボーン/v_ボーンの表示.wgsl').then(x => x.text()), f_fillRenderShaderModule, [], "2d", "t");
-export const LimitedBoneRenderPipeline = GPU.createRenderPipeline([v_u_u_f_ts, v_sr, f_u, v_sr], await fetch('script/wgsl/レンダー/ボーン/v_特定のボーンの表示.wgsl').then(x => x.text()), f_fillRenderShaderModule, [], "2d", "s");
+export const pipelineFortextureToCVS = GPU.createRenderPipeline([GPU.getGroupLayout("Fts_Ft")], v_cvsDraw, f_cvsDraw, [], "cvsCopy");
+export const renderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Ft_Ft_Fu")], v_renderShaderModule, f_renderShaderModule, [["u"]], "2d", "t");
+export const maskRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Ft")], v_maskRenderShaderModule, f_maskRenderShaderModule, [["u"]], "mask", "t");
+export const screenCirclesFromAllVerticesRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Vu_Fu")], v_screenAllSquareRenderShaderModule, f_squareRenderShaderModule, [], "2d", "s");
+export const circlesFromAllVerticesRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Vu_Fu")], v_allSquareRenderShaderModule, f_squareRenderShaderModule, [], "2d", "s");
+export const circlesFromLimitedVerticesRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Vu_Fu"), GPU.getGroupLayout("Vsr")], v_partSquareRenderShaderModule, f_squareRenderShaderModule, [], "2d", "s");
+export const BBoxRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], v_BBoxRenderShaderModule, f_strokeRenderShaderModule, [], "2d", "s");
+// export const lineRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], v_lineRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
+export const graphicMeshsMeshRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Fu")], v_graphicMeshsMeshRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
+export const modifierMeshRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vu"), GPU.getGroupLayout("Fu")], v_modifierMeshRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
+export const modifierFrameRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vu"), GPU.getGroupLayout("Fu")], v_modifierFrameRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
+export const modifierFrame2RenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vu"), GPU.getGroupLayout("Fu")], v_modifierFrame2RenderShaderModule, f_fillRenderShaderModule, [], "2d", "t");
+export const bezierRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], v_bezierRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
+export const rotateModifierRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Fu")], await loadFile('script/wgsl/レンダー/回転モディファイア/v_表示.wgsl'), f_fillRenderShaderModule, [], "2d", "t");
+export const boneRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], await loadFile('script/wgsl/レンダー/ボーン/v_ボーンの表示.wgsl'), f_fillRenderShaderModule, [], "2d", "t");
+export const LimitedBoneRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu"), GPU.getGroupLayout("Vsr")], await loadFile('script/wgsl/レンダー/ボーン/v_特定のボーンの表示.wgsl'), f_fillRenderShaderModule, [], "2d", "s");
 
 export const sampler = GPU.createTextureSampler();
 
@@ -139,18 +115,18 @@ export const inactiveColorBuffer = GPU.createUniformBuffer(4 * 4,[0,0,1,1],["f32
 
 export const boneSizeBuffer = GPU.createUniformBuffer(4,[0.1],["f32"]);
 export const activeBoneRendringColorBuffer = GPU.createUniformBuffer(4 * 4,[0,0,0,1],["f32"]);
-export const activeBoneRendringConfigGroup = GPU.createGroup(f_u,[activeBoneRendringColorBuffer]);
+export const activeBoneRendringConfigGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[activeBoneRendringColorBuffer]);
 export const inactiveBoneRendringColorBuffer = GPU.createUniformBuffer(4 * 4,[0,0,0,0.2],["f32"]);
-export const inactiveBoneRendringConfigGroup = GPU.createGroup(f_u,[inactiveBoneRendringColorBuffer]);
+export const inactiveBoneRendringConfigGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[inactiveBoneRendringColorBuffer]);
 
-export const activeColorGroup = GPU.createGroup(f_u,[activeColorBuffer]);
-export const referenceCoordinatesColorGroup = GPU.createGroup(f_u,[referenceCoordinatesColorBuffer]);
-export const inactiveColorGroup = GPU.createGroup(f_u,[inactiveColorBuffer]);
+export const activeColorGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[activeColorBuffer]);
+export const referenceCoordinatesColorGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[referenceCoordinatesColorBuffer]);
+export const inactiveColorGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[inactiveColorBuffer]);
 
 export const BBoxLineWidthSizeBuffer = GPU.createUniformBuffer(4,[5],["f32"]);
 export const inactiveBBoxColorBuffer = GPU.createUniformBuffer(4 * 4,[0,0,0,0.1],["f32"]);
-export const inactiveBBoxColorGroup = GPU.createGroup(f_u,[inactiveBBoxColorBuffer]);
+export const inactiveBBoxColorGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[inactiveBBoxColorBuffer]);
 export const activeBBoxColorBuffer = GPU.createUniformBuffer(4 * 4,[0,0,0,1],["f32"]);
-export const activeBBoxColorGroup = GPU.createGroup(f_u,[activeBBoxColorBuffer]);
+export const activeBBoxColorGroup = GPU.createGroup(GPU.getGroupLayout("Fu"),[activeBBoxColorBuffer]);
 
 export const isNotTexture = await GPU.imageToTexture2D("config/画像データ/ui_icon/画像未設定.png");

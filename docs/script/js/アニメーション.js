@@ -1,5 +1,5 @@
 import { device,GPU } from "./webGPU.js";
-import { c_sr_u, c_srw, adaptAllAnimationToVerticesPipeline } from "./GPUObject.js";
+import { adaptAllAnimationToVerticesPipeline } from "./GPUObject.js";
 import { arrayMath } from "./配列計算.js";
 import { createID } from "./UI/制御.js";
 
@@ -93,7 +93,7 @@ export class VerticesAnimation {
 
     emptyInit() {
         this.s_verticesAnimationBuffer = GPU.createStorageBuffer(this.belongObject.verticesNum * 2 * 4, Array(this.belongObject.verticesNum * 2).fill(0), ["f32","f32"]);
-        this.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
+        this.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
     }
 
     async getSaveData() {
@@ -109,14 +109,14 @@ export class VerticesAnimation {
             trueData.push(data.transformData[index])
         }
         this.s_verticesAnimationBuffer = GPU.createStorageBuffer(trueData.length * 4, trueData, ["f32","f32"]);
-        this.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
+        this.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
 
         this.isChange = true;
     }
 
     getWorldVerticesPositionBuffer() {
         const resultBuffer = GPU.copyBufferToNewBuffer(this.belongObject.s_baseVerticesPositionBuffer);
-        GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(c_srw, [{item: resultBuffer, type: "b"}]), GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
+        GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: resultBuffer, type: "b"}]), GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
         return resultBuffer;
     }
 }
@@ -155,7 +155,7 @@ export class MultAnimation {
 
     emptyInit() {
         this.s_verticesAnimationBuffer = GPU.createStorageBuffer(this.belongObject.verticesNum * 2 * 4, Array(this.belongObject.verticesNum * 2).fill(0), ["f32","f32"]);
-        this.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
+        this.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
     }
 
     async getSaveData() {
@@ -171,14 +171,14 @@ export class MultAnimation {
             trueData.push(data.transformData[index])
         }
         this.s_verticesAnimationBuffer = GPU.createStorageBuffer(trueData.length * 4, trueData, ["f32","f32"]);
-        this.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
+        this.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
 
         this.isChange = true;
     }
 
     getWorldVerticesPositionBuffer() {
         const resultBuffer = GPU.copyBufferToNewBuffer(this.belongObject.s_baseVerticesPositionBuffer);
-        GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(c_srw, [{item: resultBuffer, type: "b"}]), GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
+        GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: resultBuffer, type: "b"}]), GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
         return resultBuffer;
     }
 }
@@ -261,7 +261,7 @@ export class BoneAnimation {
 
     emptyInit() {
         this.s_verticesAnimationBuffer = GPU.createStorageBuffer(this.belongObject.verticesNum * 6 * 4, Array(this.belongObject.verticesNum * 6).fill(0), ["f32","f32"]);
-        this.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
+        this.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
     }
 
     async getSaveData() {
@@ -277,7 +277,7 @@ export class BoneAnimation {
             trueData.push(data.transformData[index]);
         }
         this.s_verticesAnimationBuffer = GPU.createStorageBuffer(trueData.length * 4, trueData, ["f32","f32"]);
-        this.adaptAnimationGroup2 = GPU.createGroup(c_sr_u, [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
+        this.adaptAnimationGroup2 = GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: this.u_animationWeightBuffer, type: 'b'}]);
     }
 
     getWorldVerticesMatrixBuffer() {

@@ -1,12 +1,7 @@
-import { calculateBBoxFromLimitedVertices } from "../../../../../BBox.js";
-import { c_srw_sr, v_sr } from "../../../../../GPUObject.js";
 import { activeView, editorParameters, keysDown, stateMachine } from "../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
-import { allFalse, allTrue, getArrayLastValue } from "../../../../../utility.js";
 import { GPU } from "../../../../../webGPU.js";
 import { mesh, weightPaint } from "../../../../../データマネージャー/メッシュ.js";
-import { vec2 } from "../../../../../ベクトル計算.js";
-import { calculateAllAverage } from "../../../../../平均.js";
 import { createNextStateData, previousKeysDown } from "../../../../状態遷移.js";
 
 function a() {
@@ -16,18 +11,17 @@ function a() {
 export class StateModel_WeightEditForGraphicMesh {
     constructor() {
         this.名前 = "グラフィックメッシュ_ウェイト編集";
-        this.options = ["ボタン", false, false, false, false];
+        this.options = ["ボタン", 50, 0, 1, false];
         this.ツールバー = "&all";
         this.シェリフ = [
             {
-                name: "メッシュ編集",
+                name: "ウェイト編集",
                 targetObject: this.options,
                 argumentArray: [
                     {name: "自動", type: {type: "ボタン", eventFn: a}},
-                    {name: "頂点追加", type: {type: "スイッチ", option: {look: "button-checkbox"}}},
-                    {name: "頂点削除", type: {type: "スイッチ", option: {look: "button-checkbox"}}},
-                    {name: "辺追加", type: {type: "スイッチ", option: {look: "button-checkbox"}}},
-                    {name: "辺削除", type: {type: "スイッチ", option: {look: "button-checkbox"}}},
+                    {name: "範囲", type: {type: "入力", inputType: "数字", option: {min: 0, max: 1000, step: 0.001}}},
+                    {name: "種類", type: {type: "選択", choices: [{text: "混ぜる", value: 0},{text: "加算", value: 1},{text: "減算", value: 2}]}},
+                    {name: "値", type: {type: "入力", inputType: "数字", option: {min: 0, max: 1, step: 0.001}}},
                 ]
             }
         ];
@@ -36,7 +30,7 @@ export class StateModel_WeightEditForGraphicMesh {
             activeObject: "&-",
             targetBoneIndex: 0,
             targetBoneIndexBuffer: {GPU: true, type: "buffer", byteSize: 1 * 4},
-            targetBoneGroup: {GPU: true, type: "group", layout: v_sr, items: ["&targetBoneIndexBuffer"]},
+            targetBoneGroup: {GPU: true, type: "group", layout: GPU.getGroupLayout("Vsr"), items: ["&targetBoneIndexBuffer"]},
         };
         this.遷移ステート = [
             createNextStateData([["/w"],["/Tab"]], "$-1"),
@@ -58,7 +52,7 @@ export class StateModel_WeightEditForGraphicMesh {
             }
         } else if (activeView.mouseState.holdFrameCount > 2) {
             if (!stateData.initBool) {
-                weightPaint.init(stateData.activeObject, stateData.targetBoneIndex, 1, 0, 50);
+                weightPaint.init(stateData.activeObject, stateData.targetBoneIndex, this.options[3], this.options[2], this.options[1]);
                 stateData.initBool = true;
             }
             weightPaint.paint(activeView.mouseState.positionForGPU);

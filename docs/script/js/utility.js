@@ -106,3 +106,11 @@ export function allFalse(array) {
 export async function loadFile(path) {
     return await fetch(path).then(x => x.text());
 }
+
+export function isUpperCase(char) {
+    return char === char.toUpperCase() && char !== char.toLowerCase();
+}
+
+export function isLowerCase(char) {
+    return char === char.toLowerCase() && char !== char.toUpperCase();
+}

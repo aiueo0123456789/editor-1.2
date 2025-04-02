@@ -1,4 +1,3 @@
-import { v_sr } from "../../../../../GPUObject.js";
 import { activeView, editorParameters, keysDown, stateMachine } from "../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
 import { GPU } from "../../../../../webGPU.js";
@@ -31,7 +30,7 @@ export class StateModel_WeightEditForGraphicMesh {
             activeObject: "&-",
             targetBoneIndex: 0,
             targetBoneIndexBuffer: {GPU: true, type: "buffer", byteSize: 1 * 4},
-            targetBoneGroup: {GPU: true, type: "group", layout: v_sr, items: ["&targetBoneIndexBuffer"]},
+            targetBoneGroup: {GPU: true, type: "group", layout: GPU.getGroupLayout("Vsr"), items: ["&targetBoneIndexBuffer"]},
         };
         this.遷移ステート = [
             createNextStateData([["/w"],["/Tab"]], "$-1"),

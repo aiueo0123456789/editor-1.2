@@ -1,4 +1,4 @@
-import { f_ts_t, pipelineFortextureToCVS, sampler } from "./GPUObject.js";
+import { pipelineFortextureToCVS, sampler } from "./GPUObject.js";
 import { device,format,GPU } from "./webGPU.js";
 
 export class TextureToCVS {
@@ -15,7 +15,7 @@ export class TextureToCVS {
     setTexture(texture,textureView) {
         this.cvs.width = texture.width;
         this.cvs.height = texture.height;
-        this.bindGroup = GPU.createGroup(f_ts_t, [{item: sampler, type: "ts"}, {item: textureView, type: "t"}]);
+        this.bindGroup = GPU.createGroup(GPU.getGroupLayout("Fts_Ft"), [{item: sampler, type: "ts"}, {item: textureView, type: "t"}]);
     }
 
     update() {

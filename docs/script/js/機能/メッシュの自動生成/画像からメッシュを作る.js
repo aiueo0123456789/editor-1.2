@@ -1,4 +1,4 @@
-import { c_srw_t, MarchingSquaresPipeline } from "../../GPUObject.js";
+import { MarchingSquaresPipeline } from "../../GPUObject.js";
 import { createArrayN, modClamp } from "../../utility.js";
 import { device, GPU } from "../../webGPU.js";
 import { vec2 } from "../../ベクトル計算.js";
@@ -264,7 +264,7 @@ export async function createEdgeFromTexture(texture, pixelDensity, padding, opti
     // マーチングスクウェア
     const resultbuffer = GPU.createStorageBuffer(imageBufferSize[0] * imageBufferSize[1] * 4, undefined, ["u32"]);
 
-    const group = GPU.createGroup(c_srw_t, [{item: resultbuffer, type: "b"}, {item: texture.createView(), type: "t"}]);
+    const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Ct"), [{item: resultbuffer, type: "b"}, {item: texture.createView(), type: "t"}]);
     const computeCommandEncoder = device.createCommandEncoder();
     const computePassEncoder = computeCommandEncoder.beginComputePass();
     computePassEncoder.setBindGroup(0, group);
