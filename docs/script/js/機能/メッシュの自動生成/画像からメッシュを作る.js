@@ -1,5 +1,5 @@
 import { MarchingSquaresPipeline } from "../../GPUObject.js";
-import { createArrayN, modClamp } from "../../utility.js";
+import { modClamp } from "../../utility.js";
 import { device, GPU } from "../../webGPU.js";
 import { vec2 } from "../../ベクトル計算.js";
 import { cdt } from "./cdt.js";

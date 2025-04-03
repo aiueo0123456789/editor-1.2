@@ -1,6 +1,8 @@
 import { createArrayN } from "../../utility.js";
 import { vec2 } from "../../ベクトル計算.js";
 
+/* https://takashiijiri.com/study/miscs/DelaunayTriangulation.htm の制約つきドロネー分割---(逐次加点法)をもとに書いたコードです */
+
 function isIntersecting(A, B, C, D) {
     function crossProduct(P, Q, R) {
         return (Q[0] - P[0]) * (R[1] - P[1]) - (Q[1] - P[1]) * (R[0] - P[0]);
