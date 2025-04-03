@@ -377,6 +377,32 @@ export function createMinList(target, listName) {
     return {container: container, listContainer: listContainer, list: list, appendButton: appendButton, deleteButton: deleteButton};
 }
 
+export function createMinListNoAppend(listName) {
+    const target = document.createElement("div");
+    const listNameTag = document.createElement("p");
+    listNameTag.textContent = listName;
+    const container = document.createElement("div");
+    container.classList.add("flex-gap10px");
+
+    const actionButtons = document.createElement("div");
+    actionButtons.style.width = "20px";
+
+    const appendButton = createMinButton(actionButtons, "+");
+    const deleteButton = createMinButton(actionButtons, "-");
+    const listContainer = document.createElement("ul");
+    listContainer.classList.add("minList");
+    listContainer.style.height = "200px";
+    new ResizerForDOM(listContainer, "h", 100, 600);
+    const list = document.createElement("ul");
+    list.classList.add("scrollable","gap-2px");
+    listContainer.append(list);
+
+    container.append(listContainer, actionButtons)
+    target.append(listNameTag);
+    target.append(container);
+    return target;
+}
+
 export function createMinWorkSpace(target, listName, workSpace = null, buttons = []) {
     const listNameTag = document.createElement("p");
     listNameTag.textContent = listName;

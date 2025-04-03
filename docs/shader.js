@@ -53,8 +53,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
         indexAndWeight[index].weights /= sumWeight; // 正規化
     }
-}`
-)// resize.wgsl
+}`)
+// resize.wgsl
 shaders.set('./script/js/データマネージャー/GPU/vertices/resize.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
@@ -71,8 +71,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let sub = (originalVertices[index] - pointOfEffort);
     // output[index] = sub * (value) * (weigth[index]) + sub + pointOfEffort;
     output[index] = ((sub * (value) + pointOfEffort) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index])) - baseData[index];
-}`
-)// rotate.wgsl
+}`)
+// rotate.wgsl
 shaders.set('./script/js/データマネージャー/GPU/vertices/rotate.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
@@ -97,8 +97,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let sub = rotate(originalVertices[index] - pointOfEffort, value.x * (weigth[index]));
     output[index] = sub + pointOfEffort - baseData[index];
-}`
-)// translate.wgsl
+}`)
+// translate.wgsl
 shaders.set('./script/js/データマネージャー/GPU/vertices/translate.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
@@ -114,8 +114,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let sub = (originalVertices[index] - pointOfEffort) + (value) * (weigth[index]);
     output[index] = sub + pointOfEffort - baseData[index];
-}`
-)// resize.wgsl
+}`)
+// resize.wgsl
 shaders.set('./script/js/データマネージャー/GPU/boneAnimation/resize.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -138,8 +138,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let boneIndex = verticesIndexs[index];
     boneAnimation[boneIndex].scale = originalBoneAnimation[boneIndex].scale * value - 1.0;
-}`
-)// rotate.wgsl
+}`)
+// rotate.wgsl
 shaders.set('./script/js/データマネージャー/GPU/boneAnimation/rotate.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -162,8 +162,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let boneIndex = verticesIndexs[index];
     boneAnimation[boneIndex].angle = originalBoneAnimation[boneIndex].angle - value.x;
-}`
-)// translate.wgsl
+}`)
+// translate.wgsl
 shaders.set('./script/js/データマネージャー/GPU/boneAnimation/translate.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -231,8 +231,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         let parentMatrix = inverseMat3x3(boneMatrix[parentIndex]);
         boneAnimation[boneIndex].position = (parentMatrix * vec3f(value,1.0)).xy + originalBoneAnimation[boneIndex].position;
     }
-}`
-)// compute.wgsl
+}`)
+// compute.wgsl
 shaders.set('./script/js/オブジェクト/アタッチメント/followBone/compute.wgsl',`@group(0) @binding(0) var<storage, read_write> targetBoneMatrix: array<mat3x3<f32>>;
 @group(0) @binding(1) var<storage, read> sourceBoneMatrix: array<mat3x3<f32>>;
 @group(0) @binding(2) var<storage, read> sourceBaseBoneMatrix: array<mat3x3<f32>>;
@@ -280,16 +280,16 @@ fn inverseMat3x3(matrix: mat3x3<f32>) -> mat3x3<f32> {
 @compute @workgroup_size(1)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     targetBoneMatrix[indexs.x] = sourceBoneMatrix[indexs.y] * inverseMat3x3(sourceBaseBoneMatrix[indexs.y]) * targetBoneMatrix[indexs.x];
-}`
-)// baseStructes.wgsl
+}`)
+// baseStructes.wgsl
 shaders.set('./script/wgsl/baseStructes.wgsl',`struct Animaition {
     position: vec2<f32>
 }
 
 struct Test {
     animaition: vec2<f32>
-}`
-)// v_限られた頂点を四角として表示.wgsl
+}`)
+// v_限られた頂点を四角として表示.wgsl
 shaders.set('./script/wgsl/レンダー/v_限られた頂点を四角として表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -327,8 +327,8 @@ fn main(
     output.position = vec4f((verticesPosition[indexs[instanceIndex]] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = point.zw;
     return output;
-}`
-)// v_BBox.wgsl
+}`)
+// v_BBox.wgsl
 shaders.set('./script/wgsl/レンダー/v_BBox.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -379,8 +379,8 @@ fn main(
     output.wk = size / (boxPoint.z - boxPoint.x) / camera.zoom;
     output.hk = size / (boxPoint.w - boxPoint.y) / camera.zoom;
     return output;
-}`
-)// f_枠線.wgsl
+}`)
+// f_枠線.wgsl
 shaders.set('./script/wgsl/レンダー/f_枠線.wgsl',`@group(2) @binding(0) var<uniform> color: vec4<f32>; // 距離を計算する座標
 // @group(2) @binding(0) var<uniform> boxPoint: vec4<f32>;
 
@@ -400,8 +400,8 @@ fn main(
     }
     output.color = color;
     return output;
-}`
-)// v_全ての頂点を四角として表示.wgsl
+}`)
+// v_全ての頂点を四角として表示.wgsl
 shaders.set('./script/wgsl/レンダー/v_全ての頂点を四角として表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -439,8 +439,8 @@ fn main(
     output.position = vec4f((verticesPosition[instanceIndex] + point.xy * size - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = point.zw;
     return output;
-}`
-)// v_線分.wgsl
+}`)
+// v_線分.wgsl
 shaders.set('./script/wgsl/レンダー/v_線分.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -493,8 +493,8 @@ fn main(
     var output: VertexOutput;
     output.position = vec4f((offset - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     return output;
-}`
-)// v_グラフィックメッシュごとのレンダリング.wgsl
+}`)
+// v_グラフィックメッシュごとのレンダリング.wgsl
 shaders.set('./script/wgsl/レンダー/v_グラフィックメッシュごとのレンダリング.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -520,8 +520,8 @@ fn main(
     output.position = vec4f((verticesPosition[index]) * cvsAspect, 0, 1.0);
     output.uv = verticesUV[index];
     return output;
-}`
-)// f_単色塗りつぶし.wgsl
+}`)
+// f_単色塗りつぶし.wgsl
 shaders.set('./script/wgsl/レンダー/f_単色塗りつぶし.wgsl',`@group(2) @binding(0) var<uniform> color: vec4<f32>; // 距離を計算する座標
 
 struct FragmentOutput {
@@ -534,8 +534,8 @@ fn main(
     var output: FragmentOutput;
     output.color = color;
     return output;
-}`
-)// v_render.wgsl
+}`)
+// v_render.wgsl
 shaders.set('./script/wgsl/レンダー/v_render.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -564,8 +564,8 @@ fn main(
     output.uv = verticesUV[index];
     output.uvForMask = (output.position.xy * 0.5 + 0.5) * vec2<f32>(1.0, -1.0);
     return output;
-}`
-)// v_全ての頂点をスクーリン座標に四角として表示.wgsl
+}`)
+// v_全ての頂点をスクーリン座標に四角として表示.wgsl
 shaders.set('./script/wgsl/レンダー/v_全ての頂点をスクーリン座標に四角として表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -603,8 +603,8 @@ fn main(
     output.position = vec4f((verticesPosition[instanceIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = point.zw;
     return output;
-}`
-)// f_テクスチャ表示.wgsl
+}`)
+// f_テクスチャ表示.wgsl
 shaders.set('./script/wgsl/レンダー/f_テクスチャ表示.wgsl',`@group(0) @binding(2) var mySampler: sampler;
 @group(2) @binding(1) var myTexture: texture_2d<f32>;
 @group(3) @binding(0) var<uniform> color: vec4<f32>;
@@ -620,8 +620,8 @@ fn main(
     var output: FragmentOutput;
     output.color = select(color, vec4<f32>(0.0), textureSample(myTexture, mySampler, uv).a < 0.5);
     return output;
-}`
-)// v_座標・回転・スケールを四角として表示.wgsl
+}`)
+// v_座標・回転・スケールを四角として表示.wgsl
 shaders.set('./script/wgsl/レンダー/v_座標・回転・スケールを四角として表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -678,8 +678,8 @@ fn main(
     output.position = vec4f((data.position + rotate2D(point.xy * textureSize * data.scale, data.angle) - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = point.zw;
     return output;
-}`
-)// f_円塗りつぶし.wgsl
+}`)
+// f_円塗りつぶし.wgsl
 shaders.set('./script/wgsl/レンダー/f_円塗りつぶし.wgsl',`@group(2) @binding(1) var<uniform> color: vec4<f32>;
 
 struct FragmentOutput {
@@ -698,8 +698,8 @@ fn main(
     // output.color = vec4f(1,0,0,1);
     output.color = color;
     return output;
-}`
-)// f_render.wgsl
+}`)
+// f_render.wgsl
 shaders.set('./script/wgsl/レンダー/f_render.wgsl',`@group(0) @binding(2) var mySampler: sampler;
 @group(1) @binding(2) var myTexture: texture_2d<f32>;
 @group(1) @binding(3) var maskTexture: texture_2d<f32>;
@@ -724,8 +724,8 @@ fn main(
     output.color = textureSample(myTexture, mySampler, uv) * maskValue;
     // output.color = vec4<f32>(maskValue, 0.0, 0.0, 1.0);
     return output;
-}`
-)// v_ボーンの表示.wgsl
+}`)
+// v_ボーンの表示.wgsl
 shaders.set('./script/wgsl/レンダー/ボーン/v_ボーンの表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -789,8 +789,8 @@ fn main(
     output.position = worldPosToClipPos(offset);
     output.uv = offset;
     return output;
-}`
-)// v_特定のボーンの表示.wgsl
+}`)
+// v_特定のボーンの表示.wgsl
 shaders.set('./script/wgsl/レンダー/ボーン/v_特定のボーンの表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -854,8 +854,8 @@ fn main(
     output.position = worldPosToClipPos(offset);
     output.uv = offset;
     return output;
-}`
-)// v_ボーン頂点の表示.wgsl
+}`)
+// v_ボーン頂点の表示.wgsl
 shaders.set('./script/wgsl/レンダー/ボーン/v_ボーン頂点の表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -933,8 +933,8 @@ fn fmain(
     }
     output.color = select(color, vec4<f32>(0,0,0,1), dist < 0.7 * 0.7);
     return output;
-}`
-)// v_三角.wgsl
+}`)
+// v_三角.wgsl
 shaders.set('./script/wgsl/レンダー/ボーン/関係/v_三角.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1013,8 +1013,8 @@ fn fmain(
     output.color = vec4<f32>(1,0,0,select(0.0,1.0,boolV));
     // output.color = vec4<f32>(1,0,0,1);
     return output;
-}`
-)// 点線.wgsl
+}`)
+// 点線.wgsl
 shaders.set('./script/wgsl/レンダー/ボーン/関係/点線.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1095,8 +1095,8 @@ fn fmain(
     output.color = vec4<f32>(1,0,0,select(0.0,1.0,boolV));
     // output.color = vec4<f32>(1,0,0,1);
     return output;
-}`
-)// v_枠の表示.wgsl
+}`)
+// v_枠の表示.wgsl
 shaders.set('./script/wgsl/レンダー/モディファイア/v_枠の表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1172,8 +1172,8 @@ fn main(
     var output: VertexOutput;
     output.position = worldPosToClipPos(offset);
     return output;
-}`
-)// v_枠2の表示 .wgsl
+}`)
+// v_枠2の表示 .wgsl
 shaders.set('./script/wgsl/レンダー/モディファイア/v_枠2の表示 .wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1224,8 +1224,8 @@ fn main(
     var output: VertexOutput;
     output.position = worldPosToClipPos(offset);
     return output;
-}`
-)// v_メッシュ.wgsl
+}`)
+// v_メッシュ.wgsl
 shaders.set('./script/wgsl/レンダー/モディファイア/v_メッシュ.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1290,8 +1290,8 @@ fn main(
     var output: VertexOutput;
     output.position = worldPosToClipPos(offset);
     return output;
-}`
-)// v_ベジェ.wgsl
+}`)
+// v_ベジェ.wgsl
 shaders.set('./script/wgsl/レンダー/ベジェモディファイア/v_ベジェ.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1362,8 +1362,8 @@ fn main(
     var output: VertexOutput;
     output.position = vec4f((offset - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     return output;
-}`
-)// f_canvasDraw.wgsl
+}`)
+// f_canvasDraw.wgsl
 shaders.set('./script/wgsl/レンダー/テクスチャのcvs表示/f_canvasDraw.wgsl',`@group(0) @binding(0) var mySampler: sampler;
 @group(0) @binding(1) var inputTexture: texture_2d<f32>;
 
@@ -1375,8 +1375,8 @@ fn main(
     let color = textureSample(inputTexture, mySampler, texCoord); // 色
     // let color = vec4<f32>(0.0,0.0,0.0,1.0); // 色
     return color;
-}`
-)// v_canvasDraw.wgsl
+}`)
+// v_canvasDraw.wgsl
 shaders.set('./script/wgsl/レンダー/テクスチャのcvs表示/v_canvasDraw.wgsl',`struct VertexOutput {
     @builtin(position) position: vec4<f32>,
     @location(0) texCoord: vec2<f32>,
@@ -1398,8 +1398,8 @@ fn main(
     output.position = vec4<f32>(point.xy, 0.0, 1.0);
     output.texCoord = point.zw;
     return output;
-}`
-)// f.wgsl
+}`)
+// f.wgsl
 shaders.set('./script/wgsl/レンダー/ウェイトのレンダリング/f.wgsl',`struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)
 };
@@ -1411,8 +1411,8 @@ fn main(
     var output: FragmentOutput;
     output.color = color;
     return output;
-}`
-)// v.wgsl
+}`)
+// v.wgsl
 shaders.set('./script/wgsl/レンダー/ウェイトのレンダリング/v.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1455,8 +1455,8 @@ fn main(
     }
     output.color = vec4<f32>(weight, weight, weight, 1.0);
     return output;
-}`
-)// f_グリッド.wgsl
+}`)
+// f_グリッド.wgsl
 shaders.set('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl',`struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)
 };
@@ -1473,8 +1473,8 @@ fn main(
     let value = select(0.2, 0.3, (floor(x / gridSize) % 2 + floor(y / gridSize) % 2) % 2 == 0);
     output.color = vec4<f32>(value, value, value, 1.0);
     return output;
-}`
-)// v_グリッド.wgsl
+}`)
+// v_グリッド.wgsl
 shaders.set('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl',`@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 
@@ -1505,8 +1505,8 @@ fn main(
     output.position = vec4<f32>(point.xy, 0.0, 1.0);
     output.uv = point.xy * (1 / cvsAspect) / camera.zoom + camera.position;
     return output;
-}`
-)// v_表示.wgsl
+}`)
+// v_表示.wgsl
 shaders.set('./script/wgsl/レンダー/回転モディファイア/v_表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1562,8 +1562,8 @@ fn main(
     // output.position = vec4f(point.xy / 2, 0, 1.0);
     output.uv = point.zw;
     return output;
-}`
-)// v_メッシュ.wgsl
+}`)
+// v_メッシュ.wgsl
 shaders.set('./script/wgsl/レンダー/グラフィックメッシュ/v_メッシュ.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1636,8 +1636,8 @@ fn main(
     var output: VertexOutput;
     output.position = vec4f((offset - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     return output;
-}`
-)// 特定の辺の表示.wgsl
+}`)
+// 特定の辺の表示.wgsl
 shaders.set('./script/wgsl/レンダー/グラフィックメッシュ/特定の辺の表示.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1702,8 +1702,8 @@ fn fmain(
     var output: FragmentOutput;
     output.color = color;
     return output;
-}`
-)// f.wgsl
+}`)
+// f.wgsl
 shaders.set('./script/wgsl/レンダー/円枠線/f.wgsl',`@group(2) @binding(1) var<uniform> color: vec4<f32>;
 
 struct FragmentOutput {
@@ -1721,8 +1721,8 @@ fn main(
     // output.color = vec4f(1,0,0,1);
     output.color = color;
     return output;
-}`
-)// f.wgsl
+}`)
+// f.wgsl
 shaders.set('./script/wgsl/レンダー/マスク/f.wgsl',`@group(0) @binding(2) var mySampler: sampler;
 @group(1) @binding(2) var myTexture: texture_2d<f32>;
 
@@ -1742,8 +1742,8 @@ fn main(
     let alpha = textureSample(myTexture, mySampler, uv).a;
     output.color = vec4<f32>(1.0,0.0,0.0,alpha);
     return output;
-}`
-)// v.wgsl
+}`)
+// v.wgsl
 shaders.set('./script/wgsl/レンダー/マスク/v.wgsl',`struct Camera {
     position: vec2<f32>,
     zoom: f32,
@@ -1770,8 +1770,8 @@ fn main(
     output.position = vec4f((verticesPosition[index] - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = verticesUV[index];
     return output;
-}`
-)// 限られた頂点からBBoxを計算.wgsl
+}`)
+// 限られた頂点からBBoxを計算.wgsl
 shaders.set('./script/wgsl/compute/限られた頂点からBBoxを計算.wgsl',`@group(0) @binding(0) var<storage, read_write> minMaxBuffer: array<vec2<f32>, 2>;
 @group(0) @binding(1) var<storage, read> indexs: array<u32>;
 @group(1) @binding(0) var<storage, read> vertices: array<vec2<f32>>;
@@ -1865,8 +1865,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>, @builtin(local_invo
         minMaxBuffer[0] = vec2<f32>(i32_to_f32(atomicLoad(&aaa[0])), i32_to_f32(atomicLoad(&aaa[1])));
         minMaxBuffer[1] = vec2<f32>(i32_to_f32(atomicLoad(&aaa[2])), i32_to_f32(atomicLoad(&aaa[3])));
     }
-}`
-)// 全ての頂点の平均.wgsl
+}`)
+// 全ての頂点の平均.wgsl
 shaders.set('./script/wgsl/compute/全ての頂点の平均.wgsl',`@group(0) @binding(0) var<storage, read_write> output: vec2<f32>;
 @group(0) @binding(1) var<storage, read> vertices: array<vec2<f32>>;
 @group(1) @binding(0) var<storage, read_write> aaa: array<atomic<i32>, 2>;
@@ -1936,8 +1936,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>, @builtin(local_invo
         // 安全にストレージバッファに書き込み
         output = vec2<f32>(i32_to_f32(atomicLoad(&aaa[0])), i32_to_f32(atomicLoad(&aaa[1]))) / f32(vertexCount);
     }
-}`
-)// 回転モディファイアのアニメーション.wgsl
+}`)
+// 回転モディファイアのアニメーション.wgsl
 shaders.set('./script/wgsl/compute/回転モディファイアのアニメーション.wgsl',`struct Rotate {
     position: vec2<f32>,
     scale: f32,
@@ -1950,8 +1950,8 @@ shaders.set('./script/wgsl/compute/回転モディファイアのアニメーシ
 @compute @workgroup_size(1)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     outputData += rotateData;
-}`
-)// MarchingSquares.wgsl
+}`)
+// MarchingSquares.wgsl
 shaders.set('./script/wgsl/compute/MarchingSquares.wgsl',`fn binary4ToU32Direct(b0: u32, b1: u32, b2: u32, b3: u32) -> u32 {
     return (b0 << 3u) | (b1 << 2u) | (b2 << 1u) | b3;
 }
@@ -1980,8 +1980,8 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
     var b3 = sampleValue(samplePoint + vec2<i32>(0, 0), dimensions);
 
     outputData[id.x + id.y * u32(dimensions.x + 1)] = binary4ToU32Direct(b0,b1,b2,b3);
-}`
-)// 中心位置を変更.wgsl
+}`)
+// 中心位置を変更.wgsl
 shaders.set('./script/wgsl/compute/中心位置を変更.wgsl',`@group(0) @binding(0) var<storage, read_write> outputData: array<vec2<f32>>; // 出力
 @group(0) @binding(1) var<storage, read> bbox: array<vec2<f32>, 2>; // 頂点インデックスのデータ
 @group(1) @binding(0) var<uniform> center: vec2<f32>; // 頂点インデックスのデータ
@@ -1995,8 +1995,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let sub = outputData[threadIndex] - (bbox[0] + bbox[1]) / 2.0;
     outputData[threadIndex] = sub + center;
-}`
-)// 全ての頂点にアニメーションを適応.wgsl
+}`)
+// 全ての頂点にアニメーションを適応.wgsl
 shaders.set('./script/wgsl/compute/全ての頂点にアニメーションを適応.wgsl',`@group(0) @binding(0) var<storage, read_write> outputData: array<vec2<f32>>; // 出力
 @group(1) @binding(0) var<storage, read> animationDatas: array<vec2<f32>>; // シェイプキーのデータ
 @group(1) @binding(1) var<uniform> animationWeight: f32; // シェイプキーの重み
@@ -2015,8 +2015,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (!isNaN(animationDatas[pointIndex].x) && !isNaN(animationDatas[pointIndex].y)) {
         outputData[pointIndex] += animationDatas[pointIndex] * animationWeight;
     }
-}`
-)// 頂点の円選択.wgsl
+}`)
+// 頂点の円選択.wgsl
 shaders.set('./script/wgsl/compute/頂点の円選択.wgsl',`@group(0) @binding(0) var<storage, read_write> outputData: array<f32>; // 出力
 @group(0) @binding(1) var<uniform> point: vec2<f32>; // 距離を計算する座標
 @group(1) @binding(0) var<storage, read> vertices: array<vec2<f32>>; // 頂点座標
@@ -2029,8 +2029,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     outputData[pointIndex] = distance(vertices[pointIndex], point);
-}`
-)// 限られた頂点にアニメーションを適応.wgsl
+}`)
+// 限られた頂点にアニメーションを適応.wgsl
 shaders.set('./script/wgsl/compute/限られた頂点にアニメーションを適応.wgsl',`struct Animation {
     index: u32,
     padding: f32,
@@ -2051,8 +2051,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let animationData = animationDatas[pointIndex];
 
     outputData[animationData.index] += animationData.movement * animationWeight;
-}`
-)// 全ての頂点からBBoxを計算.wgsl
+}`)
+// 全ての頂点からBBoxを計算.wgsl
 shaders.set('./script/wgsl/compute/全ての頂点からBBoxを計算.wgsl',`@group(0) @binding(0) var<storage, read_write> minMaxBuffer: array<vec2<f32>, 2>;
 @group(0) @binding(1) var<storage, read> vertices: array<vec2<f32>>;
 @group(1) @binding(0) var<storage, read_write> aaa: array<atomic<i32>, 4>;
@@ -2145,8 +2145,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>, @builtin(local_invo
         minMaxBuffer[0] = vec2<f32>(i32_to_f32(atomicLoad(&aaa[0])), i32_to_f32(atomicLoad(&aaa[1])));
         minMaxBuffer[1] = vec2<f32>(i32_to_f32(atomicLoad(&aaa[2])), i32_to_f32(atomicLoad(&aaa[3])));
     }
-}`
-)// 限られたボーンからBBoxを計算.wgsl
+}`)
+// 限られたボーンからBBoxを計算.wgsl
 shaders.set('./script/wgsl/compute/限られたボーンからBBoxを計算.wgsl',`struct BoneVertices {
     h: vec2<f32>,
     t: vec2<f32>,
@@ -2245,8 +2245,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>, @builtin(local_invo
         minMaxBuffer[0] = vec2<f32>(i32_to_f32(atomicLoad(&aaa[0])), i32_to_f32(atomicLoad(&aaa[1])));
         minMaxBuffer[1] = vec2<f32>(i32_to_f32(atomicLoad(&aaa[2])), i32_to_f32(atomicLoad(&aaa[3])));
     }
-}`
-)// モディファイアの頂点位置.wgsl
+}`)
+// モディファイアの頂点位置.wgsl
 shaders.set('./script/wgsl/compute/モディファイアの頂点位置.wgsl',`struct ModifierBox {
     max: vec2<f32>,
     min: vec2<f32>,
@@ -2266,8 +2266,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let pos = modifierBox.min + ((vec2f(global_id.xy) / vec2f(fineness.xy)) * (modifierBox.max - modifierBox.min)) + movement[pointIndex];
     outputData[pointIndex] = pos;
-}`
-)// 頂点のボックス選択.wgsl
+}`)
+// 頂点のボックス選択.wgsl
 shaders.set('./script/wgsl/compute/頂点のボックス選択.wgsl',`struct CollsionBox {
     max: vec2<f32>,
     min: vec2<f32>,
@@ -2291,8 +2291,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         outputData[pointIndex] = 0.0;
     }
-}`
-)// 回転モディファイアの変形を適応.wgsl
+}`)
+// 回転モディファイアの変形を適応.wgsl
 shaders.set('./script/wgsl/compute/回転モディファイアの変形を適応.wgsl',`struct Rotate {
     position: vec2<f32>,
     scale: f32,
@@ -2322,8 +2322,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let pos = rotate2D(outputData[pointIndex] - baseData.position, rotateData.angle - baseData.angle) * (rotateData.scale - baseData.scale + 1.0) + rotateData.position;
     outputData[pointIndex] = pos;
-}`
-)// updateAnimationVerticesPosition.wgsl
+}`)
+// updateAnimationVerticesPosition.wgsl
 shaders.set('./script/wgsl/compute/updateAnimationVerticesPosition.wgsl',`struct Output {
     index: u32,
     padding: f32,
@@ -2347,8 +2347,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     outputData[activeIndexs[pointIndex].index].movement += movement;
-}`
-)// 複数アニメーション.wgsl
+}`)
+// 複数アニメーション.wgsl
 shaders.set('./script/wgsl/compute/アニメーション/コピー/複数アニメーション.wgsl',`@group(0) @binding(0) var<storage, read_write> outputData: array<f32>; // 出力
 @group(1) @binding(0) var<storage, read> animationDatas: array<f32>; // シェイプキーのデータ
 @group(1) @binding(1) var<storage, read> keyPoints: array<f32>; // キーの位置
@@ -2388,8 +2388,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         outputData[dataIndex] = mix(leftKey, rightKey, (rightPoint - leftPoint) / (nowPoint - leftPoint));
     }
-}`
-)// inversionCopy.wgsl
+}`)
+// inversionCopy.wgsl
 shaders.set('./script/wgsl/compute/アニメーション/コピー/inversionCopy.wgsl',`struct Animation {
     index: u32,
     padding: f32,
@@ -2419,8 +2419,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         targetData[threadIndex] = Animation(data.index, data.padding, data.movement * vec2f(-1,-1));
     }
-}`
-)// モディファイアの変形を適応.wgsl
+}`)
+// モディファイアの変形を適応.wgsl
 shaders.set('./script/wgsl/compute/モディファイア/モディファイアの変形を適応.wgsl',`struct AnimationData {
     index: vec4<u32>,
     weight: vec4<f32>,
@@ -2457,8 +2457,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         c * animationData.weight.z +
         d * animationData.weight.w
         ;
-}`
-)// 頂点にモディファイアとの関係を作る.wgsl
+}`)
+// 頂点にモディファイアとの関係を作る.wgsl
 shaders.set('./script/wgsl/compute/モディファイア/頂点にモディファイアとの関係を作る.wgsl',`struct Output {
     index: vec4<u32>,
     weight: vec4<f32>,
@@ -2507,8 +2507,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     outputData[verticesIndex] = calculateWeight(
             (baseVertices[verticesIndex] - modifierBox.min) / (modifierBox.max - modifierBox.min) * vec2f(modifierFineness)
         );
-}`
-)// 当たり判定.wgsl
+}`)
+// 当たり判定.wgsl
 shaders.set('./script/wgsl/compute/モディファイア/当たり判定.wgsl',`
 @group(0) @binding(0) var<storage, read_write> hitTestResult: array<f32>; // 出力
 @group(0) @binding(1) var<uniform> point: vec2<f32>; // 距離を計算する座標
@@ -2563,8 +2563,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         hitTestResult[index] = 0.0;
     }
-}`
-)// 子の変形.wgsl
+}`)
+// 子の変形.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/子の変形.wgsl',`struct AnimationData {
     index: vec4<u32>,
     weight: vec4<f32>,
@@ -2635,8 +2635,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     }
     outputData[vertexIndex] = skinnedPosition;
-}`
-)// ベースボーンのデータを作る.wgsl
+}`)
+// ベースボーンのデータを作る.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/ベースボーンのデータを作る.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -2700,8 +2700,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         baseBone[boneIndex] = Bone(inverseRotatePoint(vertex.h - parentVertex.h, parentAngle), vec2<f32>(1.0), boneData.angle - parentAngle, boneData.length); // 親ボーンからのローカルデータ
     }
     baseBoneMatrix[boneIndex] = createTransformMatrix(boneData.scale, boneData.angle, boneData.position);
-}`
-)// 適応.wgsl
+}`)
+// 適応.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/適応.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -2735,8 +2735,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let localBoneData = localBoneDatas[boneIndex];
     localBonewMatrix[boneIndex] = createTransformMatrix(localBoneData.scale, localBoneData.angle, localBoneData.position);
-}`
-)// 当たり判定.wgsl
+}`)
+// 当たり判定.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/当たり判定.wgsl',`struct BoneVertices {
     h: vec2<f32>,
     t: vec2<f32>,
@@ -2792,8 +2792,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         hitTestResult[boneIndex] = 0.0;
     }
-}`
-)// 表示頂点を計算.wgsl
+}`)
+// 表示頂点を計算.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/表示頂点を計算.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -2823,8 +2823,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     output.h = (matrix * vec3<f32>(0.0, 0.0, 1.0)).xy;
     output.t = (matrix * vec3<f32>(0.0, boneData[boneIndex].length, 1.0)).xy;
     outputData[boneIndex] = output;
-}`
-)// 伝播非採用.wgsl
+}`)
+// 伝播非採用.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/伝播非採用.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: f32,
@@ -2881,8 +2881,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
         workgroupBarrier();
     }
-}`
-)// ウェイト付与.wgsl
+}`)
+// ウェイト付与.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/ウェイト付与.wgsl',`struct Output {
     index: vec4<u32>,
     weight: vec4<f32>,
@@ -3038,8 +3038,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     outputData[verticesIndex] = calculateWeight(baseVertices[verticesIndex]);
-}`
-)// 伝播.wgsl
+}`)
+// 伝播.wgsl
 shaders.set('./script/wgsl/compute/ボーンモディファイア/伝播.wgsl',`struct Relationship {
     child: u32,
     parent: u32,
@@ -3085,8 +3085,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let relationship = relationships[index];
     boneMatrix[relationship.child] = boneMatrix[relationship.parent] * boneMatrix[relationship.child];
-}`
-)// 当たり判定.wgsl
+}`)
+// 当たり判定.wgsl
 shaders.set('./script/wgsl/compute/ベジェモディファイア/当たり判定.wgsl',`struct Bezier {
     p: vec2<f32>,
     c1: vec2<f32>,
@@ -3222,8 +3222,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let controlPoints = array<vec2<f32>, 4>(modifierVertices[bezierIndex].p, modifierVertices[bezierIndex].c2, modifierVertices[bezierIndex + 1].c1, modifierVertices[bezierIndex + 1].p); // ベジェ曲線の制御点
     hitTestResult[bezierIndex] = neighbor_bezier(controlPoints, point, 0, 1).y;
-}`
-)// 頂点にベジェモディファイアとの関係を作る.wgsl
+}`)
+// 頂点にベジェモディファイアとの関係を作る.wgsl
 shaders.set('./script/wgsl/compute/ベジェモディファイア/頂点にベジェモディファイアとの関係を作る.wgsl',`struct Output {
     index: u32,
     t: f32,
@@ -3384,8 +3384,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     outputData[verticesIndex] = bezierModifierWeightFromPoint(baseVertices[verticesIndex]);
-}`
-)// ベジェモディファイアの変形を適応.wgsl
+}`)
+// ベジェモディファイアの変形を適応.wgsl
 shaders.set('./script/wgsl/compute/ベジェモディファイア/ベジェモディファイアの変形を適応.wgsl',`struct Output {
     position: vec2<f32>,
 }
@@ -3462,8 +3462,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let rotatePosition = rotate2D(outputData[pointIndex].position + (position2 - position1) - position2, calculateRotation(normal1, normal2));
 
     outputData[pointIndex].position = rotatePosition + position2;
-}`
-)// c.wgsl
+}`)
+// c.wgsl
 shaders.set('./script/wgsl/compute/ウェイトペイント/c.wgsl',`struct Output {
     indexs: vec4<u32>,
     weights: vec4<f32>,
@@ -3517,8 +3517,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
         indexAndWeight[index].weights /= sumWeight; // 正規化
     }
-}`
-)// baseTransform.wgsl
+}`)
+// baseTransform.wgsl
 shaders.set('./script/wgsl/compute/変形/baseTransform.wgsl',`struct Output {
     position: vec2<f32>,
 }
@@ -3542,8 +3542,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let pointIndex = activeIndexs[threadIndex].index;
 
     outputData[pointIndex].position = activeIndexs[threadIndex].movement + outputData[pointIndex].position * activeIndexs[threadIndex].padding;
-}`
-)// deleteVertices.wgsl
+}`)
+// deleteVertices.wgsl
 shaders.set('./script/wgsl/compute/頂点情報の削除/deleteVertices.wgsl',`struct Data {
     index: u32,
     padding: f32,
@@ -3575,8 +3575,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     }
     dataOutput[pointIndex] = data;
-}`
-)// collisionMesh.wgsl
+}`)
+// collisionMesh.wgsl
 shaders.set('./script/wgsl/compute/選択/collisionMesh.wgsl',`struct Meshu {
     i1: u32,
     i2: u32,
@@ -3622,8 +3622,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else {
         outputData[meshIndex] = 0.0;
     }
-}`
-)// f32_加算と減算.wgsl
+}`)
+// f32_加算と減算.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/f32_加算と減算.wgsl',`struct Data {
 }
 
@@ -3639,8 +3639,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     outputData[threadIndex] = updateData[threadIndex] - baseData[threadIndex];
-}`
-)// 変形回転.wgsl
+}`)
+// 変形回転.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/変形回転.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<uniform> pointOfEffort: vec2<f32>;
 @group(0) @binding(2) var<storage, read> originalVertices: array<vec2<f32>>;
@@ -3668,8 +3668,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let sub = rotate(originalVertices[index] - pointOfEffort, value.x * (weigth[index]));
     output[index] = sub + pointOfEffort;
-}`
-)// 重みなどの作成.wgsl
+}`)
+// 重みなどの作成.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/重みなどの作成.wgsl',`@group(0) @binding(0) var<storage, read_write> weight: array<f32>;
 @group(0) @binding(1) var<storage, read> verticesIndexs: array<u32>;
 @group(1) @binding(0) var<uniform> proportionalEditType: u32;
@@ -3721,8 +3721,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             }
         }
     }
-}`
-)// 変形並行移動.wgsl
+}`)
+// 変形並行移動.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/変形並行移動.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
@@ -3738,8 +3738,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let sub = (originalVertices[index] - pointOfEffort) + (value) * (weigth[index]);
     output[index] = sub + pointOfEffort - baseData[index];
-}`
-)// 変形拡大縮小.wgsl
+}`)
+// 変形拡大縮小.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/変形拡大縮小.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> weigth: array<f32>;
@@ -3755,8 +3755,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let sub = (originalVertices[index] - pointOfEffort);
     // output[index] = sub * (value) * (weigth[index]) + sub + pointOfEffort;
     output[index] = ((sub * (value) + pointOfEffort) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index]));
-}`
-)// ボーンアニメーション変形並行移動.wgsl
+}`)
+// ボーンアニメーション変形並行移動.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/ボーンアニメーション変形並行移動.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -3822,5 +3822,4 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let parentMatrix = inverseMat3x3(boneMatrix[parents[boneIndex]]);
     boneAnimation[boneIndex].position = value * parentMatrix + originalBoneAnimation[boneIndex].position;
-}`
-)
+}`)

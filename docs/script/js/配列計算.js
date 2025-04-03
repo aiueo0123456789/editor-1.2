@@ -108,7 +108,7 @@ class Mat3x3 {
             a[6] * b[2] + a[7] * b[5] + a[8] * b[8]
         ];
     }
-    
+
     local(globalA, globalB) {
         // A のローカル座標系での B の行列を求める
         const invA = this.invert(globalA);

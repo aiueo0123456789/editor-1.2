@@ -6,7 +6,7 @@ export let keyfarameCount = 0;
 class RenderingParameters {
     constructor() {
         this.keyfarameCount = 0;
-        this.keyfarameStep = 0.2;
+        this.keyfarameStep = 0.3;
         this.isReplay = false;
     }
 

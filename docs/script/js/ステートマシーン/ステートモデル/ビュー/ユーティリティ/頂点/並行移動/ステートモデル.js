@@ -41,7 +41,7 @@ export class StateModel_Vertices_Translate {
     }
 
     init(stateData) {
-        if (stateData.selectIndexs.length == 0) return {nextState: "$-1"};
+        if (stateData.selectIndexs.length == 0) return {cancel: true};
         this.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         this.transformValue = [0,0];
         calculateAllAverage(stateData.calculateSelectVerticesBBoxCenterGroup, 2);

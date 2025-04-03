@@ -285,16 +285,23 @@ export class StateMachine {
                             console.warn("ステートが定義されていません",nextStateStrings,nextState,data,nextStateStruct)
                         }
                         console.log("次のデータ",newData)
+                        const oldData = this.state;
                         this.state = {stateID: nextState, data: newData, structClass: nextStateStruct};
-                        if (nextStateStruct.init && typeof nextStateStruct.init === 'function') nextStateStruct.init(newData);
-                        if (nextStateStruct.シェリフ) {
-                            activeView.deleteAll();
-                            for (const shelf of nextStateStruct.シェリフ) {
-                                activeView.addTranceShelfe(shelf.targetObject, shelf.argumentArray, shelf.name);
-                            }
-                        }
-                        if (!data.ステート変更後ループさせるか) roop = false;
                         console.log("次のステート",this.state)
+                        let result = null;
+                        if (nextStateStruct.init && typeof nextStateStruct.init === 'function') result = nextStateStruct.init(newData);
+                        if (result && result.cancel) {
+                            this.state = oldData;
+                            console.log("キャンセル",this.state)
+                        } else if (!data.ステート変更後ループさせるか) {
+                            if (nextStateStruct.シェリフ) {
+                                activeView.deleteAll();
+                                for (const shelf of nextStateStruct.シェリフ) {
+                                    activeView.addTranceShelfe(shelf.targetObject, shelf.argumentArray, shelf.name);
+                                }
+                            }
+                            roop = false;
+                        }
                         return true;
                     }
                     return false;

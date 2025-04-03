@@ -41,7 +41,7 @@ export class StateModel_Vertices_Resize {
     }
 
     init(stateData) {
-        if (stateData.selectIndexs.length == 0) return {nextState: "$-1"};
+        if (stateData.selectIndexs.length == 0) return {cancel: true};
         calculateAllAverage(stateData.calculateSelectVerticesBBoxCenterGroup, 2);
         transform.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         if (stateData.selectAnimation) {

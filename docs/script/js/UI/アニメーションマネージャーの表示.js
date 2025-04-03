@@ -1,6 +1,8 @@
+import { readJsonFile } from "../utility.js";
 import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
 import { renderingParameters } from "../レンダリングパラメーター.js";
 import { createCheckbox, createDoubleClickInput, createIcon, managerForDOMs, setRangeStyle } from "./制御.js";
+import { UI_createFromJSON } from "./UIの自動生成.js";
 
 function updateAnimationManagerWeight(object, groupID, DOM) {
     let slider = DOM.slider;
@@ -106,14 +108,18 @@ export function updateAnimationManagerList(object, groupID, DOM) {
     managerForDOMs.set("現在のフレーム", groupID, hasKeyCheckboxs, updateHasKeyCheckbox);
 }
 
+
+const jsonData = await readJsonFile("./script/js/UI/json/ワールド.json");
 export function displayAnimationManager(targetDiv, groupID) {
-    targetDiv.replaceChildren();
-    const scrollable = document.createElement("ul");
-    scrollable.classList.add("scrollable","gap-2px");
-    targetDiv.append(scrollable);
+    // targetDiv.replaceChildren();
+    // const scrollable = document.createElement("ul");
+    // scrollable.classList.add("scrollable","gap-2px");
+    // targetDiv.append(scrollable);
 
-    const scrollableTag = targetDiv.querySelector("ul");
+    // const scrollableTag = targetDiv.querySelector("ul");
 
-    managerForDOMs.set("アニメーションマネージャー", groupID, scrollableTag, updateAnimationManagerList);
-    managerForDOMs.update("アニメーションマネージャー");
+    // managerForDOMs.set("アニメーションマネージャー", groupID, scrollableTag, updateAnimationManagerList);
+    // managerForDOMs.update("アニメーションマネージャー");
+
+    UI_createFromJSON(targetDiv,jsonData);
 }

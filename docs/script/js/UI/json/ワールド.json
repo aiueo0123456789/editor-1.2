@@ -1,0 +1,15 @@
+{
+    "inputObject": {"h": "hierarchy"},
+    "DOM": [
+        {"type": "section", "name": "test", "children": [
+            {"type": "input", "name": "test0", "min": 0, "max": 10, "withObject": {"object": "h/graphicMeshs/0", "parameter": "zIndex"}},
+            {"type": "input", "name": "test1", "min": 0, "max": 10, "withObject": {"object": "h/graphicMeshs/0", "parameter": "zIndex"}},
+            {"type": "list", "name": "test2", "withObject": {"object": "h/graphicMeshs"}, "liStruct": [
+                {"type": "input"},
+                {"type": "input"},
+                {"type": "input"}
+            ]},
+            {"type": "select", "name": "test3", "withObject": {"object": "h/0", "parameter": "test"}}
+        ]}
+    ]
+}

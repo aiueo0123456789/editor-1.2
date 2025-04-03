@@ -107,6 +107,17 @@ export async function loadFile(path) {
     return await fetch(path).then(x => x.text());
 }
 
+export const readJsonFile = async (filePath) => {
+    try {
+        const response = await fetch(filePath);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        return await response.json();
+    } catch (error) {
+        console.error("Error reading JSON file:", error);
+        return null;
+    }
+};
+
 export function isUpperCase(char) {
     return char === char.toUpperCase() && char !== char.toLowerCase();
 }

@@ -15,8 +15,8 @@ for root, dirs, files in os.walk(directory):
             rel_path = os.path.relpath(file_path, directory)  # directory からの相対パスを取得
             with open(file_path, "r", encoding="utf-8") as f:
                 js_code += f"// {file}\n"
-                # js_code += f"shaders.set({os.path.splitext(file)[0]},`{f.read()}`\n)"
-                js_code += f"shaders.set('./{rel_path}',`{f.read()}`\n)"
+                # js_code += f"shaders.set({os.path.splitext(file)[0]},`{f.read()}`)\n"
+                js_code += f"shaders.set('./{rel_path}',`{f.read()}`)\n"
 # print(jsFile)
 # .jsの作成
 filename = "shader.js"
