@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2024-2025 [aiueo0123456789]
+Copyright (c) 2019 Nicolas Cusan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,9 +20,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----
-
-## Additional Disclaimer (追加の注意)
-
-- This software is provided **as is**, and while you are free to use it, I do **not** recommend using it in production due to possible bugs.
-- If you use this software, please include a link to this repository: [リポジトリURL]
