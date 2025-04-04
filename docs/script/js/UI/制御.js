@@ -506,7 +506,6 @@ export function createDoubleClickInput(fn, object) {
     });
 
     inputTag.addEventListener('blur', () => {
-        fn(object, inputTag.value);
         inputTag.setAttribute('readonly', true);
     });
     return inputTag;
