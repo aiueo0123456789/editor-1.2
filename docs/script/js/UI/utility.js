@@ -1,4 +1,4 @@
-import { createID } from "./制御.js";
+import { createID, managerForDOMs } from "./制御.js";
 
 export function createLabeledInputNumber(target, labelText, name, ID) {
     const label = document.createElement("label");
@@ -17,4 +17,9 @@ export function createLabeledInputNumber(target, labelText, name, ID) {
     div.append(label,input);
     target.append(div);
     return input;
+}
+
+export function changeParameter(object, parameter, newValue) {
+    object[parameter] = newValue;
+    managerForDOMs.update(object, parameter);
 }

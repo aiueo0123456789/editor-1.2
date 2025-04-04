@@ -2,6 +2,7 @@ import { searchAnimation } from "./オブジェクトで共通の処理.js";
 import { KeyframeBlock } from "../キーフレーム.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
 import { hierarchy } from "../ヒエラルキー.js";
+import { changeParameter } from "../UI/utility.js";
 
 class Editor {
     constructor(animationManager) {
@@ -29,13 +30,13 @@ export class AnimationManager {
     }
 
     setWeight(weight) {
-        this.weight = weight;
+        changeParameter(this, "weight", weight);
         managerForDOMs.update(this, "ウェイト");
     }
 
     update() {
         for (const animation of this.containedAnimations) {
-            animation.weight = this.weight;
+            changeParameter(animation, "weight", this.weight);
         }
     }
 

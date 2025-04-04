@@ -3,6 +3,8 @@ import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
 import { renderingParameters } from "../レンダリングパラメーター.js";
 import { createCheckbox, createDoubleClickInput, createIcon, managerForDOMs, setRangeStyle } from "./制御.js";
 import { UI_createFromJSON } from "./UIの自動生成.js";
+import { World } from "./json/ワールド.js";
+import { Inspector } from "./json/インスペクタ.js";
 
 function updateAnimationManagerWeight(object, groupID, DOM) {
     let slider = DOM.slider;
@@ -109,8 +111,9 @@ export function updateAnimationManagerList(object, groupID, DOM) {
 }
 
 
-const jsonData = await readJsonFile("./script/js/UI/json/ワールド.json");
+// const jsonData = await readJsonFile("./script/js/UI/json/ワールド.json");
 export function displayAnimationManager(targetDiv, groupID) {
+    const UI = new Inspector();
     // targetDiv.replaceChildren();
     // const scrollable = document.createElement("ul");
     // scrollable.classList.add("scrollable","gap-2px");
@@ -121,5 +124,6 @@ export function displayAnimationManager(targetDiv, groupID) {
     // managerForDOMs.set("アニメーションマネージャー", groupID, scrollableTag, updateAnimationManagerList);
     // managerForDOMs.update("アニメーションマネージャー");
 
-    UI_createFromJSON(targetDiv,jsonData);
+    // UI_createFromJSON(targetDiv,jsonData);
+    UI_createFromJSON(targetDiv,UI.struct, UI.inputObject);
 }

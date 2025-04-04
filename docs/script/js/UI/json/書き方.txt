@@ -1,5 +1,6 @@
 タグの情報の書き方
 type: タグの種類
+    looper: 回想を戻ってループする,
 name: htmlのnameと同じ
 withObject: 一部タグはjsのオブジェクトと連動するため関連付けに必要なデータ {object: inputObjectから辿っていくルート "h/graphicMeshs/0"　の場合 hierarchy -> graphicMeshs -> 0番目, parameter: オブジェクト内の連動させたい値}
 そのたタグごとの値

@@ -6,13 +6,13 @@ export class DOMsManager {
         /* {
             object: { o
                 defo: { i
-                    groupparameter: [DOM, updateFn, others], g
+                    groupID: [DOM, updateFn, others], g
                     .
                     .
                     .
                 },
-                parameter: { i
-                    groupparameter: [DOM, updateFn, others], g
+                ID: { i
+                    groupID: [DOM, updateFn, others], g
                     .
                     .
                     .
@@ -24,24 +24,24 @@ export class DOMsManager {
         } */
     }
 
-    set(object, groupparameter, DOM, updateFn, others = null, parameter = "defo") {
+    set(object, groupID, DOM, updateFn, others = null, ID = "defo") {
         if (!this.objectsMap.has(object)) {
             this.objectsMap.set(object, new Map());
         }
         const o = this.objectsMap.get(object);
-        if (!o.has(parameter)) {
-            o.set(parameter, new Map());
+        if (!o.has(ID)) {
+            o.set(ID, new Map());
         }
-        const i = o.get(parameter);
-        i.set(groupparameter, [DOM, updateFn, others]);
+        const i = o.get(ID);
+        i.set(groupID, [DOM, updateFn, others]);
     }
 
-    getGroupInObject(object, groupparameter, parameter = "defo") {
+    getGroupInObject(object, groupID, ID = "defo") {
         const o = this.objectsMap.get(object);
         if (o) {
-            const i = o.get(parameter);
+            const i = o.get(ID);
             if (i) {
-                const g = i.get(groupparameter);
+                const g = i.get(groupID);
                 if (g) {
                     return g;
                 }
@@ -50,12 +50,12 @@ export class DOMsManager {
         return null;
     }
 
-    getDOMInObject(object, groupparameter, parameter = "defo") {
+    getDOMInObject(object, groupID, ID = "defo") {
         const o = this.objectsMap.get(object);
         if (o) {
-            const i = o.get(parameter);
+            const i = o.get(ID);
             if (i) {
-                const g = i.get(groupparameter);
+                const g = i.get(groupID);
                 if (g) {
                     return g[0];
                 }
@@ -64,10 +64,10 @@ export class DOMsManager {
         return null;
     }
 
-    deleteGroup(groupparameter) {
+    deleteGroup(groupID) {
         this.objectsMap.forEach((o, object) => {
             o.forEach((i, id) => {
-                const g = i.get(groupparameter);
+                const g = i.get(groupID);
                 if (g) {
                     const fn = (data) => {
                         if (data instanceof HTMLElement) {
@@ -83,7 +83,7 @@ export class DOMsManager {
                         }
                     }
                     fn(g);
-                    i.delete(groupparameter);
+                    i.delete(groupID);
                 }
             });
         });
@@ -93,7 +93,7 @@ export class DOMsManager {
         const o = this.objectsMap.get(object);
         if (o) {
             o.forEach((i, id) => {
-                i.forEach((g, groupparameter) => {
+                i.forEach((g, groupID) => {
                     const fn = (data) => {
                         if (data instanceof HTMLElement) {
                             data.remove();
@@ -108,7 +108,7 @@ export class DOMsManager {
                         }
                     }
                     fn(g);
-                    i.delete(groupparameter);
+                    i.delete(groupID);
                 });
             });
             o.clear();
@@ -116,33 +116,39 @@ export class DOMsManager {
         }
     }
 
-    update(object, parameter = ":ALL:") {
+    submitFn(object, groupID,DOM_Fn) {
+        if (typeof DOM_Fn[1] === 'function') {
+            DOM_Fn[1](object, groupID, DOM_Fn[0], DOM_Fn[2]);
+        }
+    }
+
+    update(object, ID = ":ALL:") {
         const o = this.objectsMap.get(object);
         if (o) {
-            if (parameter == ":ALL:") {
+            if (ID == ":ALL:") {
                 o.forEach((i, id) => {
-                    i.forEach((DOM_Fn, groupparameter) => {
-                        DOM_Fn[1](object, groupparameter, DOM_Fn[0], DOM_Fn[2]);
+                    i.forEach((DOM_Fn, groupID) => {
+                        this.submitFn(object, groupID,DOM_Fn);
                     });
                 });
             } else {
-                const i = o.get(parameter);
+                const i = o.get(ID);
                 if (i) {
-                    i.forEach((DOM_Fn, groupparameter) => {
-                        DOM_Fn[1](object, groupparameter, DOM_Fn[0], DOM_Fn[2]);
+                    i.forEach((DOM_Fn, groupID) => {
+                        this.submitFn(object, groupID,DOM_Fn);
                     });
                 }
             }
         }
     }
 
-    updateGroupInObject(object, groupparameter) {
+    updateGroupInObject(object, groupID) {
         const o = this.objectsMap.get(object);
         if (o) {
             o.forEach((i, id) => {
-                const DOM_Fn = i.get(groupparameter);
+                const DOM_Fn = i.get(groupID);
                 if (DOM_Fn) {
-                    DOM_Fn[1](object, groupparameter, DOM_Fn[0], DOM_Fn[2]);
+                    this.submitFn(object, groupID,DOM_Fn);
                 }
             });
         }
@@ -151,8 +157,8 @@ export class DOMsManager {
     allUpdate() {
         this.objectsMap.forEach((o, object) => {
             o.forEach((i, id) => {
-                i.forEach((DOM_Fn, groupparameter) => {
-                    DOM_Fn[1](object, groupparameter, DOM_Fn[0], DOM_Fn[2]);
+                i.forEach((DOM_Fn, groupID) => {
+                    this.submitFn(object, groupID,DOM_Fn);
                 });
             });
         });

@@ -296,6 +296,7 @@ export function searchAnimation(object, animationName) {
 
 export function appendAnimationToObject(object, name) {
     object.animationBlock.appendAnimation(name);
+    managerForDOMs.update(object.animationBlock.animationBlock);
     managerForDOMs.update(object.animationBlock);
 }
 

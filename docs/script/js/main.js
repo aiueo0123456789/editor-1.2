@@ -145,7 +145,7 @@ async function init() {
                 source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
             },
             {
-                type: "行列コピー",
+                type: "ボーン追従",
                 target: {object: "fTt6iJ1ahSIyxAbI", boneIndex: 0},
                 source: {object: "ajRgB51r4iDQTCS9", boneIndex: 1},
             },

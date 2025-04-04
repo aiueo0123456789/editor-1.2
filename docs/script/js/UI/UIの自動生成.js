@@ -55,11 +55,25 @@ function createWith(/** @type {HTMLElement} */t, withObject, searchTarget) {
 function createListChildren(t, liStruct, withObject, searchTarget) {
     let list = findSource(withObject.object, searchTarget);
     if (Array.isArray(list)) {
-        for (const object of list) {
-            const li = document.createElement("li");
-            t.append(li);
-            createFromChildren(li, liStruct, object);
+        const listUpdate = (o, groupID, t) => {
+            for (const object of list) {
+                let li = managerForDOMs.getDOMInObject(object.id, "000", "ヒエラルキー");
+                if (!li) {
+                    const li = document.createElement("li");
+                    t.append(li);
+                    createFromChildren(li, liStruct, object);
+                    managerForDOMs.set(object.id, "000", li, null, null, "ヒエラルキー");
+                }
+            }
         }
+        managerForDOMs.set(list, "000", t, listUpdate);
+        managerForDOMs.update(list);
+        // for (const object of list) {
+        //     const li = document.createElement("li");
+        //     t.append(li);
+        //     createFromChildren(li, liStruct, object);
+        //     managerForDOMs.set(list, "000", t, listUpdate, null, object.id);
+        // }
     } else if (isPlainObject(list)) {
         // for (const object of list) {
         //     const li = document.createElement("li");
@@ -69,7 +83,7 @@ function createListChildren(t, liStruct, withObject, searchTarget) {
     }
 }
 
-// 構造の配列をDOMに追加
+// 構造の配列をもとにDOMの構築
 function createFromChildren(/** @type {HTMLElement} */t, children, searchTarget) {
     for (const child of children) {
         /** @type {HTMLElement} */
@@ -82,7 +96,13 @@ function createFromChildren(/** @type {HTMLElement} */t, children, searchTarget)
                 createFromChildren(element, child.children, searchTarget);
             }
         } else if (child.type == "input") {
-            element = createLabeledInputNumber(t, child.name, child.name);
+            if (child.label) {
+                element = createLabeledInputNumber(t, child.name, child.name);
+            } else {
+                element = document.createElement("input");
+                element.type = "number";
+                t.append(element)
+            }
             createWith(element, child.withObject, searchTarget);
         } else if (child.type == "select") {
             element = createLabeledSelect(t, child.name, child.name);
@@ -96,12 +116,25 @@ function createFromChildren(/** @type {HTMLElement} */t, children, searchTarget)
             t.append(element);
             createWith(element, child.withObject, searchTarget);
         } else if (child.type == "list") {
-            element = createMinList(t,child.name);
-            createListChildren(element.list, child.liStruct, child.withObject, searchTarget);
+            if (child.option == "min") {
+                element = createMinList(t,child.name);
+                createListChildren(element.list, child.liStruct, child.withObject, searchTarget);
+            } else if (child.option == "noScroll") {
+                element = document.createElement("ul");
+                t.appendChild(element);
+                createListChildren(element, child.liStruct, child.withObject, searchTarget);
+            } else {
+                element = document.createElement("ul");
+                t.appendChild(element);
+                element.classList.add("scrollable");
+                createListChildren(element, child.liStruct, child.withObject, searchTarget);
+            }
         } else if (child.type == "container") {
             element = document.createElement("ul");
             t.append(element);
-            createListChildren(element, child.liStruct, child.withObject, searchTarget);
+            if (child.children) {
+                createFromChildren(element, child.children, searchTarget);
+            }
         } else if (child.type == "section") {
             const div = document.createElement("div");
             div.classList.add("section");
@@ -111,6 +144,7 @@ function createFromChildren(/** @type {HTMLElement} */t, children, searchTarget)
             }
         } else if (child.type == "icon-img") {
             element = createIcon(t, findSource(child.withObject.object, searchTarget)[child.withObject.parameter]);
+        } else if (child.type == "looper") {
         }
         if (child.style) {
             child.style.replace(/\s+/g, ""); // 半角・全角スペースを削除
@@ -131,14 +165,21 @@ function createFromChildren(/** @type {HTMLElement} */t, children, searchTarget)
     }
 }
 
-export function UI_createFromJSON(/** @type {HTMLElement} */target, struct) {
-    const objectTable = {};
-    for (const keyName in struct.inputObject) {
-        let object;
-        if (struct.inputObject[keyName] == "hierarchy") {
-            object = hierarchy;
+function createLooper(/** @type {HTMLElement} */t, target, searchTarget) {
+}
+
+export function UI_createFromJSON(/** @type {HTMLElement} */target, struct, inputObject) {
+    let objectTable = {};
+    if (inputObject) {
+        objectTable = inputObject;
+    } else {
+        for (const keyName in struct.inputObject) {
+            let object;
+            if (struct.inputObject[keyName] == "hierarchy") {
+                object = hierarchy;
+            }
+            objectTable[keyName] = object;
         }
-        objectTable[keyName] = object;
     }
 
     console.log(struct);
