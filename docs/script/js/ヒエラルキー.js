@@ -2,7 +2,7 @@ import { GraphicMesh } from "./オブジェクト/グラフィックメッシュ
 import { Modifier } from "./オブジェクト/モディファイア.js";
 import { BezierModifier } from "./オブジェクト/ベジェモディファイア.js";
 import { RotateModifier } from "./オブジェクト/回転モディファイア.js";
-import { AnimationManager } from "./オブジェクト/アニメーションマネージャー.js";
+import { AnimationCollector } from "./オブジェクト/アニメーションコレクター.js";
 import { updateObject,setParentModifierWeight, searchAnimation } from "./オブジェクト/オブジェクトで共通の処理.js";
 import { createID, managerForDOMs, updateDataForUI } from "./UI/制御.js";
 import { BoneModifier } from "./オブジェクト/ボーンモディファイア.js";
@@ -120,7 +120,7 @@ class Editor {
 
 class Hierarchy {
     constructor() {
-        this.animationManagers = [];
+        this.animationCollectors = [];
         this.modifiers = [];
         this.bezierModifiers = [];
         this.rotateModifiers = [];
@@ -150,7 +150,7 @@ class Hierarchy {
         this.modifiers.length = 0;
         this.bezierModifiers.length = 0;
         this.rotateModifiers.length = 0;
-        this.animationManagers.length = 0;
+        this.animationCollectors.length = 0;
         this.allObject.length = 0;
         this.surface.length = 0;
     }
@@ -166,8 +166,8 @@ class Hierarchy {
             return [this.rotateModifiers, this.rotateModifiers.indexOf(object)];
         } else if (object.type == "ボーンモディファイア") {
             return [this.boneModifiers, this.boneModifiers.indexOf(object)];
-        } else if (object.type == "アニメーションマネージャー") {
-            return [this.animationManagers, this.animationManagers.indexOf(object)];
+        } else if (object.type == "アニメーションコレクター") {
+            return [this.animationCollectors, this.animationCollectors.indexOf(object)];
         }
     }
 
@@ -183,7 +183,7 @@ class Hierarchy {
     getSaveData() {
         const result = []; // [[親の情報: [name,type], 自分の情報: [name,type]],...]
         for (const object of this.allObject) {
-            if (object.type != "アニメーションマネージャー") {
+            if (object.type != "アニメーションコレクター") {
                 if (object.parent == "") {
                     result.push(["",object.id]);
                 } else {
@@ -260,11 +260,11 @@ class Hierarchy {
                 if (modifier.name == name) return modifier;
             }
             console.warn("ボーンモディファイアが見つかりませんでした")
-        } else if (type == "アニメーションマネージャー") {
-            for (const anmationManager of this.animationManagers) {
+        } else if (type == "アニメーションコレクター") {
+            for (const anmationManager of this.animationCollectors) {
                 if (anmationManager.name == name) return anmationManager;
             }
-            console.warn("アニメーションマネージャーが見つかりませんでした")
+            console.warn("アニメーションコレクターが見つかりませんでした")
         }
         return null;
     }
@@ -278,17 +278,17 @@ class Hierarchy {
         return null;
     }
 
-    setAnimationManagerLink(animationManager, animationKey) { // アニメーションマネージャーとアニメーションを関係付ける
-        this.deleteAnimationManagerLink(animationKey); // 前に関連付けられていたアニメーションマネージャーとの関係を切る
-        animationManager.containedAnimations.push(animationKey);
-        animationKey.belongAnimationManager = animationManager;
+    setAnimationCollectorLink(animationCollector, animationKey) { // アニメーションコレクターとアニメーションを関係付ける
+        this.deleteAnimationCollectorLink(animationKey); // 前に関連付けられていたアニメーションコレクターとの関係を切る
+        animationCollector.containedAnimations.push(animationKey);
+        animationKey.belongAnimationCollector = animationCollector;
     }
 
-    deleteAnimationManagerLink(deleteAnimationKey) { // 関連付けられていたアニメーションマネージャーとの関係を切る
-        if (!deleteAnimationKey.belongAnimationManager) return ;
-        const resource = deleteAnimationKey.belongAnimationManager.containedAnimations;
+    deleteAnimationCollectorLink(deleteAnimationKey) { // 関連付けられていたアニメーションコレクターとの関係を切る
+        if (!deleteAnimationKey.belongAnimationCollector) return ;
+        const resource = deleteAnimationKey.belongAnimationCollector.containedAnimations;
         resource.splice(resource.indexOf(deleteAnimationKey), 1);
-        deleteAnimationKey.belongAnimationManager = null;
+        deleteAnimationKey.belongAnimationCollector = null;
     }
 
     findUnusedName(name) {
@@ -336,10 +336,10 @@ class Hierarchy {
             object = new BoneModifier(data.name,data.id);
             object.init(data);
             this.boneModifiers.push(object);
-        } else if (data.type == "アニメーションマネージャー" || data.type == "am") {
-            object = new AnimationManager(data.name,data.id);
+        } else if (data.type == "アニメーションコレクター" || data.type == "am") {
+            object = new AnimationCollector(data.name,data.id);
             object.init(data);
-            this.animationManagers.push(object);
+            this.animationCollectors.push(object);
         }
         this.allObject.push(object);
         return object;
@@ -347,12 +347,12 @@ class Hierarchy {
 
     addEmptyObject(type) {
         let object;
-        if (type == "アニメーションマネージャー") {
-            object = new AnimationManager("名称未設定");
-            this.animationManagers.push(object);
+        if (type == "アニメーションコレクター") {
+            object = new AnimationCollector("名称未設定");
+            this.animationCollectors.push(object);
             managerForDOMs.update("タイムライン-チャンネル");
             managerForDOMs.update("タイムライン-タイムライン-オブジェクト");
-            managerForDOMs.update(this.animationManagers);
+            managerForDOMs.update(this.animationCollectors);
             this.allObject.push(object);
         } else {
             updateDataForUI["オブジェクト"] = true;
@@ -380,7 +380,7 @@ class Hierarchy {
 
     changeObjectName(object, newName) {
         object.name = newName;
-        if (object.type == "アニメーションマネージャー") {
+        if (object.type == "アニメーションコレクター") {
             managerForDOMs.update("タイムライン-チャンネル");
         } else {
             managerForDOMs.update(this);
@@ -440,14 +440,14 @@ class Hierarchy {
 
     // フレームを適応
     updateAnimation(frame) {
-        for (const object of this.animationManagers) {
+        for (const object of this.animationCollectors) {
             object.keyframe.update(frame);
         }
     }
 
-    // アニメーションマネージャーの適応
+    // アニメーションコレクターの適応
     updateManagers() {
-        for (const animtionManager of this.animationManagers) {
+        for (const animtionManager of this.animationCollectors) {
             animtionManager.update();
         }
     }

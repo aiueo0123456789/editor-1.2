@@ -5,7 +5,7 @@ import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
 import { stateMachine } from '../main.js';
 import { vec2 } from "../ベクトル計算.js";
 import { TextureToCVS } from "../キャンバスにテクスチャを表示.js";
-import { createCheckbox, createIcon, createLabeledInput, createLabeledSelect, createLabeledVecInput, createMinButton, createSection, managerForDOMs, resetTag, setRangeStyle, updateDataForUI } from "./制御.js";
+import { createCheckbox, createIcon, createLabeledInput, createLabeledSelect, createLabeledVecInput, createMinButton, createSection, managerForDOMs, setRangeStyle, updateDataForUI } from "./制御.js";
 import { ResizerForDOM } from "./resizer.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
 import { createMeshFromTexture } from "../機能/メッシュの自動生成/画像からメッシュを作る.js";
@@ -25,16 +25,16 @@ function updateAnimationDOM(object, groupID, DOM) {
         const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
         sleectElement.value = ""; // h1要素に配列の要素を設定
         sleectElement.textContent = "なし"; // h1要素に配列の要素を設定
-        if (!object.belongAnimationManager) {
+        if (!object.belongAnimationCollector) {
             sleectElement.selected = true;
         }
         managerSelectTag.append(sleectElement);
     }
-    hierarchy.animationManagers.forEach(manager => {
+    hierarchy.animationCollectors.forEach(manager => {
         const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
         sleectElement.value = manager.name; // h1要素に配列の要素を設定
         sleectElement.textContent = manager.name; // h1要素に配列の要素を設定
-        if (object.belongAnimationManager == manager) {
+        if (object.belongAnimationCollector == manager) {
             sleectElement.selected = true;
         }
         managerSelectTag.append(sleectElement);
@@ -74,7 +74,7 @@ function updateAnimationBlockDOM(object, groupID, /** @type {HTMLElement} */ DOM
             listItem = document.createElement("li");
             listItem.dataset.objectID = animation.id;
             // listItem.classList.add("flex-gap10px");
-            listItem.classList.add("animationManagerContainer");
+            listItem.classList.add("animationCollectorContainer");
 
             createIcon(listItem, "頂点アニメーション");
 
@@ -102,16 +102,16 @@ function updateAnimationBlockDOM(object, groupID, /** @type {HTMLElement} */ DOM
                 const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
                 sleectElement.value = "none"; // h1要素に配列の要素を設定
                 sleectElement.textContent = "なし"; // h1要素に配列の要素を設定
-                if (!animation.belongAnimationManager) {
+                if (!animation.belongAnimationCollector) {
                     sleectElement.selected = true;
                 }
                 managerSelectTag.append(sleectElement);
             }
-            hierarchy.animationManagers.forEach(manager => {
+            hierarchy.animationCollectors.forEach(manager => {
                 const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
                 sleectElement.value = manager.id; // h1要素に配列の要素を設定
                 sleectElement.textContent = manager.name; // h1要素に配列の要素を設定
-                if (animation.belongAnimationManager == manager) {
+                if (animation.belongAnimationCollector == manager) {
                     sleectElement.selected = true;
                 }
                 managerSelectTag.append(sleectElement);
@@ -119,9 +119,9 @@ function updateAnimationBlockDOM(object, groupID, /** @type {HTMLElement} */ DOM
 
             managerSelectTag.addEventListener("change", () => {
                 if (managerSelectTag.value == "none") {
-                    hierarchy.deleteAnimationManagerLink(animation);
+                    hierarchy.deleteAnimationCollectorLink(animation);
                 } else {
-                    hierarchy.setAnimationManagerLink(hierarchy.searchObjectFromID(managerSelectTag.value), animation);
+                    hierarchy.setAnimationCollectorLink(hierarchy.searchObjectFromID(managerSelectTag.value), animation);
                 }
                 managerForDOMs.update(animation);
             })

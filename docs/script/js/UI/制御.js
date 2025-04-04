@@ -9,7 +9,7 @@ import { Select } from "../選択.js";
 import { ResizerForDOM } from "./resizer.js";
 import { TranslaterForDOM } from "./tranlater.js";
 import { DOMsManager } from "./UIの更新管理.js";
-import { displayAnimationManager } from "./アニメーションマネージャーの表示.js";
+import { displayAnimationCollector } from "./アニメーションコレクターの表示.js";
 import { displayInspector } from "./インスペクタの表示.js";
 import { displayObjects } from "./オブジェクトの表示.js";
 import { displayGraphEditor } from "./グラフディタ.js";
@@ -28,7 +28,7 @@ const modes = {
     "オブジェクト": displayObjects,
     "ヒエラルキー": displayHierarchy,
     "レイヤー": displayLayer,
-    "アニメーションマネージャー": displayAnimationManager,
+    "アニメーションコレクター": displayAnimationCollector,
     "表示順番": displayRenderingOrder,
     "インスペクタ": displayInspector,
     "プロパティ": displayProperty,
@@ -40,7 +40,7 @@ export const updateDataForUI = {
     "ビュー": false,
     "オブジェクト": false,
     "ヒエラルキー": false,
-    "アニメーションマネージャー": false,
+    "アニメーションコレクター": false,
     "表示順番": false,
     "インスペクタ": false,
     "プロパティ": false,
@@ -159,25 +159,6 @@ export class GridInterior {
             modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
         }
     }
-}
-
-export function deleteTagDisappearedObject(tags) {
-    tags.forEach((value,object) => {
-        if (object.delete) {
-            if (Array.isArray(value)) {
-                for (const tag of value) {
-                    if (tag instanceof HTMLElement) {
-                        tag.remove();
-                    }
-                }
-            } else {
-                if (value instanceof HTMLElement) {
-                    value.remove();
-                }
-            }
-            tags.delete(object);
-        }
-    })
 }
 
 export function resetTag(tags) {

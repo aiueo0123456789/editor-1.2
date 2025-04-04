@@ -1,6 +1,6 @@
-import { loadFile } from "../utility.js";
-import { GPU } from "../webGPU.js";
-import { setBaseBBox, setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
+import { loadFile } from "../../../utility.js";
+import { GPU } from "../../../webGPU.js";
+import { setBaseBBox, setParentModifierWeight } from "../../../オブジェクト/オブジェクトで共通の処理.js";
 
 // const pipelines = {
 //     graphicMesh: {rotate: },
@@ -26,17 +26,17 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 }
 `);
 
-const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/データマネージャー/GPU/vertices/translate.wgsl"));
+const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/translate.wgsl"));
 
-const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/データマネージャー/GPU/vertices/resize.wgsl"));
+const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/resize.wgsl"));
 
-const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/データマネージャー/GPU/vertices/rotate.wgsl"));
+const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/rotate.wgsl"));
 
-const boneAnimationTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/translate.wgsl"));
+const boneAnimationTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/translate.wgsl"));
 
-const boneAnimationRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/rotate.wgsl"));
+const boneAnimationRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/rotate.wgsl"));
 
-const boneAnimationResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/データマネージャー/GPU/boneAnimation/resize.wgsl"));
+const boneAnimationResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/resize.wgsl"));
 
 const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], `
 @group(0) @binding(0) var<storage, read_write> weight: array<f32>;
@@ -93,7 +93,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 }
 `);
 
-export class Transform {
+export class TransformCommand {
     constructor() {
         this.target = null;
         this.worldOriginalBuffer = null;
@@ -246,7 +246,13 @@ export class Transform {
     }
 }
 
-export const transform = new Transform();
+export class VerticesTransformCommand extends TransformCommand {
+    constructor() {
+        
+    }
+}
+
+export const transform = new TransformCommand();
 transform.translate.argumentArray = [
     {name: "変化量", type: {type: "入力", inputType: "ベクトル", option: {initValue: [0,0], axis: ["x","y"]}}},
     {name: "座標系", type: {type: "選択", choices: ["ローカル", "ワールド"]}},

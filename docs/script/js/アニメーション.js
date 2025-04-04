@@ -73,7 +73,7 @@ export class VerticesAnimation {
 
         this.name = name;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = belongObject;
     }
 
@@ -87,7 +87,7 @@ export class VerticesAnimation {
 
         this.name = null;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = null;
     }
 
@@ -135,7 +135,7 @@ export class MultAnimation {
 
         this.name = name;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = belongObject;
     }
 
@@ -149,7 +149,7 @@ export class MultAnimation {
 
         this.name = null;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = null;
     }
 
@@ -193,7 +193,7 @@ export class RotateAnimation {
 
         this.name = name;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = belongObject;
     }
 
@@ -205,7 +205,7 @@ export class RotateAnimation {
 
         this.name = null;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = null;
     }
 
@@ -241,7 +241,7 @@ export class BoneAnimation {
 
         this.name = name;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = belongObject;
     }
 
@@ -255,7 +255,7 @@ export class BoneAnimation {
 
         this.name = null;
 
-        this.belongAnimationManager = null;
+        this.belongAnimationCollector = null;
         this.belongObject = null;
     }
 

@@ -1,6 +1,6 @@
 import { changeObjectName, hierarchy } from '../ヒエラルキー.js';
 import { stateMachine } from '../main.js';
-import { createCheckbox, createIcon, deleteTagDisappearedObject, managerForDOMs } from './制御.js';
+import { createCheckbox, createIcon, managerForDOMs } from './制御.js';
 import { activeOrClear } from '../コンテキストメニュー/制御.js';
 
 export function select(a,b,bool) {
@@ -27,7 +27,7 @@ function updateObjects(objects, groupID, DOM) {
 
     // タグがないオブジェクトにタグを作る
     for (const object of hierarchy.allObject) {
-        if (object.type != "アニメーションマネージャー") {
+        if (object.type != "アニメーションコレクター") {
             let listItem = managerForDOMs.getDOMInObject(object, groupID);
 
             if (!listItem) {

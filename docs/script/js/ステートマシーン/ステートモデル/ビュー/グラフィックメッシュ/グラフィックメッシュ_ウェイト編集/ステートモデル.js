@@ -1,7 +1,7 @@
 import { activeView, editorParameters, keysDown, stateMachine } from "../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
 import { GPU } from "../../../../../webGPU.js";
-import { mesh, weightPaint } from "../../../../../データマネージャー/メッシュ.js";
+import { mesh, weightPaint } from "../../../../../機能/オペレーター/メッシュ/メッシュ.js";
 import { createNextStateData, previousKeysDown } from "../../../../状態遷移.js";
 
 function a() {

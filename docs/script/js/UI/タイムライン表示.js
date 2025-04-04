@@ -81,7 +81,7 @@ function updateKeyBlock(object, groupID, DOM) {
 }
 
 function updateKeyBlocks(object, groupID, DOM) {
-    for (const object of hierarchy.animationManagers) {
+    for (const object of hierarchy.animationCollectors) {
         managerForDOMs.update(object.keyframe, "タイムライン-メイン");
     }
 }
@@ -89,7 +89,7 @@ function updateKeyBlocks(object, groupID, DOM) {
 function updateKeyBlocksAppendDelete(object, groupID, DOM) {
     /** @type {HTMLElement} */
     const timelineMain = DOM;
-    for (const object of hierarchy.animationManagers) {
+    for (const object of hierarchy.animationCollectors) {
         let listItem = managerForDOMs.getDOMInObject(object.keyframe, groupID,"タイムライン-メイン" );
         if (!listItem) {
             listItem = document.createElement("ul");
@@ -103,7 +103,7 @@ function updateKeyBlocksAppendDelete(object, groupID, DOM) {
     }
 }
 
-function updateChannelAnimationManager() {
+function updateChannelAnimationCollector() {
 }
 
 function updateChannel(object, groupID, DOM) {
@@ -112,7 +112,7 @@ function updateChannel(object, groupID, DOM) {
     const channelDiv = DOM;
     const channelHeader = channelDiv.querySelector('[name="h"]');
     const channelMain = channelDiv.querySelector('[name="m"]');
-    for (const object of hierarchy.animationManagers) {
+    for (const object of hierarchy.animationCollectors) {
         let listItem = managerForDOMs.getDOMInObject(object, groupID, "タイムライン-チャンネル");
         if (!listItem) {
             listItem = document.createElement("li");
@@ -120,7 +120,7 @@ function updateChannel(object, groupID, DOM) {
             name.type = "text";
             name.value = object.name;
             listItem.append(name);
-            managerForDOMs.set(object, groupID, listItem, updateChannelAnimationManager, null, "タイムライン-チャンネル");
+            managerForDOMs.set(object, groupID, listItem, updateChannelAnimationCollector, null, "タイムライン-チャンネル");
             channelMain.append(listItem);
         }
     }
@@ -136,7 +136,7 @@ function header(target) {
     target.append(button);
 }
 
-function updateAppendAnimationManager() {
+function updateAppendAnimationCollector() {
     managerForDOMs.update("タイムライン-チャンネル");
     managerForDOMs.update("タイムライン-タイムライン-オブジェクト");
 }

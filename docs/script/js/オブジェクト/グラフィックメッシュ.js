@@ -84,6 +84,8 @@ class Editor {
         this.graphicMesh.setVerticesData(result.vertices, result.uv);
         this.setBaseSilhouetteEdges(result.edges)
         this.createMesh();
+        this.graphicMesh.weightAuto = true;
+        setParentModifierWeight(this.graphicMesh);
     }
 
     async createMesh() {

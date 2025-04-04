@@ -68,12 +68,6 @@ function createListChildren(t, liStruct, withObject, searchTarget) {
         }
         managerForDOMs.set(list, "000", t, listUpdate);
         managerForDOMs.update(list);
-        // for (const object of list) {
-        //     const li = document.createElement("li");
-        //     t.append(li);
-        //     createFromChildren(li, liStruct, object);
-        //     managerForDOMs.set(list, "000", t, listUpdate, null, object.id);
-        // }
     } else if (isPlainObject(list)) {
         // for (const object of list) {
         //     const li = document.createElement("li");

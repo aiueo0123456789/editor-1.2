@@ -3,6 +3,11 @@ import { createID, managerForDOMs, updateDataForUI } from './UI/制御.js';
 
 const maskTextureSize = [2048,2048];
 
+// エディタ関数
+function appendMaskTexture() {
+    
+}
+
 class MaskTexture {
     constructor(name, size) {
         this.id = createID();
@@ -11,11 +16,19 @@ class MaskTexture {
         this.textureView = this.texture.createView();
         this.renderingObjects = [];
         this.useObjects = [];
+        this.type = "マスク";
+    }
+}
+
+class Editor {
+    constructor(renderObjectManager) {
+        this.renderObjectManager = renderObjectManager;
     }
 }
 
 export class RenderObjectManager {
     constructor() {
+        this.editor = new Editor();
         this.backgroundColor = { r: 1, g: 1, b: 1, a: 1 };
         this.maskTextures = [
             new MaskTexture("base", [1,1]),

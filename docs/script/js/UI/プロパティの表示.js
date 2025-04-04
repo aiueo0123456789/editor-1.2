@@ -2,7 +2,9 @@ import { keysDown, renderObjectManager } from "../main.js";
 import { hexToRgba } from "../utility.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
 import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
-import { updateAnimationManagerList } from "./アニメーションマネージャーの表示.js";
+import { World } from "./json/ワールド.js";
+import { UI_createFromJSON } from "./UIの自動生成.js";
+import { updateAnimationCollectorList } from "./アニメーションコレクターの表示.js";
 import { createIcon, createLabeledInput, createMinList, createSection, managerForDOMs } from "./制御.js";
 
 function updateMaskTexture(object, groupID, DOM) {
@@ -66,73 +68,77 @@ function updateMaskTextureList(object, groupID, DOM) {
     }
 }
 
-export function displayProperty(scrollableDiv, groupID) {
-    scrollableDiv.innerHTML = "";
-    scrollableDiv.className = "";
-    scrollableDiv.classList.add("grid-main","scrollable","gap-2px","color3","pa-10px","pa-r-0px");
+// export function displayProperty(scrollableDiv, groupID) {
+//     scrollableDiv.innerHTML = "";
+//     scrollableDiv.className = "";
+//     scrollableDiv.classList.add("grid-main","scrollable","gap-2px","color3","pa-10px","pa-r-0px");
 
-    if (true) {
-        const worldSection = document.createElement("div");
-        worldSection.classList.add("section");
+//     if (true) {
+//         const worldSection = document.createElement("div");
+//         worldSection.classList.add("section");
 
-        const backgroundColorInput = createLabeledInput(worldSection, "背景色", "color");
-        backgroundColorInput.value = "#FFFFFF";
+//         const backgroundColorInput = createLabeledInput(worldSection, "背景色", "color");
+//         backgroundColorInput.value = "#FFFFFF";
 
-        backgroundColorInput.addEventListener("change", () => {
-            renderObjectManager.backgroundColor = hexToRgba(backgroundColorInput.value, 1);
-        });
+//         backgroundColorInput.addEventListener("change", () => {
+//             renderObjectManager.backgroundColor = hexToRgba(backgroundColorInput.value, 1);
+//         });
 
-        const maskTextureDataSection = document.createElement("div");
-        maskTextureDataSection.classList.add("section");
+//         const maskTextureDataSection = document.createElement("div");
+//         maskTextureDataSection.classList.add("section");
 
-        const maskTextureListObject = createMinList(maskTextureDataSection, "マスクテクスチャ");
-        maskTextureListObject.appendButton.addEventListener("click", () => {
-            renderObjectManager.appendMaskTexture("名称未設定");
-        });
+//         const maskTextureListObject = createMinList(maskTextureDataSection, "マスクテクスチャ");
+//         maskTextureListObject.appendButton.addEventListener("click", () => {
+//             renderObjectManager.appendMaskTexture("名称未設定");
+//         });
 
-        maskTextureListObject.deleteButton.addEventListener("click", () => {
-            for (let i = maskTextureListObject.list.children.length - 1; i >= 0; i --) {
-                const dom = maskTextureListObject.list.children[i];
-                if (dom.dataset.selected === "true") {
-                    renderObjectManager.deleteMaskTextureFromID(dom.dataset.objectID);
-                }
-            }
-        });
+//         maskTextureListObject.deleteButton.addEventListener("click", () => {
+//             for (let i = maskTextureListObject.list.children.length - 1; i >= 0; i --) {
+//                 const dom = maskTextureListObject.list.children[i];
+//                 if (dom.dataset.selected === "true") {
+//                     renderObjectManager.deleteMaskTextureFromID(dom.dataset.objectID);
+//                 }
+//             }
+//         });
 
-        managerForDOMs.set(renderObjectManager.maskTextures, groupID, maskTextureListObject.list, updateMaskTextureList);
-        managerForDOMs.update(renderObjectManager.maskTextures);
+//         managerForDOMs.set(renderObjectManager.maskTextures, groupID, maskTextureListObject.list, updateMaskTextureList);
+//         managerForDOMs.update(renderObjectManager.maskTextures);
 
-        createLabeledInput(maskTextureDataSection, "名前", "text");
-        createLabeledInput(maskTextureDataSection, "テスト", "number");
-        createSection(worldSection, "テクスチャ", maskTextureDataSection);
+//         createLabeledInput(maskTextureDataSection, "名前", "text");
+//         createLabeledInput(maskTextureDataSection, "テスト", "number");
+//         createSection(worldSection, "テクスチャ", maskTextureDataSection);
 
-        createSection(scrollableDiv, "ワールド", worldSection);
-    }
+//         createSection(scrollableDiv, "ワールド", worldSection);
+//     }
 
-    if (true) {
-        const animationManagerSection = document.createElement("div");
-        animationManagerSection.classList.add("section");
+//     if (true) {
+//         const animationCollectorSection = document.createElement("div");
+//         animationCollectorSection.classList.add("section");
 
-        const maskTextureListObject = createMinList(animationManagerSection, "アニメーションマネージャー");
-        maskTextureListObject.appendButton.addEventListener("click", () => {
-            hierarchy.addEmptyObject("アニメーションマネージャー");
-        });
+//         const maskTextureListObject = createMinList(animationCollectorSection, "アニメーションコレクター");
+//         maskTextureListObject.appendButton.addEventListener("click", () => {
+//             hierarchy.addEmptyObject("アニメーションコレクター");
+//         });
 
-        maskTextureListObject.deleteButton.addEventListener("click", () => {
-            for (let i = maskTextureListObject.list.children.length - 1; i >= 0; i --) {
-                const dom = maskTextureListObject.list.children[i];
-                if (dom.dataset.selected === "true") {
-                    renderObjectManager.deleteMaskTextureFromID(dom.dataset.objectID);
-                }
-            }
-        });
+//         maskTextureListObject.deleteButton.addEventListener("click", () => {
+//             for (let i = maskTextureListObject.list.children.length - 1; i >= 0; i --) {
+//                 const dom = maskTextureListObject.list.children[i];
+//                 if (dom.dataset.selected === "true") {
+//                     renderObjectManager.deleteMaskTextureFromID(dom.dataset.objectID);
+//                 }
+//             }
+//         });
 
-        managerForDOMs.set(hierarchy.animationManagers, groupID, maskTextureListObject.list, updateAnimationManagerList);
-        managerForDOMs.update(hierarchy.animationManagers);
+//         managerForDOMs.set(hierarchy.animationCollectors, groupID, maskTextureListObject.list, updateAnimationCollectorList);
+//         managerForDOMs.update(hierarchy.animationCollectors);
 
-        createLabeledInput(animationManagerSection, "名前", "text");
-        createLabeledInput(animationManagerSection, "テスト", "number");
+//         createLabeledInput(animationCollectorSection, "名前", "text");
+//         createLabeledInput(animationCollectorSection, "テスト", "number");
 
-        createSection(scrollableDiv, "アニメーションマネージャー", animationManagerSection);
-    }
+//         createSection(scrollableDiv, "アニメーションコレクター", animationCollectorSection);
+//     }
+// }
+export function displayProperty(targetDiv, groupID) {
+    const UI = new World();
+    UI_createFromJSON(targetDiv,UI.struct, UI.inputObject);
 }

@@ -17,9 +17,9 @@ import { StateModel_BaseEditForBezierModifier } from "./ステートモデル/�
 import { StateModel_AnimationEditForBone } from "./ステートモデル/ビュー/ボーンモディファイア/ボーンモディファイア_アニメーション編集/ステートモデル.js";
 import { StateModel_AnimationEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ベジェモディファイア_アニメーション編集/ステートモデル.js";
 import { StateModel_AnimationEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_アニメーション編集/ステートモデル.js";
-import { transform } from "../データマネージャー/変形.js";
+import { transform } from "../機能/オペレーター/変形/変形.js";
 import { StateModel_WeightEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_ウェイト編集/ステートモデル.js";
-import { mesh } from "../データマネージャー/メッシュ.js";
+import { mesh } from "../機能/オペレーター/メッシュ/メッシュ.js";
 
 function isPlainObject(obj) {
     return obj instanceof Object && Object.getPrototypeOf(obj) === Object.prototype;

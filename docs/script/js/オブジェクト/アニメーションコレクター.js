@@ -10,10 +10,10 @@ class Editor {
     }
 }
 
-export class AnimationManager {
+export class AnimationCollector {
     constructor(name, id) {
         this.id = id ? id : createID();
-        this.type = "アニメーションマネージャー";
+        this.type = "アニメーションコレクター";
         this.name = name;
         this.weight = 0;
         this.containedAnimations = [];
@@ -47,7 +47,7 @@ export class AnimationManager {
             const animation = searchAnimation(object, animationName);
             if (animation) {
                 this.containedAnimations.push(animation);
-                animation.belongAnimationManager = this;
+                animation.belongAnimationCollector = this;
             } else {
                 console.log(object, animationName)
             }

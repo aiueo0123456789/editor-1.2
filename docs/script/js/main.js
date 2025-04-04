@@ -122,7 +122,7 @@ async function init() {
         for (const data of loadData.graphicMeshs) {
             hierarchy.setSaveObject(data,"");
         }
-        for (const data of loadData.animationManagers) {
+        for (const data of loadData.animationCollectors) {
             hierarchy.setSaveObject(data,"");
         }
         updateLoad("読み込み", 60);
@@ -278,10 +278,10 @@ async function save() {
             })
         );
     updateLoad("書き出し", 80);
-    data.animationManagers =
+    data.animationCollectors =
         await Promise.all(
-            hierarchy.animationManagers.map(animationManager => {
-                return animationManager.getSaveData(); // Promise を返す
+            hierarchy.animationCollectors.map(animationCollector => {
+                return animationCollector.getSaveData(); // Promise を返す
             })
         );
     updateLoad("書き出し", 90);

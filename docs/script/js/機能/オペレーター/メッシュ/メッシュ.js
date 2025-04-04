@@ -1,8 +1,8 @@
-import { GPU } from "../webGPU.js";
-import { GraphicMesh } from "../オブジェクト/グラフィックメッシュ.js";
-import { setBaseBBox, setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
-import { vec2 } from "../ベクトル計算.js";
-import { BoneModifier } from "../オブジェクト/ボーンモディファイア.js";
+import { GPU } from "../../../webGPU.js";
+import { GraphicMesh } from "../../../オブジェクト/グラフィックメッシュ.js";
+import { setBaseBBox, setParentModifierWeight } from "../../../オブジェクト/オブジェクトで共通の処理.js";
+import { vec2 } from "../../../ベクトル計算.js";
+import { BoneModifier } from "../../../オブジェクト/ボーンモディファイア.js";
 
 export class Mesh {
     constructor() {

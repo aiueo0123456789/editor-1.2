@@ -1,6 +1,6 @@
 import { changeObjectName, hierarchy } from '../ヒエラルキー.js';
 import { keysDown, stateMachine } from '../main.js';
-import { createCheckbox, createIcon, deleteTagDisappearedObject, managerForDOMs } from './制御.js';
+import { createCheckbox, createIcon, managerForDOMs } from './制御.js';
 import { activeOrClear } from '../コンテキストメニュー/制御.js';
 
 export function select(a,b,bool) {

@@ -141,9 +141,9 @@ const menus = {
             {id: "アニメーション", children: [], targetFn: null},
         ]
     ),
-    "アニメーションマネージャー": new Contextmenu(
+    "アニメーションコレクター": new Contextmenu(
         [
-            {id: "マネージャー追加", children: [], targetFn: addObject.bind(null, "アニメーションマネージャー")},
+            {id: "マネージャー追加", children: [], targetFn: addObject.bind(null, "アニメーションコレクター")},
             {id: "マネージャー削除", children: [], targetFn: deleteA},
         ]
     ),

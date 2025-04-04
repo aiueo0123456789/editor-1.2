@@ -1,6 +1,6 @@
 import { activeView, editorParameters, keysDown } from "../../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../../UI/制御.js";
-import { transform } from "../../../../../../データマネージャー/変形.js";
+import { transform } from "../../../../../../機能/オペレーター/変形/変形.js";
 import { vec2 } from "../../../../../../ベクトル計算.js";
 import { calculateAllAverage } from "../../../../../../平均.js";
 import { createNextStateData } from "../../../../../状態遷移.js";

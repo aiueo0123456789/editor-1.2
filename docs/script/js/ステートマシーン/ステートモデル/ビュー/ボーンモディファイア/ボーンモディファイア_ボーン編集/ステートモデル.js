@@ -3,7 +3,7 @@ import { activeView, editorParameters, keysDown, stateMachine } from "../../../.
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
 import { allFalse } from "../../../../../utility.js";
 import { GPU } from "../../../../../webGPU.js";
-import { mesh } from "../../../../../データマネージャー/メッシュ.js";
+import { mesh } from "../../../../../機能/オペレーター/メッシュ/メッシュ.js";
 import { vec2 } from "../../../../../ベクトル計算.js";
 import { calculateAllAverage } from "../../../../../平均.js";
 import { createNextStateData, previousKeysDown } from "../../../../状態遷移.js";

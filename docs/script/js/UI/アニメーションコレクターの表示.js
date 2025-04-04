@@ -6,7 +6,7 @@ import { UI_createFromJSON } from "./UIの自動生成.js";
 import { World } from "./json/ワールド.js";
 import { Inspector } from "./json/インスペクタ.js";
 
-function updateAnimationManagerWeight(object, groupID, DOM) {
+function updateAnimationCollectorWeight(object, groupID, DOM) {
     let slider = DOM.slider;
     let input = DOM.input;
 
@@ -19,7 +19,7 @@ function updateAnimationManagerWeight(object, groupID, DOM) {
     input.value = object.weight;
 }
 
-function updateAnimationManager(object, groupID, DOM) {
+function updateAnimationCollector(object, groupID, DOM) {
     /** @type {HTMLElement} */
     const containerDiv = DOM.querySelector("div");
     const name = containerDiv.querySelector('input[type="text"]');
@@ -38,19 +38,19 @@ function updateHasKeyCheckbox(object, groupID, DOM, others) {
     // DOM.checked = true;
 }
 
-export function updateAnimationManagerList(object, groupID, DOM) {
+export function updateAnimationCollectorList(object, groupID, DOM) {
     /** @type {HTMLElement} */
     const ul = DOM;
 
     const hasKeyCheckboxs = [];
 
-    for (const /** @type {AnimationManager} */ animationManager of hierarchy.animationManagers) {
+    for (const /** @type {AnimationCollector} */ animationManager of hierarchy.animationManagers) {
         let listItem = managerForDOMs.getDOMInObject(animationManager, groupID);
         if (!listItem) {
             listItem = document.createElement("ul");
             const main = document.createElement("div");
             main.classList.add("animationManagerContainer");
-            createIcon(main, "アニメーションマネージャー");
+            createIcon(main, "アニメーションコレクター");
 
             const name = createDoubleClickInput(changeObjectName, animationManager);
 
@@ -86,8 +86,8 @@ export function updateAnimationManagerList(object, groupID, DOM) {
                 animationManager.setWeight(Number(weightInput.value));
             })
 
-            managerForDOMs.set(animationManager, groupID, {slider: weightSlider, input: weightInput}, updateAnimationManagerWeight, null, "ウェイト");
-            managerForDOMs.set(animationManager, groupID, listItem, updateAnimationManager);
+            managerForDOMs.set(animationManager, groupID, {slider: weightSlider, input: weightInput}, updateAnimationCollectorWeight, null, "ウェイト");
+            managerForDOMs.set(animationManager, groupID, listItem, updateAnimationCollector);
 
             const hasKeyCheckbox = createCheckbox();
 
@@ -112,7 +112,7 @@ export function updateAnimationManagerList(object, groupID, DOM) {
 
 
 // const jsonData = await readJsonFile("./script/js/UI/json/ワールド.json");
-export function displayAnimationManager(targetDiv, groupID) {
+export function displayAnimationCollector(targetDiv, groupID) {
     const UI = new Inspector();
     // targetDiv.replaceChildren();
     // const scrollable = document.createElement("ul");
@@ -121,8 +121,8 @@ export function displayAnimationManager(targetDiv, groupID) {
 
     // const scrollableTag = targetDiv.querySelector("ul");
 
-    // managerForDOMs.set("アニメーションマネージャー", groupID, scrollableTag, updateAnimationManagerList);
-    // managerForDOMs.update("アニメーションマネージャー");
+    // managerForDOMs.set("アニメーションコレクター", groupID, scrollableTag, updateAnimationCollectorList);
+    // managerForDOMs.update("アニメーションコレクター");
 
     // UI_createFromJSON(targetDiv,jsonData);
     UI_createFromJSON(targetDiv,UI.struct, UI.inputObject);
