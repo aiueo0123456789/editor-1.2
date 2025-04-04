@@ -1,5 +1,5 @@
-import { AnimationManager } from "./アニメーション/アニメーション";
-import { CreateObjectCommand, ObjectManager } from "./オブジェクト/オブジェクト";
+import { AnimationManager } from "./アニメーション/アニメーション.js";
+import { CreateObjectCommand, ObjectManager } from "./オブジェクト/オブジェクト.js";
 
 // undoとredoを実行
 class CommandStack {
@@ -33,7 +33,7 @@ class CommandStack {
 }
 
 // コマンド関係の管理
-class CommandManager {
+class Operator {
     constructor() {
         this.animation = new AnimationManager();
         this.object = new ObjectManager();
@@ -45,9 +45,12 @@ class CommandManager {
         this.commands.push(command);
     }
 
-    execute() {
+    update() {
+        while (this.commands.length != 0) {
+            const command = this.commands.pop();
+            this.stack.execute(command);
+        }
     }
 }
 
-const commandManager = new CommandManager();
-commandManager.appendCommand(new CreateObjectCommand(manager, "mesh", { vertices: [], faces: [] }));
+export const operator = new Operator();

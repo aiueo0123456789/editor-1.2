@@ -1,9 +1,11 @@
 import { activeView, editorParameters, keysDown } from "../../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../../UI/制御.js";
-import { transform } from "../../../../../../機能/オペレーター/変形/変形.js";
+import { transform } from "../../../../../../機能/オペレーター/変形/バックアップ.js";
 import { vec2 } from "../../../../../../ベクトル計算.js";
 import { calculateAllAverage } from "../../../../../../平均.js";
 import { createNextStateData } from "../../../../../状態遷移.js";
+import { TranslateCommand } from "../../../../../../機能/オペレーター/変形/トランスフォーム.js";
+import { operator } from "../../../../../../機能/オペレーター/オペレーター.js";
 
 export class StateModel_Vertices_Translate {
     constructor() {
@@ -35,8 +37,8 @@ export class StateModel_Vertices_Translate {
             transformValue: [0,0],
         };
         this.遷移ステート = [
-            createNextStateData([["/g"],["クリック"]], "$-1", {object: transform, targetFn: "createUndoData"}),
-            createNextStateData([["右クリック"]], "$-1", {object: transform, targetFn: "cancel"}),
+            createNextStateData([["/g"],["クリック"]], "$-1", {object: operator, targetFn: "update"}),
+            // createNextStateData([["右クリック"]], "$-1", {object: operator, targetFn: "cancel"}),
         ]
     }
 
@@ -45,12 +47,13 @@ export class StateModel_Vertices_Translate {
         this.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         this.transformValue = [0,0];
         calculateAllAverage(stateData.calculateSelectVerticesBBoxCenterGroup, 2);
-        transform.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         if (stateData.selectAnimation) {
-            transform.init(stateData.selectAnimation, stateData.selectIndexs);
+            stateData.command = new TranslateCommand(stateData.selectAnimation, stateData.selectIndexs);
         } else {
-            transform.init(stateData.activeObject, stateData.selectIndexs);
+            stateData.command = new TranslateCommand(stateData.activeObject, stateData.selectIndexs);
         }
+        operator.appendCommand(stateData.command);
+        stateData.command.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         stateData.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         stateData.transformValue = [0,0];
     }
@@ -63,7 +66,7 @@ export class StateModel_Vertices_Translate {
         } else if (keysDown["y"]) {
             vec2.mul(stateData.transformValue, stateData.transformValue, [0,1])
         }
-        transform.translate(stateData.transformValue, "ローカル", editorParameters.smoothType, editorParameters.smoothRadius);
+        stateData.command.update(stateData.transformValue, "ローカル", editorParameters.smoothType, editorParameters.smoothRadius);
     }
 
     finish(stateData) {

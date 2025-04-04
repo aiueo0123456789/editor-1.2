@@ -17,9 +17,10 @@ import { StateModel_BaseEditForBezierModifier } from "./ステートモデル/�
 import { StateModel_AnimationEditForBone } from "./ステートモデル/ビュー/ボーンモディファイア/ボーンモディファイア_アニメーション編集/ステートモデル.js";
 import { StateModel_AnimationEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ベジェモディファイア_アニメーション編集/ステートモデル.js";
 import { StateModel_AnimationEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_アニメーション編集/ステートモデル.js";
-import { transform } from "../機能/オペレーター/変形/変形.js";
+import { transform } from "../機能/オペレーター/変形/バックアップ.js";
 import { StateModel_WeightEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_ウェイト編集/ステートモデル.js";
 import { mesh } from "../機能/オペレーター/メッシュ/メッシュ.js";
+import { operator } from "../機能/オペレーター/オペレーター.js";
 
 function isPlainObject(obj) {
     return obj instanceof Object && Object.getPrototypeOf(obj) === Object.prototype;
@@ -211,9 +212,9 @@ export class StateMachine {
                             } else {
                                 console.warn("関数が見つかりません", resource);
                             }
-                            if (result.undoData) {
-                                this.addUndoData(result.undoData);
-                            }
+                            // if (result.undoData) {
+                            //     this.addUndoData(result.undoData);
+                            // }
                         }
 
                         let nextStateStruct;
@@ -327,11 +328,13 @@ export class StateMachine {
             }
             // 巻き戻し巻き戻しの取り消し
             if (keysDown["undo"]) {
-                this.undo();
+                // this.undo();
+                operator.stack.undo();
                 keysDown["undo"] = false;
             }
             if (keysDown["redo"]) {
-                this.redo();
+                // this.redo();
+                operator.stack.redo();
                 keysDown["redo"] = false;
             }
             activeView.mouseState.click = false;

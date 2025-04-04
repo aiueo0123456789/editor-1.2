@@ -7,6 +7,7 @@ import { renderingParameters } from './レンダリングパラメーター.js';
 import { updateObjectFromAnimation } from './オブジェクト/オブジェクトで共通の処理.js';
 import { EditorPreference } from './エディタ設定.js';
 import { GPU } from './webGPU.js';
+import { operator } from './機能/オペレーター/オペレーター.js';
 
 // updateLoad("", 100);
 updateLoad("test", 100, "test");
@@ -202,6 +203,7 @@ async function update() {
         }
         updateForUI();
         renderingParameters.updateKeyfarameCount();
+        operator.update();
         requestAnimationFrame(update);
     }
 }

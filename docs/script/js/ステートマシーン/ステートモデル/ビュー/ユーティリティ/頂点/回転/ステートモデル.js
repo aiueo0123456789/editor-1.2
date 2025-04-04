@@ -1,9 +1,10 @@
 import { activeView, editorParameters, keysDown } from "../../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../../UI/制御.js";
-import { transform } from "../../../../../../機能/オペレーター/変形/変形.js";
 import { vec2 } from "../../../../../../ベクトル計算.js";
 import { createNextStateData } from "../../../../../状態遷移.js";
 import { calculateAllAverage } from "../../../../../../平均.js";
+import { RotateCommand } from "../../../../../../機能/オペレーター/変形/トランスフォーム.js";
+import { operator } from "../../../../../../機能/オペレーター/オペレーター.js";
 
 export class StateModel_Vertices_Rotate {
     constructor() {
@@ -34,20 +35,21 @@ export class StateModel_Vertices_Rotate {
             transformValue: 0,
         };
         this.遷移ステート = [
-            createNextStateData([["/r"],["クリック"]], "$-1", {object: transform, targetFn: "createUndoData"}),
-            createNextStateData([["右クリック"]], "$-1", {object: transform, targetFn: "cancel"}),
+            createNextStateData([["/g"],["クリック"]], "$-1", {object: operator, targetFn: "update"}),
+            // createNextStateData([["右クリック"]], "$-1", {object: transform, targetFn: "cancel"}),
         ]
     }
 
     init(stateData) {
         if (stateData.selectIndexs.length == 0) return {cancel: true};
         calculateAllAverage(stateData.calculateSelectVerticesBBoxCenterGroup, 2);
-        transform.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         if (stateData.selectAnimation) {
-            transform.init(stateData.selectAnimation, stateData.selectIndexs);
+            stateData.command = new RotateCommand(stateData.selectAnimation, stateData.selectIndexs);
         } else {
-            transform.init(stateData.activeObject, stateData.selectIndexs);
+            stateData.command = new RotateCommand(stateData.activeObject, stateData.selectIndexs);
         }
+        operator.appendCommand(stateData.command);
+        stateData.command.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         stateData.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         stateData.transformValue = 0;
     }
@@ -55,7 +57,7 @@ export class StateModel_Vertices_Rotate {
     // 頂点を移動
     update(stateData) {
         stateData.transformValue += vec2.getAngularVelocity(stateData.selectBBoxForCenterPoint, activeView.mouseState.lastPositionForGPU, activeView.mouseState.movementForGPU);
-        transform.rotate(stateData.transformValue, "ローカル", editorParameters.smoothType, editorParameters.smoothRadius);
+        stateData.command.update(stateData.transformValue, "ローカル", editorParameters.smoothType, editorParameters.smoothRadius);
     }
 
     finish(stateData) {

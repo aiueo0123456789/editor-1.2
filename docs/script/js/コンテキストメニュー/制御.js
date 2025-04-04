@@ -1,6 +1,8 @@
 import { hierarchy } from "../ヒエラルキー.js";
 import { stateMachine } from '../main.js';
 import { appendAnimationToObject } from "../オブジェクト/オブジェクトで共通の処理.js";
+import { CreateObjectCommand } from "../機能/オペレーター/オブジェクト/オブジェクト.js";
+import { operator } from "../機能/オペレーター/オペレーター.js";
 
 function deleteA() {
     console.log("アニメーションの削除")
@@ -12,7 +14,7 @@ function deleteObject() {
 }
 
 function addObject(type) {
-    hierarchy.addEmptyObject(type);
+    operator.appendCommand(new CreateObjectCommand(operator.object, type, null));
 }
 
 function addAnimation() {

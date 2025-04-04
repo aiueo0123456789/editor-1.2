@@ -1,18 +1,20 @@
+import { hierarchy } from "../../../ヒエラルキー.js";
+
+function destroy(object) {
+    hierarchy.destroy(object);
+}
+
 // 管理クラス
 export class ObjectManager {
     constructor() {
-        this.objects = {}; // IDをキーにオブジェクトを管理
-        this.nextId = 1;
     }
 
     createObject(type, data) {
-        const id = this.nextId++;
-        this.objects[id] = { id, type, data };
-        return id;
+        return hierarchy.addEmptyObject(type);
     }
 
-    deleteObject(id) {
-        delete this.objects[id];
+    deleteObject(object) {
+        destroy(object);
     }
 }
 
@@ -22,36 +24,34 @@ export class CreateObjectCommand {
         this.manager = manager;
         this.type = type;
         this.data = data;
-        this.objectId = null;
+        this.object = null;
     }
 
     execute() {
-        this.objectId = this.manager.createObject(this.type, this.data);
+        this.object = this.manager.createObject(this.type, this.data);
     }
 
     undo() {
-        if (this.objectId !== null) {
-            this.manager.deleteObject(this.objectId);
+        if (this.object !== null) {
+            this.manager.deleteObject(this.object);
         }
     }
 }
 
 // 削除コマンド
 export class DeleteObjectCommand {
-    constructor(manager, id) {
+    constructor(manager, type, data) {
         this.manager = manager;
-        this.type = type;
-        this.data = data;
-        this.objectId = null;
+        this.object = null;
     }
 
     execute() {
-        this.objectId = this.manager.createObject(this.type, this.data);
+        this.object = this.manager.createObject(this.type, this.data);
     }
 
     undo() {
-        if (this.objectId !== null) {
-            this.manager.deleteObject(this.objectId);
+        if (this.object !== null) {
+            this.manager.createObject(this.object);
         }
     }
 }
