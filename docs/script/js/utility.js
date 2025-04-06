@@ -125,3 +125,7 @@ export function isUpperCase(char) {
 export function isLowerCase(char) {
     return char === char.toLowerCase() && char !== char.toUpperCase();
 }
+
+export function isFunction(t) {
+    return typeof t === 'function';
+}

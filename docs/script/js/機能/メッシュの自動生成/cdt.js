@@ -229,25 +229,24 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
         return A.filter(item => !setB.has(item));
     }
 
+    // 入力と出力のindexのズレを正すため
     // 線分制約に関わる頂点
     const cnEdgesIncludedVerticesIndex = [...new Set(cnEdges.flat())];
     for (const index of cnEdgesIncludedVerticesIndex) {
         inputIndexFromIndex.push(index);
     }
-
     // 線分線役に関わらない頂点
     const cnEdgesNotIncludedVerticesIndex = arrayDifference(createArrayN(inputVertices.length), cnEdgesIncludedVerticesIndex);
     for (const index of cnEdgesNotIncludedVerticesIndex) {
         inputIndexFromIndex.push(index);
     }
-    console.log(inputIndexFromIndex)
 
     const S = []; // スタック
     // 線分制約に関わる頂点Pを図形に追加
     for (const index of cnEdgesIncludedVerticesIndex) {
         appendVertex(index);
     }
-    console.log("線分制約に関わる頂点Pを図形に追加")
+    // console.log("線分制約に関わる頂点Pを図形に追加")
 
     // 制約線分の復帰
     const K = []; // キュー
@@ -305,12 +304,12 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
         }
     }
     roopStack();
-    console.log("制約線分の復帰")
+    // console.log("制約線分の復帰")
     // 線分制約に関わらない頂点Pの追加
     for (const index of cnEdgesNotIncludedVerticesIndex) {
         appendVertex(index);
     }
-    console.log("線分制約に関わらない頂点Pの追加")
+    // console.log("線分制約に関わらない頂点Pの追加")
 
     // 頂点全てを包む三角形を消す
     vertices.splice(0,1);

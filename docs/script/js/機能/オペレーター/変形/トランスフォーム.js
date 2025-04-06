@@ -94,8 +94,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 `);
 
 class TransformCommand {
-    constructor(target, selectIndexs, type) {
-        this.type = type;
+    constructor(target, selectIndexs) {
         this.target = null;
         this.worldOriginalBuffer = null;
         this.valueBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);

@@ -7,6 +7,7 @@ import { updateObject,setParentModifierWeight, searchAnimation } from "./オブ�
 import { createID, managerForDOMs, updateDataForUI } from "./UI/制御.js";
 import { BoneModifier } from "./オブジェクト/ボーンモディファイア.js";
 import { renderingParameters } from "./レンダリングパラメーター.js";
+import { operator } from "./機能/オペレーター/オペレーター.js";
 
 export function changeObjectName(object, newName) {
     object.name = newName;
@@ -168,6 +169,17 @@ class Hierarchy {
             return [this.boneModifiers, this.boneModifiers.indexOf(object)];
         } else if (object.type == "アニメーションコレクター") {
             return [this.animationCollectors, this.animationCollectors.indexOf(object)];
+        }
+    }
+
+    deleteObjectInHierarchy(object) {
+        if (!object) {
+            operator.appendErrorLog("無効なobjectを受け取りました");
+        } else {
+            this.allObject.splice(this.allObject.indexOf(object),1);
+            const [array, indexe] = this.searchObject(object);
+            array.splice(indexe, 1);
+            this.deleteHierarchy(object);
         }
     }
 
@@ -376,6 +388,7 @@ class Hierarchy {
             this.allObject.push(object);
             this.addHierarchy("", object);
         }
+        return object;
     }
 
     changeObjectName(object, newName) {

@@ -20,8 +20,16 @@ import { displayProperty } from "./プロパティの表示.js";
 import { FunctionTranceShelfe, TranceShelfe } from "./シェリフ.js";
 import { displayRenderingOrder } from "./表示順番の表示.js";
 import { displayLayer } from "./レイヤーの表示.js";
+import { CommandStack } from "./json/デバッグ.js";
+import { CreatorForUI } from "./UIの自動生成.js";
 
 export const managerForDOMs = new DOMsManager();
+
+function displayCommandStack(targetDiv, groupID) {
+    const UI_ = new CommandStack();
+    const ui = new CreatorForUI();
+    ui.create(targetDiv,UI_.struct, UI_.inputObject);
+}
 
 const modes = {
     "ビュー": displayHierarchy,
@@ -34,6 +42,7 @@ const modes = {
     "プロパティ": displayProperty,
     "タイムライン": displayTimeLine,
     "グラフエディタ": displayGraphEditor,
+    "デバッグ": displayCommandStack,
 };
 
 export const updateDataForUI = {
@@ -69,6 +78,97 @@ const objectDataAndRelateTags = new Map();
 
 const gridInteriorObjects = [];
 
+// export class GridInterior {
+//     constructor(tag, initMode) {
+//         gridInteriorObjects.push(this);
+//         this.groupID = createID();
+//         this.config = {};
+//         this.targetTag = tag;
+//         this.targetTag.className = "grid-container";
+
+//         this.modeDiv = document.createElement("div");
+//         this.modeDiv.className = "modeSelect";
+
+//         this.modeSelectTag = document.createElement('select');
+//         setModeSelectOption(this.modeSelectTag, initMode);
+
+//         this.mainDiv = document.createElement("div");
+//         this.mainDiv.className = "grid-main";
+
+//         this.modeDiv.append(this.modeSelectTag, this.createModeToolBar(initMode));
+
+//         this.targetTag.append(this.modeDiv, this.mainDiv);
+
+//         this.tags = new Map();
+
+//         this.modeSelectTag.addEventListener('change', () => {
+//             if (this.modeSelectTag.value == "ビュー") {
+//                 this.mainDiv.className = "grid-main";
+//                 this.mainDiv.replaceChildren();
+//                 managerForDOMs.deleteGroup(this.groupID);
+//                 resetTag(this.tags);
+//                 this.targetTag.innerHTML = "";
+//                 gridInteriorObjects.splice(gridInteriorObjects.indexOf(this), 1);
+//                 new View(this.targetTag);
+//             } else {
+//                 this.mainDiv.className = "grid-main";
+//                 this.mainDiv.replaceChildren();
+//                 managerForDOMs.deleteGroup(this.groupID);
+//                 resetTag(this.tags);
+//                 // this.modeDiv.append(this.modeSelectTag, this.createModeToolBar(this.modeSelectTag.value));
+//                 this.tags.clear();
+//                 modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
+//             }
+//         });
+
+//         modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
+
+//         this.mainDiv.addEventListener('contextmenu', (e) => {
+//             e.preventDefault();
+//             updateForContextmenu(this.modeSelectTag.value,[e.clientX,e.clientY]);
+//         });
+//     }
+
+//     createModeToolBar(mode) {
+//         if (mode == "オブジェクト") {
+//             const tagDiv = document.createElement("div");
+//             const filteringSelectTag = document.createElement('select');
+//             for (const type of ["すべて","グラフィックメッシュ","モディファイア","ベジェモディファイア","回転モディファイア"]) {
+//                 const filteringSelectOptionTag = document.createElement('option');
+//                 filteringSelectOptionTag.textContent = type;
+//                 filteringSelectOptionTag.value = type;
+//                 filteringSelectTag.appendChild(filteringSelectOptionTag);
+//             }
+//             filteringSelectTag.addEventListener('change', () => {
+//                 displayObjects(this.mainDiv,false,filteringSelectTag.value);
+//             });
+//             tagDiv.append(filteringSelectTag);
+//             return tagDiv;
+//         } else if (mode == "アニメーション") {
+//             const tagDiv = document.createElement("div");
+//             return tagDiv;
+//         } else if (mode == "タイムライン") {
+//             const tagDiv = document.createElement("div");
+//             const isReplayCheckbox = document.createElement("input");
+//             isReplayCheckbox.type = "checkbox";
+//             isReplayCheckbox.checked = renderingParameters.isReplay;
+//             isReplayCheckbox.addEventListener("change", () => {
+//                 renderingParameters.isReplay = isReplayCheckbox.checked;
+//             })
+//             tagDiv.append(isReplayCheckbox);
+//             return tagDiv;
+//         }
+//         const tagDiv = document.createElement("div");
+//         return tagDiv;
+//     }
+
+//     update(updateData) {
+//         if (updateData[this.modeSelectTag.value]) {
+//             managerForDOMs.deleteGroup(this.groupID);
+//             modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
+//         }
+//     }
+// }
 export class GridInterior {
     constructor(tag, initMode) {
         gridInteriorObjects.push(this);
@@ -214,6 +314,20 @@ export function createID() {
     var S="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     var N=16;
     return Array.from(Array(N)).map(()=>S[Math.floor(Math.random()*S.length)]).join('');
+}
+
+export function createTag(target, type, option = {}) {
+    const element = document.createElement(type);
+    target.append(element);
+    for (const key in option) {
+        if (key == "class") {
+            console.log("クラス", option[key].split(" ").filter(Boolean))
+            element.classList.add(...option[key].split(" ").filter(Boolean));
+        } else {
+            element[key] = option[key];
+        }
+    }
+    return element;
 }
 
 export function createLabeledVecInput(target, axis, name, inputId) {

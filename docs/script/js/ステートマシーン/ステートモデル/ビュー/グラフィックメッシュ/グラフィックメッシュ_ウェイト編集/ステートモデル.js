@@ -1,6 +1,7 @@
 import { activeView, editorParameters, keysDown, stateMachine } from "../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
 import { GPU } from "../../../../../webGPU.js";
+import { WeightPaintCommand } from "../../../../../機能/オペレーター/メッシュ/ウェイトペイント.js";
 import { mesh, weightPaint } from "../../../../../機能/オペレーター/メッシュ/メッシュ.js";
 import { createNextStateData, previousKeysDown } from "../../../../状態遷移.js";
 
@@ -26,19 +27,19 @@ export class StateModel_WeightEditForGraphicMesh {
             }
         ];
         this.データ構造 = {
-            initBool: false,
             activeObject: "&-",
-            targetBoneIndex: 0,
-            targetBoneIndexBuffer: {GPU: true, type: "buffer", byteSize: 1 * 4},
-            targetBoneGroup: {GPU: true, type: "group", layout: GPU.getGroupLayout("Vsr"), items: ["&targetBoneIndexBuffer"]},
+            targetBoneIndex: {isInclude: "&-", not: 0},
+            targetBoneIndexBuffer: {isInclude: "&-", not: {GPU: true, type: "buffer", byteSize: 1 * 4}},
+            targetBoneGroup: {isInclude: "&-", not: {GPU: true, type: "group", layout: GPU.getGroupLayout("Vsr"), items: ["&targetBoneIndexBuffer"]}},
         };
         this.遷移ステート = [
             createNextStateData([["/w"],["/Tab"]], "$-1"),
+            createNextStateData([["クリック","!Alt"]], "ウェイトペイント"),
         ]
     }
 
     init(stateData) {
-        GPU.writeBuffer(stateData.targetBoneIndexBuffer, new Uint32Array([0]));
+        GPU.writeBuffer(stateData.targetBoneIndexBuffer, new Uint32Array([stateData.targetBoneIndex]));
     }
 
     async update(stateData) {
@@ -50,14 +51,6 @@ export class StateModel_WeightEditForGraphicMesh {
                     GPU.writeBuffer(stateData.targetBoneIndexBuffer, new Uint32Array([stateData.targetBoneIndex]));
                 }
             }
-        } else if (activeView.mouseState.holdFrameCount > 2) {
-            if (!stateData.initBool) {
-                weightPaint.init(stateData.activeObject, stateData.targetBoneIndex, this.options[3], this.options[2], this.options[1]);
-                stateData.initBool = true;
-            }
-            weightPaint.paint(activeView.mouseState.positionForGPU);
-        } else {
-            stateData.initBool = false;
         }
     }
 

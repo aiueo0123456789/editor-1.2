@@ -246,12 +246,6 @@ export class TransformCommand {
     }
 }
 
-export class VerticesTransformCommand extends TransformCommand {
-    constructor() {
-        
-    }
-}
-
 export const transform = new TransformCommand();
 transform.translate.argumentArray = [
     {name: "変化量", type: {type: "入力", inputType: "ベクトル", option: {initValue: [0,0], axis: ["x","y"]}}},

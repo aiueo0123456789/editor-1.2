@@ -21,6 +21,7 @@ import { transform } from "../機能/オペレーター/変形/バックアッ�
 import { StateModel_WeightEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_ウェイト編集/ステートモデル.js";
 import { mesh } from "../機能/オペレーター/メッシュ/メッシュ.js";
 import { operator } from "../機能/オペレーター/オペレーター.js";
+import { StateModel_WeightPaint } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_ウェイト編集/ウェイトペイント/ステートモデル.js";
 
 function isPlainObject(obj) {
     return obj instanceof Object && Object.getPrototypeOf(obj) === Object.prototype;
@@ -56,7 +57,7 @@ export class StateMachine {
             StateModel_BoneModifier,StateModel_BoneEditForBoneModifier,StateModel_AnimationEditForBone,
             StateModel_Modifier,StateModel_MeshEditForModifier,
             StateModel_BezierModifier,StateModel_BaseEditForBezierModifier,StateModel_AnimationEditForBezierModifier,
-            StateModel_Vertices_Translate,StateModel_Vertices_Resize,StateModel_Vertices_Rotate,
+            StateModel_Vertices_Translate,StateModel_Vertices_Resize,StateModel_Vertices_Rotate,StateModel_WeightPaint
         ];
 
         // ステートモデルからデータを作成
@@ -282,25 +283,27 @@ export class StateMachine {
                                     }
                                 }
                             }
-                        } else {
-                            console.warn("ステートが定義されていません",nextStateStrings,nextState,data,nextStateStruct)
-                        }
-                        console.log("次のデータ",newData)
-                        const oldData = this.state;
-                        this.state = {stateID: nextState, data: newData, structClass: nextStateStruct};
-                        console.log("次のステート",this.state)
-                        let result = null;
-                        if (nextStateStruct.init && typeof nextStateStruct.init === 'function') result = nextStateStruct.init(newData);
-                        if (result && result.cancel) {
-                            this.state = oldData;
-                            console.log("キャンセル",this.state)
-                        } else if (!data.ステート変更後ループさせるか) {
-                            if (nextStateStruct.シェリフ) {
-                                activeView.deleteAll();
-                                for (const shelf of nextStateStruct.シェリフ) {
-                                    activeView.addTranceShelfe(shelf.targetObject, shelf.argumentArray, shelf.name);
+                            console.log("次のデータ",newData)
+                            const oldData = this.state;
+                            this.state = {stateID: nextState, data: newData, structClass: nextStateStruct};
+                            console.log("次のステート",this.state)
+                            let result = null;
+                            if (nextStateStruct.init && typeof nextStateStruct.init === 'function') result = nextStateStruct.init(newData);
+                            if (result && result.cancel) {
+                                this.state = oldData;
+                                console.log("キャンセル",this.state)
+                            } else if (!data.ステート変更後ループさせるか) {
+                                if (nextStateStruct.シェリフ) {
+                                    activeView.deleteAll();
+                                    for (const shelf of nextStateStruct.シェリフ) {
+                                        activeView.addTranceShelfe(shelf.targetObject, shelf.argumentArray, shelf.name);
+                                    }
                                 }
+                                roop = false;
                             }
+                        } else {
+                            operator.appendErrorLog(`ステートの未定義`);
+                            console.warn("ステートが定義されていません",nextStateStrings,nextState,data,nextStateStruct)
                             roop = false;
                         }
                         return true;

@@ -3,13 +3,13 @@ import { GPU } from "../webGPU.js";
 import { appendAnimationToObject, deleteAnimationToObject, updateCenterPosition } from "../オブジェクト/オブジェクトで共通の処理.js";
 import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
 import { stateMachine } from '../main.js';
-import { vec2 } from "../ベクトル計算.js";
 import { TextureToCVS } from "../キャンバスにテクスチャを表示.js";
 import { createCheckbox, createIcon, createLabeledInput, createLabeledSelect, createLabeledVecInput, createMinButton, createSection, managerForDOMs, setRangeStyle, updateDataForUI } from "./制御.js";
 import { ResizerForDOM } from "./resizer.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
-import { createMeshFromTexture } from "../機能/メッシュの自動生成/画像からメッシュを作る.js";
-import { hexToRgba, hexToRgbaArray, rgbToHex } from "../utility.js";
+import { hexToRgbaArray, rgbToHex } from "../utility.js";
+import { SetParentObjectManager } from "../機能/オペレーター/オブジェクト/オブジェクト.js";
+import { operator } from "../機能/オペレーター/オペレーター.js";
 
 function updateAnimationDOM(object, groupID, DOM) {
     const listItem = DOM;
@@ -159,6 +159,8 @@ function updateBasicDOM(object, groupID, DOM) {
     nameInput.value = object.name;
 
     const parentSelect = basicSection.querySelector('[name="親要素の選択"]').querySelector("select");
+    console.log("おや",parentSelect);
+    parentSelect.replaceChildren();
     if (true) {
         const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
         sleectElement.value = ""; // h1要素に配列の要素を設定
@@ -170,7 +172,7 @@ function updateBasicDOM(object, groupID, DOM) {
     }
     const createModifierOptionTag = (modifier,type) => {
         const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
-        sleectElement.value = `${type}${modifier.name}`; // h1要素に配列の要素を設定
+        sleectElement.value = `${modifier.id}`; // h1要素に配列の要素を設定
         sleectElement.textContent = `${modifier.name}`; // h1要素に配列の要素を設定
         if (object.parent == modifier) {
             sleectElement.selected = true;
@@ -189,18 +191,6 @@ function updateBasicDOM(object, groupID, DOM) {
     hierarchy.boneModifiers.forEach(modifier => {
         createModifierOptionTag(modifier,"bm");
     })
-    parentSelect.addEventListener('change', () => {
-        if (parentSelect.value == "") {
-            hierarchy.sortHierarchy("", object);
-        } else {
-            let type;
-            if (parentSelect.value.slice(0,2) == "_m") type = "モディファイア";
-            if (parentSelect.value.slice(0,2) == "lm") type = "ベジェモディファイア";
-            if (parentSelect.value.slice(0,2) == "rm") type = "回転モディファイア";
-            if (parentSelect.value.slice(0,2) == "bm") type = "ボーンモディファイア";
-            hierarchy.sortHierarchy(hierarchy.searchObjectFromName(parentSelect.value.slice(2), type), object);
-        }
-    });
 
     const sizeContainer = basicSection.querySelector('[name="大きさ入力"]');
     sizeContainer.querySelector('[name="大きさ入力-w"]').value = object.editor.BBox.max[0] - object.editor.BBox.min[0];
@@ -279,57 +269,21 @@ export function displayInspector(targetDiv, groupID) {
         nameInput.addEventListener("change", eventFnChangeObjectName.bind(null, nameInput, object));
 
         const parentSelect = createLabeledSelect(basicSection, "親要素:", "親要素の選択");
-        if (true) {
-            const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
-            sleectElement.value = ""; // h1要素に配列の要素を設定
-            sleectElement.textContent = "なし"; // h1要素に配列の要素を設定
-            if (!object.parent) {
-                sleectElement.selected = true;
-            }
-            parentSelect.append(sleectElement);
-        }
-        const createModifierOptionTag = (modifier,type) => {
-            const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
-            sleectElement.value = `${type}${modifier.name}`; // h1要素に配列の要素を設定
-            sleectElement.textContent = `${modifier.name}`; // h1要素に配列の要素を設定
-            if (object.parent == modifier) {
-                sleectElement.selected = true;
-            }
-            parentSelect.append(sleectElement);
-        }
-        hierarchy.modifiers.forEach(modifier => {
-            createModifierOptionTag(modifier,"_m");
-        })
-        hierarchy.bezierModifiers.forEach(modifier => {
-            createModifierOptionTag(modifier,"lm");
-        })
-        hierarchy.rotateModifiers.forEach(modifier => {
-            createModifierOptionTag(modifier,"rm");
-        })
-        hierarchy.boneModifiers.forEach(modifier => {
-            createModifierOptionTag(modifier,"bm");
-        })
         parentSelect.addEventListener('change', () => {
             if (parentSelect.value == "") {
                 hierarchy.sortHierarchy("", object);
             } else {
-                let type;
-                if (parentSelect.value.slice(0,2) == "_m") type = "モディファイア";
-                if (parentSelect.value.slice(0,2) == "lm") type = "ベジェモディファイア";
-                if (parentSelect.value.slice(0,2) == "rm") type = "回転モディファイア";
-                if (parentSelect.value.slice(0,2) == "bm") type = "ボーンモディファイア";
-                hierarchy.sortHierarchy(hierarchy.searchObjectFromName(parentSelect.value.slice(2), type), object);
+                operator.appendCommand(new SetParentObjectManager(object, hierarchy.searchObjectFromID(parentSelect.value)));
             }
-            managerForDOMs.update(object);
         });
-    
+
         basicSection.appendChild(document.createElement("p")).textContent = "大きさ";
-    
+
         const {container: sizeContainer, axis0: sizeInputForW, axis1: sizeInputForH} = createLabeledVecInput(basicSection, ["w","h"], "大きさ入力");
-    
+
         sizeInputForW.value = object.editor.BBox.max[0] - object.editor.BBox.min[0];
         sizeInputForH.value = object.editor.BBox.max[1] - object.editor.BBox.min[1];
-    
+
         basicSection.appendChild(document.createElement("p")).textContent = "位置";
 
         const changeCenterPositionFn = () => {
@@ -572,4 +526,6 @@ export function displayInspector(targetDiv, groupID) {
 
         createSection(scrollableDiv, "アニメーション", animationSection);
     }
+
+    managerForDOMs.updateGroupInObject(object, groupID);
 }

@@ -36,6 +36,34 @@ export class DOMsManager {
         i.set(groupID, [DOM, updateFn, others]);
     }
 
+    delete(object, groupID, ID) {
+        const a = new Map();
+        const o = this.objectsMap.get(object);
+        if (o) {
+            const i = o.get(ID);
+            if (i) {
+                const g = i.get(groupID);
+                if (g) {
+                    const fn = (data) => {
+                        if (data instanceof HTMLElement) {
+                            data.remove();
+                        } else if (isPlainObject(data)) {
+                            for (const key in data) {
+                                fn(data[key]);
+                            }
+                        } else if (Array.isArray(data)) {
+                            for (const value of data) {
+                                fn(value);
+                            }
+                        }
+                    }
+                    fn(g);
+                    i.delete(groupID);
+                }
+            }
+        }
+    }
+
     getGroupInObject(object, groupID, ID = "defo") {
         const o = this.objectsMap.get(object);
         if (o) {
@@ -48,6 +76,20 @@ export class DOMsManager {
             }
         }
         return null;
+    }
+
+    getGroupAndID(groupID, ID) {
+        const result = new Map();
+        this.objectsMap.forEach((o, object) => {
+            const i = o.get(ID)
+            if (i) {
+                const g = i.get(groupID);
+                if (g) {
+                    result.set(object,g);
+                }
+            }
+        });
+        return result;
     }
 
     getDOMInObject(object, groupID, ID = "defo") {

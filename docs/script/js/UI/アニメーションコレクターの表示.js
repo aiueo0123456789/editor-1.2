@@ -2,7 +2,7 @@ import { readJsonFile } from "../utility.js";
 import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
 import { renderingParameters } from "../レンダリングパラメーター.js";
 import { createCheckbox, createDoubleClickInput, createIcon, managerForDOMs, setRangeStyle } from "./制御.js";
-import { UI_createFromJSON } from "./UIの自動生成.js";
+import { CreatorForUI } from "./UIの自動生成.js";
 import { World } from "./json/ワールド.js";
 import { Inspector } from "./json/インスペクタ.js";
 
@@ -113,17 +113,7 @@ export function updateAnimationCollectorList(object, groupID, DOM) {
 
 // const jsonData = await readJsonFile("./script/js/UI/json/ワールド.json");
 export function displayAnimationCollector(targetDiv, groupID) {
-    const UI = new Inspector();
-    // targetDiv.replaceChildren();
-    // const scrollable = document.createElement("ul");
-    // scrollable.classList.add("scrollable","gap-2px");
-    // targetDiv.append(scrollable);
-
-    // const scrollableTag = targetDiv.querySelector("ul");
-
-    // managerForDOMs.set("アニメーションコレクター", groupID, scrollableTag, updateAnimationCollectorList);
-    // managerForDOMs.update("アニメーションコレクター");
-
-    // UI_createFromJSON(targetDiv,jsonData);
-    UI_createFromJSON(targetDiv,UI.struct, UI.inputObject);
+    const UI_ = new Inspector();
+    const ui = new CreatorForUI();
+    ui.create(targetDiv,UI_.struct, UI_.inputObject);
 }

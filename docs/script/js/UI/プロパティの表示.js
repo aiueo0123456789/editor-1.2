@@ -3,7 +3,7 @@ import { hexToRgba } from "../utility.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
 import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
 import { World } from "./json/ワールド.js";
-import { UI_createFromJSON } from "./UIの自動生成.js";
+import { CreatorForUI } from "./UIの自動生成.js";
 import { updateAnimationCollectorList } from "./アニメーションコレクターの表示.js";
 import { createIcon, createLabeledInput, createMinList, createSection, managerForDOMs } from "./制御.js";
 
@@ -139,6 +139,7 @@ function updateMaskTextureList(object, groupID, DOM) {
 //     }
 // }
 export function displayProperty(targetDiv, groupID) {
-    const UI = new World();
-    UI_createFromJSON(targetDiv,UI.struct, UI.inputObject);
+    const UI_ = new World();
+    const ui = new CreatorForUI();
+    ui.create(targetDiv,UI_.struct, UI_.inputObject);
 }

@@ -13,9 +13,9 @@ export class Inspector {
             inputObject: {h: "hierarchy"},
             DOM: [
                 {type: "section", name: "test", children: [
-                    {type: "input", "label": "test0", name: "test0", min: 0, max: 10, withObject: {object: "h/graphicMeshs/0", parameter: "zIndex"}},
-                    {type: "input", "label": "test1", name: "test1", min: 0, max: 10, withObject: {object: "h/graphicMeshs/0", parameter: "zIndex"}},
-                    {type: "list", "option": "min", name: "test2", withObject: {object: "s/state/data/activeObject/animationBlock/animationBlock"}, liStruct: [
+                    {type: "input", label: "test0", name: "test0", min: 0, max: 10, withObject: {object: "h/graphicMeshs/0", parameter: "zIndex"}},
+                    {type: "input", label: "test1", name: "test1", min: 0, max: 10, withObject: {object: "h/graphicMeshs/0", parameter: "zIndex"}},
+                    {type: "list", option: "min", name: "test2", withObject: {object: "s/state/data/activeObject/animationBlock/animationBlock"}, liStruct: [
                         {type: "div", "style": "flex", children: [
                             {type: "dbInput", withObject: {object: "", parameter: "name"}},
                             // {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},

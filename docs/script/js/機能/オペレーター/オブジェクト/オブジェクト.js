@@ -1,9 +1,5 @@
 import { hierarchy } from "../../../ヒエラルキー.js";
 
-function destroy(object) {
-    hierarchy.destroy(object);
-}
-
 // 管理クラス
 export class ObjectManager {
     constructor() {
@@ -14,7 +10,7 @@ export class ObjectManager {
     }
 
     deleteObject(object) {
-        destroy(object);
+        hierarchy.deleteObjectInHierarchy(object);
     }
 }
 
@@ -53,5 +49,25 @@ export class DeleteObjectCommand {
         if (this.object !== null) {
             this.manager.createObject(this.object);
         }
+    }
+}
+
+export class SetParentObjectManager {
+    constructor(target, parent) {
+        console.log("かおwdじ")
+        this.target = target;
+        this.parent = parent;
+        this.beforeParent = null;
+    }
+
+    execute() {
+        console.log("実行",this.parent,this.target)
+        this.beforeParent = this.target.parent;
+        hierarchy.sortHierarchy(this.parent,this.target);
+    }
+
+    undo() {
+        console.log("巻き戻し",this.beforeParent,this.target)
+        hierarchy.sortHierarchy(this.beforeParent,this.target);
     }
 }
