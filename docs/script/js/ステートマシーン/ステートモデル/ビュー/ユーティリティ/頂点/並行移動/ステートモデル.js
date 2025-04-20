@@ -1,11 +1,10 @@
 import { activeView, editorParameters, keysDown } from "../../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../../UI/制御.js";
-import { transform } from "../../../../../../機能/オペレーター/変形/バックアップ.js";
 import { vec2 } from "../../../../../../ベクトル計算.js";
 import { calculateAllAverage } from "../../../../../../平均.js";
 import { createNextStateData } from "../../../../../状態遷移.js";
 import { TranslateCommand } from "../../../../../../機能/オペレーター/変形/トランスフォーム.js";
-import { operator } from "../../../../../../機能/オペレーター/オペレーター.js";
+import { app } from "../../../../../../app.js";
 
 export class StateModel_Vertices_Translate {
     constructor() {
@@ -22,6 +21,7 @@ export class StateModel_Vertices_Translate {
                 ]
             }
         ];
+        this.mouseStateModel = "move";
         this.データ構造 = {
             activeObject: "&-",
             selectAnimation: {isInclude: "&-", not: null},
@@ -29,6 +29,7 @@ export class StateModel_Vertices_Translate {
             selectIndexsGroup: "&-",
             selectBBoxForCenterPoint: "&-",
             selectBBoxBuffer: "&-",
+            selectBBoxGroup: "&-",
             referenceCoordinatesBuffer: "&-",
             selectBBoxRenderGroup: "&-",
             referenceCoordinatesRenderGroup: "&-",
@@ -37,7 +38,7 @@ export class StateModel_Vertices_Translate {
             transformValue: [0,0],
         };
         this.遷移ステート = [
-            createNextStateData([["/g"],["クリック"]], "$-1", {object: operator, targetFn: "update"}),
+            createNextStateData([["/g"],["クリック"]], "$-1", {object: app.operator, targetFn: "update"}),
             // createNextStateData([["右クリック"]], "$-1", {object: operator, targetFn: "cancel"}),
         ]
     }
@@ -52,7 +53,7 @@ export class StateModel_Vertices_Translate {
         } else {
             stateData.command = new TranslateCommand(stateData.activeObject, stateData.selectIndexs);
         }
-        operator.appendCommand(stateData.command);
+        app.operator.appendCommand(stateData.command);
         stateData.command.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         stateData.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         stateData.transformValue = [0,0];

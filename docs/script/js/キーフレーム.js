@@ -217,7 +217,7 @@ export class KeyframeBlockForGPUBuffer {
         if (this.keys.length == 0) return ;
         let leftKey = this.keys[0];
         let rightKey = this.keys[0];
-        for (const key of this.keys) {
+        for (const key of this.keys.slice(1)) {
             leftKey = rightKey;
             rightKey = key;
             if (frame < key.frame) {

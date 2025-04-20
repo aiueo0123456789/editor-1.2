@@ -1,6 +1,6 @@
+import { app } from "../../../../app.js";
 import { activeView } from "../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../UI/制御.js";
-import { hierarchy } from "../../../../ヒエラルキー.js";
 import { createNextStateData } from "../../../状態遷移.js";
 import { updateForHoverObjects } from "../ユーティリティ/関数.js";
 
@@ -29,13 +29,13 @@ export class StateModel_BezierModifier {
         this.遷移ステート = [
             createNextStateData([["/m"]], "ベジェモディファイア_ベース編集"),
             createNextStateData([["/a"]], "ベジェモディファイア_アニメーション編集"),
-            createNextStateData([["/w"]], "モディファイア_ウェイト編集"),
+            createNextStateData([["/w"]], "ベジェモディファイア_ウェイト編集"),
             createNextStateData([["クリック"],["input-ヒエラルキーのオブジェクト選択"]], "$-1", null, true),
         ]
     }
 
     init(stateData) {
-        managerForDOMs.update(hierarchy);
+        managerForDOMs.update(app.hierarchy);
         updateDataForUI["インスペクタ"] = true;
     }
 

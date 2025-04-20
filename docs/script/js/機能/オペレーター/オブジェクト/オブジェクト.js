@@ -1,4 +1,4 @@
-import { hierarchy } from "../../../ヒエラルキー.js";
+import { app } from "../../../app.js";
 
 // 管理クラス
 export class ObjectManager {
@@ -6,11 +6,19 @@ export class ObjectManager {
     }
 
     createObject(type, data) {
-        return hierarchy.addEmptyObject(type);
+        return app.scene.createObject({type: type});
     }
 
     deleteObject(object) {
-        hierarchy.deleteObjectInHierarchy(object);
+        app.scene.deleteObject(object);
+    }
+
+    changeParent(object, newParent) {
+        app.hierarchy.sortHierarchy(newParent,object);
+    }
+
+    changeMode(object, newMode) {
+        object.mode = newMode;
     }
 }
 
@@ -53,8 +61,8 @@ export class DeleteObjectCommand {
 }
 
 export class SetParentObjectManager {
-    constructor(target, parent) {
-        console.log("かおwdじ")
+    constructor(manager, target, parent) {
+        this.manager = manager;
         this.target = target;
         this.parent = parent;
         this.beforeParent = null;
@@ -63,11 +71,12 @@ export class SetParentObjectManager {
     execute() {
         console.log("実行",this.parent,this.target)
         this.beforeParent = this.target.parent;
-        hierarchy.sortHierarchy(this.parent,this.target);
+        this.manager.changeParent(this.target, this.parent);
     }
 
     undo() {
         console.log("巻き戻し",this.beforeParent,this.target)
-        hierarchy.sortHierarchy(this.beforeParent,this.target);
+        this.manager.changeParent(this.target, this.beforeParent);
+
     }
 }

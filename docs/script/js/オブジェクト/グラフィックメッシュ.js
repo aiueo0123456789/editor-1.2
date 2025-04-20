@@ -1,31 +1,39 @@
 import { device,GPU } from "../webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
 import { isNotTexture } from "../GPUObject.js";
-import { renderObjectManager } from "../main.js";
-import { setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { createID } from "../UI/制御.js";
+import { BoundingBox, ObjectBase, ObjectEditorBase, setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { indexOfSplice } from "../utility.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../機能/メッシュの自動生成/画像からメッシュを作る.js";
 import { createBBox } from "../BBox.js";
+import { app } from "../app.js";
 
-class EditorGPU {
+class Vert {
     constructor() {
-        this.groups = {};
-        this.buffers = {};
+        this.index = 0;
+        this.select = true;
     }
 }
 
-class Editor {
+class Mesh {
+    constructor() {
+        this.vertices = [];
+    }
+
+    getVertices() {
+
+    }
+}
+
+class Editor extends ObjectEditorBase {
     constructor(graphicMesh) {
+        super();
         this.baseVertices = [];
         this.baseEdges = [];
         this.baseSilhouetteEdges = [];
-        this.BBox = {min: [0,0], max: [0,0], width: 0, height: 0, center: [0,0]};
         this.graphicMesh = graphicMesh;
-        this.imageBBox = {min: [0,0], max: [0,0], width: 0, height: 0, center: [0,0]};
+        this.imageBBox = new BoundingBox();
         this.imageBBoxBuffer = GPU.createUniformBuffer(2 * 4 + 2 * 4, undefined, ["f32"]);
-        this.gpu = new EditorGPU();
 
         this.baseSilhouetteEdgesBuffer = null;
         this.baseSilhouetteEdgesRenderGroup = null;
@@ -41,14 +49,14 @@ class Editor {
     }
 
     setDataForGPU() {
-        if (this.baseSilhouetteEdges.length) {
-            this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(this.baseSilhouetteEdges.length * 2 * 4, this.baseSilhouetteEdges.flat(), ["u32","u32"]);
-            this.baseSilhouetteEdgesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.graphicMesh.RVrt_coBuffer, this.baseSilhouetteEdgesBuffer]);
-        }
-        if (this.baseEdges.length) {
-            this.baseEdgesBuffer = GPU.createStorageBuffer(this.baseEdges.length * 2 * 4, this.baseEdges.flat(), ["u32","u32"]);
-            this.baseEdgesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.graphicMesh.RVrt_coBuffer, this.baseEdgesBuffer]);
-        }
+        // if (this.baseSilhouetteEdges.length) {
+        //     this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(this.baseSilhouetteEdges.length * 2 * 4, this.baseSilhouetteEdges.flat(), ["u32","u32"]);
+        //     this.baseSilhouetteEdgesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.graphicMesh.RVrt_coBuffer, this.baseSilhouetteEdgesBuffer]);
+        // }
+        // if (this.baseEdges.length) {
+        //     this.baseEdgesBuffer = GPU.createStorageBuffer(this.baseEdges.length * 2 * 4, this.baseEdges.flat(), ["u32","u32"]);
+        //     this.baseEdgesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.graphicMesh.RVrt_coBuffer, this.baseEdgesBuffer]);
+        // }
     }
 
     setImageBBox(bbox) {
@@ -81,7 +89,7 @@ class Editor {
         const result = await createEdgeFromTexture(this.graphicMesh.texture, pixelDensity, scale);
         result.vertices = this.calculateLocalVerticesToWorldVertices(result.vertices);
         this.baseEdges = [...result.edges];
-        this.graphicMesh.setVerticesData(result.vertices, result.uv);
+        this.setVerticesData(result.vertices, result.uv);
         this.setBaseSilhouetteEdges(result.edges)
         this.createMesh();
         this.graphicMesh.weightAuto = true;
@@ -92,7 +100,7 @@ class Editor {
         const vertices = await GPU.getBufferVerticesData(this.graphicMesh.s_baseVerticesPositionBuffer);
         const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
         // const meshData = createMeshFromTexture(vertices, this.baseEdges);
-        this.graphicMesh.setMeshData(meshData);
+        this.setMeshData(meshData);
     }
 
     deleteBaseVertices(indexs) {
@@ -173,20 +181,63 @@ class Editor {
         // return vec2.addR(position, this.BBox.center);
         return vec2.addR(position, this.imageBBox.center);
     }
+
+    setVerticesData(vertices, uv) {
+        this.graphicMesh.verticesNum = vertices.length;
+        this.graphicMesh.s_baseVerticesPositionBuffer = GPU.createStorageBuffer(this.graphicMesh.verticesNum * (2) * 4, vertices.flat(), ['f32','f32']);
+        this.graphicMesh.s_baseVerticesUVBuffer = GPU.createStorageBuffer(this.graphicMesh.verticesNum * (2) * 4, uv.flat(), ['f32','f32']);
+        this.graphicMesh.RVrt_coBuffer = GPU.createStorageBuffer(this.graphicMesh.verticesNum * (2) * 4, undefined, ['f32']);
+        this.graphicMesh.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
+
+        this.graphicMesh.isChange = true;
+
+        this.graphicMesh.baseTransformIsLock = true;
+
+        this.graphicMesh.setGroup();
+        setBaseBBox(this.graphicMesh);
+        setParentModifierWeight(this.graphicMesh);
+    }
+
+    setMeshData(mesh) {
+        this.graphicMesh.meshesNum = mesh.length;
+        this.graphicMesh.v_meshIndexBuffer = GPU.createVertexBuffer(this.graphicMesh.meshesNum * 3 * 4, mesh.flat(), ['u32']);
+        this.graphicMesh.s_meshIndexBuffer = GPU.createStorageBuffer(this.graphicMesh.meshesNum * 4 * 4, mesh.map((x) => x.concat([0])).flat(), ['u32']);
+        if (!this.graphicMesh.isInit && this.graphicMesh.texture) {
+            this.graphicMesh.isInit = true;
+        }
+        this.graphicMesh.isChange = true;
+        this.graphicMesh.baseTransformIsLock = true;
+        this.graphicMesh.setGroup();
+        setBaseBBox(this.graphicMesh);
+        setParentModifierWeight(this.graphicMesh);
+    }
+
+    changeTexture(texture) {
+        this.graphicMesh.texture = texture;
+        this.graphicMesh.textureView = texture.createView();
+
+        this.imageBBox.setWidthAndHeight(texture.width, texture.height);
+
+        this.graphicMesh.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
+        this.graphicMesh.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.objectDataBuffer, this.graphicMesh.textureView]);
+    }
 }
 
-export class GraphicMesh {
-    constructor(name, id = null) {
-        this.id = id ? id : createID();
-        this.name = name;
-        this.type = "グラフィックメッシュ";
-        this.isInit = false;
+export class GraphicMesh extends ObjectBase {
+    constructor(name, id) {
+        super(name, "グラフィックメッシュ", id);
+
+        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
+        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
+        this.vertexBufferOffset = 0;
+        this.animationBufferOffset = 0;
+        this.weightBufferOffset = 0;
+        this.allocationIndex = 0;
+
         this.baseTransformIsLock = false;
         this.visible = true;
         this.zIndex = 0;
         this.delete = false;
-
-        this.isChange = false;
 
         // バッファの宣言
         this.s_baseVerticesPositionBuffer = null;
@@ -224,10 +275,11 @@ export class GraphicMesh {
 
         this.renderingTargetTexture = null;
         this.maskTargetTexture = null;
-        this.changeMaskTexture(renderObjectManager.searchMaskTextureFromName("base"));
+        this.changeMaskTexture(app.scene.searchMaskTextureFromName("base"));
         this.maskTypeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         GPU.writeBuffer(this.maskTypeBuffer, new Float32Array([0])); // 0　マスク 反転マスク
 
+        this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.editor = new Editor(this);
         // this.init();
     }
@@ -272,7 +324,7 @@ export class GraphicMesh {
         this.meshesNum = null;
 
         this.parent = "";
-        this.weightAuto = true;
+        this.weightAuto = false;
     }
 
     init(data) {
@@ -303,13 +355,33 @@ export class GraphicMesh {
 
             this.textureView = this.texture.createView(); // これを先に処理しようとするとエラーが出る
 
-            this.changeMaskTexture(renderObjectManager.searchMaskTextureFromName("base"));
+            this.changeMaskTexture(app.scene.searchMaskTextureFromName("base"));
 
             this.isInit = true;
             this.isChange = true;
             this.setGroup();
             setBaseBBox(this);
         } else {
+            let weightGroupData = [];
+            if (data.modifierEffectData) {
+                if (data.modifierEffectData.type == "u32*4,f32*4") {
+                    weightGroupData = data.modifierEffectData.data;
+                } else if (data.modifierEffectData.type == "u32,f32") {
+                    for (let i = 0; i < data.modifierEffectData.data.length; i += 2) {
+                        weightGroupData.push(
+                            data.modifierEffectData.data[i],0,0,0,
+                            data.modifierEffectData.data[i + 1],0,0,0
+                        );
+                    }
+                }
+            }
+            app.scene.gpuData.graphicMeshData.prepare(this);
+            app.scene.gpuData.graphicMeshData.setBase(this, data.baseVerticesPosition, data.baseVerticesUV, weightGroupData);
+            data.animationKeyDatas.forEach((keyData,index) => {
+                const animationData = keyData.transformData.transformData;
+                app.scene.gpuData.graphicMeshData.setAnimationData(this, animationData, index);
+            })
+
             if (data.texture) {
                 this.texture = GPU.createTexture2D([data.texture.width, data.texture.height, 1],"rgba8unorm");
                 GPU.copyBase64ToTexture(this.texture, data.texture.data);
@@ -320,20 +392,6 @@ export class GraphicMesh {
             this.zIndex = data.zIndex;
             this.verticesNum = data.baseVerticesPosition.length / 2;
             this.meshesNum = data.meshIndex.length / 4;
-            this.s_baseVerticesPositionBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, data.baseVerticesPosition, ['f32','f32']);
-            this.s_baseVerticesUVBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, data.baseVerticesUV, ['f32','f32']);
-            this.RVrt_coBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, undefined, ['f32']);
-            if (data.modifierEffectData) {
-                if (data.modifierEffectData.type == "u32*4,f32*4") {
-                    this.parentWeightBuffer = GPU.createStorageBuffer(data.modifierEffectData.data.length * 4, data.modifierEffectData.data, ['u32','u32','u32','u32','f32','f32','f32','f32']);
-                } else if (data.modifierEffectData.type == "u32,f32") {
-                    this.parentWeightBuffer = GPU.createStorageBuffer(data.modifierEffectData.data.length * 4, data.modifierEffectData.data, ["u32","f32"]);
-                }
-                this.weightAuto = false;
-            } else {
-                this.weightAuto = true;
-                this.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
-            }
 
             this.v_meshIndexBuffer = GPU.createVertexBuffer(this.meshesNum * 3 * 4, data.meshIndex.filter((x,i) => (i + 1) % 4 != 0), ['u32']); // [i0,i1,i2,padding,...] -> [i0,i1,i2,...]
             this.s_meshIndexBuffer = GPU.createStorageBuffer(this.meshesNum * 4 * 4, data.meshIndex, ['u32']);
@@ -343,9 +401,9 @@ export class GraphicMesh {
             this.textureView = this.texture.createView(); // これを先に処理しようとするとエラーが出る
 
             if (data.renderingTargetTexture) {
-                this.changeRenderingTarget(renderObjectManager.searchMaskTextureFromName(data.renderingTargetTexture));
+                this.changeRenderingTarget(app.scene.searchMaskTextureFromName(data.renderingTargetTexture));
             }
-            this.changeMaskTexture(renderObjectManager.searchMaskTextureFromName(data.maskTargetTexture));
+            this.changeMaskTexture(app.scene.searchMaskTextureFromName(data.maskTargetTexture));
 
             if (data.editor) {
                 this.editor.setSaveData(data.editor);
@@ -353,43 +411,8 @@ export class GraphicMesh {
             this.isInit = true;
             this.isChange = true;
             this.setGroup();
-            setBaseBBox(this);
+            // setBaseBBox(this);
         }
-    }
-
-    setVerticesData(vertices, uv) {
-        this.verticesNum = vertices.length;
-        this.s_baseVerticesPositionBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, vertices.flat(), ['f32','f32']);
-        this.s_baseVerticesUVBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, uv.flat(), ['f32','f32']);
-        this.RVrt_coBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, undefined, ['f32']);
-        this.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
-
-        this.isChange = true;
-
-        this.baseTransformIsLock = true;
-
-        this.setGroup();
-        setBaseBBox(this);
-        setParentModifierWeight(this);
-    }
-
-    setMeshData(mesh) {
-        this.meshesNum = mesh.length;
-
-        this.v_meshIndexBuffer = GPU.createVertexBuffer(this.meshesNum * 3 * 4, mesh.flat(), ['u32']);
-        this.s_meshIndexBuffer = GPU.createStorageBuffer(this.meshesNum * 4 * 4, mesh.map((x) => x.concat([0])).flat(), ['u32']);
-
-        if (!this.isInit && this.texture) {
-            this.isInit = true;
-        }
-
-        this.isChange = true;
-
-        this.baseTransformIsLock = true;
-
-        this.setGroup();
-        setBaseBBox(this);
-        setParentModifierWeight(this);
     }
 
     changeMaskTexture(target) {
@@ -399,7 +422,7 @@ export class GraphicMesh {
         this.maskTargetTexture = target;
         this.maskTargetTexture.useObjects.push(this);
         if (this.isInit) {
-            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Ft_Ft_Fu"), [this.RVrt_coBuffer, {item: this.s_baseVerticesUVBuffer, type: 'b'}, {item: this.textureView, type: 't'}, {item: this.maskTargetTexture.textureView, type: 't'}, {item: this.maskTypeBuffer, type: "b"}]);
+            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
         }
     }
 
@@ -412,52 +435,10 @@ export class GraphicMesh {
         this.isChange = true;
     }
 
-    subBaseVertices(sub) {
-        sub.sort((a,b) => a - b);
-        const indexs = [];
-        let lastIndex = 0;
-        for (const subIndex of sub) {
-            if (subIndex - lastIndex >= 1) {
-                indexs.push([lastIndex,subIndex - 1]);
-            }
-            lastIndex = subIndex + 1;
-        }
-        if (lastIndex < this.pointNum) {
-            indexs.push([lastIndex,this.pointNum]);
-        }
-        GPU.consoleBufferData(this.s_baseVerticesPositionBuffer);
-        const newBuffer = GPU.createStorageBuffer((this.verticesNum - sub.length) * (2) * 4, undefined, ["f32","f32"]);
-        let offset = 0;
-        for (const rOffset of indexs) {
-            GPU.copyBuffer(this.s_baseVerticesPositionBuffer, newBuffer, rOffset[0] * 2 * 4, offset, (rOffset[1] - rOffset[0]) * 2 * 4);
-            offset += (rOffset[1] - rOffset[0] + 1) * 2 * 4;
-        }
-        GPU.consoleBufferData(newBuffer);
-        this.verticesNum = this.verticesNum - sub.length;
-        this.s_baseVerticesPositionBuffer = newBuffer;
-        this.RVrt_coBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, undefined, ["f32"]);
-        this.isChange = true;
-        this.setGroup();
-
-        setParentModifierWeight(this);
-    }
-
     setGroup() {
         if (!this.isInit) return ;
-        this.adaptAnimationGroup1 = GPU.createGroup(GPU.getGroupLayout("Csrw"), [this.RVrt_coBuffer]);
-
-        this.modifierTransformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.RVrt_coBuffer, type: "b"}, {item: this.parentWeightBuffer, type: "b"}]);
-
-        this.collisionVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [this.RVrt_coBuffer]);
-        this.collisionMeshGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [this.RVrt_coBuffer, this.s_meshIndexBuffer]);
-
-        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Ft_Ft_Fu"), [this.RVrt_coBuffer, {item: this.s_baseVerticesUVBuffer, type: 'b'}, {item: this.textureView, type: 't'}, {item: this.maskTargetTexture.textureView, type: 't'}, {item: this.maskTypeBuffer, type: "b"}]);
-        this.renderWegihtGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.RVrt_coBuffer, {item: this.parentWeightBuffer, type: 'b'}]);
-        this.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Ft"), [this.RVrt_coBuffer, {item: this.s_baseVerticesUVBuffer, type: 'b'}, {item: this.textureView, type: 't'}]);
-        this.calculateAllBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.BBoxBuffer, type: 'b'}, this.RVrt_coBuffer]);
-        this.calculateAllBaseBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.baseBBoxBuffer, type: 'b'}, {item: this.s_baseVerticesPositionBuffer, type: 'b'}]);
-        this.GUIMeshRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.RVrt_coBuffer, this.s_meshIndexBuffer]);
-        this.GUIVerticesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.RVrt_coBuffer]);
+        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
+        this.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.objectDataBuffer, this.textureView]);
     }
 
     async getSaveData() {

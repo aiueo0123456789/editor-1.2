@@ -1,20 +1,19 @@
-import { hierarchy } from "../ヒエラルキー.js";
 import { stateMachine } from '../main.js';
 import { appendAnimationToObject } from "../オブジェクト/オブジェクトで共通の処理.js";
 import { CreateObjectCommand } from "../機能/オペレーター/オブジェクト/オブジェクト.js";
-import { operator } from "../機能/オペレーター/オペレーター.js";
+import { app } from "../app.js";
 
 function deleteA() {
     console.log("アニメーションの削除")
 }
 
 function deleteObject() {
-    hierarchy.deleteObject(stateMachine.state.data.activeObject);
+    app.scene.deleteObject(stateMachine.state.data.activeObject);
     stateMachine.externalInputs["ヒエラルキーのオブジェクト選択"] = "選択解除";
 }
 
 function addObject(type) {
-    operator.appendCommand(new CreateObjectCommand(operator.object, type, null));
+    app.operator.appendCommand(new CreateObjectCommand(app.operator.object, type, null));
 }
 
 function addAnimation() {

@@ -3,11 +3,6 @@ import { createID, managerForDOMs, updateDataForUI } from './UI/制御.js';
 
 const maskTextureSize = [2048,2048];
 
-// エディタ関数
-function appendMaskTexture() {
-    
-}
-
 class MaskTexture {
     constructor(name, size) {
         this.id = createID();

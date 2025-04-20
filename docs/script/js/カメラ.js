@@ -6,8 +6,9 @@ export class Camera {
         this.position = [0,0];
         this.zoomMax = 100;
         this.zoomMin = 0.5;
-        this.zoom = 1;
+        this.zoom = 10;
         this.cameraDataBuffer = GPU.createUniformBuffer((2 + 1 + 1) * 4, undefined, ["f32", "f32", "f32"]);
+        this.updateCamera();
     }
 
     updateCamera() {

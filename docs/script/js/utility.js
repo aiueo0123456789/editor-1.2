@@ -32,8 +32,16 @@ export function hitTestPointTriangle(a, b, c, p) {
     return (c1 > 0.0 && c2 > 0.0 && c3 > 0.0) || (c1 < 0.0 && c2 < 0.0 && c3 < 0.0);
 }
 
-export function createArrayN(N) {
-    return [...Array(N)].map((_, i) => i);
+export function createArrayN(N, data) {
+    if (data) {
+        const array = [...Array(N)];
+        for (let i = 0; i < array.length; i ++) {
+            array[i] = data[i % data.length];
+        }
+        return array;
+    } else {
+        return [...Array(N)].map((_, i) => i);
+    }
 }
 
 // -xのmod(%)を+に収める
@@ -85,10 +93,12 @@ export function rgbToHex(r, g, b, a = null) {
     }
 }
 
+// 配列の最後の要素
 export function getArrayLastValue(array) {
     return array[array.length - 1];
 }
 
+// 全てtrue
 export function allTrue(array) {
     for (const element of array) {
         if (!element) return false;
@@ -96,6 +106,7 @@ export function allTrue(array) {
     return true;
 }
 
+// 全てfalseか
 export function allFalse(array) {
     for (const element of array) {
         if (element) return false;
@@ -103,10 +114,12 @@ export function allFalse(array) {
     return true;
 }
 
+// textの読み込み
 export async function loadFile(path) {
     return await fetch(path).then(x => x.text());
 }
 
+// jsonの読み込み
 export const readJsonFile = async (filePath) => {
     try {
         const response = await fetch(filePath);
@@ -118,14 +131,17 @@ export const readJsonFile = async (filePath) => {
     }
 };
 
+// 大文字か
 export function isUpperCase(char) {
     return char === char.toUpperCase() && char !== char.toLowerCase();
 }
 
+// 小文字か
 export function isLowerCase(char) {
     return char === char.toLowerCase() && char !== char.toUpperCase();
 }
 
+// 関数か
 export function isFunction(t) {
     return typeof t === 'function';
 }

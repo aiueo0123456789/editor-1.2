@@ -17,3 +17,9 @@ export class AnimationManager {
         }
     }
 }
+
+export class AnimationDeleteCommand {
+    constructor() {
+        // this.
+    }
+}

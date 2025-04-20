@@ -1,7 +1,9 @@
+import { app } from '../app.js';
 import { stateMachine } from '../main.js';
 import { activeOrClear } from '../コンテキストメニュー/制御.js';
-import { changeObjectName, hierarchy } from '../ヒエラルキー.js';
+import { changeObjectName } from '../app/Hierarchy.js';
 import { createCheckbox, managerForDOMs } from './制御.js';
+import { changeParameter } from './utility.js';
 
 function updateObject(object, groupID, DOM) {
     /** @type {HTMLElement} */
@@ -19,7 +21,7 @@ function updateRenderingOrder(objects, groupID, DOM) {
     /** @type {HTMLElement} */
     const ul = DOM;
     ul.replaceChildren();
-    for (const object of hierarchy.renderingOrder) {
+    for (const object of app.scene.renderingOrder) {
         let listItem = managerForDOMs.getDOMInObject(object, groupID);
 
         if (!listItem) {
@@ -55,7 +57,7 @@ function updateRenderingOrder(objects, groupID, DOM) {
             tagsGroup.append(depthAndNameDiv, zIndexInput, hideCheckTag);
 
             zIndexInput.addEventListener('change', () => {
-                hierarchy.updateZindex(object, Number(zIndexInput.value));
+                changeParameter(object, "zIndex", Number(zIndexInput.value));
             });
 
             hideCheckTag.inputDOM.addEventListener('change', () => {

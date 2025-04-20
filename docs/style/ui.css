@@ -1,0 +1,55 @@
+:root {
+    --color3: #272727; /* 任意の色 */
+    --colorAreaBG: rgb(80, 80, 80)
+}
+
+.ui_options {
+    background-color: var(--color3);
+    border: 0px;
+    width: 100%;
+    height: fit-content;
+}
+
+.ui_container {
+    background-color: var(--color3);
+    gap: 5px;
+    padding: 5px;
+}
+
+
+.area {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: 25px 1fr;
+}
+/* ヘッダー */
+.area .header {
+    grid-row: 1/2;
+    padding: 0px 5px;
+    display: flex;
+    overflow: hidden;
+    align-items: center;      /* 縦方向中央 */
+    width: fit-content;
+    height: 100%;
+    background-color: var(--colorAreaBG);
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+.area .header :first-child {
+}
+.area .header :nth-child(2){
+}
+.area .header :nth-child(3){
+    font-weight: 900;
+}
+/* メイン */
+.area .main {
+    grid-row: 2/3;
+    height: 100%;
+    width: 100%;
+    background-color: var(--colorAreaBG);
+    overflow: hidden;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+}

@@ -1,9 +1,8 @@
-import { readJsonFile } from "../utility.js";
-import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
+import { app } from "../app.js";
+import { changeObjectName } from "../app/Hierarchy.js";
 import { renderingParameters } from "../レンダリングパラメーター.js";
 import { createCheckbox, createDoubleClickInput, createIcon, managerForDOMs, setRangeStyle } from "./制御.js";
-import { CreatorForUI } from "./UIの自動生成.js";
-import { World } from "./json/ワールド.js";
+import { CreatorForUI } from "../area/補助/UIの自動生成.js";
 import { Inspector } from "./json/インスペクタ.js";
 
 function updateAnimationCollectorWeight(object, groupID, DOM) {
@@ -32,8 +31,8 @@ function updateAnimationCollector(object, groupID, DOM) {
 function updateHasKeyCheckbox(object, groupID, DOM, others) {
     /** @type {HTMLElement} */
     const checkboxs = DOM;
-    for (let i = 0; i < hierarchy.animationManagers.length; i ++) {
-        checkboxs[i].checked = hierarchy.animationManagers[i].keyframe.hasKeyFromFrame(renderingParameters.keyfarameCount, 1);
+    for (let i = 0; i < app.hierarchy.animationManagers.length; i ++) {
+        checkboxs[i].checked = app.hierarchy.animationManagers[i].keyframe.hasKeyFromFrame(renderingParameters.keyfarameCount, 1);
     }
     // DOM.checked = true;
 }
@@ -44,7 +43,7 @@ export function updateAnimationCollectorList(object, groupID, DOM) {
 
     const hasKeyCheckboxs = [];
 
-    for (const /** @type {AnimationCollector} */ animationManager of hierarchy.animationManagers) {
+    for (const /** @type {AnimationCollector} */ animationManager of app.hierarchy.animationManagers) {
         let listItem = managerForDOMs.getDOMInObject(animationManager, groupID);
         if (!listItem) {
             listItem = document.createElement("ul");

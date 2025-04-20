@@ -4,24 +4,25 @@ import { vec2 } from "../ベクトル計算.js";
 import { arrayMath } from "../配列計算.js";
 import { StateModel_View } from "./ステートモデル/ビュー/ステートモデル.js";
 import { StateModel_GraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/ステートモデル.js";
-import { StateModel_MeshEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_メッシュ編集/ステートモデル.js";
+import { StateModel_MeshEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/メッシュ編集/ステートモデル.js";
 import { StateModel_BoneModifier } from "./ステートモデル/ビュー/ボーンモディファイア/ステートモデル.js";
-import { StateModel_BoneEditForBoneModifier } from "./ステートモデル/ビュー/ボーンモディファイア/ボーンモディファイア_ボーン編集/ステートモデル.js";
+import { StateModel_BoneEditForBoneModifier } from "./ステートモデル/ビュー/ボーンモディファイア/ボーン編集/ステートモデル.js";
 import { StateModel_Vertices_Resize } from "./ステートモデル/ビュー/ユーティリティ/頂点/リサイズ/ステートモデル.js";
 import { StateModel_Vertices_Translate } from "./ステートモデル/ビュー/ユーティリティ/頂点/並行移動/ステートモデル.js";
 import { StateModel_Vertices_Rotate } from "./ステートモデル/ビュー/ユーティリティ/頂点/回転/ステートモデル.js";
 import { StateModel_Modifier } from "./ステートモデル/ビュー/モディファイア/ステートモデル.js";
-import { StateModel_MeshEditForModifier } from "./ステートモデル/ビュー/モディファイア/ディファイア_メッシュ編集/ステートモデル.js";
+import { StateModel_MeshEditForModifier } from "./ステートモデル/ビュー/モディファイア/メッシュ編集/ステートモデル.js";
 import { StateModel_BezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ステートモデル.js";
-import { StateModel_BaseEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ベジェモディファイア_ベース編集/ステートモデル.js";
-import { StateModel_AnimationEditForBone } from "./ステートモデル/ビュー/ボーンモディファイア/ボーンモディファイア_アニメーション編集/ステートモデル.js";
-import { StateModel_AnimationEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ベジェモディファイア_アニメーション編集/ステートモデル.js";
-import { StateModel_AnimationEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_アニメーション編集/ステートモデル.js";
+import { StateModel_BaseEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ベース編集/ステートモデル.js";
+import { StateModel_AnimationEditForBone } from "./ステートモデル/ビュー/ボーンモディファイア/アニメーション編集/ステートモデル.js";
+import { StateModel_AnimationEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/アニメーション編集/ステートモデル.js";
+import { StateModel_AnimationEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/アニメーション編集/ステートモデル.js";
 import { transform } from "../機能/オペレーター/変形/バックアップ.js";
-import { StateModel_WeightEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_ウェイト編集/ステートモデル.js";
+import { StateModel_WeightEditForGraphicMesh } from "./ステートモデル/ビュー/グラフィックメッシュ/ウェイト編集/ステートモデル.js";
 import { mesh } from "../機能/オペレーター/メッシュ/メッシュ.js";
-import { operator } from "../機能/オペレーター/オペレーター.js";
-import { StateModel_WeightPaint } from "./ステートモデル/ビュー/グラフィックメッシュ/グラフィックメッシュ_ウェイト編集/ウェイトペイント/ステートモデル.js";
+import { StateModel_WeightPaint } from "./ステートモデル/ビュー/グラフィックメッシュ/ウェイト編集/ウェイトペイント/ステートモデル.js";
+import { StateModel_WeightEditForBezierModifier } from "./ステートモデル/ビュー/ベジェモディファイア/ウェイト編集/ステートモデル.js";
+import { app } from "../app.js";
 
 function isPlainObject(obj) {
     return obj instanceof Object && Object.getPrototypeOf(obj) === Object.prototype;
@@ -56,7 +57,7 @@ export class StateMachine {
             StateModel_GraphicMesh,StateModel_MeshEditForGraphicMesh,StateModel_AnimationEditForGraphicMesh,StateModel_WeightEditForGraphicMesh,
             StateModel_BoneModifier,StateModel_BoneEditForBoneModifier,StateModel_AnimationEditForBone,
             StateModel_Modifier,StateModel_MeshEditForModifier,
-            StateModel_BezierModifier,StateModel_BaseEditForBezierModifier,StateModel_AnimationEditForBezierModifier,
+            StateModel_BezierModifier,StateModel_BaseEditForBezierModifier,StateModel_AnimationEditForBezierModifier,StateModel_WeightEditForBezierModifier,
             StateModel_Vertices_Translate,StateModel_Vertices_Resize,StateModel_Vertices_Rotate,StateModel_WeightPaint
         ];
 
@@ -302,7 +303,7 @@ export class StateMachine {
                                 roop = false;
                             }
                         } else {
-                            operator.appendErrorLog(`ステートの未定義`);
+                            app.operator.appendErrorLog(`ステートの未定義`);
                             console.warn("ステートが定義されていません",nextStateStrings,nextState,data,nextStateStruct)
                             roop = false;
                         }
@@ -332,12 +333,12 @@ export class StateMachine {
             // 巻き戻し巻き戻しの取り消し
             if (keysDown["undo"]) {
                 // this.undo();
-                operator.stack.undo();
+                app.operator.stack.undo();
                 keysDown["undo"] = false;
             }
             if (keysDown["redo"]) {
                 // this.redo();
-                operator.stack.redo();
+                app.operator.stack.redo();
                 keysDown["redo"] = false;
             }
             activeView.mouseState.click = false;
@@ -350,6 +351,12 @@ export class StateMachine {
                 this.externalInputs[keyName] = false;
             }
             previousKeysDown = structuredClone(keysDown);
+
+            if (this.state.structClass.mouseStateModel) {
+                document.body.style.cursor = this.state.structClass.mouseStateModel;
+            } else {
+                document.body.style.cursor = "default";
+            }
         } catch (err) {
             console.error(err);
         }

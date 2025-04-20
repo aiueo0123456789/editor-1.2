@@ -24,6 +24,6 @@ fn main(
     var output: VertexOutput;
     output.position = vec4f((verticesPosition[index] - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = verticesUV[index];
-    output.uvForMask = (output.position.xy * 0.5 + 0.5) * vec2<f32>(1.0, -1.0);
+    output.uvForMask = (output.position.xy * 0.5 + 0.5) * vec2<f32>(1.0, -1.0); // マスクはカメラに映る範囲しか表示しないので画面内のuvを求める
     return output;
 }

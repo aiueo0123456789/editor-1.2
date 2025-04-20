@@ -4,7 +4,7 @@ import { vec2 } from "../../../../../../ベクトル計算.js";
 import { createNextStateData } from "../../../../../状態遷移.js";
 import { calculateAllAverage } from "../../../../../../平均.js";
 import { RotateCommand } from "../../../../../../機能/オペレーター/変形/トランスフォーム.js";
-import { operator } from "../../../../../../機能/オペレーター/オペレーター.js";
+import { app } from "../../../../../../app.js";
 
 export class StateModel_Vertices_Rotate {
     constructor() {
@@ -20,6 +20,7 @@ export class StateModel_Vertices_Rotate {
                 ]
             }
         ];
+        this.mouseStateModel = "move";
         this.データ構造 = {
             activeObject: "&-",
             selectAnimation: {isInclude: "&-", not: null},
@@ -27,6 +28,7 @@ export class StateModel_Vertices_Rotate {
             selectIndexsGroup: "&-",
             selectBBoxForCenterPoint: "&-",
             selectBBoxBuffer: "&-",
+            selectBBoxGroup: "&-",
             referenceCoordinatesBuffer: "&-",
             selectBBoxRenderGroup: "&-",
             referenceCoordinatesRenderGroup: "&-",
@@ -35,7 +37,7 @@ export class StateModel_Vertices_Rotate {
             transformValue: 0,
         };
         this.遷移ステート = [
-            createNextStateData([["/g"],["クリック"]], "$-1", {object: operator, targetFn: "update"}),
+            createNextStateData([["/g"],["クリック"]], "$-1", {object: app.operator, targetFn: "update"}),
             // createNextStateData([["右クリック"]], "$-1", {object: transform, targetFn: "cancel"}),
         ]
     }
@@ -48,7 +50,7 @@ export class StateModel_Vertices_Rotate {
         } else {
             stateData.command = new RotateCommand(stateData.activeObject, stateData.selectIndexs);
         }
-        operator.appendCommand(stateData.command);
+        app.operator.appendCommand(stateData.command);
         stateData.command.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         stateData.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         stateData.transformValue = 0;

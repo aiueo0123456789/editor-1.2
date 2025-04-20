@@ -1,9 +1,9 @@
-import { keysDown, renderObjectManager } from "../main.js";
+import { keysDown } from "../main.js";
 import { hexToRgba } from "../utility.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
-import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
+import { changeObjectName } from "../app/Hierarchy.js";
 import { World } from "./json/ワールド.js";
-import { CreatorForUI } from "./UIの自動生成.js";
+import { CreatorForUI } from "../area/補助/UIの自動生成.js";
 import { updateAnimationCollectorList } from "./アニメーションコレクターの表示.js";
 import { createIcon, createLabeledInput, createMinList, createSection, managerForDOMs } from "./制御.js";
 

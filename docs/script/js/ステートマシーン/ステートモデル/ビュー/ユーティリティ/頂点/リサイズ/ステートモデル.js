@@ -4,7 +4,7 @@ import { vec2 } from "../../../../../../ベクトル計算.js";
 import { calculateAllAverage } from "../../../../../../平均.js";
 import { createNextStateData } from "../../../../../状態遷移.js";
 import { ResizeCommand } from "../../../../../../機能/オペレーター/変形/トランスフォーム.js";
-import { operator } from "../../../../../../機能/オペレーター/オペレーター.js";
+import { app } from "../../../../../../app.js";
 
 export class StateModel_Vertices_Resize {
     constructor() {
@@ -21,6 +21,7 @@ export class StateModel_Vertices_Resize {
                 ]
             }
         ];
+        this.mouseStateModel = "nesw-resize";
         this.データ構造 = {
             activeObject: "&-",
             selectAnimation: {isInclude: "&-", not: null},
@@ -28,6 +29,7 @@ export class StateModel_Vertices_Resize {
             selectIndexsGroup: "&-",
             selectBBoxForCenterPoint: "&-",
             selectBBoxBuffer: "&-",
+            selectBBoxGroup: "&-",
             referenceCoordinatesBuffer: "&-",
             selectBBoxRenderGroup: "&-",
             referenceCoordinatesRenderGroup: "&-",
@@ -36,7 +38,7 @@ export class StateModel_Vertices_Resize {
             transformValue: [0,0],
         };
         this.遷移ステート = [
-            createNextStateData([["/g"],["クリック"]], "$-1", {object: operator, targetFn: "update"}),
+            createNextStateData([["/g"],["クリック"]], "$-1", {object: app.operator, targetFn: "update"}),
             // createNextStateData([["右クリック"]], "$-1", {object: transform, targetFn: "cancel"}),
         ]
     }
@@ -49,7 +51,7 @@ export class StateModel_Vertices_Resize {
         } else {
             stateData.command = new ResizeCommand(stateData.activeObject, stateData.selectIndexs);
         }
-        operator.appendCommand(stateData.command);
+        app.operator.appendCommand(stateData.command);
         stateData.command.setPointOfEffort(stateData.selectBBoxForCenterPoint);
         stateData.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         stateData.transformValue = [0,0];

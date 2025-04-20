@@ -1,4 +1,6 @@
+import { isLowerCase, isPlainObject } from "./utility.js";
 import { vec2 } from "./ベクトル計算.js";
+import { japanese } from "./機能/言語/ja.js";
 
 export function IsString(value) {
     return typeof value === "string" || value instanceof String;
@@ -8,6 +10,8 @@ class WebGPU {
     constructor() {
         this.structures = new Map();
         this.groupLayouts = new Map();
+
+        this.padding = 0;
     }
 
     getGroupLayout(groupLayout) {
@@ -17,14 +21,15 @@ class WebGPU {
         } else {
             const items = [];
             for (const item of groupLayout.split("_")) {
-                const useShaderTypes = item[0];
-                const type = item.slice(1);
-                if (useShaderTypes === "V") {
-                    items.push({useShaderTypes: ["v"], type: type});
-                } else if (useShaderTypes === "F") {
-                    items.push({useShaderTypes: ["f"], type: type});
-                } else if (useShaderTypes === "C") {
-                    items.push({useShaderTypes: ["c"], type: type});
+                const useShaderTypes = [];
+                for (let i = 0; i < item.length; i ++) {
+                    const char = item[i];
+                    if (isLowerCase(char)) {
+                        items.push({useShaderTypes: useShaderTypes, type: item.slice(i)});
+                        break ;
+                    } else {
+                        useShaderTypes.push(char.toLowerCase());
+                    }
                 }
             }
             result = this.createGroupLayout(items);
@@ -84,6 +89,7 @@ class WebGPU {
 
     // バッファの書き換え
     writeBuffer(target, data, offset = 0) {
+        // console.trace("Calling writeBuffer");
         device.queue.writeBuffer(target, offset ,data);
     }
 
@@ -120,7 +126,6 @@ class WebGPU {
                 }
             }
         }
-
         return new Uint8Array(buffer);
     }
 
@@ -129,7 +134,7 @@ class WebGPU {
         if (data) {
             const buffer = device.createBuffer({
                 size: size,
-                usage: GPUBufferUsage.UNIFORM,
+                usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
                 mappedAtCreation: true,
             });
             new Uint8Array(buffer.getMappedRange()).set(this.createBitData(data, struct));
@@ -454,6 +459,8 @@ class WebGPU {
                     type = "t";
                 } else if (item instanceof GPUTextureView) {
                     type = "t";
+                } else if (item instanceof GPUSampler) {
+                    type = "ts";
                 } else {
                     console.warn("無効",item);
                 }
@@ -465,11 +472,21 @@ class WebGPU {
                         error: "bufferのサイズが有効な値ではありません",
                     };
                 }
-                return {
-                    resource: {
-                        buffer: item,
-                    }
-                };
+                if (isPlainObject(item)) {
+                    return {
+                        resource: {
+                            buffer: item.buffer,
+                            offset: item.offset,
+                            size: item.size,
+                        }
+                    };
+                } else {
+                    return {
+                        resource: {
+                            buffer: item,
+                        }
+                    };
+                }
             }
             if (type == 't') {
                 return {
@@ -530,9 +547,28 @@ class WebGPU {
     }
 
     appendDataToStorageBuffer(buffer, data) {
-        const newBuffer = GPU.createStorageBuffer(buffer.size + (data.length * 4), undefined, ["f32"]);
-        GPU.copyBuffer(buffer, newBuffer);
-        GPU.writeBuffer(newBuffer, data, buffer.size);
+        let newBuffer;
+        if (buffer instanceof GPUBuffer) {
+            newBuffer = GPU.createStorageBuffer(buffer.size + (data.length * 4), undefined, ["f32"]);
+            GPU.copyBuffer(buffer, newBuffer);
+            GPU.writeBuffer(newBuffer, data, buffer.size);
+        } else {
+            // 渡されたbufferがGPUBufferではなかったら新規作成
+            newBuffer = GPU.createStorageBuffer(data.length * 4, undefined, ["f32"]);
+            GPU.writeBuffer(newBuffer, data);
+        }
+        return newBuffer;
+    }
+
+    appendEmptyToStorageBuffer(buffer, byteLength) {
+        let newBuffer;
+        if (buffer instanceof GPUBuffer) {
+            newBuffer = GPU.createStorageBuffer(buffer.size + byteLength, undefined, ["f32"]);
+            GPU.copyBuffer(buffer, newBuffer);
+        } else {
+            // 渡されたbufferがGPUBufferではなかったら新規作成
+            newBuffer = GPU.createStorageBuffer(byteLength, undefined, ["f32"]);
+        }
         return newBuffer;
     }
 
@@ -652,6 +688,43 @@ class WebGPU {
                                 }
                             }
                         }
+                    ],
+                },
+                primitive: {
+                    // topology: 'triangle-list',
+                    topology: topologyType == "t" ? 'triangle-list' : 'triangle-strip',
+                },
+            });
+        } else if (option == "mask") {
+            return device.createRenderPipeline({
+                layout: device.createPipelineLayout({
+                    bindGroupLayouts: groupLayouts,
+                }),
+                vertex: {
+                    module: shader,
+                    entryPoint: 'vmain',
+                    buffers: vertexBuffers,
+                },
+                fragment: {
+                    module: shader,
+                    entryPoint: 'fmain',
+                    targets: [
+                        {
+                            format: 'r8unorm', // 出力フォーマットをr8unormに設定
+                            blend: {
+                                color: {
+                                    srcFactor: 'src-alpha', // ソースの透明度
+                                    dstFactor: 'one-minus-src-alpha', // 背景の透明度
+                                    operation: 'add',
+                                },
+                                alpha: {
+                                    srcFactor: 'one',
+                                    dstFactor: 'one-minus-src-alpha',
+                                    operation: 'add',
+                                },
+                            },
+                            writeMask: GPUColorWrite.RED, // 赤チャネルのみ書き込み
+                        },
                     ],
                 },
                 primitive: {
@@ -1096,28 +1169,30 @@ class WebGPU {
         let offset = 0;
         if (indexs == "all") {
             for (let i = 0; i < buffer.size / structSize; i++) {
+                const keep = [];
                 for (const field of struct) {
                     if (field === "u32") {
-                        result.push(dataView.getUint32(offset, true));
+                        keep.push(dataView.getUint32(offset, true));
                     } else if (field === "f32") {
-                        result.push(dataView.getFloat32(offset, true));
+                        keep.push(dataView.getFloat32(offset, true));
                     }
                     offset += 4; // フィールドのサイズを加算
                 }
+                result.push(keep);
             }
         } else {
             let index = 0;
             for (let i = 0; i < buffer.size / structSize; i++) {
+                const keep = [];
                 for (const field of struct) {
-                    if (indexs.includes(index)) {
-                        if (field === "u32") {
-                            result.push(dataView.getUint32(offset, true));
-                        } else if (field === "f32") {
-                            result.push(dataView.getFloat32(offset, true));
-                        }
+                    if (field === "u32") {
+                        keep.push(dataView.getUint32(offset, true));
+                    } else if (field === "f32") {
+                        keep.push(dataView.getFloat32(offset, true));
                     }
                     offset += 4; // フィールドのサイズを加算
                 }
+                result.push(keep);
                 index ++;
             }
         }
@@ -1511,15 +1586,28 @@ class WebGPU {
     // }
 }
 
+export const userLang = navigator.language || navigator.userLanguage;
+
+console.log("使用言語",userLang)
+
 if ('gpu' in navigator) {
-    console.log("WebGPU is supported!");
 } else {
-    console.log("WebGPU is NOT supported.");
+    // WebGPUが使えない
+    console.warn(japanese.get("Your browser does not support WebGPU. Please use a modern compatible browser."));
 }
 
 const adapter = await navigator.gpu.requestAdapter();
 
-export const device = await adapter.requestDevice();
+export const device = await adapter.requestDevice({
+    requiredLimits: {
+        maxStorageBuffersPerShaderStage: 10, // ストレージバッファを10個まで使えるようにする
+    },
+});
+
+const limits = adapter.limits;
+console.log("最大 storage buffer 数:", limits.maxStorageBuffersPerShaderStage);
+console.log("最大 bind group 数:", limits.maxBindGroups);
+console.log("最大そのた:", limits);
 
 export const format = navigator.gpu.getPreferredCanvasFormat();
 

@@ -1,6 +1,7 @@
 import { createID, managerForDOMs } from "../../UI/制御.js";
 import { AnimationManager } from "./アニメーション/アニメーション.js";
 import { CreateObjectCommand, ObjectManager } from "./オブジェクト/オブジェクト.js";
+import { BoneManager } from "./メッシュ/メッシュ.js";
 
 // undoとredoを実行
 class CommandStack {
@@ -37,10 +38,12 @@ class CommandStack {
 }
 
 // コマンド関係の管理
-class Operator {
-    constructor() {
+export class Operator {
+    constructor(app) {
+        this.app = app;
         this.animation = new AnimationManager();
         this.object = new ObjectManager();
+        this.bone = new BoneManager();
         this.stack = new CommandStack();
         this.commands = [];
         this.errorLog = [];
@@ -69,4 +72,4 @@ class Operator {
     }
 }
 
-export const operator = new Operator();
+// export const operator = new Operator();

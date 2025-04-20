@@ -1,6 +1,6 @@
+import { app } from "../app.js";
 import { keysDown, stateMachine, editorParameters } from "../main.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
-import { hierarchy } from "../ヒエラルキー.js";
 import { renderingParameters } from "../レンダリングパラメーター.js";
 import { select } from "./ヒエラルキーの表示.js";
 import { createCheckbox, managerForDOMs } from "./制御.js";
@@ -81,7 +81,7 @@ function updateKeyBlock(object, groupID, DOM) {
 }
 
 function updateKeyBlocks(object, groupID, DOM) {
-    for (const object of hierarchy.animationCollectors) {
+    for (const object of app.hierarchy.animationCollectors) {
         managerForDOMs.update(object.keyframe, "タイムライン-メイン");
     }
 }
@@ -89,7 +89,7 @@ function updateKeyBlocks(object, groupID, DOM) {
 function updateKeyBlocksAppendDelete(object, groupID, DOM) {
     /** @type {HTMLElement} */
     const timelineMain = DOM;
-    for (const object of hierarchy.animationCollectors) {
+    for (const object of app.hierarchy.animationCollectors) {
         let listItem = managerForDOMs.getDOMInObject(object.keyframe, groupID,"タイムライン-メイン" );
         if (!listItem) {
             listItem = document.createElement("ul");
@@ -112,7 +112,7 @@ function updateChannel(object, groupID, DOM) {
     const channelDiv = DOM;
     const channelHeader = channelDiv.querySelector('[name="h"]');
     const channelMain = channelDiv.querySelector('[name="m"]');
-    for (const object of hierarchy.animationCollectors) {
+    for (const object of app.hierarchy.animationCollectors) {
         let listItem = managerForDOMs.getDOMInObject(object, groupID, "タイムライン-チャンネル");
         if (!listItem) {
             listItem = document.createElement("li");
@@ -129,9 +129,9 @@ function updateChannel(object, groupID, DOM) {
 function header(target) {
     const button = createCheckbox("replay");
     const checkbox = button.inputDOM;
-    checkbox.checked = renderingParameters.isReplay;
+    checkbox.checked = renderingParameters.isPlaying;
     checkbox.addEventListener("change", () => {
-        renderingParameters.isReplay = checkbox.checked;
+        renderingParameters.isPlaying = checkbox.checked;
     })
     target.append(button);
 }

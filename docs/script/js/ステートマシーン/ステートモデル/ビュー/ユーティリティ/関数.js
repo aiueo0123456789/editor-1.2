@@ -1,13 +1,13 @@
+import { app } from "../../../../app.js";
 import { activeView } from "../../../../main.js";
 import { managerForDOMs } from "../../../../UI/制御.js";
-import { hierarchy } from "../../../../ヒエラルキー.js";
 
 // ホバーオブジェクトを更新
 export async function updateForHoverObjects(stateData) {
     let hoverObjects = stateData.hoverObjects;
     hoverObjects.length = 0;
     await Promise.all(
-        hierarchy.allObject.map(async (object) => {
+        app.hierarchy.allObject.map(async (object) => {
             if (!("visible" in object && !object.visible) && await activeView.select.selectSilhouette(object, activeView.mouseState.positionForGPU)) {
                 hoverObjects.push(object);
             }
@@ -33,5 +33,5 @@ export function updateSelectObjects(stateData, objects, append = false) {
             }
         }
     }
-    managerForDOMs.update(hierarchy)
+    managerForDOMs.update(app.hierarchy)
 }

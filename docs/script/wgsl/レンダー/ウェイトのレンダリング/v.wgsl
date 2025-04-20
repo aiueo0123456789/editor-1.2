@@ -4,7 +4,7 @@ struct Camera {
     padding: f32,
 }
 
-struct AnimationData {
+struct IndexAndWeight {
     index: vec4<u32>,
     weight: vec4<f32>,
 }
@@ -12,7 +12,7 @@ struct AnimationData {
 @group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
-@group(1) @binding(1) var<storage, read> verticesIndexAndWeight: array<AnimationData>;
+@group(1) @binding(1) var<storage, read> verticesIndexAndWeight: array<IndexAndWeight>;
 @group(2) @binding(0) var<storage, read> targetIndex: u32;
 
 struct VertexOutput {

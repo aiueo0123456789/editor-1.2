@@ -1,0 +1,9 @@
+#custom-cursor {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    background: url('cursor-base.png') no-repeat center center;
+    pointer-events: none;
+    transform: rotate(45deg); /* 角度を調整 */
+    z-index: 10000;
+}

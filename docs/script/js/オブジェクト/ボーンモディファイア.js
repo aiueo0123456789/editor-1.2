@@ -3,10 +3,11 @@ import { Children } from "../子要素.js";
 import { AnimationBlock, BoneAnimation, VerticesAnimation } from "../アニメーション.js";
 import { calculateBaseBoneDataPipeline } from "../GPUObject.js";
 import { createID } from "../UI/制御.js";
-import { setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";
+import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { Color } from "../エディタ設定.js";
-import { indexOfSplice } from "../utility.js";
+import { createArrayN, indexOfSplice } from "../utility.js";
 import { Attachments } from "./アタッチメント/attachments.js";
+import { app } from "../app.js";
 
 class Bone {
     constructor(armature,index) {
@@ -15,15 +16,40 @@ class Bone {
         this.index = index;
         this.children = [];
         this.armature = armature;
+        this.color = [0,0,0,1];
     }
 }
 
-class Editor {
+class Colors {
+    constructor(armature) {
+        this.armature = armature;
+        this.buffer = null;
+        this.group = null;
+    }
+
+    setColor() {
+        this.buffer = GPU.createStorageBuffer(4 * this.armature.boneModifier.boneNum * 4, createArrayN(4 * this.armature.boneModifier.boneNum, [1,0,0,1, 0,1,0,1, 0,0,1,1]), ["f32", "f32", "f32", "f32"]);
+        this.group = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.buffer]);
+    }
+
+    changeColor(index, color) {
+
+    }
+}
+
+class Group {
+    constructor() {
+        this.indexs = [];
+    }
+}
+
+class Editor extends ObjectEditorBase {
     constructor(boneModifier) {
-        this.BBox = {min: [0,0], max: [0,0], width: 0, height: 0, center: [0,0]};
+        super();
         this.boneModifier = boneModifier;
 
         this.boneColor = new Color([Math.random(),Math.random(),Math.random(),1]);
+        this.bonesColor = new Colors(this); // ボーンの色
 
         // this.boneForCPU = new BoneBlock();
         this.allBones = [];
@@ -101,15 +127,17 @@ class Editor {
     }
 
     // ボーンの親ボーンを探す
-    getBoneParent(boneIndex) {
-        for (const data of this.boneModifier.propagateDatas) {
-            for (let i = 0; i < data.length; i += 2) {
-                if (data[i] == boneIndex) {
-                    return data[i + 1];
+    getBoneParentIndex(boneIndex) {
+        for (const bone of this.allBones) {
+            if (bone.index == boneIndex) {
+                if (bone.parent) {
+                    return bone.parent.index;
+                } else {
+                    return -1;
                 }
             }
         }
-        return 0;
+        return null;
     }
 
     changeBoneParent(parent, bone) {
@@ -193,28 +221,32 @@ class Editor {
         this.struct.length = 0;
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
-                const childBone = new Bone(this.boneModifier, child.parent);
+                const childBone = new Bone(this.boneModifier, child.index);
                 this.allBones.push(childBone);
                 this.setBoneParent(parent,childBone);
                 roopChildren(child.children, childBone, depth + 1);
             }
         }
         roopChildren(boneData);
+        this.bonesColor.setColor();
     }
 }
 
-export class BoneModifier {
+export class BoneModifier extends ObjectBase {
     constructor(name, id) {
-        this.id = id ? id : createID();
-        this.name = name;
-        this.isInit = false;
-        this.isChange = false;
+        super(name, "ボーンモディファイア", id);
+
+        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_BONEMODIFIER;
+        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_BONEMODIFIER;
+        this.vertexBufferOffset = 0;
+        this.animationBufferOffset = 0;
+        this.weightBufferOffset = 0;
+        this.allocationIndex = 0;
 
         this.baseBoneBuffer = null;
         this.baseBoneMatrixBuffer = null;
         this.boneMatrixBuffer = null;
         this.boneBuffer = null;
-        this.type = "ボーンモディファイア";
         this.animationBlock = new AnimationBlock(this, BoneAnimation);
         this.modifierDataGroup = null;
         this.modifierTransformDataGroup = null;
@@ -236,11 +268,14 @@ export class BoneModifier {
         this.boneNum = 0;
         this.baseTransformIsLock = false;
 
+        this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+
         this.children = new Children();
         this.editor = new Editor(this);
         this.parent = "";
 
         this.attachments = new Attachments(this);
+        this.relationship = null;
 
         this.init({
             baseVertices: [
@@ -282,6 +317,15 @@ export class BoneModifier {
         this.editor.setSaveData(data.editor);
         this.editor.setBoneData(data.relationship);
         this.editor.updatePropagateData();
+
+        this.relationship = data.relationship;
+
+        app.scene.gpuData.boneModifierData.prepare(this);
+        app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, data.relationship);
+        data.animationKeyDatas.forEach((keyData,index) => {
+            const animationData = keyData.transformData.transformData;
+            app.scene.gpuData.boneModifierData.setAnimationData(this, animationData, index);
+        })
         // this.updatePropagateDataForGPU();
 
         this.isInit = true;

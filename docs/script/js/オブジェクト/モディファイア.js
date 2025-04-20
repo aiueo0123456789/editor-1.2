@@ -3,14 +3,11 @@ import { Children } from "../子要素.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
 import { vec2 } from "../ベクトル計算.js";
 import { BBox } from "../BBox.js";
-import { setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { createID } from "../UI/制御.js";
+import { ObjectBase, ObjectEditorBase, setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
 
-class Editor {
+class Editor extends ObjectEditorBase {
     constructor(modifier) {
-        this.baseEdges = [];
-        this.baseVertices = [];
-        this.BBox = {min: [0,0], max: [0,0], width: 0, height: 0, center: [0,0]};
+        super();
         this.modifier = modifier;
     }
 
@@ -19,13 +16,10 @@ class Editor {
     }
 }
 
-export class Modifier {
+export class Modifier extends ObjectBase {
     constructor(name, id) {
-        this.id = id ? id : createID();
-        this.name = name;
-        this.isInit = false;
-        this.type = "モディファイア";
-        this.isChange = false;
+        super(name, "モディファイア", id);
+
         this.baseTransformIsLock = false;
 
         this.verticesNum = null;

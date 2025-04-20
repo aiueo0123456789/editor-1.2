@@ -8,7 +8,7 @@ class Editor {
         this.aff = aff;
     }
 
-    async setSourceBone(bone) {
+    setSourceBone(bone) {
         this.aff.sourceBone = bone;
         GPU.writeBuffer(this.aff.indexBuffer, new Uint32Array([this.aff.targetBone.index, this.aff.sourceBone.index]));
         this.aff.group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Cu"), [this.aff.targetBone.armature.boneMatrixBuffer, this.aff.sourceBone.armature.boneMatrixBuffer, this.aff.sourceBone.armature.baseBoneMatrixBuffer, this.aff.indexBuffer]);

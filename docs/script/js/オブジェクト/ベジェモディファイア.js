@@ -1,14 +1,12 @@
 import { device,GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
-import { setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { createID } from "../UI/制御.js";
+import { ObjectBase, ObjectEditorBase, setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
+import { app } from "../app.js";
 
-class Editor {
+class Editor extends ObjectEditorBase {
     constructor(bezierModifier) {
-        this.baseEdges = [];
-        this.baseVertices = [];
-        this.BBox = {min: [0,0], max: [0,0], width: 0, height: 0, center: [0,0]};
+        super();
         this.bezierModifier = bezierModifier;
     }
 
@@ -17,18 +15,21 @@ class Editor {
     }
 }
 
-export class BezierModifier {
+export class BezierModifier extends ObjectBase {
     constructor(name, id) {
-        this.id = id ? id : createID();
-        this.name = name;
-        this.isInit = false;
-        this.isChange = false;
+        super(name, "ベジェモディファイア", id);
+
+        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
+        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
+        this.vertexBufferOffset = 0;
+        this.animationBufferOffset = 0;
+        this.weightBufferOffset = 0;
+        this.allocationIndex = 0;
 
         this.CPUbaseVerticesPositionData = [];
         this.s_baseVerticesPositionBuffer = null;
         this.RVrt_coBuffer = null;
         this.s_controlPointBuffer = null;
-        this.type = "ベジェモディファイア";
         this.renderBBoxData = {max: [1,1], min: [-1,-1]};
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
@@ -51,11 +52,13 @@ export class BezierModifier {
         this.pointNum = 0;
         this.baseTransformIsLock = false;
 
+        this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+
         this.children = new Children();
         this.editor = new Editor(this);
 
         this.parent = "";
-        this.weightAuto = true;
+        this.weightAuto = false;
 
         this.init({baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0], animationKeyDatas: []});
     }
@@ -92,91 +95,51 @@ export class BezierModifier {
 
     init(data) {
         console.log(data)
+        let weightGroupData = [];
+        if (data.modifierEffectData) {
+            if (data.modifierEffectData.type == "u32*4,f32*4") {
+                weightGroupData = data.modifierEffectData.data;
+            } else if (data.modifierEffectData.type == "u32,f32") {
+                for (let i = 0; i < data.modifierEffectData.data.length; i += 2) {
+                    weightGroupData.push(
+                        data.modifierEffectData.data[i],0,0,0,
+                        data.modifierEffectData.data[i + 1],0,0,0
+                    );
+                }
+            }
+        }
+        app.scene.gpuData.bezierModifierData.prepare(this);
+        app.scene.gpuData.bezierModifierData.setBase(this, data.baseVertices, weightGroupData);
+        data.animationKeyDatas.forEach((keyData,index) => {
+            const animationData = keyData.transformData.transformData;
+            app.scene.gpuData.bezierModifierData.setAnimationData(this, animationData, index);
+        })
         this.verticesNum = data.baseVertices.length / 2;
         this.pointNum = this.verticesNum / 3;
 
         this.animationBlock.setSaveData(data.animationKeyDatas);
 
-        this.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
-
-        this.s_baseVerticesPositionBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, data.baseVertices, ["f32","f32","f32","f32","f32","f32"]);
-        this.RVrt_coBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, undefined, ["f32","f32","f32","f32","f32","f32"]);
-
         this.isInit = true;
         this.isChange = true;
-
-        this.setGroup();
-        setBaseBBox(this);
-    }
-
-    addBaseVertices(add) {
-        const newBuffer = GPU.createStorageBuffer((this.verticesNum + add.length) * (2) * 4, undefined, ["f32","f32","f32","f32","f32","f32"]);
-        GPU.copyBuffer(this.s_baseVerticesPositionBuffer, newBuffer);
-        GPU.writeBuffer(newBuffer, new Float32Array(add.flat(1)), this.verticesNum * (2) * 4);
-        this.verticesNum = this.verticesNum + add.length;
-        this.pointNum = this.verticesNum / 3;
-        this.s_baseVerticesPositionBuffer = newBuffer;
-        this.RVrt_coBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, undefined, ["f32","f32","f32","f32","f32","f32"]);
-        this.setGroup();
-        this.isChange = true;
-
-        this.children.weightReset();
-        setParentModifierWeight(this);
-    }
-
-    subBaseVertices(sub) {
-        sub = sub.filter((x) => x % 3 == 0);
-        sub = sub.map((x) => x / 3);
-        sub.sort((a,b) => a - b);
-        const indexs = [];
-        let lastIndex = 0;
-        for (const subIndex of sub) {
-            if (subIndex - lastIndex >= 1) {
-                indexs.push([lastIndex,subIndex - 1]);
-            }
-            lastIndex = subIndex + 1;
-        }
-        if (lastIndex < this.pointNum) {
-            indexs.push([lastIndex,this.pointNum]);
-        }
-        GPU.consoleBufferData(this.s_baseVerticesPositionBuffer);
-        const newBuffer = GPU.createStorageBuffer((this.verticesNum - sub.length * 3) * (2) * 4, undefined, ["f32","f32","f32","f32","f32","f32"]);
-        let offset = 0;
-        for (const rOffset of indexs) {
-            GPU.copyBuffer(this.s_baseVerticesPositionBuffer, newBuffer, rOffset[0] * 3 * 2 * 4, offset, (rOffset[1] - rOffset[0]) * 3 * 2 * 4);
-            offset += (rOffset[1] - rOffset[0] + 1) * 3 * 2 * 4;
-        }
-        GPU.consoleBufferData(newBuffer);
-        this.verticesNum = this.verticesNum - sub.length * 3;
-        this.pointNum = this.verticesNum / 3;
-        this.s_baseVerticesPositionBuffer = newBuffer;
-        this.RVrt_coBuffer = GPU.createStorageBuffer(this.verticesNum * (2) * 4, undefined, ["f32","f32","f32","f32","f32","f32"]);
-        this.setGroup();
-        this.isChange = true;
-
-        this.children.weightReset();
-        setParentModifierWeight(this);
-    }
-
-    setGroup() {
-        this.modifierDataGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [{item: this.s_baseVerticesPositionBuffer, type: "b"}]);
-        this.modifierTransformDataGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [{item: this.s_baseVerticesPositionBuffer, type: "b"}, {item: this.RVrt_coBuffer, type: "b"}]);
-        this.adaptAnimationGroup1 = GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: this.RVrt_coBuffer, type: 'b'}]);
-        this.collisionVerticesGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [{item: this.RVrt_coBuffer, type: 'b'}]);
-
-        this.modifierTransformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.RVrt_coBuffer, type: "b"}, {item: this.parentWeightBuffer, type: "b"}]);
-
-        this.calculateAllBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.BBoxBuffer, type: 'b'}, {item: this.RVrt_coBuffer, type: 'b'}]);
-        this.calculateAllBaseBBoxGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: this.baseBBoxBuffer, type: 'b'}, {item: this.s_baseVerticesPositionBuffer, type: 'b'}]);
-        this.GUIrenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.RVrt_coBuffer, type: 'b'}]);
     }
 
     async getSaveData() {
-        const animationKeyDatas = await this.animationBlock.getSaveData()
+        const animationKeyDatas = await this.animationBlock.getSaveData();
+        let modifierEffectData = null;
+        if (this.parent) {
+            if (this.parent.type == "モディファイア") {
+                modifierEffectData = {type: "u32*4,f32*4", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (4 + 4) * 4, ["u32","u32","u32","u32","f32","f32","f32","f32"])};
+            } else if (this.parent.type == "ベジェモディファイア") {
+                modifierEffectData = {type: "u32,f32", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (1 + 1) * 4, ["u32","f32"])};
+            } else if (this.parent.type == "ボーンモディファイア") {
+                modifierEffectData = {type: "u32*4,f32*4", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (4 + 4) * 4, ["u32","u32","u32","u32","f32","f32","f32","f32"])};
+            }
+        }
         return {
             name: this.name,
             id: this.id,
             type: this.type,
+            modifierEffectData: modifierEffectData,
             baseVertices: [...await GPU.getF32BufferData(this.s_baseVerticesPositionBuffer)],
             animationKeyDatas: animationKeyDatas,
         };

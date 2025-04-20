@@ -1,7 +1,9 @@
-import { changeObjectName, hierarchy } from '../ヒエラルキー.js';
+import { app } from '../app.js';
+import { changeObjectName } from '../app/Hierarchy.js';
 import { keysDown, stateMachine } from '../main.js';
 import { createCheckbox, createIcon, managerForDOMs } from './制御.js';
 import { activeOrClear } from '../コンテキストメニュー/制御.js';
+import { changeParameter } from './utility.js';
 
 export function select(a,b,bool) {
     return bool ? a : b;
@@ -26,7 +28,7 @@ function updateLayer(objects, groupID, DOM) {
     const pairData = new Map();
 
     // タグがないオブジェクトにタグを作る
-    for (const object of hierarchy.editor.layer.allLayers) {
+    for (const object of app.hierarchy.editor.layer.allLayers) {
         let listItem = managerForDOMs.getDOMInObject(object, groupID);
         if (!listItem) {
             listItem = document.createElement("li");
@@ -100,7 +102,7 @@ function updateLayer(objects, groupID, DOM) {
                     tagsGroup.append(depthAndNameDiv, zIndexInput, visibleCheckbox);
 
                     zIndexInput.addEventListener('change', () => {
-                        hierarchy.updateZindex(object, Number(zIndexInput.value));
+                        changeParameter(object, "zIndex", Number(zIndexInput.value));
                     });
 
                     visibleCheckbox.inputDOM.addEventListener('change', () => {
@@ -142,7 +144,7 @@ function updateLayer(objects, groupID, DOM) {
 
     const objectChildrenRoop = (object = "") => {
         if (object == "") {
-            fn("surface", ul, hierarchy.editor.layer.surface);
+            fn("surface", ul, app.hierarchy.editor.layer.surface);
         } else {
             if (pairData.get(object).querySelector("ul")) {
                 fn(object.id, pairData.get(object).querySelector("ul"), object.getChildren());

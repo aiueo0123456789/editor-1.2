@@ -1,5 +1,13 @@
 import { isPlainObject } from "../utility.js";
 
+export class DataBlock {
+    constructor(tag, updateFn, others) {
+        this.tag = tag;
+        this.updateFn = updateFn;
+        this.others = others;
+    }
+}
+
 export class DOMsManager {
     constructor() {
         this.objectsMap = new Map();

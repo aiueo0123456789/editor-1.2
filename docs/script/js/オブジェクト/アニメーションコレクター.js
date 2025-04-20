@@ -1,8 +1,8 @@
 import { searchAnimation } from "./オブジェクトで共通の処理.js";
 import { KeyframeBlock } from "../キーフレーム.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
-import { hierarchy } from "../ヒエラルキー.js";
 import { changeParameter } from "../UI/utility.js";
+import { app } from "../app.js";
 
 class Editor {
     constructor(animationManager) {
@@ -43,7 +43,7 @@ export class AnimationCollector {
     init(data) {
         this.keyframe.setKeyframe(data.keyframe.keys);
         for (const [id, animationName] of data.containedAnimations) {
-            const object = hierarchy.searchObjectFromID(id);
+            const object = app.scene.searchObjectFromID(id);
             const animation = searchAnimation(object, animationName);
             if (animation) {
                 this.containedAnimations.push(animation);

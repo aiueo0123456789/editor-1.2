@@ -2,7 +2,34 @@ import { GPU,device } from "../webGPU.js";
 import { adaptAllAnimationToVerticesPipeline,modifierTransformPipeline,rotateModifierTransformPipeline,bezierModifierTransformPipeline, setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, updateCenterPositionPipeline, calculateBoneModifierLocalMatrixPipeline, calculateBoneModifierMatrixPropagatePipeline, calculateBoneModifierWeightToVerticesPipeline, adaptBoneModifierToVerticesPipeline, calculateBoneVerticesPipeline } from "../GPUObject.js";
 import { calculateBBoxFromAllVertices } from "../BBox.js";
 import { vec2 } from "../ベクトル計算.js";
-import { managerForDOMs } from "../UI/制御.js";
+import { createID, managerForDOMs } from "../UI/制御.js";
+
+export class ObjectBase {
+    constructor(name,type,id = createID()) {
+        this.isChange = true;
+        this.isInit = false;
+        this.type = type;
+        this.name = name;
+        this.id = id;
+    }
+}
+
+export class VerticesObjectBase {
+    constructor() {
+        this.B_Vert_co = null; // baseVerticesCoordinate
+        this.R_Vert_co = null; // renderingVerticesCoordinate
+        this.parent = ""; // 親要素
+
+        this.vertNum = 0; // 頂点数
+    }
+}
+
+export class ObjectEditorBase {
+    constructor() {
+        this.mode = "Object";
+        this.BBox = {min: [0,0], max: [0,0], width: 0, height: 0, center: [0,0]};
+    }
+}
 
 export function updateObject(object) {
     if (!object.isInit) return ;
@@ -24,7 +51,7 @@ export function updateObject(object) {
         }
     } else if (object.type == "ボーンモディファイア") {
         if (object.parent.isChange) object.isChange = true;
-        object.animationBlock.animationBlock.forEach(animation => {
+        object.animationBlock.animationBlock.forEach((animation, index) => {
             if (animation.beforeWeight != animation.weight) {
                 object.isChange = true;
                 GPU.writeBuffer(animation.u_animationWeightBuffer, new Float32Array([animation.weight]));
@@ -83,6 +110,7 @@ export function updateObject(object) {
             calculateBBoxFromAllVertices(object.calculateAllBBoxGroup, object.verticesNum);
             GPU.copyBBoxBufferToObject(object.BBoxBuffer, object.editor);
         }
+    } else if (object.type == "グラフィックメッシュ") {
     } else {
         if (object.parent.isChange) object.isChange = true;
         object.animationBlock.animationBlock.forEach(animation => {
@@ -263,15 +291,6 @@ export function setBaseBBox(object) {
     GPU.copyBufferToArray(object.baseBBoxBuffer,object.baseBBox);
 }
 
-export function baseTransform(object, transformDataGroup) {
-    if (object.baseTransformIsLock) return ;
-    object.isChange = true;
-    if (object.type == "回転モディファイア") {
-        object.updateBaseData(transformDataGroup);
-        setParentModifierWeight(object);
-    }
-}
-
 const centerPositionBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
 const updateCenterPositionGroup2 = GPU.createGroup(GPU.getGroupLayout("Cu"), [{item: centerPositionBuffer, type: 'b'}]);
 export function updateCenterPosition(object, centerPosition) {
@@ -311,4 +330,34 @@ export function sharedDestroy(object) {
     object.editor.destroy();
     object.animationBlock = null;
     object.editor = null;
+}
+
+export class BoundingBox {
+    constructor() {
+        this.min = [0,0];
+        this.max = [0,0];
+        this.width = 0;
+        this.height = 0;
+        this.center = [0,0]
+    }
+
+    set(data) {
+        if (data.min && data.max) {
+            this.min = data.min;
+            this.max = data.max;
+            vec2.reverseScale(this.center, vec2.addR(this.min,this.max), 2);
+            [this.width,this.height] = vec2.subR(this.max,this.min);
+        } else {
+            
+        }
+    }
+
+    setWidthAndHeight(width, height) {
+        this.width = width;
+        this.height = height;
+
+        let radius = vec2.reverseScaleR([width,height], 2);
+        this.min = vec2.subR(this.center, radius);
+        this.max = vec2.addR(this.center, radius);
+    }
 }

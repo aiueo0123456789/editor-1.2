@@ -21,7 +21,7 @@ import { FunctionTranceShelfe, TranceShelfe } from "./シェリフ.js";
 import { displayRenderingOrder } from "./表示順番の表示.js";
 import { displayLayer } from "./レイヤーの表示.js";
 import { CommandStack } from "./json/デバッグ.js";
-import { CreatorForUI } from "./UIの自動生成.js";
+import { CreatorForUI } from "../area/補助/UIの自動生成.js";
 
 export const managerForDOMs = new DOMsManager();
 
@@ -149,13 +149,13 @@ const gridInteriorObjects = [];
 //             return tagDiv;
 //         } else if (mode == "タイムライン") {
 //             const tagDiv = document.createElement("div");
-//             const isReplayCheckbox = document.createElement("input");
-//             isReplayCheckbox.type = "checkbox";
-//             isReplayCheckbox.checked = renderingParameters.isReplay;
-//             isReplayCheckbox.addEventListener("change", () => {
-//                 renderingParameters.isReplay = isReplayCheckbox.checked;
+//             const isPlayingCheckbox = document.createElement("input");
+//             isPlayingCheckbox.type = "checkbox";
+//             isPlayingCheckbox.checked = renderingParameters.isPlaying;
+//             isPlayingCheckbox.addEventListener("change", () => {
+//                 renderingParameters.isPlaying = isPlayingCheckbox.checked;
 //             })
-//             tagDiv.append(isReplayCheckbox);
+//             tagDiv.append(isPlayingCheckbox);
 //             return tagDiv;
 //         }
 //         const tagDiv = document.createElement("div");
@@ -240,13 +240,13 @@ export class GridInterior {
             return tagDiv;
         } else if (mode == "タイムライン") {
             const tagDiv = document.createElement("div");
-            const isReplayCheckbox = document.createElement("input");
-            isReplayCheckbox.type = "checkbox";
-            isReplayCheckbox.checked = renderingParameters.isReplay;
-            isReplayCheckbox.addEventListener("change", () => {
-                renderingParameters.isReplay = isReplayCheckbox.checked;
+            const isPlayingCheckbox = document.createElement("input");
+            isPlayingCheckbox.type = "checkbox";
+            isPlayingCheckbox.checked = renderingParameters.isPlaying;
+            isPlayingCheckbox.addEventListener("change", () => {
+                renderingParameters.isPlaying = isPlayingCheckbox.checked;
             })
-            tagDiv.append(isReplayCheckbox);
+            tagDiv.append(isPlayingCheckbox);
             return tagDiv;
         }
         const tagDiv = document.createElement("div");

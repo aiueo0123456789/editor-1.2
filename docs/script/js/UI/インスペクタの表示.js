@@ -1,7 +1,8 @@
+import { app } from "../app.js";
 import { renderObjectManager } from "../main.js";
 import { GPU } from "../webGPU.js";
 import { appendAnimationToObject, deleteAnimationToObject, updateCenterPosition } from "../オブジェクト/オブジェクトで共通の処理.js";
-import { changeObjectName, hierarchy } from "../ヒエラルキー.js";
+import { changeObjectName } from "../app/Hierarchy.js";
 import { stateMachine } from '../main.js';
 import { TextureToCVS } from "../キャンバスにテクスチャを表示.js";
 import { createCheckbox, createIcon, createLabeledInput, createLabeledSelect, createLabeledVecInput, createMinButton, createSection, managerForDOMs, setRangeStyle, updateDataForUI } from "./制御.js";
@@ -9,7 +10,7 @@ import { ResizerForDOM } from "./resizer.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
 import { hexToRgbaArray, rgbToHex } from "../utility.js";
 import { SetParentObjectManager } from "../機能/オペレーター/オブジェクト/オブジェクト.js";
-import { operator } from "../機能/オペレーター/オペレーター.js";
+import { changeParameter } from "./utility.js";
 
 function updateAnimationDOM(object, groupID, DOM) {
     const listItem = DOM;
@@ -30,7 +31,7 @@ function updateAnimationDOM(object, groupID, DOM) {
         }
         managerSelectTag.append(sleectElement);
     }
-    hierarchy.animationCollectors.forEach(manager => {
+    app.hierarchy.animationCollectors.forEach(manager => {
         const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
         sleectElement.value = manager.name; // h1要素に配列の要素を設定
         sleectElement.textContent = manager.name; // h1要素に配列の要素を設定
@@ -107,7 +108,7 @@ function updateAnimationBlockDOM(object, groupID, /** @type {HTMLElement} */ DOM
                 }
                 managerSelectTag.append(sleectElement);
             }
-            hierarchy.animationCollectors.forEach(manager => {
+            app.hierarchy.animationCollectors.forEach(manager => {
                 const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
                 sleectElement.value = manager.id; // h1要素に配列の要素を設定
                 sleectElement.textContent = manager.name; // h1要素に配列の要素を設定
@@ -119,9 +120,9 @@ function updateAnimationBlockDOM(object, groupID, /** @type {HTMLElement} */ DOM
 
             managerSelectTag.addEventListener("change", () => {
                 if (managerSelectTag.value == "none") {
-                    hierarchy.deleteAnimationCollectorLink(animation);
+                    app.hierarchy.deleteAnimationCollectorLink(animation);
                 } else {
-                    hierarchy.setAnimationCollectorLink(hierarchy.searchObjectFromID(managerSelectTag.value), animation);
+                    app.hierarchy.setAnimationCollectorLink(app.scene.searchObjectFromID(managerSelectTag.value), animation);
                 }
                 managerForDOMs.update(animation);
             })
@@ -179,16 +180,16 @@ function updateBasicDOM(object, groupID, DOM) {
         }
         parentSelect.append(sleectElement);
     }
-    hierarchy.modifiers.forEach(modifier => {
+    app.hierarchy.modifiers.forEach(modifier => {
         createModifierOptionTag(modifier,"_m");
     })
-    hierarchy.bezierModifiers.forEach(modifier => {
+    app.hierarchy.bezierModifiers.forEach(modifier => {
         createModifierOptionTag(modifier,"lm");
     })
-    hierarchy.rotateModifiers.forEach(modifier => {
+    app.hierarchy.rotateModifiers.forEach(modifier => {
         createModifierOptionTag(modifier,"rm");
     })
-    hierarchy.boneModifiers.forEach(modifier => {
+    app.hierarchy.boneModifiers.forEach(modifier => {
         createModifierOptionTag(modifier,"bm");
     })
 
@@ -271,9 +272,9 @@ export function displayInspector(targetDiv, groupID) {
         const parentSelect = createLabeledSelect(basicSection, "親要素:", "親要素の選択");
         parentSelect.addEventListener('change', () => {
             if (parentSelect.value == "") {
-                hierarchy.sortHierarchy("", object);
+                app.hierarchy.sortHierarchy("", object);
             } else {
-                operator.appendCommand(new SetParentObjectManager(object, hierarchy.searchObjectFromID(parentSelect.value)));
+                app.operator.appendCommand(new SetParentObjectManager(app.operator.object,object, app.scene.searchObjectFromID(parentSelect.value)));
             }
         });
 
@@ -316,7 +317,7 @@ export function displayInspector(targetDiv, groupID) {
         zIndexInput.step = 1;
         zIndexInput.value = object.zIndex;
         zIndexInput.addEventListener("change", () => {
-            hierarchy.updateZindex(object, Number(zIndexInput.value));
+            changeParameter(object, "zIndex", Number(zIndexInput.value));
         })
 
         const textureInput = createLabeledInput(meshSection,"画像を選択", "file");
@@ -325,10 +326,7 @@ export function displayInspector(targetDiv, groupID) {
             if (file) {
                 const fileName = file.name.split(".")[0];
                 changeObjectName(object, fileName);
-                // ファイルのプレビュー表示例
-                object.texture = await GPU.imageToTexture2D(URL.createObjectURL(file));
-                object.textureView = object.texture.createView();
-                object.setGroup();
+                object.editor.changeTexture(await GPU.imageToTexture2D(URL.createObjectURL(file)));
 
                 textureToCVS.setTexture(object.texture,object.textureView);
                 textureToCVS.update();
@@ -366,13 +364,6 @@ export function displayInspector(targetDiv, groupID) {
         meshSection.appendChild(generateMeshButton);
 
         generateMeshButton.addEventListener("click", async () => {
-            // [Number(generateMeshValue2InputForX.value),Number(generateMeshValue2InputForY.value)]
-            // const meshData = await createMeshFromTexture(object.texture, Number(generateMeshValue1Input.value), 1, {vertices: object.editor.baseVertices, edges: object.editor.baseEdges});
-            // for (let i = 0; i < meshData[0].length; i ++) {
-            //     vec2.add(meshData[0][i], meshData[0][i], [object.editor.BBox.center[0], object.editor.BBox.center[1]]);
-            // }
-            // console.log(meshData)
-            // object.setMeshData(...meshData);
             object.editor.autoCreateOutline(6,1);
         })
 

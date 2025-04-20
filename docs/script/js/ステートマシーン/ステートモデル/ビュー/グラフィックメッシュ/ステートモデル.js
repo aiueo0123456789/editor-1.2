@@ -1,5 +1,5 @@
+import { app } from "../../../../app.js";
 import { managerForDOMs, updateDataForUI } from "../../../../UI/制御.js";
-import { hierarchy } from "../../../../ヒエラルキー.js";
 import { createNextStateData } from "../../../状態遷移.js";
 import { updateForHoverObjects } from "../ユーティリティ/関数.js";
 
@@ -34,7 +34,7 @@ export class StateModel_GraphicMesh {
     }
 
     init(stateData) {
-        managerForDOMs.update(hierarchy);
+        managerForDOMs.update(app.hierarchy);
         updateDataForUI["インスペクタ"] = true;
     }
 

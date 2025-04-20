@@ -82,7 +82,8 @@ export const modifierFrameRenderPipeline = GPU.createRenderPipeline([GPU.getGrou
 export const modifierFrame2RenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vu"), GPU.getGroupLayout("Fu")], v_modifierFrame2RenderShaderModule, f_fillRenderShaderModule, [], "2d", "t");
 export const bezierRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], v_bezierRenderShaderModule, f_fillRenderShaderModule, [], "2d", "s");
 export const rotateModifierRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Fu")], await loadFile('script/wgsl/レンダー/回転モディファイア/v_表示.wgsl'), f_fillRenderShaderModule, [], "2d", "t");
-export const boneRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], await loadFile('script/wgsl/レンダー/ボーン/v_ボーンの表示.wgsl'), f_fillRenderShaderModule, [], "2d", "t");
+// export const oneColorBoneRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu")], await loadFile('script/wgsl/レンダー/ボーン/v_ボーンの表示.wgsl'), f_fillRenderShaderModule, [], "2d", "t");
+// export const boneRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fsr")], await loadFile('script/wgsl/レンダー/ボーン/v_ボーンの表示.wgsl'), f_fillRenderShaderModule, [], "2d", "t");
 export const LimitedBoneRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Fu"), GPU.getGroupLayout("Vsr")], await loadFile('script/wgsl/レンダー/ボーン/v_特定のボーンの表示.wgsl'), f_fillRenderShaderModule, [], "2d", "s");
 
 export const sampler = GPU.createTextureSampler();

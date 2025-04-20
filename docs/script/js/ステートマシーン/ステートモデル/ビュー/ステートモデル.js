@@ -1,7 +1,7 @@
+import { app } from "../../../app.js";
 import { activeView, keysDown } from "../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../UI/制御.js";
 import { updateForContextmenu } from "../../../コンテキストメニュー/制御.js";
-import { hierarchy } from "../../../ヒエラルキー.js";
 import { createNextStateData, previousKeysDown } from "../../状態遷移.js";
 import { updateForHoverObjects, updateSelectObjects } from "./ユーティリティ/関数.js";
 
@@ -31,7 +31,7 @@ export class StateModel_View {
     }
 
     init(stateData) {
-        managerForDOMs.update(hierarchy);
+        managerForDOMs.update(app.hierarchy);
         updateDataForUI["インスペクタ"] = true;
     }
 
@@ -42,7 +42,7 @@ export class StateModel_View {
             updateForContextmenu("オブジェクト追加",activeView.mouseState.client);
         }
         if (keysDown["a"]) {
-            updateSelectObjects(stateData,hierarchy.graphicMeshs);
+            updateSelectObjects(stateData,app.hierarchy.graphicMeshs);
             managerForDOMs.update("ヒエラルキー")
         }
     }

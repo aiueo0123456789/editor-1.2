@@ -1,10 +1,8 @@
-import { stateMachine } from "../../main.js";
-import { hierarchy } from "../../ヒエラルキー.js";
-import { operator } from "../../機能/オペレーター/オペレーター.js";
+import { app } from "../../app.js";
 
 export class CommandStack {
     constructor() {
-        this.inputObject = {"o": operator};
+        this.inputObject = {"o": app.operator};
 
         const update = () => {
         }
