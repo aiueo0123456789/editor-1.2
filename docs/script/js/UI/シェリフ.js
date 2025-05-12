@@ -1,4 +1,4 @@
-import { activeView, stateMachine } from "../main.js";
+import { stateMachine } from "../main.js";
 import { getFuntion, isNumber, isPlainObject, IsString } from "../utility.js";
 import { createCheckbox, createLabeledInput, createLabeledP, createLabeledSelect, createLabeledVecInput, managerForDOMs } from "./制御.js";
 
@@ -43,7 +43,7 @@ export function initMeshShelf(groupID, DOM) {
     createMeshButton.textContent = "自動";
     createMeshButton.addEventListener("click", () => {
         stateMachine.state.data.activeObject.editor.createEdgeFromTexture(6,10);
-        activeView.addFunctionTranceShelfe({object: stateMachine.state.data.activeObject.editor, targetFn: "createEdgeFromTexture"}, [{name: "ピクセル密度", type: {type: "入力", inputType: "数字", option: {initValue: 6}}}, {name: "余白", type: {type: "入力", inputType: "数字", option: {initValue: 10}}}]);
+        // activeView.addFunctionTranceShelfe({object: stateMachine.state.data.activeObject.editor, targetFn: "createEdgeFromTexture"}, [{name: "ピクセル密度", type: {type: "入力", inputType: "数字", option: {initValue: 6}}}, {name: "余白", type: {type: "入力", inputType: "数字", option: {initValue: 10}}}]);
     })
 
     const appenButton = createCheckbox("button-checkbox", "追加");

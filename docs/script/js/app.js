@@ -1,12 +1,17 @@
-import { InputManager } from "./app/InputManager.js";
+import { FaileIOManager } from "./app/FaileIOManager.js";
 import { Scene } from "./app/Scene.js";
-import { Viewer } from "./area/viewer/viewer.js";
 import { AutoGrid } from "./UI/grid.js";
-import { CreatorForUI } from "./area/補助/UIの自動生成.js";
 import { createIcon, createID, createTag } from "./UI/制御.js";
 import { Hierarchy } from "./app/Hierarchy.js";
 import { Operator } from "./機能/オペレーター/オペレーター.js";
-import { Area_Hierarchy } from "./area/hierarchy/hierarchy.js";
+import { Area_Viewer } from "./area/Viewer/Viewer.js";
+import { Area_Hierarchy } from "./area/Hierarchy/Hierarchy.js";
+import { Area_Inspector } from "./area/Inspector/Inspector.js";
+import { Area_Preview } from "./area/Preview/Preview.js";
+import { Area_Timeline } from "./area/Timeline/Timeline.js";
+import { ViewerSpaceData } from "./area/Viewer/spaceData.js";
+import { TimelineSpaceData } from "./area/Timeline/spaceData.js";
+import { InputManager } from "./app/InputManager.js";
 
 // モードごとに使えるツールの管理
 class WorkSpaceTool {
@@ -25,28 +30,36 @@ class WorkSpaceTool {
 // アプリの設定
 class AppConfig {
     constructor() {
-        this.workSpaceTool = new WorkSpaceTool;
+        this.workSpaceTool = new WorkSpaceTool();
 
         this.MAX_GRAPHICMESH = 100; // グラフィックメッシュの最大数
         this.MAX_VERTICES_PER_GRAPHICMESH = 500; // グラフィックメッシュあたりの最大頂点数
+        this.MAX_MESHES_PER_GRAPHICMESH = 700; // グラフィックメッシュあたりの最大頂メッシュ数
         this.MAX_ANIMATIONS_PER_GRAPHICMESH = 10; // グラフィックメッシュあたりの最大アニメーション数
 
         this.MAX_BONEMODIFIER = 10; // ボーンモディファイアの最大数
         this.MAX_VERTICES_PER_BONEMODIFIER = 100; // ボーンモディファイアあたりの最大頂点数
         this.MAX_ANIMATIONS_PER_BONEMODIFIER = 10; // ボーンモディファイアあたりの最大アニメーション数
+
+        this.areasConfig = {};
+        for (const keyName in useClassFromAreaType) {
+            this.areasConfig[keyName] = new useClassFromAreaType[keyName]["areaConfig"]();
+        }
     }
 }
 
 export class Application { // 全てをまとめる
-    constructor(dom) {
+    constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
 
         this.appConfig = new AppConfig();
 
         this.areas = [];
+        this.activeArea = null;
         this.scene = new Scene(this);
         this.animationPlayer = new AnimationPlayer(this);
         this.hierarchy = new Hierarchy(this);
+        this.fileIO = new FaileIOManager(this);
         this.input = new InputManager(this);
         this.operator = new Operator(this);
     }
@@ -78,6 +91,11 @@ export class Application { // 全てをまとめる
     }
 
     async update() {
+        for (const area of this.areas) {
+            if ("inputUpdate" in area.uiModel) {
+                area.uiModel.inputUpdate();
+            }
+        }
         // await stateMachine.stateUpdate();
         // 表示順番の再計算
         this.scene.updateRenderingOrder(100);
@@ -87,12 +105,7 @@ export class Application { // 全てをまとめる
         this.scene.updateAnimationCollectors();
         // this.hierarchy.runHierarchy();
         this.scene.update();
-        // // 編集中のobjectを特別処理
-        // if (stateMachine.state.data.selectAnimation) {
-            //     // console.log("特別処理")
-            //     updateObjectFromAnimation(stateMachine.state.data.activeObject, stateMachine.state.data.selectAnimation);
-            // }
-            for (const object of this.scene.allObject) {
+        for (const object of this.scene.allObject) {
             object.isChange = false;
         }
         // this.animationPlayer.update(1 / 60);
@@ -105,6 +118,14 @@ export class Application { // 全てをまとめる
         this.operator.update();
     }
 }
+
+const useClassFromAreaType = {
+    "Viewer": {area: Area_Viewer, areaConfig: ViewerSpaceData},
+    "Hierarchy": {area: Area_Hierarchy, areaConfig: ViewerSpaceData},
+    "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
+    "Preview": {area: Area_Preview, areaConfig: ViewerSpaceData},
+    "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
+};
 
 // UIのエリア管理
 class Area {
@@ -128,21 +149,22 @@ class Area {
         this.main.classList.add("main");
         this.target.append(this.header, this.main);
 
-        if (type == "Viewer") {
-            this.struct = "View";
-            this.viewer = new Viewer(this.main);
-        } else if (type == "Hierarchy") {
-            this.struct = "";
-            this.creatorForUI = new Area_Hierarchy(this.main);
+        this.struct = type;
+        if (type in useClassFromAreaType) {
+            this.uiModel = new useClassFromAreaType[type]["area"](this.main);
         } else {
-            this.struct = "";
-            this.creatorForUI = new CreatorForUI();
+            this.uiModel = {type: "エラー"};
+            console.warn("設定されていないエリアを表示しようとしました",type)
         }
+
+        this.main.addEventListener("mouseover", () => {
+            app.activeArea = this;
+        });
     }
 
     update() {
-        if (this.type == "Viewer") {
-            this.viewer.update();
+        if (this.type == "Viewer" || this.type == "Preview") {
+            this.uiModel.update();
         }
     }
 }
@@ -166,20 +188,18 @@ class AnimationPlayer {
 export const app = new Application(document.getElementById("app"));
 
 const area1 = app.createArea("w");
+const area1_h = app.createArea("h", area1.child1);
 const area2 = app.createArea("w", area1.child2);
 const area3 = app.createArea("h", area2.child2);
 const area4 = app.createArea("w", area3.child1);
-app.setAreaType(area1.child1,"Viewer");
+app.setAreaType(area1_h.child1,"Viewer");
 app.setAreaType(area2.child1,"Hierarchy");
+// app.setAreaType(area4.child1,"Preview");
 app.setAreaType(area4.child1,"Viewer");
-app.setAreaType(area3.child2,"Inspector");
+// app.setAreaType(area3.child2,"Inspector");
+app.setAreaType(area1_h.child2,"Timeline");
+app.setAreaType(area4.child2,"Timeline");
 app.setAreaType(area4.child2,"Property");
-// app.setAreaType(area3.child1,"Viewer");
-// app.setAreaType(area3.child2,"Viewer");
-// app.setAreaType(area2.child1,"Inspector");
-// app.setAreaType(area3.child2,"Hierarchy");
-// app.setAreaType(area3.child1,"Hierarchy");
-// app.setAreaType(area3.child2,"Property");
 
 function appUpdate() {
     app.update();

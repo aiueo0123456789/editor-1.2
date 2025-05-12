@@ -63,7 +63,4 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     localBonewMatrix[fixVertexIndex] = createTransformMatrix(localBoneData.scale, localBoneData.angle, localBoneData.position);
-    // localBonewMatrix[fixVertexIndex][0] = vec3<f32>(localBoneData.position, 1.0);
-    // localBonewMatrix[fixVertexIndex][1] = vec3<f32>(localBoneData.scale, 1.0);
-    // localBonewMatrix[fixVertexIndex][2] = vec3<f32>(localBoneData.angle, localBoneData.length, 1.0);
 }

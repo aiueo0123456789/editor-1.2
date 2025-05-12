@@ -54,7 +54,7 @@ export class AutoGrid {
                         // サイズを計算して適用
                         const x = e.pageX - (rect.left + window.scrollX);
                         // const y = e.pageY - (rect.top + window.scrollY);
-                        const newWidth = clamp(0.2, 0.8, x / maxX);
+                        const newWidth = clamp(0.1, 0.9, x / maxX);
                         this.container.style.gridTemplateColumns = `${newWidth * 100}% 4px 1fr`;
                     };
                     const onMouseUp = () => {
@@ -81,7 +81,7 @@ export class AutoGrid {
                     const onMouseMove = (e) => {
                         // サイズを計算して適用
                         const y = e.pageY - (rect.top + window.scrollY);
-                        const newHeight = clamp(0.2, 0.8, y / maxY);
+                        const newHeight = clamp(0.1, 0.9, y / maxY);
                         this.container.style.gridTemplateRows = `${newHeight * 100}% 4px 1fr`;
                     };
                     const onMouseUp = () => {

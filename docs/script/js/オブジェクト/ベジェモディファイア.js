@@ -53,6 +53,7 @@ export class BezierModifier extends ObjectBase {
         this.baseTransformIsLock = false;
 
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+        this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
         this.children = new Children();
         this.editor = new Editor(this);

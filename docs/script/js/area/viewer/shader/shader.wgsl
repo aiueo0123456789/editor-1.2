@@ -45,6 +45,7 @@ fn vmain(
 @group(2) @binding(1) var myTexture: texture_2d<f32>;
 @group(2) @binding(2) var maskTexture: texture_2d<f32>;
 @group(2) @binding(3) var<uniform> maskType: f32;
+@group(3) @binding(0) var<uniform> alpha: f32;
 
 struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)
@@ -64,6 +65,6 @@ fn fmain(
     let maskValue = select(1.0 - value, value, maskType == 0.0);
     // output.color = textureSample(myTexture, mySampler, uv).bgra * maskValue;
     output.color = textureSample(myTexture, mySampler, uv) * maskValue;
-    // output.color = vec4<f32>(maskValue, 0.0, 0.0, 1.0);
+    output.color.a *= alpha;
     return output;
 }

@@ -22,7 +22,7 @@ function updateRenderingOrder(objects, groupID, DOM) {
     const ul = DOM;
     ul.replaceChildren();
     for (const object of app.scene.renderingOrder) {
-        let listItem = managerForDOMs.getDOMInObject(object, groupID);
+        let listItem = managerForDOMs.getDOMInObjectAndGroupID(object, groupID);
 
         if (!listItem) {
             listItem = document.createElement("li");

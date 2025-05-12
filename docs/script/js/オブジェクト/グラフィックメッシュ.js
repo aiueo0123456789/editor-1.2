@@ -201,6 +201,7 @@ class Editor extends ObjectEditorBase {
     setMeshData(mesh) {
         this.graphicMesh.meshesNum = mesh.length;
         this.graphicMesh.v_meshIndexBuffer = GPU.createVertexBuffer(this.graphicMesh.meshesNum * 3 * 4, mesh.flat(), ['u32']);
+        
         this.graphicMesh.s_meshIndexBuffer = GPU.createStorageBuffer(this.graphicMesh.meshesNum * 4 * 4, mesh.map((x) => x.concat([0])).flat(), ['u32']);
         if (!this.graphicMesh.isInit && this.graphicMesh.texture) {
             this.graphicMesh.isInit = true;
@@ -229,6 +230,7 @@ export class GraphicMesh extends ObjectBase {
 
         this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
         this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
+        this.MAX_MESHES = app.appConfig.MAX_MESHES_PER_GRAPHICMESH;
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
@@ -280,6 +282,9 @@ export class GraphicMesh extends ObjectBase {
         GPU.writeBuffer(this.maskTypeBuffer, new Float32Array([0])); // 0　マスク 反転マスク
 
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+        this.objectMeshData = GPU.createUniformBuffer(4 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+        this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
+        this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectMeshData]);
         this.editor = new Editor(this);
         // this.init();
     }
@@ -347,6 +352,7 @@ export class GraphicMesh extends ObjectBase {
             this.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
 
             this.v_meshIndexBuffer = GPU.createVertexBuffer(this.meshesNum * 3 * 4, [0,1,2, 2,3,1], ['u32']); // [i0,i1,i2,padding,...] -> [i0,i1,i2,...]
+            
             this.s_meshIndexBuffer = GPU.createStorageBuffer(this.meshesNum * 4 * 4, [0,1,2,0, 2,3,1,0], ['u32']);
 
             this.editor.setBaseSilhouetteEdges([[0,1],[0,2],[1,3],[2,3]]);
@@ -376,7 +382,7 @@ export class GraphicMesh extends ObjectBase {
                 }
             }
             app.scene.gpuData.graphicMeshData.prepare(this);
-            app.scene.gpuData.graphicMeshData.setBase(this, data.baseVerticesPosition, data.baseVerticesUV, weightGroupData);
+            app.scene.gpuData.graphicMeshData.setBase(this, data.baseVerticesPosition, data.baseVerticesUV, weightGroupData, data.meshIndex.filter((x,i) => (i + 1) % 4 != 0));
             data.animationKeyDatas.forEach((keyData,index) => {
                 const animationData = keyData.transformData.transformData;
                 app.scene.gpuData.graphicMeshData.setAnimationData(this, animationData, index);
@@ -394,6 +400,7 @@ export class GraphicMesh extends ObjectBase {
             this.meshesNum = data.meshIndex.length / 4;
 
             this.v_meshIndexBuffer = GPU.createVertexBuffer(this.meshesNum * 3 * 4, data.meshIndex.filter((x,i) => (i + 1) % 4 != 0), ['u32']); // [i0,i1,i2,padding,...] -> [i0,i1,i2,...]
+
             this.s_meshIndexBuffer = GPU.createStorageBuffer(this.meshesNum * 4 * 4, data.meshIndex, ['u32']);
 
             this.animationBlock.setSaveData(data.animationKeyDatas);

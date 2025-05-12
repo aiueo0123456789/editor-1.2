@@ -16,17 +16,33 @@ export function calculateBBoxFromLimitedBone(group0, group1, indexsNum) { // 選
     GPU.runComputeShader(calculateLimitedBoneBBoxPipeline, [group0, group1, aaaGroup], Math.ceil(indexsNum / 20 / 64));
 }
 
+// export function BBox(points) {
+//     console.log(points)
+//     if (!points.length) return {max: [NaN, NaN], min: [NaN, NaN]};
+//     let maxX = points[0];
+//     let maxY = points[1];
+//     let minX = points[0];
+//     let minY = points[1];
+//     for (let i = 2; i < points.length; i += 2) {
+//         maxX = Math.max(points[i], maxX);
+//         maxY = Math.max(points[i + 1], maxY);
+//         minX = Math.min(points[i], minX);
+//         minY = Math.min(points[i + 1], minY);
+//     }
+//     return {max: [maxX,maxY], min: [minX,minY]};
+// }
+
 export function BBox(points) {
     if (!points.length) return {max: [NaN, NaN], min: [NaN, NaN]};
-    let maxX = points[0];
-    let maxY = points[1];
-    let minX = points[0];
-    let minY = points[1];
-    for (let i = 2; i < points.length; i += 2) {
-        maxX = Math.max(points[i], maxX);
-        maxY = Math.max(points[i + 1], maxY);
-        minX = Math.min(points[i], minX);
-        minY = Math.min(points[i + 1], minY);
+    let maxX = points[0][0];
+    let maxY = points[0][1];
+    let minX = points[0][0];
+    let minY = points[0][1];
+    for (let i = 1; i < points.length; i ++) {
+        maxX = Math.max(points[i][0], maxX);
+        maxY = Math.max(points[i][1], maxY);
+        minX = Math.min(points[i][0], minX);
+        minY = Math.min(points[i][1], minY);
     }
     return {max: [maxX,maxY], min: [minX,minY]};
 }

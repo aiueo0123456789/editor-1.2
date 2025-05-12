@@ -43,7 +43,7 @@ class Group {
 class Layer {
     constructor(app) {
         this.app = app;
-        this.surface = [];
+        this.root = [];
         this.allLayers = [];
     }
 
@@ -58,13 +58,13 @@ class Layer {
 
     createGroup(parent) {
         const group = new Group();
-        this.surface.push(group);
+        this.root.push(group);
         return group;
     }
 
     appendLayer(parent, object) {
         if (parent == "") {
-            this.surface.push(object);
+            this.root.push(object);
             object.editor.layerParent = "";
         } else {
             parent.appendChild(object);
@@ -74,7 +74,7 @@ class Layer {
 
     deleteLayer(object) {
         if (object.editor.layerParent == "") {
-            this.surface.splice(this.surface.indexOf(object), 1);
+            this.root.splice(this.root.indexOf(object), 1);
             object.editor.layerParent = null;
         } else {
             object.editor.layerParent.deleteChild(object);
@@ -117,20 +117,16 @@ export class Hierarchy {
     constructor(app) {
         this.app = app;
 
-        this.surface = [];
+        this.root = [];
 
         this.editor = new Editor(app);
 
-        function hierarchyUpdate() {
-            managerForDOMs.update("ヒエラルキー")
-            managerForDOMs.update("レイヤー")
-        }
-        managerForDOMs.set(this, "ヒエラルキー", null, hierarchyUpdate);
+        managerForDOMs.update(this.root);
     }
 
     // 全てのオブジェクトをgc対象にしてメモリ解放
     destroy() {
-        this.surface.length = 0;
+        this.root.length = 0;
     }
 
     getSaveData() {
@@ -150,16 +146,16 @@ export class Hierarchy {
     }
 
     getAllObject() {
-        const getChildrenRoop = (children, result = []) => {
+        const getLoopChildren = (children, result = []) => {
             for (const child of children) {
                 result.push(child);
                 if (child.children) { // 子要素がある場合ループする
-                    getChildrenRoop(child.children.objects, result);
+                    getLoopChildren(child.children.objects, result);
                 }
             }
             return result;
         }
-        return getChildrenRoop(this.surface);
+        return getLoopChildren(this.root);
     }
 
     setAnimationCollectorLink(animationCollector, animationKey) { // アニメーションコレクターとアニメーションを関係付ける
@@ -191,20 +187,20 @@ export class Hierarchy {
 
     addHierarchy(parentObject, addObject) { // ヒエラルキーに追加
         if (parentObject == "") {
-            this.surface.push(addObject);
+            this.root.push(addObject);
             addObject.parent = "";
         } else {
             parentObject.children.addChild(addObject);
             addObject.parent = parentObject;
             setParentModifierWeight(addObject); // モディファイアの適応
         }
-        managerForDOMs.update("ヒエラルキー");
+        managerForDOMs.update(this.root)
     }
 
     sortHierarchy(targetObject, object) { // ヒエラルキーの並び替え
         this.deleteHierarchy(object);
         if (targetObject == "") {
-            this.surface.push(object);
+            this.root.push(object);
             object.parent = "";
         } else {
             targetObject.children.addChild(object);
@@ -216,14 +212,14 @@ export class Hierarchy {
             object.parent = targetObject;
             setParentModifierWeight(object); // モディファイアの適応
         }
-        managerForDOMs.update("ヒエラルキー");
+        managerForDOMs.update(this.root)
     }
 
     deleteHierarchy(object) { // ヒエラルキーから削除
         if (object.parent) {
             object.parent.children.deleteChild(object);
         } else {
-            this.surface.splice(this.surface.indexOf(object), 1);
+            this.root.splice(this.root.indexOf(object), 1);
         }
         if (object.children) {
             // 削除対象の子要素を削除対象の親要素の子要素にする
@@ -232,11 +228,11 @@ export class Hierarchy {
             }
             object.children.objects.length = 0;
         }
-        managerForDOMs.update("ヒエラルキー");
+        managerForDOMs.update(this.root)
     }
 
     runHierarchy() { // 伝播の実行
-        this.surface.forEach(x => {
+        this.root.forEach(x => {
             updateObject(x);
             x.children?.run();
         })

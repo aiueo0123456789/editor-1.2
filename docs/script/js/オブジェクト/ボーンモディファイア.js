@@ -5,7 +5,7 @@ import { calculateBaseBoneDataPipeline } from "../GPUObject.js";
 import { createID } from "../UI/制御.js";
 import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { Color } from "../エディタ設定.js";
-import { createArrayN, indexOfSplice } from "../utility.js";
+import { createArrayN, createStructArrayN, indexOfSplice } from "../utility.js";
 import { Attachments } from "./アタッチメント/attachments.js";
 import { app } from "../app.js";
 
@@ -269,6 +269,9 @@ export class BoneModifier extends ObjectBase {
         this.baseTransformIsLock = false;
 
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+        this.objectMeshData = GPU.createUniformBuffer(2 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
+        this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
+        this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectMeshData]);
 
         this.children = new Children();
         this.editor = new Editor(this);
@@ -321,7 +324,7 @@ export class BoneModifier extends ObjectBase {
         this.relationship = data.relationship;
 
         app.scene.gpuData.boneModifierData.prepare(this);
-        app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, data.relationship);
+        app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, data.relationship, createStructArrayN(this.boneNum, [1,1,0,1]));
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
             app.scene.gpuData.boneModifierData.setAnimationData(this, animationData, index);

@@ -44,6 +44,15 @@ export function createArrayN(N, data) {
     }
 }
 
+export function createStructArrayN(N, data) {
+    const array = [...Array(N * data.length)];
+    for (let i = 0; i < array.length; i += data.length) {
+        for (let j = 0; j < data.length; j ++) {
+            array[i + j] = data[j];
+        }
+    }
+    return array;
+}
 // -xのmod(%)を+に収める
 export function modClamp(value, max) {
     return (value % max + max) % max;
@@ -144,4 +153,13 @@ export function isLowerCase(char) {
 // 関数か
 export function isFunction(t) {
     return typeof t === 'function';
+}
+
+export function boolTo0or1(bool) {
+    return bool ? 1 : 0;
+}
+
+export function calculateLocalMousePosition(/** @type {HTMLElement} */dom, position) {
+    const rect = dom.getBoundingClientRect();
+    return vec2.subR(position, [rect.left, rect.top]);
 }

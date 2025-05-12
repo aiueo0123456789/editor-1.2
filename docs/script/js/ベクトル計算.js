@@ -166,6 +166,19 @@ class Vec2 {
         vec2.reverseScale(result, result, pointArray.length);
         return result;
     }
+
+    decimalPartR(vec) {
+        return [vec[0] - Math.floor(vec[0]), vec[1] - Math.floor(vec[1])];
+    }
+
+    modR(a,b) {
+        return [a[0] % b[0], a[1] % b[1]];
+    }
+
+    flipY(vec, height) {
+        vec[1] = height - vec[1];
+        return vec;
+    }
 }
 
 export const vec2 = new Vec2();

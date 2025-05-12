@@ -1,7 +1,7 @@
 import { isNumber, loadFile } from '../utility.js';
 import { GPU, device, format } from '../webGPU.js';
 import { graphicMeshsMeshRenderPipeline, modifierMeshRenderPipeline, renderPipeline,circlesFromAllVerticesRenderPipeline,circlesFromLimitedVerticesRenderPipeline,bezierRenderPipeline,BBoxRenderPipeline,sampler, maskRenderPipeline, LimitedBoneRenderPipeline, rotateModifierRenderPipeline,  modifierFrameRenderPipeline, modifierFrame2RenderPipeline, screenCirclesFromAllVerticesRenderPipeline } from "../GPUObject.js";
-import { renderObjectManager, stateMachine, editorParameters, activeView } from '../main.js';
+import { renderObjectManager, stateMachine, editorParameters } from '../main.js';
 import { app } from '../app.js';
 
 const weigthRenderPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vsr")], `
@@ -689,7 +689,7 @@ export class Render {
                 renderPass.setBindGroup(2, editorParameters.smoothRadiusRenderingConfig.group);
                 renderPass.draw(4, 1, 0, 0);
             }
-            this.renderingCircle(renderPass, {point: activeView.mouseState.positionForGPU, radius: 20, radiusOption: true, width: 10, widthOption: true, color: [1,0,0,1]});
+            // this.renderingCircle(renderPass, {point: activeView.mouseState.positionForGPU, radius: 20, radiusOption: true, width: 10, widthOption: true, color: [1,0,0,1]});
         }
 
         renderPass.setPipeline(screenCirclesFromAllVerticesRenderPipeline);

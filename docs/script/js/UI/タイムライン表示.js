@@ -56,7 +56,7 @@ function updateKeyBlock(object, groupID, DOM) {
     const ul = DOM;
 
     for (const key of object.keys) {
-        let listItem = managerForDOMs.getDOMInObject(key, groupID, "タイムライン-メイン");
+        let listItem = managerForDOMs.getDOMInObjectAndGroupID(key, groupID, "タイムライン-メイン");
 
         if (!listItem) {
             listItem = document.createElement("span");
@@ -90,7 +90,7 @@ function updateKeyBlocksAppendDelete(object, groupID, DOM) {
     /** @type {HTMLElement} */
     const timelineMain = DOM;
     for (const object of app.hierarchy.animationCollectors) {
-        let listItem = managerForDOMs.getDOMInObject(object.keyframe, groupID,"タイムライン-メイン" );
+        let listItem = managerForDOMs.getDOMInObjectAndGroupID(object.keyframe, groupID,"タイムライン-メイン" );
         if (!listItem) {
             listItem = document.createElement("ul");
             listItem.style.height = "20px";
@@ -113,7 +113,7 @@ function updateChannel(object, groupID, DOM) {
     const channelHeader = channelDiv.querySelector('[name="h"]');
     const channelMain = channelDiv.querySelector('[name="m"]');
     for (const object of app.hierarchy.animationCollectors) {
-        let listItem = managerForDOMs.getDOMInObject(object, groupID, "タイムライン-チャンネル");
+        let listItem = managerForDOMs.getDOMInObjectAndGroupID(object, groupID, "タイムライン-チャンネル");
         if (!listItem) {
             listItem = document.createElement("li");
             const name = document.createElement("input");

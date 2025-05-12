@@ -1,4 +1,4 @@
-import { keysDown, activeViewUpdate, editorParameters, activeView, stateMachine } from "../main.js";
+import { keysDown, editorParameters, stateMachine } from "../main.js";
 import { GPU } from "../webGPU.js";
 import { Camera } from "../カメラ.js";
 import { updateForContextmenu } from "../コンテキストメニュー/制御.js";
@@ -318,7 +318,9 @@ export function createID() {
 
 export function createTag(target, type, option = {}) {
     const element = document.createElement(type);
-    target.append(element);
+    if (target) {
+        target.append(element);
+    }
     for (const key in option) {
         if (key == "class") {
             console.log("クラス", option[key].split(" ").filter(Boolean))
@@ -346,6 +348,17 @@ export function createLabeledVecInput(target, axis, name, inputId) {
     inputForAxis1.step = 0.0001;
     // return {[axis[0]]: inputForAxis0, [axis[1]]: inputForAxis1, container: container};
     return {axis0: inputForAxis0, axis1: inputForAxis1, container: container};
+}
+
+export function setLabel(target, labelText, inner) {
+    const label = document.createElement("label");
+    label.textContent = labelText;
+
+    const div = document.createElement("div");
+    div.className = "label-input";
+    div.append(label,inner);
+    target.append(div);
+    return div;
 }
 
 export function createLabeledInput(target, labelText, inputType, name, isCoordinate = false, inputId) {
@@ -418,25 +431,6 @@ export function createLabeledSelect(target, labelText, name, ID) {
     label.setAttribute("for", ID); // for属性を設定
 
     return select;
-}
-
-export function createCheckbox(type = "custom-checkbox", text = "") {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    const label = document.createElement("label");
-    label.classList.add("box");
-    label.setAttribute("name", "checkbox");
-    const span = document.createElement("span");
-    if (type == "button-checkbox") {
-        const textTag = document.createElement("p");
-        textTag.textContent = `${text}`;
-        textTag.classList.add("button-checkbox-text");
-        span.append(textTag);
-    }
-    span.classList.add(type);
-    label.append(checkbox,span);
-    label.inputDOM = checkbox;
-    return label;
 }
 
 export function createMinButton(target, text) {
@@ -526,7 +520,7 @@ export function createMinWorkSpace(target, listName, workSpace = null, buttons =
     return {container: container, listContainer: listContainer, list: workSpace, buttons: buttonsForDOM};
 }
 
-export function createSection(target, sectionName, section, className = "inspector-container") {
+export function createSection(target, sectionName, section, className = "section") {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = true;
@@ -559,7 +553,127 @@ export function createSection(target, sectionName, section, className = "inspect
     return containerDiv;
 }
 
+// チェック
+export function createChecks(target, checks) {
+    const div = createTag(target, "div", {class: "flex"});
+    const result = {html: div, checkList: []};
+    checks.forEach((check, index) => {
+        const element = createCheckbox2(div, check.icon, check.label);
+        result.checkList.push(element.check);
+        if (index == 0) {
+            element.div.style.borderTopRightRadius = "0px";
+            element.div.style.borderBottomRightRadius = "0px";
+        } else if (index == checks.length - 1) {
+            element.div.style.borderTopLeftRadius = "0px";
+            element.div.style.borderBottomLeftRadius = "0px";
+        } else {
+            element.div.style.borderRadius = "0px";
+        }
+    })
+    return result;
+}
+function createCheckbox2(target, icon, text) {
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    const label = document.createElement("label");
+    label.classList.add("box");
+    const div = document.createElement("div");
+    div.classList.add("radioElement");
+    createIcon(div, icon);
+    const textNode = document.createTextNode(text);
+    div.append(textNode);
+    label.append(check,div);
+    target.append(label);
+    return {label, div, check};
+}
+
+export function createCheckbox(type = "custom-checkbox", text = "") {
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    const label = document.createElement("label");
+    label.classList.add("box");
+    label.setAttribute("name", "checkbox");
+    const span = document.createElement("span");
+    if (type == "button-checkbox") {
+        const textTag = document.createElement("p");
+        textTag.textContent = `${text}`;
+        textTag.classList.add("button-checkbox-text");
+        span.append(textTag);
+    }
+    if (type == "eye-icon") {
+        const pupil = document.createElement("span");
+        pupil.classList.add("eye-icon-pupil");
+        span.append(pupil);
+    }
+    span.classList.add(type);
+    label.append(checkbox,span);
+    label.inputDOM = checkbox;
+    return label;
+}
+
+// ラジオ
+export function createRadios(target, radios) {
+    const fieldset = createTag(target, "fieldset", {class: "flex"});
+    const legend = createTag(fieldset, "legend");
+    radios.forEach((radio, index) => {
+        // const element = createTag(fieldset, "input", {type: "radio"});
+        const element = createRadio(fieldset, "test", radio.icon, radio.label);
+        if (index == 0) {
+            element.div.style.borderTopRightRadius = "0px";
+            element.div.style.borderBottomRightRadius = "0px";
+        } else if (index == radios.length - 1) {
+            element.div.style.borderTopLeftRadius = "0px";
+            element.div.style.borderBottomLeftRadius = "0px";
+        } else {
+            element.div.style.borderRadius = "0px";
+        }
+    })
+    console.log(fieldset)
+}
+export function createRadio(target, radioName, icon, text) {
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.setAttribute("name", radioName);
+    const label = document.createElement("label");
+    label.classList.add("box");
+    label.setAttribute("name", "radio");
+    const div = document.createElement("div");
+    div.classList.add("radioElement");
+    createIcon(div, icon);
+    const textNode = document.createTextNode(text);
+    div.append(textNode);
+    label.append(radio,div);
+    target.append(label);
+    return {label, div, radio};
+}
+
+// ボタン
+export function createButton(target, icon, text = "") {
+    const button = document.createElement("button");
+    createIcon(button, icon);
+    const textNode = document.createTextNode(text);
+    button.append(textNode);
+    target.append(button);
+    return button;
+}
+export function createGroupButton(target, buttons) {
+    const container = createTag(target, "div", {class: "flex"});
+    buttons.forEach((button, index) => {
+        const element = createButton(container,button.icon, button.label);
+        if (index == 0) {
+            element.style.borderTopRightRadius = "0px";
+            element.style.borderBottomRightRadius = "0px";
+        } else if (index == buttons.length - 1) {
+            element.style.borderTopLeftRadius = "0px";
+            element.style.borderBottomLeftRadius = "0px";
+        } else {
+            element.style.borderRadius = "0px";
+        }
+    })
+}
+
 export function createIcon(target, imgName) {
+    console.log(target)
     const container = document.createElement("div");
     container.classList.add("icon");
     const icon = document.createElement("img");
@@ -571,7 +685,7 @@ export function createIcon(target, imgName) {
             errorC ++;
             icon.src = `config/画像データ/ui_icon/${imgName}.png`;
         } else {
-            console.error("画像の読み込みに失敗",imgName)
+            console.error("画像の読み込みに失敗",imgName,`config/画像データ/ui_icon/${imgName}.png`)
         }
     })
     container.append(icon);
@@ -635,13 +749,24 @@ export function createShelf(target, title = "テスト") {
     return {container: container, inner: inner};
 }
 
+export function createRange(target, options) {
+    const range = createTag(target, "input", options);
+    range.type = "range";
+    target.append(range);
+    return range;
+}
+
+export function updateRangeStyle(target) {
+    const value = target.value;
+    const min = target.min;
+    const max = target.max;
+    const percentage = ((value - min) / (max - min)) * 100;
+    target.style.background = `linear-gradient(to right,rgb(172, 194, 183) ${percentage}%,rgba(0, 0, 0, 0) ${percentage}%)`;
+}
 export function setRangeStyle(target) {
+    updateRangeStyle(target);
     target.addEventListener("input", () => {
-        const value = target.value;
-        const min = target.min;
-        const max = target.max;
-        const percentage = ((value - min) / (max - min)) * 100;
-        target.style.background = `linear-gradient(to right,rgb(172, 194, 183) ${percentage}%, #404040 ${percentage}%)`;
+        updateRangeStyle(target);
     });
 }
 
@@ -660,203 +785,6 @@ export function deleteAllShelfForAllView() {
 
 export function deleteShelfForAllView(shelfName) {
     
-}
-
-export class View {
-    constructor(tag) {
-        views.push(this);
-        this.groupID = createID();
-        gridInteriorObjects.push(this);
-        this.targetTag = tag;
-        this.targetTag.className = "grid-container";
-
-        this.modeDiv = document.createElement("div");
-        this.modeDiv.className = "modeSelect";
-
-        this.modeSelectTag = document.createElement('select');
-        setModeSelectOption(this.modeSelectTag, "ビュー");
-
-        this.modeDiv.append(this.modeSelectTag);
-        const circleSelectRadiusInput = createLabeledInput(this.modeDiv, "選択半径", "number");
-        circleSelectRadiusInput.value = editorParameters.selectRadius;
-        circleSelectRadiusInput.addEventListener("change", () => {
-            editorParameters.circleSelectRenderingConfigGroup.setWidth(circleSelectRadiusInput.value);
-        })
-        const smoothTypeSelect = createLabeledSelect(this.modeDiv, "スムーズタイプ");
-        for (const type of [["通常", 0],["線形", 1],["逆2乗",2]]) {
-            const sleectElement = document.createElement('option'); // h1要素に配列の要素を設定
-            sleectElement.value = type[1]; // h1要素に配列の要素を設定
-            sleectElement.textContent = type[0]; // h1要素に配列の要素を設定
-            smoothTypeSelect.append(sleectElement);
-            if (sleectElement[1] == editorParameters.smoothType) sleectElement.selected = true;
-        }
-
-        smoothTypeSelect.addEventListener("change", () => {
-            editorParameters.smoothType = smoothTypeSelect.value;
-        })
-        const smoothRadiusInput = createLabeledInput(this.modeDiv, "スムーズ半径", "number");
-        smoothRadiusInput.value = editorParameters.smoothRadius;
-        smoothRadiusInput.addEventListener("change", () => {
-            editorParameters.smoothRadius = smoothRadiusInput.value;
-            GPU.writeBuffer(editorParameters.smoothRadiusBuffer, new Float32Array([editorParameters.smoothRadius]));
-        })
-
-        this.gizmoConfig = {
-            visible: true
-        }
-
-        const gizmoVisibleCheckbox = createLabeledInput(this.modeDiv, "ギズモ", "checkbox");
-        gizmoVisibleCheckbox.inputDOM.checked = this.gizmoConfig.visible;
-        gizmoVisibleCheckbox.inputDOM.addEventListener("change", () => {
-            this.gizmoConfig.visible = gizmoVisibleCheckbox.inputDOM.checked;
-        })
-
-        this.modeSelectTag.addEventListener('change', () => {
-            this.targetTag.innerHTML = "";
-            this.render = null;
-            this.camera = null;
-            this.convertCoordinate = null;
-            this.select = null;
-            resizeObserver.unobserve(this.cvs);
-            if (activeView == this) {
-                for (const grid of gridInteriorObjects) {
-                    if (grid instanceof View) {
-                        activeViewUpdate(grid);
-                    }
-                }
-            }
-            gridInteriorObjects.splice(gridInteriorObjects.indexOf(this), 1);
-            views.splice(views.indexOf(this), 1);
-            new GridInterior(this.targetTag, this.modeSelectTag.value);
-        });
-
-        this.gridMainTag = document.createElement("div");
-        this.gridMainTag.className = "grid-main";
-
-        this.cvs = document.createElement("canvas");
-        this.cvs.className = "renderingTarget";
-
-        this.shelfRange = document.createElement("div");
-        this.shelfRange.className = "shelf-range";
-
-        this.toolbar = createToolBar(this.gridMainTag, ["選択", "並行移動", "拡大縮小", "回転", "頂点追加", "頂点削除"]);
-        this.gridMainTag.classList.add("viewGrid");
-        this.gridMainTag.append(this.cvs, this.shelfRange);
-        this.targetTag.append(this.modeDiv,this.gridMainTag);
-        this.cvsRect = this.cvs.getBoundingClientRect();
-        this.cvs.width = this.cvsRect.width * 2;
-        this.cvs.height = this.cvsRect.height * 2;
-        this.cvsK = this.cvs.height / this.cvsRect.height;
-        this.camera = new Camera();
-        this.render = new Render(this.cvs, this.camera, this.gizmoConfig);
-
-        this.shelfs = [];
-
-        this.convertCoordinate = new ConvertCoordinate(this.cvs,this.camera);
-        this.select = new Select(this.convertCoordinate);
-
-        this.mouseState = {client: [0,0], click: false, rightClick: false, hold: false, holdFrameCount: 0, clickPosition: [0,0], clickPositionForGPU:[0,0], position: [0,0], lastPosition: [0,0], positionForGPU: [0,0], lastPositionForGPU: [0,0], movementForGPU: [0,0]};
-
-        // ホイール操作
-        this.cvs.addEventListener('wheel', (event) => {
-            if (keysDown["Alt"]) {
-                this.camera.zoom += event.deltaY / 200;
-                this.camera.zoom = Math.max(Math.min(this.camera.zoom,this.camera.zoomMax),this.camera.zoomMin);
-            } else {
-                this.camera.position = vec2.addR(this.camera.position, vec2.scaleR([-event.deltaX, event.deltaY], 1 / this.camera.zoom));
-            }
-
-            event.preventDefault();
-        }, { passive: false });
-
-        this.cvs.addEventListener('mousemove', (event) => {
-            const mouseX = (event.clientX - this.cvsRect.left) * this.cvsK; // Calculate mouse X relative to canvas
-            const mouseY = this.cvs.height - ((event.clientY - this.cvsRect.top) * this.cvsK); // Calculate mouse Y relative to canvas
-            this.mouseState.client = [event.clientX,event.clientY];
-            this.mouseState.position = [mouseX,mouseY];
-            this.mouseState.positionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-        });
-
-        this.cvs.addEventListener('mousedown', (event) => {
-            if (event.button == 0) {
-                activeViewUpdate(this);
-                const mouseX = (event.clientX - this.cvsRect.left) * this.cvsK; // Calculate mouse X relative to canvas
-                const mouseY = this.cvs.height - ((event.clientY - this.cvsRect.top) * this.cvsK); // Calculate mouse Y relative to
-                this.mouseState.client = [event.clientX,event.clientY];
-                this.mouseState.clickPosition = [mouseX,mouseY];
-                this.mouseState.clickPositionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-                this.mouseState.position = [mouseX,mouseY];
-                this.mouseState.positionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-                this.mouseState.hold = true;
-                this.mouseState.holdFrameCount = 0;
-                this.mouseState.click = true;
-            }
-        });
-
-        this.cvs.addEventListener('mouseup', () => {
-            this.mouseState.hold = false;
-            this.mouseState.holdFrameCount = 0;
-        });
-
-        this.cvs.addEventListener("contextmenu", (event) => {
-            event.preventDefault();
-            this.mouseState.rightClick = true;
-        });
-
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                // 要素の新しいサイズを取得
-                this.cvsRect = this.cvs.getBoundingClientRect();
-                this.cvs.width = this.cvsRect.width * 3;
-                this.cvs.height = this.cvsRect.height * 3;
-                this.cvsK = this.cvs.height / this.cvsRect.height;
-                this.render.resizeCVS();
-            }
-        });
-
-        this.gridMainTag.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            updateForContextmenu("ビュー",[e.clientX,e.clientY]);
-        });
-
-        // 要素のリサイズを監視
-        resizeObserver.observe(this.cvs);
-    }
-
-    // シェリフの作成
-    addShelf(shelfName, initFn, updateFn) {
-        const shelf = createShelf(this.shelfRange, shelfName);
-        this.shelfs.push(shelf);
-        // initSelectShelf(this.groupID, shelf);
-        initFn(this.groupID, shelf);
-    }
-
-    // 関数シェリフの作成
-    addFunctionTranceShelfe(targetFn, argumentArray, shelfName = "") {
-        const shelf = createShelf(this.shelfRange, shelfName ? shelfName : targetFn.name);
-        new FunctionTranceShelfe(this.groupID, shelf.inner, targetFn, argumentArray);
-        this.shelfs.push(shelf);
-    }
-
-    // トレースシェリフの作成
-    addTranceShelfe(targetObject, argumentArray, shelfName) {
-        const shelf = createShelf(this.shelfRange, shelfName);
-        new TranceShelfe(this.groupID, shelf.inner, targetObject, argumentArray);
-        this.shelfs.push(shelf);
-    }
-
-    deleteAll() {
-        for (const shelf of this.shelfs) {
-            shelf.container.remove();
-        }
-        this.shelfs.length = 0;
-    }
-
-    update() {
-        this.camera.updateCamera();
-        this.render.rendering();
-        this.render.renderGizmo();
-    }
 }
 
 export function updateLoad(processName,percentage,processDetail = "") {

@@ -1,4 +1,4 @@
-import { keysDown, activeView } from "../main.js";
+import { keysDown } from "../main.js";
 import { GPU } from "../webGPU.js";
 import { vec2 } from "../ベクトル計算.js";
 import { arrayMath } from "../配列計算.js";
@@ -133,8 +133,8 @@ export class StateMachine {
     // ステート更新
     async stateUpdate() {
         try {
-            vec2.sub(activeView.mouseState.movementForGPU, activeView.mouseState.positionForGPU, activeView.mouseState.lastPositionForGPU);
-            GPU.writeBuffer(this.mouseBuffer, new Float32Array(activeView.mouseState.positionForGPU));
+            // vec2.sub(activeView.mouseState.movementForGPU, activeView.mouseState.positionForGPU, activeView.mouseState.lastPositionForGPU);
+            // GPU.writeBuffer(this.mouseBuffer, new Float32Array(activeView.mouseState.positionForGPU));
             let roop = true;
             while (roop) {
                 const nowStateStruct = this.structs[this.state.stateID[this.state.stateID.length - 1]];

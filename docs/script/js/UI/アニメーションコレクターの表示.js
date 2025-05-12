@@ -44,7 +44,7 @@ export function updateAnimationCollectorList(object, groupID, DOM) {
     const hasKeyCheckboxs = [];
 
     for (const /** @type {AnimationCollector} */ animationManager of app.hierarchy.animationManagers) {
-        let listItem = managerForDOMs.getDOMInObject(animationManager, groupID);
+        let listItem = managerForDOMs.getDOMInObjectAndGroupID(animationManager, groupID);
         if (!listItem) {
             listItem = document.createElement("ul");
             const main = document.createElement("div");

@@ -16,61 +16,13 @@ export const editorParameters = new EditorPreference();
 export const stateMachine = new StateMachine();
 export const renderObjectManager = new RenderObjectManager();
 
-// // 構造の作成
-// const layout =
-//     {id: "main", type: "w", widthOrHeight: 70, children: [
-//         {id: "c1", type: "h", widthOrHeight: 70, children: [
-//             {id: "render-toolbar", type: "", children: []},
-//             {id: "ui2", type: "w", widthOrHeight: 70, children: [
-//                 {id: "ui2_0", type: "", children: []},
-//                 {id: "ui2_1", type: "", children: []},
-//             ]},
-//         ]},
-//         {id: "ui1", type: "h", widthOrHeight: 40, children: [
-//             {id: "ui1_0", type: "", children: []},
-//             {id: "ui1_1", type: "", children: []},
-//         ]},
-//     ]};
-
-// // 構造からグリッドオブジェクトを作成
-// createGridsObject(null, layout);
-
-// // appをリセットしてグリッドオブジェクトを表示
-// const appDiv = document.getElementById("app");
-// appDiv.innerHTML = "";
-// gridUpdate("app");
-
-const renderAndToolbar = document.getElementById("render-toolbar");
-
-const ui1_0 = document.getElementById("ui1_0");
-
-const ui1_1 = document.getElementById("ui1_1");
-
-const ui2_0 = document.getElementById("ui2_0");
-const ui2_1 = document.getElementById("ui2_1");
-
-// new GridInterior(ui1_0, "ヒエラルキー");
-// new GridInterior(ui1_1, "プロパティ");
-// new GridInterior(ui2_0, "タイムライン");
-// new GridInterior(ui2_1, "インスペクタ");
-
+export const mouseEvent = {};
 export const keysDown = {};
 let projectName = "名称未設定";
 const projectNameInputTag = document.getElementById("projectName-input");
 let loadData = null;
 
-// export let activeView = new View(renderAndToolbar);
-export let activeView;
-
-// 関数モーダルのテスト
-function test(a,b,c) {
-    console.log("テスト",a,b,c)
-}
-// activeView.addFunctionTranceShelfe(test, [{name: "a", type: {type: "入力", inputType: "文字"}}, {name: "b", type: {type: "入力", inputType: "数字", option: {}}}, {name: "c", type: {type: "選択", choices: ["g", "1", "あ"]}}]);
-
-export function activeViewUpdate(view) {
-    activeView = view;
-}
+export let activeView = null;
 
 async function init() {
     if (loadData.append) {
@@ -179,7 +131,7 @@ async function init() {
     update();
 }
 
-// キーのダウンを検知
+// キーイベント管理
 document.addEventListener('keydown', (event) => {
     const isCtrlOrCmd = event.ctrlKey || event.metaKey;
     console.log(event.key,"down")
@@ -202,12 +154,22 @@ document.addEventListener('keydown', (event) => {
         }
     }
 });
-
-// キーのアップを検知
 document.addEventListener('keyup',(event) => {
     keysDown[event.key] = false;
     console.log(event.key,"up")
 });
+
+// マウスイベント管理
+document.addEventListener("mousedown", (e) => {
+    mouseEvent.down = true;
+    mouseEvent.click = true;
+    mouseEvent.clickPosition = [e.clientX,e.clientY];
+    mouseEvent.movement = [e.movementX,e.movementY];
+})
+document.addEventListener("mouseup", (e) => {
+    mouseEvent.down = false;
+    mouseEvent.position = [e.clientX,e.clientY];
+})
 
 async function save() {
     updateLoad("書き出し", 0);
@@ -346,7 +308,7 @@ document.getElementById("open-btn").addEventListener("change", (event) => {
                 projectName = file.name.split(".")[0];
                 projectNameInputTag.value = projectName;
                 loadData = JSON.parse(e.target.result);
-                app.input.loadFile(JSON.parse(e.target.result));
+                app.fileIO.loadFile(JSON.parse(e.target.result));
                 // init();
             } catch (error) {
                 console.error("JSONの解析に失敗しました:", error);

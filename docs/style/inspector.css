@@ -9,13 +9,6 @@
     background-color: white;
 }
 
-.section {
-    padding: 5px;
-    width: 100%;
-    display: flex;
-    flex-flow: column;
-    gap: 5px;
-}
 
 .inspector-container {
     width: 100%;

@@ -8,6 +8,18 @@ export class DataBlock {
     }
 }
 
+export class DOMsManager_DataBlock {
+    constructor(dom, fn, others) {
+        this.dom = dom;
+        this.fn = fn;
+        this.others = others;
+    }
+
+    appendFn() {
+        
+    }
+}
+
 export class DOMsManager {
     constructor() {
         this.objectsMap = new Map();
@@ -44,8 +56,7 @@ export class DOMsManager {
         i.set(groupID, [DOM, updateFn, others]);
     }
 
-    delete(object, groupID, ID) {
-        const a = new Map();
+    deleteDOM(object, groupID, ID) {
         const o = this.objectsMap.get(object);
         if (o) {
             const i = o.get(ID);
@@ -72,18 +83,19 @@ export class DOMsManager {
         }
     }
 
-    getGroupInObject(object, groupID, ID = "defo") {
+    getDataInObjectAndGroupID(object, groupID) {
         const o = this.objectsMap.get(object);
         if (o) {
-            const i = o.get(ID);
-            if (i) {
+            const result = [];
+            o.forEach((i, id) => {
                 const g = i.get(groupID);
                 if (g) {
-                    return g;
+                    result.push(g);
                 }
-            }
+            });
+            return result;
         }
-        return null;
+        return [];
     }
 
     getGroupAndID(groupID, ID) {
@@ -100,7 +112,7 @@ export class DOMsManager {
         return result;
     }
 
-    getDOMInObject(object, groupID, ID = "defo") {
+    getDOMInObjectAndGroupID(object, groupID, ID = "defo") {
         const o = this.objectsMap.get(object);
         if (o) {
             const i = o.get(ID);
@@ -169,13 +181,19 @@ export class DOMsManager {
     submitFn(object, groupID,DOM_Fn) {
         if (typeof DOM_Fn[1] === 'function') {
             DOM_Fn[1](object, groupID, DOM_Fn[0], DOM_Fn[2]);
+        } else if (Array.isArray(DOM_Fn[1])) {
+            for (const fn of DOM_Fn[1]) {
+                if (typeof fn === 'function') {
+                    fn(object, groupID, DOM_Fn[0], DOM_Fn[3]);
+                }
+            }
         }
     }
 
-    update(object, ID = ":ALL:") {
+    update(object, ID = "all") {
         const o = this.objectsMap.get(object);
         if (o) {
-            if (ID == ":ALL:") {
+            if (ID == "all") {
                 o.forEach((i, id) => {
                     i.forEach((DOM_Fn, groupID) => {
                         this.submitFn(object, groupID,DOM_Fn);

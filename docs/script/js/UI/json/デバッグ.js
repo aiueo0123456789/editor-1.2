@@ -11,13 +11,13 @@ export class CommandStack {
             inputObject: {h: "hierarchy"},
             DOM: [
                 {type: "section", name: "test", children: [
-                    {type: "list", option: "min", name: "コマンドスタック", withObject: {object: "o/stack/history"}, liStruct: [
+                    {type: "list", options: {type: "min", select: true}, name: "コマンドスタック", withObject: {object: "o/stack/history"}, liStruct: [
                         {type: "div", "style": "flex", children: [
                             {type: "dbInput", withObject: {object: "constructor", parameter: "name"}},
                             {type: "dbInput", withObject: {object: "", parameter: "id"}},
                         ]},
                     ]},
-                    {type: "list", option: "min", name: "エラーログ", withObject: {object: "o/errorLog"}, liStruct: [
+                    {type: "list", options: {type: "min", select: true}, name: "エラーログ", withObject: {object: "o/errorLog"}, liStruct: [
                         {type: "div", "style": "flex", children: [
                             {type: "dbInput", withObject: {object: "", parameter: "text"}},
                         ]},

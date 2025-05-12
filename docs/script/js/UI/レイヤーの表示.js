@@ -29,7 +29,7 @@ function updateLayer(objects, groupID, DOM) {
 
     // タグがないオブジェクトにタグを作る
     for (const object of app.hierarchy.editor.layer.allLayers) {
-        let listItem = managerForDOMs.getDOMInObject(object, groupID);
+        let listItem = managerForDOMs.getDOMInObjectAndGroupID(object, groupID);
         if (!listItem) {
             listItem = document.createElement("li");
             const tagsGroup = document.createElement("div");
@@ -144,7 +144,7 @@ function updateLayer(objects, groupID, DOM) {
 
     const objectChildrenRoop = (object = "") => {
         if (object == "") {
-            fn("surface", ul, app.hierarchy.editor.layer.surface);
+            fn("root", ul, app.hierarchy.editor.layer.root);
         } else {
             if (pairData.get(object).querySelector("ul")) {
                 fn(object.id, pairData.get(object).querySelector("ul"), object.getChildren());

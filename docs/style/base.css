@@ -9,7 +9,7 @@ body {
 * {
     color: rgb(243, 243, 243);
     font-size: 96.5%;
-    border-radius: 5px;
+    border-radius: 4px;
     text-shadow: 0px 1px 0px rgb(28, 28, 28);
 }
 
@@ -17,12 +17,38 @@ select {
     appearance: auto;
     -webkit-appearance: auto;
     background-color: #151515;
-    border-radius: 5px;
-    border: solid rgb(63, 63, 63);
-    padding: 1px;
-    min-width: fit-content;
+    border-radius: 4px;
+    border: solid rgb(63, 63, 63) 2px;
+    padding: 2px;
+    /* min-width: fit-content; */
     max-width: 100%;
     overflow: hidden;
+
+    -webkit-appearance: none; /* Safari/Chrome */
+    -moz-appearance: none;    /* Firefox */
+    appearance: none;
+}
+
+.select-wrapper {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.select-wrapper select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2em;
+}
+
+.select-wrapper::after {
+    content: "▼"; /* お好みで画像でもOK */
+    position: absolute;
+    right: 0.5em;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
 select:hover {
@@ -31,10 +57,11 @@ select:hover {
 
 input {
     background-color: rgb(120, 120, 120);
-    border: solid rgb(79, 79, 79) 2px;
-    border-radius: 5px;
+    border: solid rgb(79, 79, 79) 1px;
+    border-radius: 4px;
     padding: 2px;
     box-shadow: 0px 1px 0px rgb(28, 28, 28);
+    height: 15px;
     /* filter: drop-shadow(0px 5px 0px rgba(0, 0, 0, 0.5)); */
 }
 
@@ -94,24 +121,68 @@ input[type="checkbox"] {
     display: inline-block;
     width: 15px;  /* サイズ調整 */
     height: 15px;
-    background-color: #262626; /* 背景色（黒に近いグレー） */
-    border-radius: 1px;  /* 角丸 */
-    border: 0.5px solid #ffffff; /* 枠線 */
+    background-color: #545454; /* 背景色（黒に近いグレー） */
+    border-radius: 2px;  /* 角丸 */
+    border: 0.5px solid #464646; /* 枠線 */
     position: relative;
     cursor: pointer;
 }
 /* チェックが入ったときの見た目 */
-input[type="checkbox"]:checked + .custom-checkbox { /* 背景を白に */
-    background-color: #ffffff;
+input[type="checkbox"]:checked + .custom-checkbox {
+    background-color: rgb(71 114 179);
 }
 input[type="checkbox"]:checked + .custom-checkbox::after { /* チェックを表示 */
-    content: "✔";  /* チェックマーク */
-    font-size: 13px;
-    color: rgb(0, 0, 0);
+    content: '';
+    display: block;
     position: absolute;
+    width: 10px;
+    height: 5px;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #ffffff;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* 表示/非表示 */
+.eye-icon-container {
+    position: relative;
+    width: 15px;
+    height: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.eye-icon {
+    /* 正方形の一組の対角を丸めて横に45度かいてん */
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    margin: 2px; /** 回転で横幅は　sqrt(width ** 2 + height ** 2)　になるためそれを考慮したmargin **/
+    border-radius: 60% 0 60% 0;
+    transform: rotate(45deg);
+    background: white;
+
+    /* マスク（穴をあける） */
+    -webkit-mask-image: radial-gradient(circle at center, transparent 0px, transparent 3.5px, black 3.5px);
+    mask-image: radial-gradient(circle at center, transparent 0px, transparent 3.5px, black 3.5px);
+}
+.eye-icon-pupil {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #ffffff; /* 中の丸い瞳 */
+    border-radius: 50%;
+}
+input[type="checkbox"]:not(:checked) + .eye-icon-container .eye-icon-pupil::after {
+    content: '';
+    position: absolute;
+    height: 13px;
+    width: 2px;
+    top: 50%;
+    left: 50%;
+    background: white;
+    transform: translate(-50%, -50%) rotate(45deg); /* 中心に配置 & ちょっと斜めに */
 }
 
 /* ▷と▽が切り替わるボタン */
@@ -165,16 +236,16 @@ input[type="checkbox"]:checked + .button-checkbox { /* チェックを表示 */
 }
 
 /* 再生ボタン */
-.replay {
+.isPlaying {
     display: inline-block;
     width: 10px;
-    height: 100%;
+    height: 15px;
     background-color: #00000000;
     border: 0px; /* 枠線 */
     position: relative;
     cursor: pointer;
 }
-input[type="checkbox"]:not(:checked) + .replay::after { /* チェックを表示 */
+input[type="checkbox"]:not(:checked) + .isPlaying::after { /* チェックを表示 */
     content: "▶";  /* チェックマーク */
     font-size: 10px;
     color: rgb(255, 255, 255);
@@ -183,7 +254,7 @@ input[type="checkbox"]:not(:checked) + .replay::after { /* チェックを表示
     top: 50%;
     transform: translate(-50%, -50%);
 }
-input[type="checkbox"]:checked + .replay::after { /* チェックを表示 */
+input[type="checkbox"]:checked + .isPlaying::after { /* チェックを表示 */
     content: "⏸";  /* チェックマーク */
     font-size: 10px;
     color: rgb(255, 255, 255);
@@ -199,14 +270,13 @@ input[type="range"] {
     appearance: none;
     display: block;
     margin: auto;
-    background: #404040; /* スライダーの背景色 */
+    background-color: #404040; /* スライダーの背景色 */
     outline: none; /* フォーカス時の青い枠を消す */
     width: 100%; /* スライダーの幅 */
-    height: 15px; /* スライダーの高さ */
-    border-radius: 5px; /* 丸みをつける */
+    border-radius: 4px; /* 丸みをつける */
 }
 input[type="range"]:hover {
-    background: #5c5c5c; /* スライダーの背景色 */
+    background-color: #5c5c5c; /* スライダーの背景色 */
 }
 /* スライダーのつまみ（thumb）のスタイル */
 input[type="range"]::-webkit-slider-thumb {
@@ -215,27 +285,52 @@ input[type="range"]::-webkit-slider-thumb {
     width: 5px; /* つまみの幅 */
     height: 17px; /* つまみの高さ */
     background: #787878; /* つまみの色 */
-    border-radius: 5px; /* つまみを丸く */
-    cursor: pointer;
-}
-input[type="range"]::-webkit-slider-thumb:focus {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 8px; /* つまみの幅 */
-    height: 8px; /* つまみの高さ */
-    background: #eaff00; /* つまみの色 */
-    border-radius: 50%; /* つまみを丸く */
+    border-radius: 4px; /* つまみを丸く */
     cursor: pointer;
 }
 
-button {
-    width: 100%;
+/* チェックボタン */
+/* チェックボックスを非表示（ただし、操作は可能） */
+input[type="checkbox"]:checked + .radioElement { /* チェックを表示 */
+    background-color: rgb(71 114 179);
+}
+
+/* ラジオボタン */
+/* チェックボックスを非表示（ただし、操作は可能） */
+input[type="radio"] {
+    display: none;
+}
+.radioElement {
     height: 25px;
     border-radius: 4px;
     padding: 2px;
     border: solid 1px rgb(77, 77, 77);
     background-color: rgb(120, 120, 120);
     width: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    box-shadow: 0px 1px 0px rgb(28, 28, 28);
+    cursor: pointer;
+}
+input[type="radio"]:checked + .radioElement { /* チェックを表示 */
+    background-color: rgb(71 114 179);
+}
+
+button {
+    height: 25px;
+    border-radius: 4px;
+    padding: 2px;
+    border: solid 1px rgb(77, 77, 77);
+    background-color: rgb(120, 120, 120);
+    width: fit-content;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 2px;
 
     box-shadow: 0px 1px 0px rgb(28, 28, 28);
 }
@@ -252,12 +347,6 @@ button:active {
     width: 20px;
     aspect-ratio: 1 / 1;
     text-align: center;
-}
-
-.renderingTarget {
-    background-color: rgb(248, 248, 248);
-    width: 100%;
-    height: 100%;
 }
 
 /* スクロールバー全体のスタイル */
@@ -355,8 +444,15 @@ input[type="file"] {
     width: 100%;
     height: 100%;
     overflow-y: auto; /* スクロールを有効にする */
+    overflow-x: hidden; /* スクロールを有効にする */
     display: flex;
     flex-flow: column;
+}
+
+.flexRow {
+    width: 100%;
+    height: 100%;
+    display: flex;
 }
 
 .color1 {
@@ -514,7 +610,7 @@ label {
 
 .icon img {
     border-radius: 0px;
-    height: 20px;
+    height: 15px;
     aspect-ratio: 1/1;
     display: block;
 }
@@ -559,4 +655,11 @@ label {
 }
 .square_btn::after {
     transform: translate(-50%,-50%) rotate(-45deg);
+}
+
+
+li {
+    list-style: none;
+    width: 100%;
+    height: 100%;
 }

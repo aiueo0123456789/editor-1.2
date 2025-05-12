@@ -30,7 +30,7 @@ function updateObjects(objects, groupID, DOM) {
     // タグがないオブジェクトにタグを作る
     for (const object of app.hierarchy.allObject) {
         if (object.type != "アニメーションコレクター") {
-            let listItem = managerForDOMs.getDOMInObject(object, groupID);
+            let listItem = managerForDOMs.getDOMInObjectAndGroupID(object, groupID);
 
             if (!listItem) {
                 listItem = document.createElement("li");

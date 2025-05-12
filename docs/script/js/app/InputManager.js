@@ -1,62 +1,62 @@
-// 入力を受け取って指示を出す
+import { Application } from "../app.js";
+
 export class InputManager {
-    constructor(app) {
+    constructor(/** @type {Application} **/app) {
         this.app = app;
-    }
+        this.mousedown = false;
+        this.mousePosition = [0,0];
+        this.click = true;
+        this.clickPosition = [0,0];
+        this.movement = [0,0];
 
-    // セーブデータを読み込み
-    loadFile(json) {
-        // オブジェクトの追加
-        this.app.scene.destroy();
-        for (const objectType of ["modifiers", "bezierModifiers", "boneModifiers", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
-            for (const data of json.scene[objectType]) {
-                this.app.scene.createObject({saveData: data});
-            }
-        }
-        // ヒエラルキーを構築
-        this.app.hierarchy.setHierarchy(json.hierarchy);
+        this.wheelDelta = [0,0];
 
-        // ボーンのアタッチメント
-        json.attachments = [
-            {
-                // type: "行列コピー",
-                type: "ボーン追従",
-                target: {object: "vRTze5673ffMCNPT", boneIndex: 0},
-                source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
-            },
-            // {
-            //     type: "行列コピー",
-            //     target: {object: "oz3KO5BnvB0Nr95d", boneIndex: 0},
-            //     source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
-            // },
-            {
-                type: "ボーン追従",
-                target: {object: "oz3KO5BnvB0Nr95d", boneIndex: 0},
-                source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
-            },
-            {
-                type: "ボーン追従",
-                target: {object: "fTt6iJ1ahSIyxAbI", boneIndex: 0},
-                source: {object: "ajRgB51r4iDQTCS9", boneIndex: 1},
-            },
-        ];
-        for (const data of json.attachments) {
-            if (data.type == "行列コピー") {
-                const target = this.app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
-                const source = this.app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
-                // console.log(target,source)
-                const attachment = this.app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
-                // console.log(attachment)
-                attachment.editor.setSourceBone(source);
-            } else if (data.type == "ボーン追従") {
-                const target = this.app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
-                const source = this.app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
-                // console.log(target,source)
-                const attachment = this.app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
-                // console.log(attachment)
-                attachment.editor.setSourceBone(source);
+        this.mouseButtonType = -1;
+
+        // マウス
+        app.dom.addEventListener("mousedown", (e) => {
+            this.mouseButtonType = e.button;
+            if (this.mouseButtonType == 0) {
+                this.click = true;
+                this.mousedown = true;
+                this.clickPosition[0] = e.clientX;
+                this.clickPosition[1] = e.clientY;
+                this.mousePosition[0] = e.clientX;
+                this.mousePosition[1] = e.clientY;
+                app.activeArea.uiModel?.mousedown(this);
             }
-        }
-        console.log(this.app)
+        })
+        app.dom.addEventListener("mouseup", (e) => {
+            if (this.mouseButtonType == 0) {
+                this.mousedown = false;
+                this.mousePosition[0] = e.clientX;
+                this.mousePosition[1] = e.clientY;
+                app.activeArea.uiModel?.mouseup(this);
+            }
+            this.mouseButtonType = -1;
+        })
+        app.dom.addEventListener("mousemove", (e) => {
+            if (this.mouseButtonType == 2) { // 右クリック
+                this.mousePosition[0] = e.clientX;
+                this.mousePosition[1] = e.clientY;
+                app.activeArea.uiModel?.mousemove(this);
+            } else if (this.mouseButtonType == 1) {
+                this.wheelDelta[0] = e.movementX;
+                this.wheelDelta[1] = e.movementY;
+                app.activeArea.uiModel?.wheel(this);
+            } else {
+                this.mousePosition[0] = e.clientX;
+                this.mousePosition[1] = e.clientY;
+                app.activeArea.uiModel?.mousemove(this);
+            }
+        })
+
+        // ホイール操作
+        app.dom.addEventListener('wheel', (event) => {
+            this.wheelDelta[0] = event.deltaX;
+            this.wheelDelta[1] = event.deltaY;
+            app.activeArea.uiModel?.wheel(this);
+            event.preventDefault();
+        }, { passive: false });
     }
 }

@@ -6,6 +6,12 @@ export function IsString(value) {
     return typeof value === "string" || value instanceof String;
 }
 
+class EmptyGPUBuffer {
+    constructor(usage) {
+        this.usage = usage;
+    }
+}
+
 class WebGPU {
     constructor() {
         this.structures = new Map();
@@ -131,7 +137,9 @@ class WebGPU {
 
     // ユニフォームバッファの作成
     createUniformBuffer(size, data = undefined, struct = ["f32"]) {
-        if (data) {
+        if (size == 0) {
+            return new EmptyGPUBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
+        } else if (data) {
             const buffer = device.createBuffer({
                 size: size,
                 usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
@@ -150,7 +158,9 @@ class WebGPU {
 
     // ストレージバッファの作成
     createStorageBuffer(size, data = undefined, struct = ["f32"]) {
-        if (data) {
+        if (size == 0) {
+            return new EmptyGPUBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
+        } else if (data) {
             const buffer = device.createBuffer({
                 size: size,
                 usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
@@ -169,7 +179,9 @@ class WebGPU {
 
     // バーテックスバッファの作成
     createVertexBuffer(size, data = undefined, struct = ["f32"]) {
-        if (data) {
+        if (size == 0) {
+            return new EmptyGPUBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
+        } else if (data) {
             const buffer = device.createBuffer({
                 size: size,
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
@@ -184,6 +196,28 @@ class WebGPU {
                 usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
             });
         }
+    }
+
+    createBuffer(size,usage) {
+        if (Array.isArray(usage)) {
+            const usageArray = usage;
+            const GPUBufferUsageTable = {
+                v: GPUBufferUsage.VERTEX,
+                s: GPUBufferUsage.STORAGE,
+                u: GPUBufferUsage.UNIFORM,
+            };
+            usage = 0;
+            for (const element of usageArray) {
+                usage |= GPUBufferUsageTable[element];
+            }
+            for (const element of [GPUBufferUsage.COPY_DST,GPUBufferUsage.COPY_SRC]) {
+                usage |= element;
+            }
+        }
+        return device.createBuffer({
+            size: size,
+            usage: usage,
+        });
     }
 
     createTextureSampler() {
@@ -298,42 +332,6 @@ class WebGPU {
             return { texture: texture, width: textureWidth, height: textureHeight };
 
         }
-    }
-
-    async imagesToSkyBoxTextures(imagePaths) {
-        const promises = [
-            "left+X.png",
-            "right-X.png",
-            "up+Y.png",
-            "down-Y.png",
-            "front+Z.png",
-            "back-Z.png",
-        ].map(async (src) => {
-            const response = await fetch(imagePaths + src);
-            return createImageBitmap(await response.blob());
-        });
-        const imageBitmaps = await Promise.all(promises);
-
-        const cubemapTexture = device.createTexture({
-            dimension: '2d',
-            size: [imageBitmaps[0].width, imageBitmaps[0].height, 6],
-            format: format,
-            usage:
-                GPUTextureUsage.TEXTURE_BINDING |
-                GPUTextureUsage.COPY_DST |
-                GPUTextureUsage.RENDER_ATTACHMENT,
-        });
-
-        for (let i = 0; i < imageBitmaps.length; i++) {
-            const imageBitmap = imageBitmaps[i];
-            device.queue.copyExternalImageToTexture(
-                { source: imageBitmap },
-                { texture: cubemapTexture, origin: [0, 0, i] },
-                [imageBitmap.width, imageBitmap.height, 1]
-            );
-        }
-
-        return cubemapTexture;
     }
 
     // グループレイアウトの作成
@@ -560,14 +558,18 @@ class WebGPU {
         return newBuffer;
     }
 
-    appendEmptyToStorageBuffer(buffer, byteLength) {
+    appendEmptyToBuffer(buffer, byteLength) {
         let newBuffer;
         if (buffer instanceof GPUBuffer) {
-            newBuffer = GPU.createStorageBuffer(buffer.size + byteLength, undefined, ["f32"]);
+            newBuffer = this.createBuffer(buffer.size + byteLength, buffer.usage);
             GPU.copyBuffer(buffer, newBuffer);
-        } else {
+        } else if (buffer instanceof EmptyGPUBuffer) { // 空バッファだったら
             // 渡されたbufferがGPUBufferではなかったら新規作成
-            newBuffer = GPU.createStorageBuffer(byteLength, undefined, ["f32"]);
+            newBuffer = this.createBuffer(byteLength, buffer.usage);
+            console.log(newBuffer)
+        } else {
+            console.trace("a");
+            console.log(buffer)
         }
         return newBuffer;
     }
@@ -1000,6 +1002,48 @@ class WebGPU {
         readBuffer.unmap();
     }
 
+    getSliceBuffer(buffer, range) {
+        const newBuffer = this.createStorageBuffer(range.num * 4, undefined, ["f32"]);
+        // コピーコマンドを発行
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(buffer, range.start * 4, newBuffer, 0, range.num * 4);
+        const commandBuffer = commandEncoder.finish();
+        device.queue.submit([commandBuffer]);
+        return newBuffer;
+    }
+
+    async getBitArrayFromBuffer(buffer) {
+        const byteLength = buffer.size;
+        console.log(buffer)
+        console.log(byteLength)
+        // GPUBuffer を読み取るための staging buffer を作成
+        const stagingBuffer = device.createBuffer({
+            size: byteLength,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        // コピーコマンドを発行
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(buffer, 0, stagingBuffer, 0, byteLength);
+        device.queue.submit([commandEncoder.finish()]);
+
+        // バッファの読み取りを待機
+        await stagingBuffer.mapAsync(GPUMapMode.READ);
+        const data = new Uint8Array(stagingBuffer.getMappedRange());
+        const result = [];
+
+        // 各バイトについて、ビット単位で処理
+        for (let byte of data) {
+            for (let i = 7; i >= 0; i--) {
+                const bit = (byte >> i) & 1;
+                result.push(bit === 1);
+            }
+        }
+
+        stagingBuffer.unmap();
+        return result;
+    }
+
     async getBufferVerticesData(buffer) {
         const size = buffer.size;
         // 一時的な読み取り用バッファを作成 (MAP_READ を含む)
@@ -1046,7 +1090,6 @@ class WebGPU {
         const dataArray = new Float32Array(mappedRange.slice(0));
 
         readBuffer.unmap();
-        readBuffer.destroy();  // ← 追加
         return dataArray;
     }
 
@@ -1072,7 +1115,6 @@ class WebGPU {
         const dataArray = new Float32Array(mappedRange.slice(0));
 
         readBuffer.unmap();
-        readBuffer.destroy();  // ← 追加
         return dataArray;
     }
 
@@ -1169,6 +1211,23 @@ class WebGPU {
         let offset = 0;
         if (indexs == "all") {
             for (let i = 0; i < buffer.size / structSize; i++) {
+                const keep = [];
+                for (const field of struct) {
+                    if (field === "u32") {
+                        keep.push(dataView.getUint32(offset, true));
+                    } else if (field === "f32") {
+                        keep.push(dataView.getFloat32(offset, true));
+                    }
+                    offset += 4; // フィールドのサイズを加算
+                }
+                result.push(keep);
+            }
+        } else if (isPlainObject(indexs)) {
+            if (!("end" in indexs)) {
+                indexs.end = indexs.start + indexs.num;
+            }
+            offset = indexs.start * (struct.length * 4); // フィールドのサイズを加算
+            for (let i = indexs.start; i < indexs.end; i ++) {
                 const keep = [];
                 for (const field of struct) {
                     if (field === "u32") {

@@ -1,4 +1,5 @@
 import { managerForDOMs } from "./UI/制御.js";
+import { vec2 } from "./ベクトル計算.js";
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す
@@ -61,24 +62,36 @@ class Keyframe {
         this.value = value;
         this.leftHandle = [-3,0];
         this.rightHandle = [3,0];
+        this.point = [frame, value];
+        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
+        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 
     setSaveData(data) {
-        this.frame = data.frame;
-        this.value = data.value;
+        this.setFrameAndValue(data.frame, data.value);
     }
 
     setFrame(frame) {
         this.frame = frame;
+        this.point[0] = frame;
+        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
+        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 
     setValue(value) {
         this.value = value;
+        this.point[1] = value;
+        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
+        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 
     setFrameAndValue(frame,value) {
         this.frame = frame;
         this.value = value;
+        this.point[0] = frame;
+        this.point[1] = value;
+        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
+        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 }
 
@@ -121,6 +134,7 @@ export class KeyframeBlock {
             keyframe.setSaveData(key);
             this.keys.push(keyframe);
         }
+        managerForDOMs.update("タイムライン-canvas");
     }
 
     getKeyFromFrame(frame, threshold = 0.5) {
