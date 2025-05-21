@@ -1,5 +1,5 @@
 import { GPU, device } from './webGPU.js';
-import { createID, managerForDOMs, updateDataForUI } from './UI/制御.js';
+import { createID, managerForDOMs } from './UI/制御.js';
 
 const maskTextureSize = [2048,2048];
 
@@ -54,7 +54,6 @@ export class RenderObjectManager {
     }
 
     appendMaskTexture(name) {
-        // updateDataForUI["プロパティ"] = true;
         this.maskTextures.push(new MaskTexture(name, maskTextureSize));
         managerForDOMs.update(this.maskTextures);
     }

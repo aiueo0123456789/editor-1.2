@@ -12,6 +12,8 @@ export class ObjectBase {
         this.name = name;
         this.id = id;
 
+        this.selected = false;
+
         this.mode = "オブジェクト";
     }
 }

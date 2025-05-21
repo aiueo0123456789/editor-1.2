@@ -1014,8 +1014,6 @@ class WebGPU {
 
     async getBitArrayFromBuffer(buffer) {
         const byteLength = buffer.size;
-        console.log(buffer)
-        console.log(byteLength)
         // GPUBuffer を読み取るための staging buffer を作成
         const stagingBuffer = device.createBuffer({
             size: byteLength,
@@ -1038,6 +1036,40 @@ class WebGPU {
                 const bit = (byte >> i) & 1;
                 result.push(bit === 1);
             }
+        }
+
+        stagingBuffer.unmap();
+        return result;
+    }
+
+    async getSelectIndexFromBufferBit(buffer) {
+        const byteLength = buffer.size;
+        // GPUBuffer を読み取るための staging buffer を作成
+        const stagingBuffer = device.createBuffer({
+            size: byteLength,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        // コピーコマンドを発行
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(buffer, 0, stagingBuffer, 0, byteLength);
+        device.queue.submit([commandEncoder.finish()]);
+
+        // バッファの読み取りを待機
+        await stagingBuffer.mapAsync(GPUMapMode.READ);
+        const data = new Uint8Array(stagingBuffer.getMappedRange());
+        const result = [];
+
+        // 各バイトについて、ビット単位で処理
+        let c = 0;
+        for (let byte of data) {
+            for (let i = 7; i >= 0; i--) {
+                const bit = (byte >> i) & 1;
+                if (bit === 1) {
+                    result.push(c);
+                }
+            }
+            c ++;
         }
 
         stagingBuffer.unmap();

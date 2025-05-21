@@ -1,3 +1,4 @@
+import { managerForDOMs } from "./UI/制御.js";
 import { vec2 } from "./ベクトル計算.js";
 
 export function isPlainObject(obj) {
@@ -162,4 +163,17 @@ export function boolTo0or1(bool) {
 export function calculateLocalMousePosition(/** @type {HTMLElement} */dom, position) {
     const rect = dom.getBoundingClientRect();
     return vec2.subR(position, [rect.left, rect.top]);
+}
+
+export function createArrayFromHashKeys(hash) {
+    const result = [];
+    for (const key in hash) {
+        result.push(key);
+    }
+    return result;
+}
+
+export function changeParameter(object, parameter, newValue) {
+    object[parameter] = newValue;
+    managerForDOMs.update(object, parameter);
 }

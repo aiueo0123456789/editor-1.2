@@ -1,8 +1,8 @@
 import { searchAnimation } from "./オブジェクトで共通の処理.js";
 import { KeyframeBlock } from "../キーフレーム.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
-import { changeParameter } from "../UI/utility.js";
 import { app } from "../app.js";
+import { changeParameter } from "../utility.js";
 
 class Editor {
     constructor(animationManager) {

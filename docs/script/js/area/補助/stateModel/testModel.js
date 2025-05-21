@@ -1,5 +1,4 @@
 import { app } from "../../../app";
-import { keysDown } from "../../../main";
 
 export class testModel {
     constructor() {
@@ -8,7 +7,7 @@ export class testModel {
 
     update() {
         if (app.scene.state.currentMode == "オブジェクト") {
-            if (keysDown["g"]) {
+            if (app.input.keysDown["g"]) {
 
             }
         }

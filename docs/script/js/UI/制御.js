@@ -1,314 +1,19 @@
-import { keysDown, editorParameters, stateMachine } from "../main.js";
-import { GPU } from "../webGPU.js";
-import { Camera } from "../カメラ.js";
-import { updateForContextmenu } from "../コンテキストメニュー/制御.js";
-import { vec2 } from "../ベクトル計算.js";
-import { renderingParameters } from "../レンダリングパラメーター.js";
-import { ConvertCoordinate } from "../座標の変換.js";
-import { Select } from "../選択.js";
 import { ResizerForDOM } from "./resizer.js";
 import { TranslaterForDOM } from "./tranlater.js";
 import { DOMsManager } from "./UIの更新管理.js";
-import { displayAnimationCollector } from "./アニメーションコレクターの表示.js";
-import { displayInspector } from "./インスペクタの表示.js";
-import { displayObjects } from "./オブジェクトの表示.js";
-import { displayGraphEditor } from "./グラフディタ.js";
-import { displayTimeLine } from "./タイムライン表示.js";
-import { displayHierarchy } from "./ヒエラルキーの表示.js";
-import { Render } from "./ビューの表示.js";
-import { displayProperty } from "./プロパティの表示.js";
-import { FunctionTranceShelfe, TranceShelfe } from "./シェリフ.js";
-import { displayRenderingOrder } from "./表示順番の表示.js";
-import { displayLayer } from "./レイヤーの表示.js";
+// import { displayAnimationCollector } from "./アニメーションコレクターの表示.js";
+// import { displayInspector } from "./インスペクタの表示.js";
+// import { displayObjects } from "./オブジェクトの表示.js";
+// import { displayGraphEditor } from "./グラフディタ.js";
+// import { displayTimeLine } from "./タイムライン表示.js";
+// import { displayHierarchy } from "./ヒエラルキーの表示.js";
+// import { displayProperty } from "./プロパティの表示.js";
+// import { displayRenderingOrder } from "./表示順番の表示.js";
+// import { displayLayer } from "./レイヤーの表示.js";
 import { CommandStack } from "./json/デバッグ.js";
 import { CreatorForUI } from "../area/補助/UIの自動生成.js";
 
 export const managerForDOMs = new DOMsManager();
-
-function displayCommandStack(targetDiv, groupID) {
-    const UI_ = new CommandStack();
-    const ui = new CreatorForUI();
-    ui.create(targetDiv,UI_.struct, UI_.inputObject);
-}
-
-const modes = {
-    "ビュー": displayHierarchy,
-    "オブジェクト": displayObjects,
-    "ヒエラルキー": displayHierarchy,
-    "レイヤー": displayLayer,
-    "アニメーションコレクター": displayAnimationCollector,
-    "表示順番": displayRenderingOrder,
-    "インスペクタ": displayInspector,
-    "プロパティ": displayProperty,
-    "タイムライン": displayTimeLine,
-    "グラフエディタ": displayGraphEditor,
-    "デバッグ": displayCommandStack,
-};
-
-export const updateDataForUI = {
-    "ビュー": false,
-    "オブジェクト": false,
-    "ヒエラルキー": false,
-    "アニメーションコレクター": false,
-    "表示順番": false,
-    "インスペクタ": false,
-    "プロパティ": false,
-    "タイムライン": false,
-};
-
-const specialTag = {
-    "フレーム": {tags: [], updateFn: (tag,object) => {
-        tag.checked = object.keyframe.hasKeyFromFrame(renderingParameters.keyfarameCount);
-    }},
-    "フレーム表示": {
-        tags: [],
-        updateFn: (tag,config) => {
-            tag.style.setProperty("--label", `'${Math.round(renderingParameters.keyfarameCount)}'`);
-            tag.style.left = `${(renderingParameters.keyfarameCount + Math.abs(config.startFrame)) * config.gap}px`;
-        }
-    }
-}
-
-const updateDataForSpecialTag = {
-    "フレーム": true,
-    "フレーム表示": true,
-}
-
-const objectDataAndRelateTags = new Map();
-
-const gridInteriorObjects = [];
-
-// export class GridInterior {
-//     constructor(tag, initMode) {
-//         gridInteriorObjects.push(this);
-//         this.groupID = createID();
-//         this.config = {};
-//         this.targetTag = tag;
-//         this.targetTag.className = "grid-container";
-
-//         this.modeDiv = document.createElement("div");
-//         this.modeDiv.className = "modeSelect";
-
-//         this.modeSelectTag = document.createElement('select');
-//         setModeSelectOption(this.modeSelectTag, initMode);
-
-//         this.mainDiv = document.createElement("div");
-//         this.mainDiv.className = "grid-main";
-
-//         this.modeDiv.append(this.modeSelectTag, this.createModeToolBar(initMode));
-
-//         this.targetTag.append(this.modeDiv, this.mainDiv);
-
-//         this.tags = new Map();
-
-//         this.modeSelectTag.addEventListener('change', () => {
-//             if (this.modeSelectTag.value == "ビュー") {
-//                 this.mainDiv.className = "grid-main";
-//                 this.mainDiv.replaceChildren();
-//                 managerForDOMs.deleteGroup(this.groupID);
-//                 resetTag(this.tags);
-//                 this.targetTag.innerHTML = "";
-//                 gridInteriorObjects.splice(gridInteriorObjects.indexOf(this), 1);
-//                 new View(this.targetTag);
-//             } else {
-//                 this.mainDiv.className = "grid-main";
-//                 this.mainDiv.replaceChildren();
-//                 managerForDOMs.deleteGroup(this.groupID);
-//                 resetTag(this.tags);
-//                 // this.modeDiv.append(this.modeSelectTag, this.createModeToolBar(this.modeSelectTag.value));
-//                 this.tags.clear();
-//                 modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
-//             }
-//         });
-
-//         modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
-
-//         this.mainDiv.addEventListener('contextmenu', (e) => {
-//             e.preventDefault();
-//             updateForContextmenu(this.modeSelectTag.value,[e.clientX,e.clientY]);
-//         });
-//     }
-
-//     createModeToolBar(mode) {
-//         if (mode == "オブジェクト") {
-//             const tagDiv = document.createElement("div");
-//             const filteringSelectTag = document.createElement('select');
-//             for (const type of ["すべて","グラフィックメッシュ","モディファイア","ベジェモディファイア","回転モディファイア"]) {
-//                 const filteringSelectOptionTag = document.createElement('option');
-//                 filteringSelectOptionTag.textContent = type;
-//                 filteringSelectOptionTag.value = type;
-//                 filteringSelectTag.appendChild(filteringSelectOptionTag);
-//             }
-//             filteringSelectTag.addEventListener('change', () => {
-//                 displayObjects(this.mainDiv,false,filteringSelectTag.value);
-//             });
-//             tagDiv.append(filteringSelectTag);
-//             return tagDiv;
-//         } else if (mode == "アニメーション") {
-//             const tagDiv = document.createElement("div");
-//             return tagDiv;
-//         } else if (mode == "タイムライン") {
-//             const tagDiv = document.createElement("div");
-//             const isPlayingCheckbox = document.createElement("input");
-//             isPlayingCheckbox.type = "checkbox";
-//             isPlayingCheckbox.checked = renderingParameters.isPlaying;
-//             isPlayingCheckbox.addEventListener("change", () => {
-//                 renderingParameters.isPlaying = isPlayingCheckbox.checked;
-//             })
-//             tagDiv.append(isPlayingCheckbox);
-//             return tagDiv;
-//         }
-//         const tagDiv = document.createElement("div");
-//         return tagDiv;
-//     }
-
-//     update(updateData) {
-//         if (updateData[this.modeSelectTag.value]) {
-//             managerForDOMs.deleteGroup(this.groupID);
-//             modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
-//         }
-//     }
-// }
-export class GridInterior {
-    constructor(tag, initMode) {
-        gridInteriorObjects.push(this);
-        this.groupID = createID();
-        this.config = {};
-        this.targetTag = tag;
-        this.targetTag.className = "grid-container";
-
-        this.modeDiv = document.createElement("div");
-        this.modeDiv.className = "modeSelect";
-
-        this.modeSelectTag = document.createElement('select');
-        setModeSelectOption(this.modeSelectTag, initMode);
-
-        this.mainDiv = document.createElement("div");
-        this.mainDiv.className = "grid-main";
-
-        this.modeDiv.append(this.modeSelectTag, this.createModeToolBar(initMode));
-
-        this.targetTag.append(this.modeDiv, this.mainDiv);
-
-        this.tags = new Map();
-
-        this.modeSelectTag.addEventListener('change', () => {
-            if (this.modeSelectTag.value == "ビュー") {
-                this.mainDiv.className = "grid-main";
-                this.mainDiv.replaceChildren();
-                managerForDOMs.deleteGroup(this.groupID);
-                resetTag(this.tags);
-                this.targetTag.innerHTML = "";
-                gridInteriorObjects.splice(gridInteriorObjects.indexOf(this), 1);
-                new View(this.targetTag);
-            } else {
-                this.mainDiv.className = "grid-main";
-                this.mainDiv.replaceChildren();
-                managerForDOMs.deleteGroup(this.groupID);
-                resetTag(this.tags);
-                // this.modeDiv.append(this.modeSelectTag, this.createModeToolBar(this.modeSelectTag.value));
-                this.tags.clear();
-                modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
-            }
-        });
-
-        modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
-
-        this.mainDiv.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            updateForContextmenu(this.modeSelectTag.value,[e.clientX,e.clientY]);
-        });
-    }
-
-    createModeToolBar(mode) {
-        if (mode == "オブジェクト") {
-            const tagDiv = document.createElement("div");
-            const filteringSelectTag = document.createElement('select');
-            for (const type of ["すべて","グラフィックメッシュ","モディファイア","ベジェモディファイア","回転モディファイア"]) {
-                const filteringSelectOptionTag = document.createElement('option');
-                filteringSelectOptionTag.textContent = type;
-                filteringSelectOptionTag.value = type;
-                filteringSelectTag.appendChild(filteringSelectOptionTag);
-            }
-            filteringSelectTag.addEventListener('change', () => {
-                displayObjects(this.mainDiv,false,filteringSelectTag.value);
-            });
-            tagDiv.append(filteringSelectTag);
-            return tagDiv;
-        } else if (mode == "アニメーション") {
-            const tagDiv = document.createElement("div");
-            return tagDiv;
-        } else if (mode == "タイムライン") {
-            const tagDiv = document.createElement("div");
-            const isPlayingCheckbox = document.createElement("input");
-            isPlayingCheckbox.type = "checkbox";
-            isPlayingCheckbox.checked = renderingParameters.isPlaying;
-            isPlayingCheckbox.addEventListener("change", () => {
-                renderingParameters.isPlaying = isPlayingCheckbox.checked;
-            })
-            tagDiv.append(isPlayingCheckbox);
-            return tagDiv;
-        }
-        const tagDiv = document.createElement("div");
-        return tagDiv;
-    }
-
-    update(updateData) {
-        if (updateData[this.modeSelectTag.value]) {
-            managerForDOMs.deleteGroup(this.groupID);
-            modes[this.modeSelectTag.value](this.mainDiv, this.groupID);
-        }
-    }
-}
-
-export function resetTag(tags) {
-    tags.forEach((value,object) => {
-        const allTag = tags.get(object);
-        if (Array.isArray(allTag)) {
-            for (const tag of allTag) {
-                if (tag instanceof HTMLElement) {
-                    tag.remove();
-                }
-            }
-        } else {
-            if (allTag instanceof HTMLElement) {
-                allTag.remove();
-            }
-        }
-        tags.delete(object);
-    })
-}
-
-export function updateForUI() {
-    for (const [key, value] of objectDataAndRelateTags) {
-        if (key.delete) {
-            // 削除
-        }
-        for (const [key2, value2] of value.map) {
-            for (const value3 of value2) {
-                value3.tag[value3.writeTarget] = key[key2];
-            }
-        }
-    }
-    for (const key in specialTag) {
-        if (updateDataForSpecialTag[key]) {
-            const data = specialTag[key];
-            for (const tag of data.tags) {
-                data.updateFn(...tag);
-            }
-        }
-    }
-    for (const gridInteriorObject of gridInteriorObjects) {
-        if (gridInteriorObject instanceof View) {
-            gridInteriorObject.update();
-        } else {
-            gridInteriorObject.update(updateDataForUI);
-        }
-    }
-    for (const keyName in updateDataForUI) {
-        updateDataForUI[keyName] = false;
-    }
-}
 
 export function createID() {
     var S="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -325,11 +30,26 @@ export function createTag(target, type, option = {}) {
         if (key == "class") {
             console.log("クラス", option[key].split(" ").filter(Boolean))
             element.classList.add(...option[key].split(" ").filter(Boolean));
+        } else if (key == "style") {
+            setStyle(element, option[key]);
         } else {
             element[key] = option[key];
         }
     }
     return element;
+}
+
+export function setStyle(element,style) {
+    // style = style.replace(/\s+/g, ""); // 半角・全角スペースを削除
+    const styles = style.split(";").filter(Boolean); // ;で区切る
+    for (const style of styles) {
+        const code = style.split(":");
+        code[0] = code[0].replace(/\s+/g, "");
+        if (code[1][0] == " ") {
+            code[1] = code[1].slice(1);
+        }
+        element.style[code[0]] = code[1];
+    }
 }
 
 export function createLabeledVecInput(target, axis, name, inputId) {
@@ -526,7 +246,7 @@ export function createSection(target, sectionName, section, className = "section
     checkbox.checked = true;
     const label = document.createElement("label");
     const span = document.createElement("span");
-    span.classList.add("hidden-checkbox");
+    span.classList.add("arrow");
     label.append(checkbox,span);
 
     const headerDiv = document.createElement("div");

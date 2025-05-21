@@ -50,18 +50,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         return;
     }
 
-    let arrayStartIndex = allocation.meshBufferOffset / 32u; // 書き込み対象の先頭index
-    let meshIndexStart = arrayStartIndex * 32u;
-
-    let arrayIndex: u32 = arrayStartIndex + global_id.x; // selectedのarrayIndex
-    var meshIndex = meshIndexStart + global_id.x * 32;
-    for (var bitIndex = 0u; bitIndex < 32u; bitIndex ++) { // selectedのbitIndex
-        if (allocation.meshBufferOffset <= meshIndex && meshIndex < allocation.meshBufferOffset + allocation.MAX_MESHES) { // チェック対象かの確認
-            let indexs = getMeshLoop(meshIndex) + allocation.vertexBufferOffset;
-            if (hitTestPointTriangle(vertices[indexs.x],vertices[indexs.y],vertices[indexs.z])) {
-                atomicStore(&result, 1);
-            }
-        }
-        meshIndex ++;
+    let indexs = getMeshLoop(global_id.x + allocation.meshBufferOffset) + allocation.vertexBufferOffset;
+    if (hitTestPointTriangle(vertices[indexs.x],vertices[indexs.y],vertices[indexs.z])) {
+    // if (hitTestPointTriangle(vec2<f32>(0,-1000),vec2<f32>(500,0),vec2<f32>(1000,-1000))) {
+        atomicStore(&result, 1);
     }
 }

@@ -1,6 +1,6 @@
 import { app } from "../../../app.js";
-import { activeView, keysDown } from "../../../main.js";
-import { managerForDOMs, updateDataForUI } from "../../../UI/制御.js";
+import { activeView } from "../../../main.js";
+import { managerForDOMs } from "../../../UI/制御.js";
 import { updateForContextmenu } from "../../../コンテキストメニュー/制御.js";
 import { createNextStateData, previousKeysDown } from "../../状態遷移.js";
 import { updateForHoverObjects, updateSelectObjects } from "./ユーティリティ/関数.js";
@@ -38,10 +38,10 @@ export class StateModel_View {
     // ホバーオブジェクトを更新
     async update(stateData) {
         await updateForHoverObjects(stateData);
-        if (keysDown["A"] && !previousKeysDown["A"]) {
+        if (app.input.keysDown["A"] && !previousKeysDown["A"]) {
             updateForContextmenu("オブジェクト追加",activeView.mouseState.client);
         }
-        if (keysDown["a"]) {
+        if (app.input.keysDown["a"]) {
             updateSelectObjects(stateData,app.hierarchy.graphicMeshs);
             managerForDOMs.update("ヒエラルキー")
         }
@@ -56,7 +56,7 @@ export class StateModel_View {
                 updateSelectObjects(stateData,externalInputs["ヒエラルキーのオブジェクト選択"],true);
                 stateData.activeObject = null;
             } else {
-                updateSelectObjects(stateData,[externalInputs["ヒエラルキーのオブジェクト選択"]],keysDown["Shift"]);
+                updateSelectObjects(stateData,[externalInputs["ヒエラルキーのオブジェクト選択"]],app.input.keysDown["Shift"]);
                 stateData.activeObject = externalInputs["ヒエラルキーのオブジェクト選択"];
                 return {nextState: stateData.activeObject.type};
             }
@@ -85,7 +85,7 @@ export class StateModel_View {
             updateSelectObjects(stateData,"clear");
             return false;
         } else {
-            updateSelectObjects(stateData,[frontObject],keysDown["Shift"]);
+            updateSelectObjects(stateData,[frontObject],app.input.keysDown["Shift"]);
             return {nextState: frontObject.type};
         }
     }

@@ -9,6 +9,8 @@ export class TimelineSpaceData {
         this.sleectBlock = [];
         this.smooth = false;
         this.visibleObject = [];
+        // this.selectObject = [];
+        // this.activeObject = null;
     }
 
     setVisibleObject(object, visible) {

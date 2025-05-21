@@ -1,7 +1,7 @@
 import { app } from './app.js';
 import { RenderObjectManager } from './レンダー.js';
-import { updateDataForUI, managerForDOMs, updateLoad } from "./UI/制御.js";
-import { StateMachine } from './ステートマシーン/状態遷移.js';
+import { managerForDOMs, updateLoad } from "./UI/制御.js";
+// import { StateMachine } from './ステートマシーン/状態遷移.js';
 import { EditorPreference } from './エディタ設定.js';
 import { GPU } from './webGPU.js';
 
@@ -13,11 +13,10 @@ const directories = document.getElementById("directories");
 appendModal.classList.add("hidden");
 
 export const editorParameters = new EditorPreference();
-export const stateMachine = new StateMachine();
+// export const stateMachine = new StateMachine();
 export const renderObjectManager = new RenderObjectManager();
 
 export const mouseEvent = {};
-export const keysDown = {};
 let projectName = "名称未設定";
 const projectNameInputTag = document.getElementById("projectName-input");
 let loadData = null;
@@ -30,9 +29,6 @@ async function init() {
             app.hierarchy.addHierarchy("", app.hierarchy.setSaveObject(data,""));
         }
         loadData = null;
-        Object.keys(updateDataForUI).forEach(key => {
-            updateDataForUI[key] = true;
-        });
         managerForDOMs.allUpdate();
     } else if (loadData.ps) {
         updateLoad("読み込み", 0);
@@ -48,9 +44,6 @@ async function init() {
         // hierarchy.setHierarchy(loadData.hierarchy);
         loadData = null;
         updateLoad("読み込み", 70);
-        Object.keys(updateDataForUI).forEach(key => {
-            updateDataForUI[key] = true;
-        });
         updateLoad("読み込み", 80);
         managerForDOMs.allUpdate();
         updateLoad("読み込み", 100);
@@ -120,9 +113,6 @@ async function init() {
         }
         loadData = null;
         updateLoad("読み込み", 70);
-        Object.keys(updateDataForUI).forEach(key => {
-            updateDataForUI[key] = true;
-        });
         updateLoad("読み込み", 80);
         managerForDOMs.allUpdate();
         updateLoad("読み込み", 100);
@@ -130,34 +120,6 @@ async function init() {
     }
     update();
 }
-
-// キーイベント管理
-document.addEventListener('keydown', (event) => {
-    const isCtrlOrCmd = event.ctrlKey || event.metaKey;
-    console.log(event.key,"down")
-    if (isCtrlOrCmd && event.key === 'z') {
-        if (event.shiftKey) {
-            keysDown["redo"] = true;
-        } else {
-            keysDown["undo"] = true;
-        }
-        event.preventDefault(); // デフォルトの動作を防ぐ場合
-    } else if (isCtrlOrCmd && event.key == "s") {
-        save();
-        event.preventDefault(); // デフォルトの動作を防ぐ場合
-    } else {
-        keysDown[event.key] = true;
-        if (event.key === "Tab" || event.key === "Shift" || event.key === "Meta") {
-            // デフォルト動作を無効化
-            event.preventDefault();
-            console.log(event.key,"のデフォルト動作を無効化しました");
-        }
-    }
-});
-document.addEventListener('keyup',(event) => {
-    keysDown[event.key] = false;
-    console.log(event.key,"up")
-});
 
 // マウスイベント管理
 document.addEventListener("mousedown", (e) => {
@@ -227,7 +189,7 @@ document.getElementById("file-append-btn").addEventListener("change", (event) =>
                                 li.classList.add("activeColor")
                             }
                             li.addEventListener("click", () => {
-                                if (keysDown["Shift"]) {
+                                if (app.input.keysDown["Shift"]) {
                                     if (path[depth]) {
                                         path[depth].push(id);
                                     } else {

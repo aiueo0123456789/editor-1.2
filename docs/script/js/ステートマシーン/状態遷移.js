@@ -1,4 +1,3 @@
-import { keysDown } from "../main.js";
 import { GPU } from "../webGPU.js";
 import { vec2 } from "../ベクトル計算.js";
 import { arrayMath } from "../配列計算.js";
@@ -180,12 +179,12 @@ export class StateMachine {
                                     break ;
                                 }
                             } else if (条件[0] == "!") { // 任意のキーを押していない
-                                if ((keysDown[条件.slice(1)])) {
+                                if ((app.input.keysDown[条件.slice(1)])) {
                                     andBool = false;
                                     break ;
                                 }
                             } else if (条件[0] == "/") { // 任意のキーを押しはじめた
-                                if (!(keysDown[条件.slice(1)] && !previousKeysDown[条件.slice(1)])) {
+                                if (!(app.input.keysDown[条件.slice(1)] && !previousKeysDown[条件.slice(1)])) {
                                     andBool = false;
                                     break ;
                                 }
@@ -193,7 +192,7 @@ export class StateMachine {
                                 if (!this.externalInputs[条件.slice(6,)]) {
                                     andBool = false;
                                 }
-                            } else if (!keysDown[条件]) { // 任意のキーを押している
+                            } else if (!app.input.keysDown[条件]) { // 任意のキーを押している
                                 andBool = false;
                                 break ;
                             }
@@ -331,15 +330,15 @@ export class StateMachine {
                 if (!orBool) roop = false;
             }
             // 巻き戻し巻き戻しの取り消し
-            if (keysDown["undo"]) {
+            if (app.input.keysDown["undo"]) {
                 // this.undo();
                 app.operator.stack.undo();
-                keysDown["undo"] = false;
+                app.input.keysDown["undo"] = false;
             }
-            if (keysDown["redo"]) {
+            if (app.input.keysDown["redo"]) {
                 // this.redo();
                 app.operator.stack.redo();
-                keysDown["redo"] = false;
+                app.input.keysDown["redo"] = false;
             }
             activeView.mouseState.click = false;
             activeView.mouseState.rightClick = false;
@@ -350,7 +349,7 @@ export class StateMachine {
             for (const keyName in this.externalInputs) {
                 this.externalInputs[keyName] = false;
             }
-            previousKeysDown = structuredClone(keysDown);
+            previousKeysDown = structuredClone(app.input.keysDown);
 
             if (this.state.structClass.mouseStateModel) {
                 document.body.style.cursor = this.state.structClass.mouseStateModel;

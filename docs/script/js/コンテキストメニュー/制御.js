@@ -1,4 +1,3 @@
-import { stateMachine } from '../main.js';
 import { appendAnimationToObject } from "../オブジェクト/オブジェクトで共通の処理.js";
 import { CreateObjectCommand } from "../機能/オペレーター/オブジェクト/オブジェクト.js";
 import { app } from "../app.js";
@@ -6,7 +5,7 @@ import { app } from "../app.js";
 function deleteA() {
     console.log("アニメーションの削除")
 }
-
+const stateMachine = {};
 function deleteObject() {
     app.scene.deleteObject(stateMachine.state.data.activeObject);
     stateMachine.externalInputs["ヒエラルキーのオブジェクト選択"] = "選択解除";

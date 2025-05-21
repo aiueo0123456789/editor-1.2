@@ -2,7 +2,6 @@
 import { app } from '../../app.js';
 import { GPU, device, format } from '../../webGPU.js';
 import { sampler } from "../../GPUObject.js";
-import { keysDown } from '../../main.js';
 import { boolTo0or1, calculateLocalMousePosition, loadFile } from '../../utility.js';
 import { Camera } from '../../カメラ.js';
 import { vec2 } from '../../ベクトル計算.js';
@@ -12,6 +11,8 @@ import { BBox } from '../../BBox.js';
 import { createTag } from '../../UI/制御.js';
 import { CreatorForUI } from '../補助/UIの自動生成.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
+import { ModalOperator } from '../補助/ModalOperator.js';
+import { VerticesTranslateModal } from './tools/VerticesTranslateTool.js';
 
 const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./script/js/area/Viewer/shader/shader.wgsl"), [["u"]], "2d", "t");
@@ -32,14 +33,6 @@ const alphaBuffers = {
     "1": GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [1], ["f32"])]),
 };
 
-class TranceShelfe {
-    constructor(/** @type {HTMLElement} */dom, sourceObject, struct) {
-        this.dom = dom;
-        this.sourceObject = sourceObject;
-        this.struct = struct;
-    }
-}
-
 class SpaceData {
     constructor() {
         this.visibleObjects = {graphicMesh: true, boneModifier: true, bezierModifier: true, grid: true};
@@ -48,70 +41,69 @@ class SpaceData {
 
 export class Area_Viewer {
     constructor(/** @type {HTMLElement} */dom) {
-        dom.style.display = "grid";
-        dom.style.gridTemplateRows = "auto 1fr";
-        // dom.style.gridTemplateRows = "35px 1fr";
         this.pixelDensity = 4;
-        this.header = createTag(dom, "div", {style: "height: fit-content"});
-        this.headerDiv = createTag(this.header, "div");
         this.creatorForUI = new CreatorForUI();
 
+        this.modalOperator = new ModalOperator({"g": VerticesTranslateModal});
+
         this.spaceData = new SpaceData();
-        this.inputObject = {"h": app.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": app.appConfig.areasConfig};
+        this.inputObject = {"h": app.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": app.appConfig.areasConfig["Viewer"]};
 
         this.struct = {
             DOM: [
-                {type: "option", name: "情報", children: [
-                    {type: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
-                        {type: "flexBox", interval: "10px", allocation: "auto auto auto auto auto auto 1fr", children: [
-                            {type: "input", name: "visibleCheck", withObject: {object: "areasConfig", parameter: "Viewer"}, options: {type: "check", look: "isPlaying"}},
-                            {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig/Viewer", parameter: "useTool"}, sourceObject: {object: "areasConfig/Viewer", parameter: "tools"}},
-    
-                            {type: "flexBox", interval: "5px", name: "", children: [
-                                {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                            ]},
-    
-                            {type: "flexBox", interval: "5px", name: "", children: [
-                                {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "boneModifier", "bezierModifier", "grid"]}},
-                            ]},
-                        ]},
-
-                        {type: "padding", size: "10px"},
-
-                        {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
-                            {type: "padding", size: "10px"},
-    
-                            {type: "flexBox", interval: "5px", name: "", children: [
-                                {type: "buttons", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                            ]},
-    
-                            {type: "separator", size: "10px"},
-    
-                            {type: "flexBox", interval: "5px", name: "", children: [
-                                {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                            ]},
-    
-                            {type: "separator", size: "10px"},
-    
-                            {type: "flexBox", interval: "5px", name: "", children: [
-                                {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "boneModifier", "bezierModifier", "grid"]}},
+                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {type: "option", style: "padding: 5px", name: "情報", children: [
+                        {type: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
+                            {type: "flexBox", interval: "10px", allocation: "auto auto auto auto auto 1fr", children: [
+                                // {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: "areasConfig/tozols"}},
+                                // {type: "path", sourceObject: {object: "areasConfig/modes", parameter: {object: "scene/state/activeObject", parameter: "type"}}, updateEventTarget: {object: "scene/state/activeObject"}, children: [
+                                {type: "path", sourceObject: {object: "areasConfig/modes", parameter: {object: "scene/state/activeObject", parameter: "type"}}, updateEventTarget: "アクティブオブジェクト", children: [
+                                    {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: ""}},
+                                ]},
+        
+                                {type: "flexBox", interval: "5px", name: "", children: [
+                                    {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
+                                ]},
+        
+                                {type: "flexBox", interval: "5px", name: "", children: [
+                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "boneModifier", "bezierModifier", "grid"]}},
+                                ]},
                             ]},
     
                             {type: "padding", size: "10px"},
-                        ]},
+    
+                            {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
+                                {type: "padding", size: "10px"},
+        
+                                {type: "flexBox", interval: "5px", name: "", children: [
+                                    {type: "buttons", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
+                                ]},
+        
+                                {type: "separator", size: "10px"},
+        
+                                {type: "flexBox", interval: "5px", name: "", children: [
+                                    {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
+                                ]},
+        
+                                {type: "separator", size: "10px"},
+        
+                                {type: "flexBox", interval: "5px", name: "", children: [
+                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "boneModifier", "bezierModifier", "grid"]}},
+                                ]},
+        
+                                {type: "padding", size: "10px"},
+                            ]},
+                        ]}
+                    ]},
+                    {type: "box", style: "width: 100%; height: 100%; position: relative;", children: [
+                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
                     ]}
-                ]},
+                ]}
             ]
         }
-        this.creatorForUI.create(this.header, this, {heightCN: true});
-        this.canvas = document.createElement("canvas");
-        this.canvas.className = "renderingTarget";
-        this.canvasContainer = createTag(dom, "div", {class: "canvasContainer"});
-        this.canvasContainer.append(this.canvas);
+        this.creatorForUI.create(dom, this, {padding: false});
+        this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
-        this.canvas.width = this.canvasRect.width * this.pixelDensity;
-        this.canvas.height = this.canvasRect.height * this.pixelDensity;
-        // this.pixelDensity = this.canvas.height / this.canvasRect.height;
 
         this.camera = new Camera();
         this.renderer = new Renderer(this.canvas, this.camera, this);
@@ -140,35 +132,35 @@ export class Area_Viewer {
     }
 
     async update() {
-        if (this.mouseState.click) {
-            if (app.scene.state.currentMode == "オブジェクト") {
-                app.scene.state.setActiveObject(await app.scene.selectedForObject([...this.mouseState.clickPositionForGPU]));
-            } else if (app.scene.state.currentMode == "メッシュ編集") {
-                for (const graphicMesh of app.scene.state.selectedObject) {
-                    if (keysDown["c"]) {
-                        app.scene.gpuData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.mouseState.clickPositionForGPU, 100]}, {add: boolTo0or1(keysDown["Shift"])});
-                    } else {
-                        if (this.mouseState.hold) {
-                            app.scene.gpuData.graphicMeshData.selectedForVertices(graphicMesh, {box: BBox([this.mouseState.clickPositionForGPU, this.mouseState.positionForGPU])}, {add: boolTo0or1(keysDown["Shift"])});
-                        }
-                    }
-                }
-            }
-            this.mouseState.click = false;
-        }
-        if (keysDown["Tab"]) {
-            if (app.scene.state.currentMode == "メッシュ編集") {
-                app.scene.state.setModeForSelected("オブジェクト");
-            } else {
-                app.scene.state.setModeForSelected("メッシュ編集");
-            }
-            keysDown["Tab"] = false;
-        }
         this.renderer.rendering();
     }
 
-    mousedown(inputManager) {
-        const local = vec2.flipY(vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.pixelDensity), this.canvas.height); // canvasないのlocal座標へ
+    toolsUpdate() {
+    }
+
+    keyInput(inputManager) {
+        let consumed = this.modalOperator.keyInput(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        if (consumed) return ;
+        const state = app.scene.state;
+        if (state.activeObject) {
+            if (state.activeObject.type == "グラフィックメッシュ") {
+                if (inputManager.consumeKeys(["Tab"])) {
+                    if (state.currentMode == "メッシュ編集") {
+                        state.setModeForSelected("オブジェクト");
+                    } else if (state.currentMode == "頂点アニメーション編集") {
+                        state.setModeForSelected("オブジェクト");
+                    } else if (inputManager.consumeKeys(["a"])) {
+                        state.setModeForSelected("頂点アニメーション編集");
+                    } else {
+                        state.setModeForSelected("メッシュ編集");
+                    }
+                }
+            }
+        }
+    }
+
+    async mousedown(inputManager) {
+        const local = vec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.canvas.offsetHeight); // canvasないのlocal座標へ
         this.mouseState.clickPosition = local;
         this.mouseState.position = local;
         this.mouseState.clickPositionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
@@ -176,6 +168,17 @@ export class Area_Viewer {
         this.mouseState.hold = true;
         this.mouseState.holdFrameCount = 0;
         this.mouseState.click = true;
+        const state = app.scene.state;
+        if (state.currentMode == "オブジェクト") {
+            const objects = await app.scene.selectedForObject([...this.mouseState.clickPositionForGPU]);
+            const frontObject = objects.length ? objects[0] : null;
+            state.setSelectedObject(frontObject, inputManager.keysDown["Shift"]);
+            state.setActiveObject(frontObject);
+        } else if (state.currentMode == "メッシュ編集") {
+            for (const graphicMesh of app.scene.state.selectedObject) {
+                app.scene.gpuData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.mouseState.clickPositionForGPU, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+            }
+        }
         console.log(this.mouseState);
     }
     mousemove(inputManager) {
@@ -189,7 +192,7 @@ export class Area_Viewer {
     }
 
     wheel(inputManager) {
-        if (keysDown["Alt"]) {
+        if (app.input.keysDown["Alt"]) {
             this.camera.zoom += inputManager.wheelDelta[1] / 200;
             this.camera.zoom = Math.max(Math.min(this.camera.zoom,this.camera.zoomMax),this.camera.zoomMin);
         } else {
@@ -297,6 +300,7 @@ export class Renderer {
             renderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderingGizumoGroup);
             for (const graphicMesh of app.scene.renderingOrder) {
                 if (graphicMesh.isInit && graphicMesh.visible) {
+                    // モード別
                     if (graphicMesh.mode == "メッシュ編集") {
                         // メッシュ表示
                         renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
@@ -306,6 +310,13 @@ export class Renderer {
                         renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
                         renderPass.setPipeline(verticesRenderPipeline);
                         renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
+                    } else if (graphicMesh.mode == "オブジェクト") {
+                        if (graphicMesh.selected) {
+                            // メッシュ表示
+                            renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
+                            renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
+                            renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
+                        }
                     }
                 }
             }

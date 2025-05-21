@@ -1,5 +1,5 @@
 import { calculateBBoxFromLimitedVertices } from "../../../../../BBox.js";
-import { activeView, editorParameters, keysDown, stateMachine } from "../../../../../main.js";
+import { activeView, editorParameters } from "../../../../../main.js";
 import { managerForDOMs, updateDataForUI } from "../../../../../UI/制御.js";
 import { GPU } from "../../../../../webGPU.js";
 import { vec2 } from "../../../../../ベクトル計算.js";
@@ -72,19 +72,19 @@ export class StateModel_AnimationEditForGraphicMesh {
         }
 
         if (activeView.mouseState.click) {
-            if (keysDown["c"]) { // サークル選択
-                updateSelectVerticesIndexs(await activeView.select.circleSelectVertices(stateData.activeObject, activeView.mouseState.positionForGPU, editorParameters.selectRadius), keysDown["Shift"]);
+            if (app.input.keysDown["c"]) { // サークル選択
+                updateSelectVerticesIndexs(await activeView.select.circleSelectVertices(stateData.activeObject, activeView.mouseState.positionForGPU, editorParameters.selectRadius), app.input.keysDown["Shift"]);
             } else { // 選択
-                updateSelectVerticesIndexs(await activeView.select.closestSelectVertices(stateData.activeObject, activeView.mouseState.positionForGPU, editorParameters.selectRadius), keysDown["Shift"]);
+                updateSelectVerticesIndexs(await activeView.select.closestSelectVertices(stateData.activeObject, activeView.mouseState.positionForGPU, editorParameters.selectRadius), app.input.keysDown["Shift"]);
             }
         }
         if (activeView.mouseState.holdFrameCount > 10) { // ボックス選択
             updateSelectVerticesIndexs(await activeView.select.boxSelectVertices(stateData.activeObject, vec2.createBBox([
                 activeView.mouseState.positionForGPU,
                 activeView.mouseState.clickPositionForGPU
-            ])), keysDown["Shift"]);
+            ])), app.input.keysDown["Shift"]);
         }
-        if (keysDown["a"]) { // 全選択
+        if (app.input.keysDown["a"]) { // 全選択
             updateSelectVerticesIndexs(Array.from({ length: stateData.activeObject.verticesNum }, (_, i) => i), false);
         }
         if (stateData.selectBBoxGroup) {

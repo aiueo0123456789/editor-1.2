@@ -37,7 +37,7 @@ fn getBit(arrayIndex: u32, bitIndex: u32) -> u32 {
     return (flags[arrayIndex] >> bitIndex) & 1u;
 }
 
-const size = 20.0;
+const size = 8.0;
 
 const pointData = array<vec4<f32>, 4>(
     vec4<f32>(-1.0, -1.0, 0.0, 1.0), // 左下

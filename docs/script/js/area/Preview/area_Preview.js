@@ -3,13 +3,13 @@
 import { app, Application } from '../../app.js';
 import { GPU, device, format } from '../../webGPU.js';
 import { sampler } from "../../GPUObject.js";
-import { keysDown } from '../../main.js';
 import { loadFile } from '../../utility.js';
 import { Camera } from '../../カメラ.js';
 import { vec2 } from '../../ベクトル計算.js';
 import { Select } from '../../選択.js';
 import { ConvertCoordinate } from '../../座標の変換.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
+import { CreatorForUI } from '../補助/UIの自動生成.js';
 
 const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu")], await loadFile("./script/js/area/Preview/shader/shader.wgsl"), [["u"]], "2d", "t");
@@ -18,12 +18,21 @@ const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayo
 export class Area_Preview {
     constructor(/** @type {HTMLElement} */dom) {
         this.pixelDensity = 3;
-        this.canvas = document.createElement("canvas");
-        this.canvas.className = "renderingTarget";
-        dom.append(this.canvas);
+        this.creatorForUI = new CreatorForUI();
+        this.struct = {
+            DOM: [
+                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {type: "option", name: "情報", children: [
+                    ]},
+                    {type: "box", style: "width: 100%; height: 100%; position: relative;", children: [
+                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
+                    ]}
+                ]}
+            ]
+        }
+        this.creatorForUI.create(dom, this, {padding: false});
+        this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
-        this.canvas.width = this.canvasRect.width * this.pixelDensity;
-        this.canvas.height = this.canvasRect.height * this.pixelDensity;
         // this.pixelDensity = this.canvas.height / this.canvasRect.height;
 
         this.camera = new Camera();
@@ -35,7 +44,7 @@ export class Area_Preview {
 
         // ホイール操作
         this.canvas.addEventListener('wheel', (event) => {
-            if (keysDown["Alt"]) {
+            if (app.input.keysDown["Alt"]) {
                 this.camera.zoom += event.deltaY / 200;
                 this.camera.zoom = Math.max(Math.min(this.camera.zoom,this.camera.zoomMax),this.camera.zoomMin);
             } else {

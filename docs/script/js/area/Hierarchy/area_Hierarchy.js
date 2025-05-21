@@ -35,8 +35,7 @@ export class Area_Hierarchy {
                     ]}
                 ]},
                 {type: "input", options: {type: "text"}},
-                {type: "section", resize: true, name: "ヒエラルキー", children: [
-                    {type: "hierarchy", name: "hierarchy", withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
+                    {type: "hierarchy", name: "hierarchy", options: {arrange: true}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
                         {type: "gridBox", axis: "c", allocation: "auto auto 50% 1fr 20%", children: [
                             {type: "input", name: "visibleCheck", withObject: {object: "", parameter: "visible"}, options: {type: "check", look: "eye-icon"}},
                             {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
@@ -45,7 +44,6 @@ export class Area_Hierarchy {
                             {type: "input", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 100, step: 1}},
                         ]},
                     ]},
-                ]},
                 {type: "section", name: "基本情報", children: [
                     {type: "input", label: "test1", name: "test1", withObject: {object: "h/root/0", parameter: "zIndex"}, options: {type: "number",min: 0, max: 10}},
                     // {type: "input", label: "test", name: "test3", withObject: {object: "scene/graphicMeshs/0", parameter: "name"}},

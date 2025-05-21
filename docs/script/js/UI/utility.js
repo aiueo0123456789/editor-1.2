@@ -18,8 +18,3 @@ export function createLabeledInputNumber(target, labelText, name, ID) {
     target.append(div);
     return input;
 }
-
-export function changeParameter(object, parameter, newValue) {
-    object[parameter] = newValue;
-    managerForDOMs.update(object, parameter);
-}

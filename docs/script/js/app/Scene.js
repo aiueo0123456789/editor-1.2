@@ -426,7 +426,7 @@ export class Scene {
         }
     }
 
-    async selectedForObject(point, option = {types: ["グラフィックメッシュ"]}) {
+    async selectedForObject(point, option = {types: ["グラフィックメッシュ"], depth: true}) {
         const optionBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
         const pointBuffer = GPU.createUniformBuffer(2 * 4, [...point], ["f32"]);
         const resultBuffer = GPU.createStorageBuffer(4, [0], ["u32"]);
@@ -440,6 +440,9 @@ export class Scene {
                     result.push(object);
                 }
             }
+        }
+        if (option.depth) {
+            result.sort((a, b) => b.zIndex - a.zIndex);
         }
         return result;
     }
@@ -697,38 +700,42 @@ export class Scene {
     }
 
     // 表示順番の再計算
+    // updateRenderingOrder(fineness) {
+    //     // if (!this.isChangeObjectsZindex) return ;
+    //     const createEmptyArray = (length) => {
+    //         const result = [];
+    //         for (let i = 0; i < length; i ++) {
+    //             result.push([]);
+    //         }
+    //         return result;
+    //     }
+    //     const supportFn = (graphicMeshs) => {
+    //         const belongChunk = Math.floor(graphicMeshs.zIndex / chunkRate);
+    //         for (let i = 0; i < chunks[belongChunk].length; i ++) {
+    //             if (chunks[belongChunk][i][1] > graphicMeshs.zIndex) {
+    //                 chunks[belongChunk].splice(i,0,[graphicMeshs, graphicMeshs.zIndex]);
+    //                 return ;
+    //             }
+    //         }
+    //         chunks[belongChunk].push([graphicMeshs, graphicMeshs.zIndex]);
+    //         return ;
+    //     }
+    //     const chunkRate = 1000 / fineness;
+    //     const chunks = createEmptyArray(fineness);
+    //     this.graphicMeshs.forEach(graphicMesh => {
+    //         supportFn(graphicMesh);
+    //     });
+    //     this.renderingOrder.length = 0;
+    //     for (const datas of chunks) {
+    //         for (const data of datas) {
+    //             this.renderingOrder.push(data[0]);
+    //         }
+    //     }
+    //     // this.isChangeObjectsZindex = false;
+    //     managerForDOMs.update("表示順番");
+    // }
     updateRenderingOrder(fineness) {
-        // if (!this.isChangeObjectsZindex) return ;
-        const createEmptyArray = (length) => {
-            const result = [];
-            for (let i = 0; i < length; i ++) {
-                result.push([]);
-            }
-            return result;
-        }
-        const supportFn = (graphicMeshs) => {
-            const belongChunk = Math.floor(graphicMeshs.zIndex / chunkRate);
-            for (let i = 0; i < chunks[belongChunk].length; i ++) {
-                if (chunks[belongChunk][i][1] > graphicMeshs.zIndex) {
-                    chunks[belongChunk].splice(i,0,[graphicMeshs, graphicMeshs.zIndex]);
-                    return ;
-                }
-            }
-            chunks[belongChunk].push([graphicMeshs, graphicMeshs.zIndex]);
-            return ;
-        }
-        const chunkRate = 1000 / fineness;
-        const chunks = createEmptyArray(fineness);
-        this.graphicMeshs.forEach(graphicMesh => {
-            supportFn(graphicMesh);
-        });
-        this.renderingOrder.length = 0;
-        for (const datas of chunks) {
-            for (const data of datas) {
-                this.renderingOrder.push(data[0]);
-            }
-        }
-        // this.isChangeObjectsZindex = false;
+        this.renderingOrder = [...this.graphicMeshs].sort((a, b) => a.zIndex - b.zIndex);
         managerForDOMs.update("表示順番");
     }
 }
@@ -741,20 +748,23 @@ class State {
         this.selectedObject = []; // 選択されているオブジェクト
     }
 
-    appendSelectedObject(object) {
-        if (!this.selectedObject.includes(object)) { // すでに選択状態か
+    setSelectedObject(object, append = false) {
+        if (!append) {
+            this.selectedObject.forEach((object) => {
+                object.selected = false;
+            })
+            this.selectedObject.length = 0;
+        }
+        if (!this.isSelect(object)) { // 選択されていない
             this.selectedObject.push(object);
         }
+        console.log(object)
+        object.selected = true;
     }
 
     setActiveObject(object) {
-        if (Array.isArray(object)) {
-            for (const o of object) {
-                this.appendSelectedObject(o);
-            }
-            object = object[0];
-        }
         this.activeObject = object;
+        managerForDOMs.update("アクティブオブジェクト");
     }
 
     setModeForSelected(mode) {
@@ -763,6 +773,10 @@ class State {
             object.mode = mode;
             console.log("モードの切り替え",object,mode)
         }
+    }
+
+    isSelect(object) {
+        return this.selectedObject.includes(object);
     }
 }
 

@@ -6,8 +6,13 @@ export class ConvertCoordinate {
         this.camera = camera;
     }
 
+    // キャンバス座標からワールド座標
     screenPosFromGPUPos(pos) {
-        return vec2.addR(vec2.reverseScaleR(vec2.subR(pos,vec2.scaleR([this.cvs.width, this.cvs.height], 0.5)), this.camera.zoom / 2), this.camera.position);
+        const clip = vec2.subR(vec2.scaleR(vec2.divR(pos, [this.cvs.offsetWidth, this.cvs.offsetHeight]), 2), [1,1]);
+        const a = vec2.divR(clip, [1 / this.cvs.offsetWidth, 1 / this.cvs.offsetHeight]);
+        vec2.reverseScale(a,a,this.camera.zoom);
+        vec2.add(a, a, this.camera.position);
+        return a;
     }
 
     GPUSizeFromCPU(size) {

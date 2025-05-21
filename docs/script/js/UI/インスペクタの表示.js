@@ -5,7 +5,7 @@ import { appendAnimationToObject, deleteAnimationToObject, updateCenterPosition 
 import { changeObjectName } from "../app/Hierarchy.js";
 import { stateMachine } from '../main.js';
 import { TextureToCVS } from "../キャンバスにテクスチャを表示.js";
-import { createCheckbox, createIcon, createLabeledInput, createLabeledSelect, createLabeledVecInput, createMinButton, createSection, managerForDOMs, setRangeStyle, updateDataForUI } from "./制御.js";
+import { createCheckbox, createIcon, createLabeledInput, createLabeledSelect, createLabeledVecInput, createMinButton, createSection, managerForDOMs, setRangeStyle } from "./制御.js";
 import { ResizerForDOM } from "./resizer.js";
 import { activeOrClear } from "../コンテキストメニュー/制御.js";
 import { hexToRgbaArray, rgbToHex } from "../utility.js";

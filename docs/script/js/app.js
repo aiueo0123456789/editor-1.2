@@ -1,7 +1,7 @@
 import { FaileIOManager } from "./app/FaileIOManager.js";
 import { Scene } from "./app/Scene.js";
 import { AutoGrid } from "./UI/grid.js";
-import { createIcon, createID, createTag } from "./UI/制御.js";
+import { createIcon, createID, createTag, managerForDOMs } from "./UI/制御.js";
 import { Hierarchy } from "./app/Hierarchy.js";
 import { Operator } from "./機能/オペレーター/オペレーター.js";
 import { Area_Viewer } from "./area/Viewer/area_Viewer.js";
@@ -9,9 +9,12 @@ import { Area_Hierarchy } from "./area/Hierarchy/area_Hierarchy.js";
 import { Area_Inspector } from "./area/Inspector/area_Inspector.js";
 import { Area_Preview } from "./area/Preview/area_Preview.js";
 import { Area_Timeline } from "./area/Timeline/area_Timeline.js";
-import { ViewerSpaceData } from "./area/Viewer/spaceData.js";
-import { TimelineSpaceData } from "./area/Timeline/spaceData.js";
+import { ViewerSpaceData } from "./area/Viewer/area_ViewerApaceData.js";
+import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
+import { createSelect } from "./area/補助/UIの自動生成.js";
+import { changeParameter, createArrayFromHashKeys } from "./utility.js";
+import { SelectTag } from "./area/補助/カスタムタグ.js";
 
 // モードごとに使えるツールの管理
 class WorkSpaceTool {
@@ -130,36 +133,45 @@ const useClassFromAreaType = {
 // UIのエリア管理
 class Area {
     constructor(type, /** @type {HTMLElement} */ dom) {
-        this.type = type;
-
         this.target = dom;
         this.target.classList.add("area");
 
         this.header = document.createElement("div");
         this.header.classList.add("header");
+        const select = new SelectTag(this.header, createArrayFromHashKeys(useClassFromAreaType));
         /** @type {HTMLElement} */
         const deleteButton = createTag(this.header, "span", {className: "square_btn"}); // バツボタン
         deleteButton.addEventListener("click", () => {
             app.deleteArea(this);
         })
         createIcon(this.header, "グラフィックメッシュ"); // アイコン
-        createTag(this.header, "div", {textContent: type}); // タイトル
+        this.title = createTag(this.header, "div", {textContent: type}); // タイトル
 
         this.main = document.createElement("div");
         this.main.classList.add("main");
         this.target.append(this.header, this.main);
 
-        this.struct = type;
+        this.setType(type);
+
+        select.input.addEventListener("change", () => {
+            this.setType(select.input.value);
+        })
+
+        this.main.addEventListener("mouseover", () => {
+            app.activeArea = this;
+        });
+    }
+
+    setType(type) {
+        this.uiModel?.creator?.delete();
+        this.title.textContent = type; // タイトル
+        this.type = type;
         if (type in useClassFromAreaType) {
             this.uiModel = new useClassFromAreaType[type]["area"](this.main);
         } else {
             this.uiModel = {type: "エラー"};
             console.warn("設定されていないエリアを表示しようとしました",type)
         }
-
-        this.main.addEventListener("mouseover", () => {
-            app.activeArea = this;
-        });
     }
 
     update() {
@@ -180,8 +192,9 @@ class AnimationPlayer {
     update(dt) {
         if (this.isPlaying) {
             this.app.scene.frame_current += dt * this.speed;
+            managerForDOMs.update("タイムライン-canvas");
         }
-        this.app.scene.frame_current = this.app.scene.frame_start + (this.app.scene.frame_current - this.app.scene.frame_start) % (this.app.scene.frame_end - this.app.scene.frame_start); // フレームスタートを下回ったらエンドに戻す
+        changeParameter(this.app.scene, "frame_current", this.app.scene.frame_start + (this.app.scene.frame_current - this.app.scene.frame_start) % (this.app.scene.frame_end - this.app.scene.frame_start)); // フレームスタートを下回ったらエンドに戻す
     }
 }
 
@@ -194,9 +207,9 @@ const area3 = app.createArea("h", area2.child2);
 const area4 = app.createArea("w", area3.child1);
 app.setAreaType(area1_h.child1,"Viewer");
 app.setAreaType(area2.child1,"Hierarchy");
+app.setAreaType(area4.child1,"Hierarchy");
 // app.setAreaType(area4.child1,"Preview");
-app.setAreaType(area4.child1,"Viewer");
-// app.setAreaType(area3.child2,"Inspector");
+app.setAreaType(area3.child2,"Inspector");
 app.setAreaType(area1_h.child2,"Timeline");
 app.setAreaType(area4.child2,"Timeline");
 app.setAreaType(area4.child2,"Property");
