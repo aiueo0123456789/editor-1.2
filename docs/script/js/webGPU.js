@@ -220,6 +220,12 @@ class WebGPU {
         });
     }
 
+    setNaNToBuffer(buffer) {
+        const floatArray = new Float32Array(buffer.size / 4);
+        floatArray.fill(NaN);
+        device.queue.writeBuffer(buffer, 0, floatArray);
+    }
+
     createTextureSampler() {
         return device.createSampler({
             magFilter: 'linear',
@@ -558,7 +564,7 @@ class WebGPU {
         return newBuffer;
     }
 
-    appendEmptyToBuffer(buffer, byteLength) {
+    appendEmptyToBuffer(buffer, byteLength, NaNset = false) {
         let newBuffer;
         if (buffer instanceof GPUBuffer) {
             newBuffer = this.createBuffer(buffer.size + byteLength, buffer.usage);
@@ -570,6 +576,10 @@ class WebGPU {
         } else {
             console.trace("a");
             console.log(buffer)
+            newBuffer = this.createBuffer(byteLength, buffer.usage);
+        }
+        if (NaNset) {
+            this.setNaNToBuffer(newBuffer);
         }
         return newBuffer;
     }
@@ -1042,7 +1052,7 @@ class WebGPU {
         return result;
     }
 
-    async getSelectIndexFromBufferBit(buffer) {
+    async getSelectIndexFromBufferBit(buffer, startIndex = 0, endIndex = buffer.size / 4 * 32) {
         const byteLength = buffer.size;
         // GPUBuffer を読み取るための staging buffer を作成
         const stagingBuffer = device.createBuffer({
@@ -1061,15 +1071,13 @@ class WebGPU {
         const result = [];
 
         // 各バイトについて、ビット単位で処理
-        let c = 0;
-        for (let byte of data) {
-            for (let i = 7; i >= 0; i--) {
-                const bit = (byte >> i) & 1;
-                if (bit === 1) {
-                    result.push(c);
-                }
+        for (let i = startIndex; i < endIndex; i ++) {
+            const byte = data[Math.floor(i / 8)];
+            const bitIndex = 7 - (i % 8); // 上位ビットから下位へ
+            const bit = (byte >> bitIndex) & 1;
+            if (bit === 1) {
+                result.push(i);
             }
-            c ++;
         }
 
         stagingBuffer.unmap();

@@ -44,7 +44,7 @@ export class Area_Viewer {
         this.pixelDensity = 4;
         this.creatorForUI = new CreatorForUI();
 
-        this.modalOperator = new ModalOperator({"g": VerticesTranslateModal});
+        this.modalOperator = new ModalOperator({"g": new VerticesTranslateModal()});
 
         this.spaceData = new SpaceData();
         this.inputObject = {"h": app.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": app.appConfig.areasConfig["Viewer"]};
@@ -182,6 +182,8 @@ export class Area_Viewer {
         console.log(this.mouseState);
     }
     mousemove(inputManager) {
+         let consumed = this.modalOperator.mouseMove(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        if (consumed) return ;
         const local = vec2.flipY(vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.pixelDensity), this.canvas.height);
         this.mouseState.position = local;
         this.mouseState.positionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);

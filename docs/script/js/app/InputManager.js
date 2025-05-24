@@ -49,6 +49,8 @@ export class InputManager {
             if (this.mouseButtonType == 2) { // 右クリック
                 this.mousePosition[0] = e.clientX;
                 this.mousePosition[1] = e.clientY;
+                this.movement[0] = e.movementX;
+                this.movement[1] = e.movementY;
                 if (app.activeArea.uiModel.mousemove) {
                     app.activeArea.uiModel.mousemove(this);
                 }
@@ -59,6 +61,8 @@ export class InputManager {
             } else {
                 this.mousePosition[0] = e.clientX;
                 this.mousePosition[1] = e.clientY;
+                this.movement[0] = e.movementX;
+                this.movement[1] = e.movementY;
                 if (app.activeArea.uiModel.mousemove) {
                     app.activeArea.uiModel.mousemove(this);
                 }

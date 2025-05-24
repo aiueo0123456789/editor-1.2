@@ -52,7 +52,7 @@ export class StateModel_Vertices_Resize {
             stateData.command = new ResizeCommand(stateData.activeObject, stateData.selectIndexs);
         }
         app.operator.appendCommand(stateData.command);
-        stateData.command.setPointOfEffort(stateData.selectBBoxForCenterPoint);
+        stateData.command.setCenterPoint(stateData.selectBBoxForCenterPoint);
         stateData.transformValueMouseStartPosition = activeView.mouseState.positionForGPU;
         stateData.transformValue = [0,0];
     }

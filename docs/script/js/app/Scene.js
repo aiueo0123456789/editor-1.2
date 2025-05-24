@@ -62,6 +62,7 @@ class GraphicMeshData {
         GPU.writeBuffer(this.uv, new Float32Array(uvData), graphicMesh.vertexBufferOffset * this.blockByteLength);
         GPU.writeBuffer(this.weightGroups, GPU.createBitData(weightGroupData, ["u32", "u32", "u32", "u32", "f32", "f32", "f32", "f32"]), graphicMesh.vertexBufferOffset * ((4 + 4) * 4));
         GPU.writeBuffer(this.meshes, new Uint32Array(meshesData), graphicMesh.meshBufferOffset * this.meshBlockByteLength);
+        this.updateParent(graphicMesh);
     }
 
     // 選択
@@ -83,13 +84,17 @@ class GraphicMeshData {
         GPU.writeBuffer(this.animations, new Float32Array(animationData), (graphicMesh.animationBufferOffset + animtaionIndex) * this.blockByteLength);
     }
 
-    updateParent(/** @type {GraphicMesh} */graphicMesh) {
-        let allocationData;
+    getAllocationData(/** @type {GraphicMesh} */graphicMesh) {
         if (graphicMesh.parent) {
-            allocationData = new Uint32Array([graphicMesh.vertexBufferOffset, graphicMesh.animationBufferOffset, graphicMesh.weightBufferOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.allocationIndex, GPU.padding]);
+            return new Uint32Array([graphicMesh.vertexBufferOffset, graphicMesh.animationBufferOffset, graphicMesh.weightBufferOffset, graphicMesh.verticesNum, graphicMesh.MAX_ANIMATIONS, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.allocationIndex, GPU.padding]);
         } else {
-            allocationData = new Uint32Array([graphicMesh.vertexBufferOffset, graphicMesh.animationBufferOffset, graphicMesh.weightBufferOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, 0, 0, GPU.padding]);
+            return new Uint32Array([graphicMesh.vertexBufferOffset, graphicMesh.animationBufferOffset, graphicMesh.weightBufferOffset, graphicMesh.verticesNum, graphicMesh.MAX_ANIMATIONS, 0, 0, GPU.padding]);
         }
+    }
+
+    updateParent(/** @type {GraphicMesh} */graphicMesh) {
+        // 頂点オフセット, アニメーションオフセット, ウェイトオフセット, 頂点数, 最大アニメーション数, 親の型, 親のインデックス, パディング
+        let allocationData = this.getAllocationData(graphicMesh);
         GPU.writeBuffer(this.allocation, allocationData, (graphicMesh.allocationIndex * 8) * 4);
         GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
     }

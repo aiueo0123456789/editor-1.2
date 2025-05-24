@@ -44,7 +44,7 @@ const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cs
 @group(0) @binding(2) var<storage, read> vertices: array<vec2<f32>>;
 @group(1) @binding(0) var<uniform> proportionalEditType: u32;
 @group(1) @binding(1) var<uniform> proportionalSize: f32;
-@group(1) @binding(2) var<uniform> pointOfEffort: vec2<f32>;
+@group(1) @binding(2) var<uniform> centerPoint: vec2<f32>;
 
 fn arrayIncludes(value: u32) -> bool {
     for (var i = 0u; i < arrayLength(&verticesIndexs); i = i + 1u) {
@@ -71,7 +71,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         if (arrayIncludes(index)) {
             weight[index] = 1.0;
         } else {
-            let dist = distance(vertices[index], pointOfEffort);
+            let dist = distance(vertices[index], centerPoint);
             if (dist < proportionalSize) {
                 weight[index] = 1.0 - dist / proportionalSize;
             } else {
@@ -82,7 +82,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         if (arrayIncludes(index)) {
             weight[index] = 1.0;
         } else {
-            let dist = distance(vertices[index], pointOfEffort);
+            let dist = distance(vertices[index], centerPoint);
             if (dist < proportionalSize) {
                 weight[index] = pow((1.0 - dist / proportionalSize), 2.0);
             } else {
@@ -98,10 +98,10 @@ export class TransformCommand {
         this.target = null;
         this.worldOriginalBuffer = null;
         this.valueBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
-        this.pointOfEffortBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32","f32"]);
+        this.centerPointBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32","f32"]);
         this.proportionalEditTypeBuffer = GPU.createUniformBuffer(4, undefined, ["u32"]);
         this.proportionalSizeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
-        this.configGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu_Cu"), [{item: this.proportionalEditTypeBuffer, type: "b"}, {item: this.proportionalSizeBuffer, type: "b"}, {item: this.pointOfEffortBuffer, type: "b"}]);
+        this.configGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu_Cu"), [{item: this.proportionalEditTypeBuffer, type: "b"}, {item: this.proportionalSizeBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}]);
     }
 
     // 基準となるデータを作る
@@ -147,13 +147,13 @@ export class TransformCommand {
                 this.weightBuffer = GPU.createStorageBuffer(target.verticesNum * 4, undefined, ["f32"]);
             }
             this.weightAndIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"),  [{item: this.weightBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}]);
-            this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.pointOfEffortBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
+            this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
             this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer); // ターゲットのオリジナル状態を保持
         }
     }
 
-    setPointOfEffort(pointOfEffort) {
-        GPU.writeBuffer(this.pointOfEffortBuffer, new Float32Array(pointOfEffort));
+    setCenterPoint(centerPoint) {
+        GPU.writeBuffer(this.centerPointBuffer, new Float32Array(centerPoint));
     }
 
     transform(pipeline, value, proportionalEditType, proportionalSize) {

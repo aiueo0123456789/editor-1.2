@@ -2,7 +2,7 @@
 @group(0) @binding(1) var<storage, read> verticesIndexs: array<u32>;
 @group(1) @binding(0) var<uniform> proportionalEditType: u32;
 @group(1) @binding(1) var<uniform> proportionalSize: f32;
-@group(1) @binding(2) var<uniform> pointOfEffort: vec2<f32>;
+@group(1) @binding(2) var<uniform> centerPoint: vec2<f32>;
 @group(2) @binding(0) var<storage, read> vertices: array<vec2<f32>>;
 
 fn arrayIncludes(value: u32) -> bool {
@@ -30,7 +30,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         if (arrayIncludes(index)) {
             weight[index] = 1.0;
         } else {
-            let dist = distance(vertices[index], pointOfEffort);
+            let dist = distance(vertices[index], centerPoint);
             if (dist < proportionalSize) {
                 weight[index] = 1.0 - dist / proportionalSize;
             } else {
@@ -41,7 +41,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         if (arrayIncludes(index)) {
             weight[index] = 1.0;
         } else {
-            let dist = distance(vertices[index], pointOfEffort);
+            let dist = distance(vertices[index], centerPoint);
             if (dist < proportionalSize) {
                 weight[index] = pow((1.0 - dist / proportionalSize), 2.0);
             } else {

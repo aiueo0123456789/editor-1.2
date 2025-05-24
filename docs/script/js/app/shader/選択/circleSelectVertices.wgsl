@@ -48,6 +48,10 @@ fn isSelected(vertex: vec2<f32>) -> bool {
     return distanceSquared2D(point.position, vertex) < point.raidus * point.raidus;
 }
 
+fn isNaN(x: f32) -> bool {
+    return x != x;
+}
+
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (ceilU32(allocation.MAX_VERTICES, 32u) <= global_id.x) {
@@ -60,10 +64,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     var vertexIndex = vertexIndexStart + global_id.x * 32;
     for (var bitIndex = 0u; bitIndex < 32u; bitIndex ++) { // selectedのbitIndex
         if (allocation.vertexBufferOffset <= vertexIndex && vertexIndex < allocation.vertexBufferOffset + allocation.MAX_VERTICES) { // チェック対象かの確認
-            if (isSelected(vertices[vertexIndex])) {
-                setBit(arrayIndex, bitIndex);
-            } else if (optionData.add == 0) { // 追加がoffなら
+            if (isNaN(vertices[vertexIndex].x) || isNaN(vertices[vertexIndex].y)) {
                 clearBit(arrayIndex, bitIndex);
+            } else {
+                if (isSelected(vertices[vertexIndex])) {
+                    setBit(arrayIndex, bitIndex);
+                } else if (optionData.add == 0) { // 追加がoffなら
+                    clearBit(arrayIndex, bitIndex);
+                }
             }
         }
         vertexIndex ++;

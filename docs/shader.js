@@ -59,7 +59,7 @@ shaders.set('./script/js/データマネージャー/GPU/vertices/resize.wgsl',`
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
 @group(0) @binding(3) var<storage, read> weigth: array<f32>;
-@group(0) @binding(4) var<uniform> pointOfEffort: vec2<f32>;
+@group(0) @binding(4) var<uniform> centerPoint: vec2<f32>;
 @group(0) @binding(5) var<uniform> value: vec2<f32>;
 
 @compute @workgroup_size(64)
@@ -68,16 +68,16 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&weigth) <= index) {
         return;
     }
-    let sub = (originalVertices[index] - pointOfEffort);
-    // output[index] = sub * (value) * (weigth[index]) + sub + pointOfEffort;
-    output[index] = ((sub * (value) + pointOfEffort) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index])) - baseData[index];
+    let sub = (originalVertices[index] - centerPoint);
+    // output[index] = sub * (value) * (weigth[index]) + sub + centerPoint;
+    output[index] = ((sub * (value) + centerPoint) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index])) - baseData[index];
 }`)
 // rotate.wgsl
 shaders.set('./script/js/データマネージャー/GPU/vertices/rotate.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
 @group(0) @binding(3) var<storage, read> weigth: array<f32>;
-@group(0) @binding(4) var<uniform> pointOfEffort: vec2<f32>;
+@group(0) @binding(4) var<uniform> centerPoint: vec2<f32>;
 @group(0) @binding(5) var<uniform> value: vec2<f32>;
 
 fn rotate(p: vec2<f32>, angle: f32) -> vec2<f32> {
@@ -95,15 +95,15 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&weigth) <= index) {
         return;
     }
-    let sub = rotate(originalVertices[index] - pointOfEffort, value.x * (weigth[index]));
-    output[index] = sub + pointOfEffort - baseData[index];
+    let sub = rotate(originalVertices[index] - centerPoint, value.x * (weigth[index]));
+    output[index] = sub + centerPoint - baseData[index];
 }`)
 // translate.wgsl
 shaders.set('./script/js/データマネージャー/GPU/vertices/translate.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
 @group(0) @binding(3) var<storage, read> weigth: array<f32>;
-@group(0) @binding(4) var<uniform> pointOfEffort: vec2<f32>;
+@group(0) @binding(4) var<uniform> centerPoint: vec2<f32>;
 @group(0) @binding(5) var<uniform> value: vec2<f32>;
 
 @compute @workgroup_size(64)
@@ -112,8 +112,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&weigth) <= index) {
         return;
     }
-    let sub = (originalVertices[index] - pointOfEffort) + (value) * (weigth[index]);
-    output[index] = sub + pointOfEffort - baseData[index];
+    let sub = (originalVertices[index] - centerPoint) + (value) * (weigth[index]);
+    output[index] = sub + centerPoint - baseData[index];
 }`)
 // resize.wgsl
 shaders.set('./script/js/データマネージャー/GPU/boneAnimation/resize.wgsl',`struct Bone {
@@ -3642,7 +3642,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 }`)
 // 変形回転.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/変形回転.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
-@group(0) @binding(1) var<uniform> pointOfEffort: vec2<f32>;
+@group(0) @binding(1) var<uniform> centerPoint: vec2<f32>;
 @group(0) @binding(2) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(3) var<storage, read> weigth: array<f32>;
 @group(0) @binding(4) var<uniform> value: vec2<f32>;
@@ -3666,15 +3666,15 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&weigth) <= index) {
         return;
     }
-    let sub = rotate(originalVertices[index] - pointOfEffort, value.x * (weigth[index]));
-    output[index] = sub + pointOfEffort;
+    let sub = rotate(originalVertices[index] - centerPoint, value.x * (weigth[index]));
+    output[index] = sub + centerPoint;
 }`)
 // 重みなどの作成.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/重みなどの作成.wgsl',`@group(0) @binding(0) var<storage, read_write> weight: array<f32>;
 @group(0) @binding(1) var<storage, read> verticesIndexs: array<u32>;
 @group(1) @binding(0) var<uniform> proportionalEditType: u32;
 @group(1) @binding(1) var<uniform> proportionalSize: f32;
-@group(1) @binding(2) var<uniform> pointOfEffort: vec2<f32>;
+@group(1) @binding(2) var<uniform> centerPoint: vec2<f32>;
 @group(2) @binding(0) var<storage, read> vertices: array<vec2<f32>>;
 
 fn arrayIncludes(value: u32) -> bool {
@@ -3702,7 +3702,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         if (arrayIncludes(index)) {
             weight[index] = 1.0;
         } else {
-            let dist = distance(vertices[index], pointOfEffort);
+            let dist = distance(vertices[index], centerPoint);
             if (dist < proportionalSize) {
                 weight[index] = 1.0 - dist / proportionalSize;
             } else {
@@ -3713,7 +3713,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         if (arrayIncludes(index)) {
             weight[index] = 1.0;
         } else {
-            let dist = distance(vertices[index], pointOfEffort);
+            let dist = distance(vertices[index], centerPoint);
             if (dist < proportionalSize) {
                 weight[index] = pow((1.0 - dist / proportionalSize), 2.0);
             } else {
@@ -3727,7 +3727,7 @@ shaders.set('./script/wgsl/compute/バッファの書き換え/変形/変形並�
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> baseData: array<vec2<f32>>; // 基準
 @group(0) @binding(3) var<storage, read> weigth: array<f32>;
-@group(0) @binding(4) var<uniform> pointOfEffort: vec2<f32>;
+@group(0) @binding(4) var<uniform> centerPoint: vec2<f32>;
 @group(0) @binding(5) var<uniform> value: vec2<f32>;
 
 @compute @workgroup_size(64)
@@ -3736,14 +3736,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&weigth) <= index) {
         return;
     }
-    let sub = (originalVertices[index] - pointOfEffort) + (value) * (weigth[index]);
-    output[index] = sub + pointOfEffort - baseData[index];
+    let sub = (originalVertices[index] - centerPoint) + (value) * (weigth[index]);
+    output[index] = sub + centerPoint - baseData[index];
 }`)
 // 変形拡大縮小.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/変形拡大縮小.wgsl',`@group(0) @binding(0) var<storage, read_write> output: array<vec2<f32>>;
 @group(0) @binding(1) var<storage, read> originalVertices: array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> weigth: array<f32>;
-@group(0) @binding(3) var<uniform> pointOfEffort: vec2<f32>;
+@group(0) @binding(3) var<uniform> centerPoint: vec2<f32>;
 @group(0) @binding(4) var<uniform> value: vec2<f32>;
 
 @compute @workgroup_size(64)
@@ -3752,9 +3752,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&weigth) <= index) {
         return;
     }
-    let sub = (originalVertices[index] - pointOfEffort);
-    // output[index] = sub * (value) * (weigth[index]) + sub + pointOfEffort;
-    output[index] = ((sub * (value) + pointOfEffort) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index]));
+    let sub = (originalVertices[index] - centerPoint);
+    // output[index] = sub * (value) * (weigth[index]) + sub + centerPoint;
+    output[index] = ((sub * (value) + centerPoint) * weigth[index]) + (originalVertices[index] * (1.0 - weigth[index]));
 }`)
 // ボーンアニメーション変形並行移動.wgsl
 shaders.set('./script/wgsl/compute/バッファの書き換え/変形/ボーンアニメーション変形並行移動.wgsl',`struct Bone {
