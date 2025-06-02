@@ -61,6 +61,8 @@ export class BezierModifier extends ObjectBase {
         this.parent = "";
         this.weightAuto = false;
 
+        this.mode = "オブジェクト";
+
         this.init({baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0], animationKeyDatas: [], modifierEffectData: {data: [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], type: "u32*4,f32*4"}});
     }
 

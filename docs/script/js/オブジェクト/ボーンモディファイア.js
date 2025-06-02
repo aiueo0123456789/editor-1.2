@@ -277,6 +277,8 @@ export class BoneModifier extends ObjectBase {
         this.editor = new Editor(this);
         this.parent = "";
 
+        this.mode = "オブジェクト";
+
         this.attachments = new Attachments(this);
         this.relationship = null;
 

@@ -35,7 +35,11 @@ export class Area_Hierarchy {
                     ]}
                 ]},
                 {type: "input", options: {type: "text"}},
-                    {type: "hierarchy", name: "hierarchy", options: {arrange: true}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
+                    {type: "hierarchy", name: "hierarchy", options: {arrange: true, clickEventFn: (event, object) => {
+                        app.scene.state.setSelectedObject(object, app.input.keysDown["Shift"]);
+                        app.scene.state.setActiveObject(object);
+                        event.stopPropagation();
+                    }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
                         {type: "gridBox", axis: "c", allocation: "auto auto 50% 1fr 20%", children: [
                             {type: "input", name: "visibleCheck", withObject: {object: "", parameter: "visible"}, options: {type: "check", look: "eye-icon"}},
                             {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
@@ -49,10 +53,6 @@ export class Area_Hierarchy {
                     // {type: "input", label: "test", name: "test3", withObject: {object: "scene/graphicMeshs/0", parameter: "name"}},
                     // {type: "select", name: "test3", withObject: {object: "h/root/0", parameter: "name"}}
                 ]},
-                {type: "if", options: {type: "=", value0: {object: "scene/state/activeObject", parameter: "type"}, value1: "グラフィックメッシュ"},
-                    result0: {type: "input", label: "test1", name: "test1", withObject: {object: "h/root/0", parameter: "zIndex"}, options: {type: "number",min: 0, max: 10}},
-                    result1: {type: "input", label: "test1", name: "test1", withObject: {object: "h/root/0", parameter: "zIndex"}, options: {type: "number",min: 0, max: 10}},
-                }
             ],
             utility: {
                 "testTest": {}

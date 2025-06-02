@@ -7,15 +7,14 @@ import { Camera } from '../../カメラ.js';
 import { vec2 } from '../../ベクトル計算.js';
 import { Select } from '../../選択.js';
 import { ConvertCoordinate } from '../../座標の変換.js';
-import { BBox } from '../../BBox.js';
-import { createTag } from '../../UI/制御.js';
 import { CreatorForUI } from '../補助/UIの自動生成.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
 import { ModalOperator } from '../補助/ModalOperator.js';
 import { VerticesTranslateModal } from './tools/VerticesTranslateTool.js';
 import { VerticesRotateModal } from './tools/VerticesRotateTool.js';
 
-const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
+// const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
+const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./script/js/area/Viewer/shader/shader.wgsl"), [["u"]], "2d", "t");
 const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./script/js/area/Viewer/shader/maskShader.wgsl"), [["u"]], "mask", "t");
 
@@ -156,6 +155,14 @@ export class Area_Viewer {
                         state.setModeForSelected("頂点アニメーション編集");
                     } else {
                         state.setModeForSelected("メッシュ編集");
+                    }
+                }
+            } else if (state.activeObject.type == "ボーンモディファイア") {
+                if (inputManager.consumeKeys(["Tab"])) {
+                    if (state.currentMode == "ボーン編集") {
+                        state.setModeForSelected("オブジェクト");
+                    } else {
+                        state.setModeForSelected("ボーン編集");
                     }
                 }
             }
@@ -302,26 +309,12 @@ export class Renderer {
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }
-            renderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderingGizumoGroup);
-            for (const graphicMesh of app.scene.renderingOrder) {
-                if (graphicMesh.isInit && graphicMesh.visible) {
-                    // モード別
-                    if (graphicMesh.mode == "メッシュ編集") {
-                        // メッシュ表示
-                        renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
-                        renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
-                        renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
-                        // 頂点描画
-                        renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
-                        renderPass.setPipeline(verticesRenderPipeline);
-                        renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
-                    } else if (graphicMesh.mode == "オブジェクト") {
-                        if (graphicMesh.selected) {
-                            // メッシュ表示
-                            renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
-                            renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
-                            renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
-                        } else {
+            if (this.viewer.spaceData.visibleObjects.graphicMesh) {
+                renderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderingGizumoGroup);
+                for (const graphicMesh of app.scene.renderingOrder) {
+                    if (graphicMesh.isInit && graphicMesh.visible) {
+                        // モード別
+                        if (graphicMesh.mode == "メッシュ編集") {
                             // メッシュ表示
                             renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
                             renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
@@ -330,6 +323,13 @@ export class Renderer {
                             renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
                             renderPass.setPipeline(verticesRenderPipeline);
                             renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
+                        } else if (graphicMesh.mode == "オブジェクト") {
+                            if (graphicMesh.selected) {
+                                // メッシュ表示
+                                renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
+                                renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
+                                renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
+                            }
                         }
                     }
                 }
@@ -344,13 +344,17 @@ export class Renderer {
             }
             renderPass.setPipeline(boneVerticesRenderPipeline);
             for (const armature of app.scene.boneModifiers) {
-                renderPass.setBindGroup(2, armature.objectDataGroup);
-                renderPass.draw(6 * 2, armature.boneNum, 0, 0);
+                if (armature.mode == "ボーン編集") {
+                    renderPass.setBindGroup(2, armature.objectDataGroup);
+                    renderPass.draw(6 * 2, armature.boneNum, 0, 0);
+                }
             }
             renderPass.setPipeline(boneRelationshipsRenderPipeline);
             for (const armature of app.scene.boneModifiers) {
-                renderPass.setBindGroup(2, armature.objectDataGroup);
-                renderPass.draw(4, armature.boneNum, 0, 0);
+                if (armature.mode == "ボーン編集") {
+                    renderPass.setBindGroup(2, armature.objectDataGroup);
+                    renderPass.draw(4, armature.boneNum, 0, 0);
+                }
             }
         }
         if (this.viewer.spaceData.visibleObjects.bezierModifier && app.scene.bezierModifiers.length) {
@@ -362,8 +366,10 @@ export class Renderer {
             }
             renderPass.setPipeline(bezierVerticesRenderPipeline);
             for (const bezierModifier of app.scene.bezierModifiers) {
-                renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
-                renderPass.draw(6 * 3, bezierModifier.pointNum, 0, 0);
+                if (bezierModifier.mode == "ベジェ編集") {
+                    renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
+                    renderPass.draw(6 * 3, bezierModifier.pointNum, 0, 0);
+                }
             }
         }
         // 処理の終了と送信

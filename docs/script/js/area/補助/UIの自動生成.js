@@ -105,6 +105,14 @@ export class CreatorForUI {
             scrollableContainer = createTag(section, "div", {style: "padding: 0px 0px 15px 0px; height: 300px"});
             new ResizerForDOM(scrollableContainer, "h", 100, 1000);
         }
+        let result = {active: null, selects: []};
+        let activeSource = null;
+        if (options.selectSource) {
+            result.selects = this.findSource(options.selectSource.object, this.root);
+            activeSource = {object: this.findSource(options.activeSource.object, this.root), parameter: options.activeSource.parameter};
+        } else {
+            activeSource = {object: result, parameter: "active"};
+        }
         const scrollable = createTag(scrollableContainer, "div", {class: "scrollable"});
         const sourceObject = this.findSource(withObject.object, searchTarget);
         const getAllObject = () => {
@@ -126,6 +134,25 @@ export class CreatorForUI {
                 const objectDOM = managerForDOMs.getDOMInObjectAndGroupID(object, this.groupID)
                 if (!objectDOM) { // タグが存在しない場合新規作成
                     const container = createTag(null, "div", {style: "paddingLeft: 2px;"});
+
+                    if (typeof options.clickEventFn === 'function') { // 関数が設定されていたら適応
+                        container.addEventListener("click", (event) => {
+                            options.clickEventFn(event, object);
+                        });
+                    } else {
+                        container.addEventListener("click", (event) => {
+                            activeSource.object[activeSource.parameter] = object;
+                            result.active = object;
+                            if (!app.input.keysDown["Shift"]) {
+                                result.selects.length = 0;
+                            }
+                            result.selects.push(object);
+                            console.log(result,activeSource);
+                            event.stopPropagation();
+                            // managerForDOMs.update(list, "選択情報");
+                        });
+                    }
+
                     const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr;"});
                     const visibleCheck = createCheckbox(upContainer, "arrow");
                     visibleCheck.checked = true;
@@ -338,18 +365,14 @@ export class CreatorForUI {
             } else if (child.type == "input") { // 入力
                 if (!child.options) return ;
                 if (child.options.type == "text") {
-                    if (child.label) {
-                        element = createLabeledInput(t, child.label, child.options.type, child.name);
-                    } else {
-                        element = createTag(t, "input", child.options);
-                    }
+                    element = createTag(t, "input", child.options);
                     this.createWith(element, child.withObject, searchTarget);
                 } else if (child.options.type == "check") {
                     element = createCheckbox(t, child.options.look);
                     this.createWith(element, child.withObject, searchTarget);
                 } else { // 数字型
                     if (child.custom?.visual) {
-                        element = createTag(element, "input", child.options);
+                        element = createTag(t, "input", child.options);
                         this.createWith(element, child.withObject, searchTarget);
                     } else {
                         element = createTag(t, "div");
@@ -507,24 +530,32 @@ export class CreatorForUI {
                         childTag.remove();
                     }
                     const o = this.findSource(child.sourceObject.object, searchTarget);
-                    const o2 = this.findSource(child.sourceObject.parameter.object, searchTarget);
-                    children.length = 0;
-                    const keep = createTag(null, "div");
-                    if (o2) {
-                        const p = o2[child.sourceObject.parameter.parameter];
-                        if (child.children) {
-                            children = this.createFromChildren(keep, child.children, o[p]);
+                    if (o) {
+                        children.length = 0;
+                        const keep = createTag(null, "div");
+                        if ("parameter" in child.sourceObject) {
+                            const o2 = isPlainObject(child.sourceObject.parameter) ? this.findSource(child.sourceObject.parameter.object, searchTarget) : false;
+                            if (o2) {
+                                const p = o2[child.sourceObject.parameter.parameter];
+                                if (child.children) {
+                                    children = this.createFromChildren(keep, child.children, o[p]);
+                                }
+                            } else {
+                                const p = "";
+                                if (child.children) {
+                                    children = this.createFromChildren(keep, child.children, o[p]);
+                                }
+                            }
+                        } else {
+                            if (child.children) {
+                                children = this.createFromChildren(keep, child.children, o);
+                            }
                         }
-                    } else {
-                        const p = "";
-                        if (child.children) {
-                            children = this.createFromChildren(keep, child.children, o[p]);
+                        for (const childTag of Array.from(keep.children).reverse()) {
+                            t.insertBefore(childTag,t.children[elementInsertIndex]);
                         }
+                        keep.remove();
                     }
-                    for (const childTag of keep.children) {
-                        t.insertBefore(childTag,t.children[elementInsertIndex]);
-                    }
-                    keep.remove();
                 }
                 let updateEventTarget = null;
                 if (isPlainObject(child.updateEventTarget)) {
@@ -534,26 +565,40 @@ export class CreatorForUI {
                 }
                 managerForDOMs.set(updateEventTarget,this.groupID,null,childrenReset);
                 childrenReset();
-            }
-            if (child.style) {
-                setStyle(element, child.style);
-            }
-            if (child.event) {
-                for (const eventName in child.event) {
-                    element.addEventListener(eventName, () => {
-                        child.event[eventName](searchTarget, element);
-                    })
+            } else if (child.type == "if") {
+                console.log(child)
+                const bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.comparison;
+                if (bool) {
+                    if (child.true) {
+                        myChildrenTag.push(...this.createFromChildren(t, child.true, searchTarget));
+                    }
+                } else {
+                    if (child.false) {
+                        myChildrenTag.push(...this.createFromChildren(t, child.false, searchTarget));
+                    }
                 }
             }
-            if (child.id) {
-                this.domKeeper.set(child.id, element);
-            }
-            if (child.label) {
-                if (element instanceof HTMLElement) {
-                    setLabel(t, child.label, element);
+            if (element) {
+                if (child.style) {
+                    setStyle(element, child.style);
                 }
+                if (child.event) {
+                    for (const eventName in child.event) {
+                        element.addEventListener(eventName, () => {
+                            child.event[eventName](searchTarget, element);
+                        })
+                    }
+                }
+                if (child.id) {
+                    this.domKeeper.set(child.id, element);
+                }
+                if (child.label) {
+                    if (element instanceof HTMLElement) {
+                        element = setLabel(t, child.label, element);
+                    }
+                }
+                myChildrenTag.push(element);
             }
-            myChildrenTag.push(element);
         }
         return myChildrenTag;
     }

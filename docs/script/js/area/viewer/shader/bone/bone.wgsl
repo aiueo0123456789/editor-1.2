@@ -26,7 +26,7 @@ struct Allocation {
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
 @group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
 
-const size = 0.05;
+const size = 0.04;
 const ratio = 0.1;
 
 struct VertexOutput {

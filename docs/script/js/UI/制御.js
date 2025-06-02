@@ -393,7 +393,6 @@ export function createGroupButton(target, buttons) {
 }
 
 export function createIcon(target, imgName) {
-    console.log(target)
     const container = document.createElement("div");
     container.classList.add("icon");
     const icon = document.createElement("img");

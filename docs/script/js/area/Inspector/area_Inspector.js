@@ -9,35 +9,28 @@ export class Area_Inspector {
 
         this.struct = {
             DOM: [
-                {type: "option", name: "情報", children: [
-                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
-                        {type: "padding", size: "10px"},
-                        {type: "flexBox", interval: "5px", name: "", children: [
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                        ]},
-                        {type: "separator", size: "10px"},
-                        {type: "flexBox", interval: "5px", name: "", children: [
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                        ]},
-                        {type: "separator", size: "10px"},
-                        {type: "flexBox", interval: "5px", name: "", children: [
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                            {type: "button", name: "aa", label: "aaaa", options: {textContent: "test"}},
-                        ]},
-                        {type: "padding", size: "10px"},
-                    ]}
-                ]},
-                {type: "option", name: "情報", children: [
-                    {type: "input", options: {type: "text"}}
-                ]},
                 {type: "section", name: "情報", children: [
-                    {type: "input", label: "test1", name: "test1", min: 0, max: 10, withObject: {object: "h/graphicMeshs/0", parameter: "zIndex"}},
-                    // {type: "select", name: "test3", withObject: {object: "h/0", parameter: "test"}}
+                    {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
+                        {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "グラフィックメッシュ"},
+                            true: [
+                                {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number"}},
+                                {type: "input", label: "最大頂点数", withObject: {object: "", parameter: "MAX_VERTICES"}, options: {type: "number"}},
+                                {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}},
+                            ],
+                            false: [
+                                {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "ベジェモディファイア"},
+                                    true: [
+                                        {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                    ],
+                                    false: [
+                                        {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                        {type: "input", label: "ボーン数", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                    ]
+                                }
+                            ]
+                        }
+                    ]}
                 ]}
             ],
             utility: {

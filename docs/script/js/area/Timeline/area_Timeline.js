@@ -178,9 +178,9 @@ export class Area_Timeline {
                             ]},
                             {type: "padding", size: "10px"},
                             {type: "gridBox", axis: "c", allocation: "auto auto auto", children: [
-                                {type: "input", label: "現在", name: "frame_current", withObject: {object: "scene", parameter: "frame_current"}, options: {type: "number", max: 500, min: -500}},
-                                {type: "input", label: "開始", name: "frame_start", withObject: {object: "scene", parameter: "frame_start"}, options: {type: "number", max: 500, min: -500}},
-                                {type: "input", label: "終了", name: "frame_end", withObject: {object: "scene", parameter: "frame_end"}, options: {type: "number", max: 500, min: -500}},
+                                {type: "input", label: "現在", name: "frame_current", withObject: {object: "scene", parameter: "frame_current"}, options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                                {type: "input", label: "開始", name: "frame_start", withObject: {object: "scene", parameter: "frame_start"}, options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                                {type: "input", label: "終了", name: "frame_end", withObject: {object: "scene", parameter: "frame_end"}, options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
                             ]},
                         ]}
                     ]},
@@ -197,8 +197,6 @@ export class Area_Timeline {
                         ]},
                         {type: "box", style: "width: 100%; height: 100%; position: relative;", children: [
                             {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
-                            // {type: "canvas", id: "timelineCanvasForKeys", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
-                            // {type: "canvas", id: "timelineCanvasUpdate", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"}
                         ]}
                     ]}
                 ]}
@@ -338,12 +336,10 @@ export class Area_Timeline {
         this.mouseState.hold = true;
         this.mouseState.holdFrameCount = 0;
         this.mouseState.click = true;
-        console.log(this.mouseState);
     }
     mousemove(inputManager) {
         const local = vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.pixelDensity);
         this.mouseState.worldPosition = this.canvasToWorld(local);
-        console.log(this)
         managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
     }
     mouseup(inputManager) {
