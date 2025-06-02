@@ -111,6 +111,10 @@ export class InputManager {
             this.keysDown[eveet.key] = false;
             console.log(eveet.key,"up")
         });
+        document.addEventListener("contextmenu", (eveet) => {
+            app.contextmenu.showContextmenu([eveet.clientX,eveet.clientY]);
+            eveet.stopPropagation();
+        })
     }
 
     consumeKeys(keys) {

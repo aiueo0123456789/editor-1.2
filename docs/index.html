@@ -24,8 +24,6 @@
     <link rel="website icon" type="png" href="config/画像データ/アプリアイコン.png">
 </head>
 <body>
-    <ul id="custom-select-items"></ul>
-    <div class="virtuality" id="virtuality"></div>
     <!-- ロードモーダル -->
     <div id="loadingModal">
         <div id="progressMessage"></div>
@@ -46,6 +44,8 @@
     </div>
 
     <div class="all">
+        <ul id="contextmenu"></ul>
+        <ul id="custom-select-items"></ul>
         <div id="menubar" class="menubar">
             <!-- <div class="label-input" id="projectNameContainer"> -->
             <div id="projectNameContainer">
@@ -67,11 +67,8 @@
                 <p style="position: absolute; top: 0; left: 10px;">erko</p>
             </span>
         </div>
-        <div id="app" class="main">
-        </div>
+        <div id="app" class="main"></div>
     </div>
-    <ul id="contextmenu-container" class="contextmenu">
-    </ul>
     <script src="script/js/main.js" type="module"></script>
 </body>
 </html>

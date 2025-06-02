@@ -2,7 +2,7 @@ import { device,GPU } from "../webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
 import { isNotTexture } from "../GPUObject.js";
 import { BoundingBox, ObjectBase, ObjectEditorBase, setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { indexOfSplice } from "../utility.js";
+import { hexToRgba, indexOfSplice } from "../utility.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../機能/メッシュの自動生成/画像からメッシュを作る.js";
 import { createBBox } from "../BBox.js";
@@ -286,7 +286,15 @@ export class GraphicMesh extends ObjectBase {
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
         this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectMeshData]);
         this.editor = new Editor(this);
-        // this.init();
+        this.init({zIndex: 0, baseVerticesPosition: [0,0, 500,0, 500,500, 0,500], baseVerticesUV: [0,1, 1,1, 1,0, 0,0], meshIndex: [0,1,2,0, 0,2,3,0], animationKeyDatas: [], modifierEffectData: {data: [
+            0,0,0,0, 0,0,0,0,
+            0,0,0,0, 0,0,0,0,
+            0,0,0,0, 0,0,0,0,
+            0,0,0,0, 0,0,0,0,
+        ], type: "u32*4,f32*4"},
+        renderingTargetTexture: null,
+        maskTargetTexture: "base",
+        editor: {baseSilhouetteEdges: [[0,1],[1,2],[2,3],[3,0]], baseEdges: [], imageBBox: {min: [0,0], max: [500,500], width: 500, height: 500, center: [250,250]}}});
     }
 
     // gc対象にしてメモリ解放
@@ -352,7 +360,7 @@ export class GraphicMesh extends ObjectBase {
             this.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
 
             this.v_meshIndexBuffer = GPU.createVertexBuffer(this.meshesNum * 3 * 4, [0,1,2, 2,3,1], ['u32']); // [i0,i1,i2,padding,...] -> [i0,i1,i2,...]
-            
+
             this.s_meshIndexBuffer = GPU.createStorageBuffer(this.meshesNum * 4 * 4, [0,1,2,0, 2,3,1,0], ['u32']);
 
             this.editor.setBaseSilhouetteEdges([[0,1],[0,2],[1,3],[2,3]]);
@@ -368,6 +376,10 @@ export class GraphicMesh extends ObjectBase {
             this.setGroup();
             setBaseBBox(this);
         } else {
+            this.zIndex = data.zIndex;
+            this.verticesNum = data.baseVerticesPosition.length / 2;
+            this.meshesNum = data.meshIndex.length / 4;
+
             let weightGroupData = [];
             if (data.modifierEffectData) {
                 if (data.modifierEffectData.type == "u32*4,f32*4") {
@@ -392,12 +404,8 @@ export class GraphicMesh extends ObjectBase {
                 this.texture = GPU.createTexture2D([data.texture.width, data.texture.height, 1],"rgba8unorm");
                 GPU.copyBase64ToTexture(this.texture, data.texture.data);
             } else {
-                this.textureView = isNotTexture;
+                this.texture = isNotTexture;
             }
-
-            this.zIndex = data.zIndex;
-            this.verticesNum = data.baseVerticesPosition.length / 2;
-            this.meshesNum = data.meshIndex.length / 4;
 
             this.v_meshIndexBuffer = GPU.createVertexBuffer(this.meshesNum * 3 * 4, data.meshIndex.filter((x,i) => (i + 1) % 4 != 0), ['u32']); // [i0,i1,i2,padding,...] -> [i0,i1,i2,...]
 
@@ -467,9 +475,9 @@ export class GraphicMesh extends ObjectBase {
             type: this.type,
             baseTransformIsLock: this.baseTransformIsLock,
             zIndex: this.zIndex,
-            baseVerticesPosition: [...await GPU.getF32BufferData(this.s_baseVerticesPositionBuffer)],
-            baseVerticesUV: [...await GPU.getF32BufferData(this.s_baseVerticesUVBuffer)],
-            meshIndex: [...await GPU.getU32BufferData(this.s_meshIndexBuffer)],
+            baseVerticesPosition: await app.scene.gpuData.graphicMeshData.getBaseVerticesFromObject(this),
+            baseVerticesUV: await app.scene.gpuData.graphicMeshData.getVerticesUVFromObject(this),
+            meshIndex: await app.scene.gpuData.graphicMeshData.getMeshFromObject(this),
             animationKeyDatas: animationKeyDatas,
             modifierEffectData: modifierEffectData,
             texture: await GPU.textureToBase64(this.texture),

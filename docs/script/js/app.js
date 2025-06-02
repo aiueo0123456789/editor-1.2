@@ -15,6 +15,7 @@ import { InputManager } from "./app/InputManager.js";
 import { createSelect } from "./area/補助/UIの自動生成.js";
 import { changeParameter, createArrayFromHashKeys } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
+import { ContextmenuOperator } from "./app/ContextMenuOperator.js";
 
 // モードごとに使えるツールの管理
 class WorkSpaceTool {
@@ -32,7 +33,8 @@ class WorkSpaceTool {
 
 // アプリの設定
 class AppConfig {
-    constructor() {
+    constructor(app) {
+        this.app = app;
         this.workSpaceTool = new WorkSpaceTool();
 
         this.MAX_GRAPHICMESH = 100; // グラフィックメッシュの最大数
@@ -48,6 +50,33 @@ class AppConfig {
         for (const keyName in useClassFromAreaType) {
             this.areasConfig[keyName] = new useClassFromAreaType[keyName]["areaConfig"]();
         }
+
+        this.contextmenusItems = {
+            "Viewer": {
+                "オブジェクト": [
+                    {label: "オブジェクトを追加", children: [
+                        {label: "グラフィックメッシュ", eventFn: app.scene.createObject.bind(app.scene, {type: "グラフィックメッシュ"})},
+                        {label: "モディファイア", eventFn: app.scene.createObject.bind(app.scene, {type: "モディファイア"})},
+                        {label: "ベジェモディファイア", eventFn: app.scene.createObject.bind(app.scene, {type: "ベジェモディファイア"})},
+                        {label: "ボーンモディファイア", eventFn: app.scene.createObject.bind(app.scene, {type: "ボーンモディファイア"})}
+                    ]},
+                    {label: "test"},
+                ]
+            },
+            "Hierarchy": {
+                "オブジェクト": [
+                    {label: "オブジェクトを追加", children: [
+                        {label: "グラフィックメッシュ"},
+                        {label: "モディファイア"}
+                    ]},
+                    {label: "test"},
+                ]
+            }
+        }
+    }
+
+    getContextmenuItems(type, mode) {
+        return this.contextmenusItems[type][mode];
     }
 }
 
@@ -55,16 +84,18 @@ export class Application { // 全てをまとめる
     constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
 
-        this.appConfig = new AppConfig();
-
+        this.scene = new Scene(this);
+        this.appConfig = new AppConfig(this);
+        
         this.areas = [];
         this.activeArea = null;
-        this.scene = new Scene(this);
         this.animationPlayer = new AnimationPlayer(this);
         this.hierarchy = new Hierarchy(this);
         this.fileIO = new FaileIOManager(this);
         this.input = new InputManager(this);
         this.operator = new Operator(this);
+
+        this.contextmenu = new ContextmenuOperator(this);
     }
 
     async getSaveData() {
@@ -163,7 +194,7 @@ class Area {
     }
 
     setType(type) {
-        this.uiModel?.creator?.delete();
+        this.uiModel?.creator?.remove();
         this.title.textContent = type; // タイトル
         this.type = type;
         if (type in useClassFromAreaType) {

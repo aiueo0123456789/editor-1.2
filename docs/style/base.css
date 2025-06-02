@@ -396,6 +396,7 @@ button:active {
     height: 100vh;
     display: grid;
     grid-template-rows: 30px calc(100% - 30px);
+    position: relative;
     /* grid-template-rows: auto 1fr; */
 }
 

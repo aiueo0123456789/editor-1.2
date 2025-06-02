@@ -1012,6 +1012,28 @@ class WebGPU {
         readBuffer.unmap();
     }
 
+    async getBBoxBuffer(BBoxBuffer) {
+        const bufferByteLength = (2 * 2) * 4;
+        // 一時的な読み取り用バッファを作成 (MAP_READ を含む)
+        const readBuffer = device.createBuffer({
+            size: bufferByteLength,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        // コピーコマンドを発行
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(BBoxBuffer, 0, readBuffer, 0, bufferByteLength);
+        const commandBuffer = commandEncoder.finish();
+        device.queue.submit([commandBuffer]);
+
+        // 一時バッファの内容をマップして表示
+        await readBuffer.mapAsync(GPUMapMode.READ);
+        const mappedRange = new Float32Array(readBuffer.getMappedRange());
+        const result = [[mappedRange[0], mappedRange[1]],[mappedRange[2], mappedRange[3]]];
+        readBuffer.unmap();
+        return result;
+    }
+
     getSliceBuffer(buffer, range) {
         const newBuffer = this.createStorageBuffer(range.num * 4, undefined, ["f32"]);
         // コピーコマンドを発行
@@ -1042,7 +1064,7 @@ class WebGPU {
 
         // 各バイトについて、ビット単位で処理
         for (let byte of data) {
-            for (let i = 7; i >= 0; i--) {
+            for (let i = 0; i < 8; i ++) {
                 const bit = (byte >> i) & 1;
                 result.push(bit === 1);
             }
@@ -1073,7 +1095,7 @@ class WebGPU {
         // 各バイトについて、ビット単位で処理
         for (let i = startIndex; i < endIndex; i ++) {
             const byte = data[Math.floor(i / 8)];
-            const bitIndex = 7 - (i % 8); // 上位ビットから下位へ
+            const bitIndex = i % 8;
             const bit = (byte >> bitIndex) & 1;
             if (bit === 1) {
                 result.push(i);
@@ -1280,7 +1302,6 @@ class WebGPU {
                 result.push(keep);
             }
         } else {
-            let index = 0;
             for (let i = 0; i < buffer.size / structSize; i++) {
                 const keep = [];
                 for (const field of struct) {
@@ -1292,12 +1313,55 @@ class WebGPU {
                     offset += 4; // フィールドのサイズを加算
                 }
                 result.push(keep);
-                index ++;
             }
         }
 
         readBuffer.unmap();
         console.log(text,result);
+    }
+
+    async getBufferDataFromIndexs(buffer, indexs, struct) {
+        // 一時的な読み取り用バッファを作成 (MAP_READ を含む)
+        const readBuffer = device.createBuffer({
+            size: buffer.size,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        // コピーコマンドを発行
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(buffer, 0, readBuffer, 0, buffer.size);
+        const commandBuffer = commandEncoder.finish();
+        device.queue.submit([commandBuffer]);
+
+        // 一時バッファの内容をマップして表示
+        await readBuffer.mapAsync(GPUMapMode.READ);
+        const mappedRange = readBuffer.getMappedRange();
+        const rawData = new Uint8Array(mappedRange);
+
+        // 構造体に基づいてデータを解析
+        const dataView = new DataView(rawData.buffer);
+        const result = [];
+
+        let offset = 0;
+        if (!("end" in indexs)) {
+            indexs.end = indexs.start + indexs.num;
+        }
+        offset = indexs.start * (struct.length * 4); // フィールドのサイズを加算
+        for (let i = indexs.start; i < indexs.end; i ++) {
+            const keep = [];
+            for (const field of struct) {
+                if (field === "u32") {
+                    keep.push(dataView.getUint32(offset, true));
+                } else if (field === "f32") {
+                    keep.push(dataView.getFloat32(offset, true));
+                }
+                offset += 4; // フィールドのサイズを加算
+            }
+            result.push(keep);
+        }
+
+        readBuffer.unmap();
+        return result;
     }
 
     async createTextureAtlas(textures, textureSize) {

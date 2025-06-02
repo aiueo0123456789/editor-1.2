@@ -61,7 +61,7 @@ export class BezierModifier extends ObjectBase {
         this.parent = "";
         this.weightAuto = false;
 
-        this.init({baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0], animationKeyDatas: []});
+        this.init({baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0], animationKeyDatas: [], modifierEffectData: {data: [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], type: "u32*4,f32*4"}});
     }
 
     // gc対象にしてメモリ解放
@@ -141,7 +141,7 @@ export class BezierModifier extends ObjectBase {
             id: this.id,
             type: this.type,
             modifierEffectData: modifierEffectData,
-            baseVertices: [...await GPU.getF32BufferData(this.s_baseVerticesPositionBuffer)],
+            baseVertices: await app.scene.gpuData.bezierModifierData.getBaseVerticesFromObject(this),
             animationKeyDatas: animationKeyDatas,
         };
     }

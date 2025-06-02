@@ -13,6 +13,7 @@ import { CreatorForUI } from '../補助/UIの自動生成.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
 import { ModalOperator } from '../補助/ModalOperator.js';
 import { VerticesTranslateModal } from './tools/VerticesTranslateTool.js';
+import { VerticesRotateModal } from './tools/VerticesRotateTool.js';
 
 const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./script/js/area/Viewer/shader/shader.wgsl"), [["u"]], "2d", "t");
@@ -43,8 +44,6 @@ export class Area_Viewer {
     constructor(/** @type {HTMLElement} */dom) {
         this.pixelDensity = 4;
         this.creatorForUI = new CreatorForUI();
-
-        this.modalOperator = new ModalOperator({"g": new VerticesTranslateModal()});
 
         this.spaceData = new SpaceData();
         this.inputObject = {"h": app.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": app.appConfig.areasConfig["Viewer"]};
@@ -95,13 +94,17 @@ export class Area_Viewer {
                             ]},
                         ]}
                     ]},
-                    {type: "box", style: "width: 100%; height: 100%; position: relative;", children: [
+                    {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
                         {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
                     ]}
                 ]}
             ]
         }
+
         this.creatorForUI.create(dom, this, {padding: false});
+
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": VerticesTranslateModal, "r": VerticesRotateModal});
+
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
 
@@ -110,11 +113,11 @@ export class Area_Viewer {
         this.convertCoordinate = new ConvertCoordinate(this.canvas,this.camera);
         this.select = new Select(this.convertCoordinate);
 
-        this.mouseState = {client: [0,0], click: false, rightClick: false, hold: false, holdFrameCount: 0, clickPosition: [0,0], clickPositionForGPU:[0,0], position: [0,0], lastPosition: [0,0], positionForGPU: [0,0], lastPositionForGPU: [0,0], movementForGPU: [0,0]};
+        // this.mouseState = {client: [0,0], click: false, rightClick: false, hold: false, holdFrameCount: 0, clickPosition: [0,0], clickPositionForGPU:[0,0], position: [0,0], lastPosition: [0,0], positionForGPU: [0,0], lastPositionForGPU: [0,0], movementForGPU: [0,0]};
+        this.inputs = {click: [0,0], position: [0,0], movement: [0,0], clickPosition: [0,0], lastPosition: [0,0]};
 
         this.canvas.addEventListener("contextmenu", (event) => {
             event.preventDefault();
-            this.mouseState.rightClick = true;
         });
 
         resizeObserver.push(dom, () => {
@@ -160,37 +163,37 @@ export class Area_Viewer {
     }
 
     async mousedown(inputManager) {
-        const local = vec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.canvas.offsetHeight); // canvasないのlocal座標へ
-        this.mouseState.clickPosition = local;
-        this.mouseState.position = local;
-        this.mouseState.clickPositionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-        this.mouseState.positionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-        this.mouseState.hold = true;
-        this.mouseState.holdFrameCount = 0;
-        this.mouseState.click = true;
+        const local = this.convertCoordinate.screenPosFromGPUPos(vec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.canvas.offsetHeight)); // canvasないのlocal座標へ
+        this.inputs.click = true;
+        this.inputs.clickPosition = local;
+        this.inputs.position = local;
+
+        let consumed = this.modalOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        if (consumed) return ;
+
         const state = app.scene.state;
         if (state.currentMode == "オブジェクト") {
-            const objects = await app.scene.selectedForObject([...this.mouseState.clickPositionForGPU]);
+            const objects = await app.scene.selectedForObject([...this.inputs.clickPosition]);
             const frontObject = objects.length ? objects[0] : null;
             state.setSelectedObject(frontObject, inputManager.keysDown["Shift"]);
             state.setActiveObject(frontObject);
         } else if (state.currentMode == "メッシュ編集") {
             for (const graphicMesh of app.scene.state.selectedObject) {
-                app.scene.gpuData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.mouseState.clickPositionForGPU, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                app.scene.gpuData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         }
-        console.log(this.mouseState);
     }
     mousemove(inputManager) {
-         let consumed = this.modalOperator.mouseMove(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        this.inputs.lastPosition = [...this.inputs.position];
+        const local = this.convertCoordinate.screenPosFromGPUPos(vec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.canvas.offsetHeight)); // canvasないのlocal座標へ
+        vec2.sub(this.inputs.movement, local, this.inputs.position);
+        this.inputs.position = local;
+
+        // let consumed = this.modalOperator.mouseMove(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = this.modalOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
-        const local = vec2.flipY(vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.pixelDensity), this.canvas.height);
-        this.mouseState.position = local;
-        this.mouseState.positionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
     }
     mouseup(inputManager) {
-        this.mouseState.hold = false;
-        this.mouseState.holdFrameCount = 0;
     }
 
     wheel(inputManager) {
@@ -318,6 +321,15 @@ export class Renderer {
                             renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
                             renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
                             renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
+                        } else {
+                            // メッシュ表示
+                            renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
+                            renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
+                            renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
+                            // 頂点描画
+                            renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
+                            renderPass.setPipeline(verticesRenderPipeline);
+                            renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
                         }
                     }
                 }

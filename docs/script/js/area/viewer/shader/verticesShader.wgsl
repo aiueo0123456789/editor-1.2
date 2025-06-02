@@ -33,8 +33,8 @@ struct VertexOutput {
     @location(0) color: vec4<f32>,
 }
 
-fn getBit(arrayIndex: u32, bitIndex: u32) -> u32 {
-    return (flags[arrayIndex] >> bitIndex) & 1u;
+fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
+    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 const size = 8.0;
@@ -59,7 +59,7 @@ fn vmain(
 
     let point = pointData[vertexIndex % 4u];
     output.position = vec4f((verticesPosition[fixIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
-    output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), getBit(flagsArrayIndex, flagBitIndex) == 1u);
+    output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), getBoolFromBit(flagsArrayIndex, flagBitIndex));
     return output;
 }
 

@@ -4,8 +4,6 @@ import { createButton, createChecks, createDoubleClickInput, createGroupButton, 
 import { ResizerForDOM } from "../../UI/resizer.js";
 import { SelectTag } from "./カスタムタグ.js";
 
-const virtuality = document.getElementById("virtuality");
-
 // パラメーターの変動を関連付けられたhtml要素に適応する関数
 function updateDOMsValue(object, groupID, DOMs, others) {
     for (const DOM of DOMs) {
@@ -16,19 +14,8 @@ function updateDOMsValue(object, groupID, DOMs, others) {
         }
         if (DOM.type == "range") {
             updateRangeStyle(DOM);
-        } else if (DOM.tagName === "SELECT") {
-            updateLookForSelect(DOM);
         }
     }
-}
-
-function updateLookForSelect(t) {
-    const imgText = document.createElement("p");
-    virtuality.append(imgText)
-    imgText.classList.add("imgText");
-    imgText.textContent = t.value;
-    t.style.width = `${imgText.offsetWidth}px`;
-    imgText.remove();
 }
 
 export function createSelect(t, list = []) {
@@ -344,7 +331,7 @@ export class CreatorForUI {
             let element;
             // 要素の作成
             if (child.type == "div") {
-                element = createTag(t, "div");
+                element = createTag(t, "div", {class: child?.class});
                 if (child.children) {
                     this.createFromChildren(element, child.children, searchTarget);
                 }
@@ -358,25 +345,30 @@ export class CreatorForUI {
                     }
                     this.createWith(element, child.withObject, searchTarget);
                 } else if (child.options.type == "check") {
-                    const checkbox = createCheckbox(t, child.options.look);
-                    this.createWith(checkbox, child.withObject, searchTarget);
+                    element = createCheckbox(t, child.options.look);
+                    this.createWith(element, child.withObject, searchTarget);
                 } else { // 数字型
-                    element = createTag(t, "div");
-                    element.style.width = "100%";
-                    element.style.display = "grid";
-                    element.style.gridTemplateColumns = "1fr 50px";
-                    /** @type {HTMLElement} */
-                    const range = createRange(element, child.options);
-                    range.style.gridColumn = "1/2";
-                    range.style.borderTopRightRadius = "0px";
-                    range.style.borderBottomRightRadius = "0px";
-                    this.createWith(range, child.withObject, searchTarget);
-                    /** @type {HTMLElement} */
-                    const number = createTag(element, "input", child.options);
-                    number.style.gridColumn = "2/3";
-                    number.style.borderTopLeftRadius = "0px";
-                    number.style.borderBottomLeftRadius = "0px";
-                    this.createWith(number, child.withObject, searchTarget);
+                    if (child.custom?.visual) {
+                        element = createTag(element, "input", child.options);
+                        this.createWith(element, child.withObject, searchTarget);
+                    } else {
+                        element = createTag(t, "div");
+                        element.style.width = "100%";
+                        element.style.display = "grid";
+                        element.style.gridTemplateColumns = "1fr 50px";
+                        /** @type {HTMLElement} */
+                        const range = createRange(element, child.options);
+                        range.style.gridColumn = "1/2";
+                        range.style.borderTopRightRadius = "0px";
+                        range.style.borderBottomRightRadius = "0px";
+                        this.createWith(range, child.withObject, searchTarget);
+                        /** @type {HTMLElement} */
+                        const number = createTag(element, "input", child.options);
+                        number.style.gridColumn = "2/3";
+                        number.style.borderTopLeftRadius = "0px";
+                        number.style.borderBottomLeftRadius = "0px";
+                        this.createWith(number, child.withObject, searchTarget);
+                    }
                 }
             } else if (child.type == "button") {
                 createButton(t, "グループ", child.label);
@@ -591,7 +583,7 @@ export class CreatorForUI {
         return this.domKeeper.get(id);
     }
 
-    delete() {
+    remove() {
         this.root = {};
         this.lists.clear();
         this.domKeeper.clear();

@@ -116,6 +116,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let weightGroupIndex = allocation.vertexBufferOffset + vertexIndex;
     let fixVertexIndex = allocation.vertexBufferOffset * 3 + vertexIndex;
     let targetVertices = select(vec2<f32>(0.0), renderingBezier[fixVertexIndex], allocation.myType == 2u);
+    // var newPosition = targetVertices;
+    // var newPosition = renderingBezier[fixVertexIndex];
     var newPosition = vec2<f32>(0.0);
     if (allocation.parentType == 2) { // 親がベジェモディファイア
         let weightGroup = bezierWeightGroups[fixVertexIndex];

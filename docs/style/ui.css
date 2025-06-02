@@ -6,13 +6,6 @@
     --colorActive: rgb(71 114 179);
 }
 
-.virtuality {
-    position: absolute;
-    width: 100%;
-    height: 1000%;
-    pointer-events: none;
-}
-
 .imgText {
     width: fit-content;
     height: fit-content;
@@ -189,4 +182,10 @@ canvas {
 
 #custom-select-items > * > * {
     width: 100%;
+}
+
+.shelfe {
+    background-color: var(--colorAreaBG);
+    width: fit-content;
+    pointer-events: all;
 }

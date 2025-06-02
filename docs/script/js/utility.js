@@ -177,3 +177,27 @@ export function changeParameter(object, parameter, newValue) {
     object[parameter] = newValue;
     managerForDOMs.update(object, parameter);
 }
+
+export function looper(object, loopTarget, fn, firstParent) {
+    const a = (children, parent, depth = 0) => {
+        for (const child of children) {
+            const nextParent = fn(child, parent, depth);
+            if (child[loopTarget]) {
+                a(child[loopTarget], nextParent, depth + 1);
+            }
+        }
+    }
+    if (Array.isArray(object)) {
+        a(object, firstParent);
+    } else {
+        console.trace("このオブジェクトはlooperが使用できません",object);
+    }
+}
+
+export function range(start, end) {
+    const result = new Array(end - start);
+    for (let i = 0; i < result.length; i ++) {
+        result[i] = start + i;
+    }
+    return result;
+}
