@@ -236,7 +236,7 @@ export class BoneModifier extends ObjectBase {
     constructor(name, id) {
         super(name, "ボーンモディファイア", id);
 
-        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_BONEMODIFIER;
+        this.MAX_BONES = app.appConfig.MAX_VERTICES_PER_BONEMODIFIER;
         this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_BONEMODIFIER;
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;

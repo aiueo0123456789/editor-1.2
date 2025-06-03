@@ -14,9 +14,9 @@ export class Area_Inspector {
                         {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "グラフィックメッシュ"},
                             true: [
                                 {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
-                                {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number"}},
-                                {type: "input", label: "最大頂点数", withObject: {object: "", parameter: "MAX_VERTICES"}, options: {type: "number"}},
-                                {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}},
+                                {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 1000, step: 1}},
+                                {type: "input", label: "最大頂点数", withObject: {object: "", parameter: "MAX_VERTICES"}, options: {type: "number"}, custom: {visual: "1"}},
+                                {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
                             ],
                             false: [
                                 {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "ベジェモディファイア"},

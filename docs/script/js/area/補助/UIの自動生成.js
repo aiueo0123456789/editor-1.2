@@ -393,6 +393,9 @@ export class CreatorForUI {
                         this.createWith(number, child.withObject, searchTarget);
                     }
                 }
+                if (child.custom && "collision" in child.custom && !child.custom.collision) {
+                    element.style.pointerEvents = "none";
+                }
             } else if (child.type == "button") {
                 createButton(t, "グループ", child.label);
             } else if (child.type == "buttons") {

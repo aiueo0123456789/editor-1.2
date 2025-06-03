@@ -4,10 +4,27 @@ struct Bezier {
     c2: vec2<f32>,
 }
 
-@group(0) @binding(0) var<storage, read_write> hitTestResult: array<f32>; // 出力
-@group(0) @binding(1) var<uniform> point: vec2<f32>; // 距離を計算する座標
-@group(1) @binding(0) var<storage, read> modifierVertices: array<Bezier>; // モディファイアの頂点位置
-const size = 10.0;
+struct Allocation {
+    vertexBufferOffset: u32,
+    animationBufferOffset: u32,
+    weightBufferOffset: u32,
+    MAX_VERTICES: u32,
+    MAX_ANIMATIONS: u32,
+    parentType: u32, // 親がなければ0
+    parentIndex: u32, // 親がなければ0
+    myType: u32,
+}
+
+struct Option {
+    add: u32,
+}
+
+@group(0) @binding(0) var<storage, read_write> result: atomic<u32>;
+@group(0) @binding(1) var<storage, read> modifierVertices: array<Bezier>; // モディファイアの頂点位置
+@group(0) @binding(2) var<uniform> allocation: Allocation; // 配分情報
+@group(0) @binding(3) var<uniform> optionData: Option; // オプション
+@group(0) @binding(4) var<uniform> point: vec2<f32>; // 距離を計算する座標
+const size = 5.0;
 
 // 内積
 fn dot(a: vec2<f32>, b: vec2<f32>) -> f32 {
@@ -126,11 +143,16 @@ fn neighbor_bezier(
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let bezierIndex = global_id.x;
-    if (arrayLength(&hitTestResult) <= bezierIndex) {
+    if (global_id.x == 0u) {
+        atomicStore(&result, 0);
+    }
+    workgroupBarrier();
+    if (allocation.MAX_VERTICES <= global_id.x) {
         return;
     }
-
+    let bezierIndex = global_id.x + allocation.vertexBufferOffset;
     let controlPoints = array<vec2<f32>, 4>(modifierVertices[bezierIndex].p, modifierVertices[bezierIndex].c2, modifierVertices[bezierIndex + 1].c1, modifierVertices[bezierIndex + 1].p); // ベジェ曲線の制御点
-    hitTestResult[bezierIndex] = neighbor_bezier(controlPoints, point, 0, 1).y;
+    if (neighbor_bezier(controlPoints, point, 0, 1).y < size) {
+        atomicStore(&result, 1);
+    }
 }
