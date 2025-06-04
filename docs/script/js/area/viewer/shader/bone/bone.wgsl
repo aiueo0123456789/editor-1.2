@@ -24,6 +24,8 @@ struct Allocation {
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
+@group(1) @binding(2) var<storage, read> relationships: array<u32>;
+@group(1) @binding(3) var<storage, read> flags: array<u32>;
 @group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
 
 const size = 0.04;
@@ -31,11 +33,19 @@ const ratio = 0.1;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>, // クリッピング座標系での頂点位置
-    @location(0) @interpolate(flat) boneIndex : u32, // flat指定で補間を防ぐ
+    @location(0) color: vec4<f32>,
 }
 
 fn worldPosToClipPos(position: vec2<f32>) -> vec4<f32> {
     return vec4f((position - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+}
+
+fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
+    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+}
+
+fn getBoolFromIndex(index: u32) -> bool {
+    return getBoolFromBit(index / 32u, index % 32u);
 }
 
 // バーテックスシェーダー
@@ -72,7 +82,9 @@ fn vmain(
 
     var output: VertexOutput;
     output.position = worldPosToClipPos(offset);
-    output.boneIndex = index;
+
+    let fixIndex = index * 2u;
+    output.color = select(boneColors[index], vec4<f32>(1.0,0.5,0.0,1.0), getBoolFromIndex(fixIndex) && getBoolFromIndex(fixIndex + 1u));
     return output;
 }
 
@@ -82,10 +94,10 @@ struct FragmentOutput {
 
 @fragment
 fn fmain(
-    @location(0) @interpolate(flat) boneIndex: u32
+    @location(0) color: vec4<f32>,
 ) -> FragmentOutput {
     var output: FragmentOutput;
-    output.color = boneColors[boneIndex];
+    output.color = color;
     // output.color = vec4<f32>(0,1,0,1);
     return output;
 }

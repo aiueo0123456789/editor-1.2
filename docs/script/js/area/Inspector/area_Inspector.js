@@ -25,7 +25,8 @@ export class Area_Inspector {
                                     ],
                                     false: [
                                         {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
-                                        {type: "input", label: "ボーン数", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                        {type: "input", label: "最大ボーン数", withObject: {object: "", parameter: "MAX_BONES"}, options: {type: "number"}, custom: {visual: "1"}},
+                                        {type: "input", label: "ボーン数", withObject: {object: "", parameter: "boneNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
                                     ]
                                 }
                             ]

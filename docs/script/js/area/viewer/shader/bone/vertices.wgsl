@@ -24,6 +24,8 @@ struct Allocation {
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
+@group(1) @binding(2) var<storage, read> relationships: array<u32>;
+@group(1) @binding(3) var<storage, read> flags: array<u32>;
 @group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
 
 const size = 0.05;
@@ -33,6 +35,7 @@ struct VertexOutput {
     @location(0) @interpolate(flat) boneIndex : u32, // flat指定で補間を防ぐ
     @location(1) uv: vec2<f32>,
     @location(2) kind: f32,
+    @location(3) color: vec4<f32>,
 }
 
 fn worldPosToClipPos(position: vec2<f32>) -> vec4<f32> {
@@ -48,6 +51,14 @@ const pointData = array<vec2<f32>, 6>(
     vec2<f32>( 1.0,  1.0), // 右上
 );
 
+fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
+    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+}
+
+fn getBoolFromIndex(index: u32) -> bool {
+    return getBoolFromBit(index / 32u, index % 32u);
+}
+
 // バーテックスシェーダー
 @vertex
 fn vmain(
@@ -60,10 +71,14 @@ fn vmain(
     let p = select(bone.h, bone.t, (vertexIndex % 12) / 6 == 1);
     let lenght = distance(bone.h, bone.t);
     var output: VertexOutput;
+
+    let fixIndex = index * 2u + select(0u, 1u, (vertexIndex % 12) / 6 == 1);
+
     output.position = worldPosToClipPos(p + point * size * lenght);
     output.uv = point;
     output.kind = select(0.0, 1.0, (vertexIndex % 12) / 6 == 1);
     output.boneIndex = index;
+    output.color = select(boneColors[index], vec4<f32>(1.0,0.5,0.0,1.0), getBoolFromIndex(fixIndex));
     return output;
 }
 
@@ -78,6 +93,7 @@ fn fmain(
     @location(0) @interpolate(flat) boneIndex: u32,
     @location(1) uv: vec2<f32>,
     @location(2) kind: f32,
+    @location(3) color: vec4<f32>,
 ) -> FragmentOutput {
     var output: FragmentOutput;
     var colorKind = false;
@@ -90,6 +106,6 @@ fn fmain(
     } else {
         colorKind = abs(uv.x) < edgeWidth && abs(uv.y) < edgeWidth;
     }
-    output.color = select(boneColors[boneIndex], vec4<f32>(0,0,0,1), colorKind);
+    output.color = select(color, vec4<f32>(0,0,0,1), colorKind);
     return output;
 }

@@ -12,10 +12,59 @@ import { Area_Timeline } from "./area/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "./area/Viewer/area_ViewerApaceData.js";
 import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
-import { createSelect } from "./area/補助/UIの自動生成.js";
 import { changeParameter, createArrayFromHashKeys } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
 import { ContextmenuOperator } from "./app/ContextMenuOperator.js";
+
+class AppOptions {
+    constructor(app) {
+        this.app = app;
+        this.primitives = {
+            "bone": {
+                "normal": {
+                    baseVertices: [
+                        0,-100, 0,100,
+                    ],
+                    relationship: [{
+                        parent: 0,
+                        children: [],
+                    }],
+                    animationKeyDatas: [],
+                    editor: {
+                        boneColor: [0,0,0,1]
+                    }
+                },
+                "body": {
+                    baseVertices: [
+                        0,-100, 0,100,
+                        100,150, 200, 250
+                    ],
+                    relationship: [{
+                        parent: 0,
+                        children: [
+                            {
+                                parent: 1,
+                                children: [],
+                            }
+                        ],
+                    }],
+                    animationKeyDatas: [],
+                    editor: {
+                        boneColor: [0,0,0,1]
+                    }
+                }
+            }
+        }
+    }
+
+    getPrimitiveData(objectType, name) {
+        try {
+            return this.primitives[objectType][name];
+        } catch {
+            return null;
+        }
+    }
+}
 
 // モードごとに使えるツールの管理
 class WorkSpaceTool {
@@ -86,6 +135,8 @@ export class Application { // 全てをまとめる
 
         this.scene = new Scene(this);
         this.appConfig = new AppConfig(this);
+
+        this.options = new AppOptions(this);
         
         this.areas = [];
         this.activeArea = null;

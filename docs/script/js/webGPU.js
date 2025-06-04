@@ -9,6 +9,7 @@ export function IsString(value) {
 class EmptyGPUBuffer {
     constructor(usage) {
         this.usage = usage;
+        this.size = 0;
     }
 }
 

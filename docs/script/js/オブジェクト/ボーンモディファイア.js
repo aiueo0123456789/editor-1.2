@@ -233,7 +233,7 @@ class Editor extends ObjectEditorBase {
 }
 
 export class BoneModifier extends ObjectBase {
-    constructor(name, id) {
+    constructor(name, id, data) {
         super(name, "ボーンモディファイア", id);
 
         this.MAX_BONES = app.appConfig.MAX_VERTICES_PER_BONEMODIFIER;
@@ -282,19 +282,7 @@ export class BoneModifier extends ObjectBase {
         this.attachments = new Attachments(this);
         this.relationship = null;
 
-        this.init({
-            baseVertices: [
-                0,-100, 0,100,
-            ],
-            relationship: [{
-                parent: 0,
-                children: [],
-            }],
-            animationKeyDatas: [],
-            editor: {
-                boneColor: [0,0,0,1]
-            }
-        });
+        this.init(data);
     }
 
     // gc対象にしてメモリ解放
