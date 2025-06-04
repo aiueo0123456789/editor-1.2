@@ -42,6 +42,8 @@ class Editor extends ObjectEditorBase {
         this.outlineVertices = [];
         this.outlineEdges = [];
         this.layerParent = "";
+
+        this.lastCreateMeshTime = Date.now();
     }
 
     destroy() {
@@ -96,11 +98,13 @@ class Editor extends ObjectEditorBase {
         setParentModifierWeight(this.graphicMesh);
     }
 
-    async createMesh() {
-        const vertices = await GPU.getBufferVerticesData(this.graphicMesh.s_baseVerticesPositionBuffer);
-        const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
-        // const meshData = createMeshFromTexture(vertices, this.baseEdges);
-        this.setMeshData(meshData);
+    async createMesh(compulsion = false) {
+        if (compulsion || Date.now() - this.lastCreateMeshTime > 0.1 * 1000) { // 処理が重いので
+            this.lastCreateMeshTime = Date.now();
+            const vertices = await GPU.getVerticesBufferPartToArray(app.scene.gpuData.graphicMeshData.baseVertices, this.graphicMesh.vertexBufferOffset, this.graphicMesh.verticesNum);
+            const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
+            app.scene.gpuData.graphicMeshData.setBase(this.graphicMesh, undefined, undefined, undefined, meshData.flat());
+        }
     }
 
     deleteBaseVertices(indexs) {
@@ -180,37 +184,6 @@ class Editor extends ObjectEditorBase {
     calculateLocalPositionToWorldPosition(position) {
         // return vec2.addR(position, this.BBox.center);
         return vec2.addR(position, this.imageBBox.center);
-    }
-
-    setVerticesData(vertices, uv) {
-        this.graphicMesh.verticesNum = vertices.length;
-        this.graphicMesh.s_baseVerticesPositionBuffer = GPU.createStorageBuffer(this.graphicMesh.verticesNum * (2) * 4, vertices.flat(), ['f32','f32']);
-        this.graphicMesh.s_baseVerticesUVBuffer = GPU.createStorageBuffer(this.graphicMesh.verticesNum * (2) * 4, uv.flat(), ['f32','f32']);
-        this.graphicMesh.RVrt_coBuffer = GPU.createStorageBuffer(this.graphicMesh.verticesNum * (2) * 4, undefined, ['f32']);
-        this.graphicMesh.parentWeightBuffer = GPU.createStorageBuffer(4, undefined, ['f32']);
-
-        this.graphicMesh.isChange = true;
-
-        this.graphicMesh.baseTransformIsLock = true;
-
-        this.graphicMesh.setGroup();
-        setBaseBBox(this.graphicMesh);
-        setParentModifierWeight(this.graphicMesh);
-    }
-
-    setMeshData(mesh) {
-        this.graphicMesh.meshesNum = mesh.length;
-        this.graphicMesh.v_meshIndexBuffer = GPU.createVertexBuffer(this.graphicMesh.meshesNum * 3 * 4, mesh.flat(), ['u32']);
-        
-        this.graphicMesh.s_meshIndexBuffer = GPU.createStorageBuffer(this.graphicMesh.meshesNum * 4 * 4, mesh.map((x) => x.concat([0])).flat(), ['u32']);
-        if (!this.graphicMesh.isInit && this.graphicMesh.texture) {
-            this.graphicMesh.isInit = true;
-        }
-        this.graphicMesh.isChange = true;
-        this.graphicMesh.baseTransformIsLock = true;
-        this.graphicMesh.setGroup();
-        setBaseBBox(this.graphicMesh);
-        setParentModifierWeight(this.graphicMesh);
     }
 
     changeTexture(texture) {

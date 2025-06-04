@@ -49,9 +49,28 @@ export class Area_Hierarchy {
                         ]},
                     ]},
                 {type: "section", name: "基本情報", children: [
-                    {type: "input", label: "test1", name: "test1", withObject: {object: "h/root/0", parameter: "zIndex"}, options: {type: "number",min: 0, max: 10}},
-                    // {type: "input", label: "test", name: "test3", withObject: {object: "scene/graphicMeshs/0", parameter: "name"}},
-                    // {type: "select", name: "test3", withObject: {object: "h/root/0", parameter: "name"}}
+                    {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
+                        {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "グラフィックメッシュ"},
+                            true: [
+                                {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 1000, step: 1}},
+                                {type: "input", label: "最大頂点数", withObject: {object: "", parameter: "MAX_VERTICES"}, options: {type: "number"}, custom: {visual: "1"}},
+                                {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                            ],
+                            false: [
+                                {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "ベジェモディファイア"},
+                                    true: [
+                                        {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                    ],
+                                    false: [
+                                        {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                        {type: "input", label: "最大ボーン数", withObject: {object: "", parameter: "MAX_BONES"}, options: {type: "number"}, custom: {visual: "1"}},
+                                        {type: "input", label: "ボーン数", withObject: {object: "", parameter: "boneNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                                    ]
+                                }
+                            ]
+                        }
+                    ]}
                 ]},
             ],
             utility: {

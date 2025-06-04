@@ -10,8 +10,8 @@ import { ConvertCoordinate } from '../../座標の変換.js';
 import { CreatorForUI } from '../補助/UIの自動生成.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
 import { ModalOperator } from '../補助/ModalOperator.js';
-import { VerticesTranslateModal } from './tools/VerticesTranslateTool.js';
-import { VerticesRotateModal } from './tools/VerticesRotateTool.js';
+import { TranslateModal } from './tools/TranslateTool.js';
+import { RotateModal } from './tools/RotateTool.js';
 
 // const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
@@ -102,7 +102,7 @@ export class Area_Viewer {
 
         this.creatorForUI.create(dom, this, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": VerticesTranslateModal, "r": VerticesRotateModal});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();

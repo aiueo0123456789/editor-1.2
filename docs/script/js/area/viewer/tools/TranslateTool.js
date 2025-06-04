@@ -5,7 +5,7 @@ import { GPU } from "../../../webGPU.js";
 import { TranslateCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
 import { ModalOperator } from "../../補助/ModalOperator.js";
 
-export class VerticesTranslateModal {
+export class TranslateModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         this.command = null;
@@ -44,6 +44,8 @@ export class VerticesTranslateModal {
             this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
         } else if (app.scene.state.currentMode == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
+        } else if (app.scene.state.currentMode == "ボーン編集") {
+            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
         }
     }
 

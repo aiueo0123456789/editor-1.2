@@ -79,16 +79,18 @@ const groupNum = 2u;
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    if (ceilU32(allocation.MAX_BONE * groupNum, 32u) <= global_id.x) {
+    let fixMax = allocation.MAX_BONE * groupNum;
+    if (ceilU32(fixMax, 32u) <= global_id.x) {
         return ;
     }
-    let arrayStartIndex = (allocation.vertexBufferOffset * groupNum) / 32u; // 書き込み対象の先頭index
-    let vertexIndexStart = arrayStartIndex * 32u / groupNum;
+    let fixOffset = allocation.vertexBufferOffset * groupNum;
+    let arrayStartIndex = (fixOffset) / 32u; // 書き込み対象の先頭index
+    let vertexIndexStart = arrayStartIndex * 32u;
 
-    let arrayIndex: u32 = arrayStartIndex + global_id.x; // selectedのarrayIndex
-    var vertexIndex = vertexIndexStart + global_id.x * 32;
+    let arrayIndex: u32 = arrayStartIndex + global_id.x * groupNum; // selectedのarrayIndex
+    var vertexIndex = vertexIndexStart + global_id.x * groupNum * 32u;
     for (var bitIndex = 0u; bitIndex < 32u; bitIndex ++) { // selectedのbitIndex
-        if (allocation.vertexBufferOffset * groupNum <= vertexIndex && vertexIndex < (allocation.vertexBufferOffset + allocation.MAX_BONE) * groupNum) { // チェック対象かの確認
+        if (fixOffset <= vertexIndex && vertexIndex < fixOffset + fixMax) { // チェック対象かの確認
             if (isNaN(vertices[vertexIndex].x) || isNaN(vertices[vertexIndex].y)) {
                 clearBit(arrayIndex, bitIndex);
             } else {

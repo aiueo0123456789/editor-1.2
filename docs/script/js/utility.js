@@ -201,3 +201,8 @@ export function range(start, end) {
     }
     return result;
 }
+
+export function timeSleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+
+}

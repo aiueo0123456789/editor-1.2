@@ -15,6 +15,7 @@ class CommandStack {
         this.history.push(command);
         this.redoStack = []; // 新しい操作をしたらRedoはリセット
         managerForDOMs.update(this.history);
+        console.log("実行")
         return result;
     }
 

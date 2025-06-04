@@ -10,7 +10,7 @@ class Modal {
     }
 }
 
-export class VerticesRotateModal {
+export class RotateModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         this.command = null;

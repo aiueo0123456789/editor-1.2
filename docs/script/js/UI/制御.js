@@ -1,17 +1,6 @@
 import { ResizerForDOM } from "./resizer.js";
 import { TranslaterForDOM } from "./tranlater.js";
 import { DOMsManager } from "./UIの更新管理.js";
-// import { displayAnimationCollector } from "./アニメーションコレクターの表示.js";
-// import { displayInspector } from "./インスペクタの表示.js";
-// import { displayObjects } from "./オブジェクトの表示.js";
-// import { displayGraphEditor } from "./グラフディタ.js";
-// import { displayTimeLine } from "./タイムライン表示.js";
-// import { displayHierarchy } from "./ヒエラルキーの表示.js";
-// import { displayProperty } from "./プロパティの表示.js";
-// import { displayRenderingOrder } from "./表示順番の表示.js";
-// import { displayLayer } from "./レイヤーの表示.js";
-import { CommandStack } from "./json/デバッグ.js";
-import { CreatorForUI } from "../area/補助/UIの自動生成.js";
 
 export const managerForDOMs = new DOMsManager();
 

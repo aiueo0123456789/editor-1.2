@@ -12,7 +12,7 @@ import { Area_Timeline } from "./area/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "./area/Viewer/area_ViewerApaceData.js";
 import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
-import { changeParameter, createArrayFromHashKeys } from "./utility.js";
+import { changeParameter, createArrayFromHashKeys, indexOfSplice } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
 import { ContextmenuOperator } from "./app/ContextMenuOperator.js";
 
@@ -91,7 +91,7 @@ class AppConfig {
         this.MAX_MESHES_PER_GRAPHICMESH = 700; // グラフィックメッシュあたりの最大頂メッシュ数
         this.MAX_ANIMATIONS_PER_GRAPHICMESH = 10; // グラフィックメッシュあたりの最大アニメーション数
 
-        this.MAX_BONEMODIFIER = 10; // ボーンモディファイアの最大数
+        this.MAX_BONEMODIFIER = 32; // ボーンモディファイアの最大数
         this.MAX_VERTICES_PER_BONEMODIFIER = 100; // ボーンモディファイアあたりの最大頂点数
         this.MAX_ANIMATIONS_PER_BONEMODIFIER = 10; // ボーンモディファイアあたりの最大アニメーション数
 
@@ -129,6 +129,17 @@ class AppConfig {
     }
 }
 
+class AreaOperator {
+    constructor(app) {
+        this.app = app;
+        this.areaMap = new Map();
+    }
+
+    setArea() {
+
+    }
+}
+
 export class Application { // 全てをまとめる
     constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
@@ -137,8 +148,9 @@ export class Application { // 全てをまとめる
         this.appConfig = new AppConfig(this);
 
         this.options = new AppOptions(this);
-        
+
         this.areas = [];
+        this.areaMap = new Map();
         this.activeArea = null;
         this.animationPlayer = new AnimationPlayer(this);
         this.hierarchy = new Hierarchy(this);
@@ -158,21 +170,36 @@ export class Application { // 全てをまとめる
 
     createArea(axis, target = this.dom) { // エリアの作成
         const area = new AutoGrid(createID(), target, axis, 50);
+        this.areaMap.set(area, []);
         return area;
     }
 
-    setAreaType(area, type) {
+    setAreaType(/** @type {AutoGrid} */grid, index, type) {
         const area_dom = document.createElement("div");
         area_dom.style.width = "100%";
         area_dom.style.height = "100%";
-        this.areas.push(new Area(type,area_dom));
-        area.append(area_dom);
+        const area = new Area(type,area_dom);
+        area.grid = grid;
+        this.areas.push(area);
+        this.areaMap.get(grid).push(area);
+        grid[`child${index + 1}`].append(area_dom);
     }
 
     deleteArea(/** @type {Area} */area) {
-        const tag = area.target.parentElement;
-        const b = tag.parentElement.children[2];
-        tag.parentElement.parentElement.parentElement.append(b);
+        area.target.replaceChildren();
+        /** @type {AutoGrid} */
+        const grid = area.grid;
+        const gridInnner = this.areaMap.get(grid);
+        indexOfSplice(gridInnner, area);
+        console.log(gridInnner)
+        console.log(grid.container);
+        console.log(grid.target);
+        grid.target.replaceChildren();
+        if (gridInnner.length) {
+            grid.target.append(gridInnner[0].target);
+        }
+        indexOfSplice(this.areas, area);
+        this.areaMap.delete(area);
     }
 
     async update() {
@@ -287,14 +314,14 @@ const area1_h = app.createArea("h", area1.child1);
 const area2 = app.createArea("w", area1.child2);
 const area3 = app.createArea("h", area2.child2);
 const area4 = app.createArea("w", area3.child1);
-app.setAreaType(area1_h.child1,"Viewer");
-app.setAreaType(area2.child1,"Hierarchy");
-app.setAreaType(area4.child1,"Hierarchy");
+app.setAreaType(area1_h,0,"Viewer");
+app.setAreaType(area2,0,"Hierarchy");
+app.setAreaType(area4,0,"Hierarchy");
 // app.setAreaType(area4.child1,"Preview");
-app.setAreaType(area3.child2,"Inspector");
-app.setAreaType(area1_h.child2,"Timeline");
-app.setAreaType(area4.child2,"Timeline");
-app.setAreaType(area4.child2,"Property");
+app.setAreaType(area3,1,"Inspector");
+app.setAreaType(area1_h,1,"Timeline");
+app.setAreaType(area4,1,"Timeline");
+app.setAreaType(area4,1,"Property");
 
 function appUpdate() {
     app.update();

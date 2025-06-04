@@ -1156,6 +1156,42 @@ class WebGPU {
         return dataArray;
     }
 
+    async getVerticesBufferPartToArray(sourceBuffer,startIndex,readNum) {
+        const sourceOffset = startIndex * 2 * 4;
+        const sizeToRead = readNum * 2 * 4;
+        // 1. 読み出し用のバッファを作成
+        const readbackBuffer = device.createBuffer({
+            size: sizeToRead,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        // 2. コピーコマンドエンコード
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(
+            sourceBuffer,  // GPUから読み出したいバッファ
+            sourceOffset,  // 取得開始位置（バイト単位）
+            readbackBuffer,
+            0,             // 読み出しバッファは先頭から書き込む
+            sizeToRead     // 読み出したいバイト数
+        );
+        device.queue.submit([commandEncoder.finish()]);
+
+        // 3. 読み出し完了を待機してマップ
+        await readbackBuffer.mapAsync(GPUMapMode.READ);
+
+        // 4. 指定範囲をTypedArrayとして取得
+        const arrayBuffer = readbackBuffer.getMappedRange(0, sizeToRead);
+        const floatArray = new Float32Array(arrayBuffer); // 型は必要に応じて変える
+        // 5. 必要に応じてコピー
+        const result = new Array(readNum); // or Array.from(floatArray)
+        for (let i = 0; i < readNum; i ++) {
+            result[i] = [floatArray[i * 2], floatArray[i * 2 + 1]];
+        }
+        // 6. アンマップ
+        readbackBuffer.unmap();
+        return result;
+    }
+
     async getF32BufferData(buffer, size) {
         if (!size) {
             size = buffer.size;

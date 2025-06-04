@@ -86,9 +86,9 @@ export class InputManager {
             console.log(e.key,"down")
             if (isCtrlOrCmd && e.key === 'z') {
                 if (e.shiftKey) {
-                    this.keysDown["redo"] = true;
+                    app.operator.stack.redo();
                 } else {
-                    this.keysDown["undo"] = true;
+                    app.operator.stack.undo();
                 }
                 e.preventDefault(); // デフォルトの動作を防ぐ場合
             } else if (isCtrlOrCmd && e.key == "s") {

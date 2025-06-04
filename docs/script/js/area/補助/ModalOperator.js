@@ -1,3 +1,4 @@
+import { app } from "../../app.js";
 import { InputManager } from "../../app/InputManager.js";
 import { createTag } from "../../UI/制御.js";
 import { CreatorForUI } from "./UIの自動生成.js";
@@ -26,7 +27,9 @@ export class ModalOperator {
     keyInput(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
             if (inputManager.consumeKeys([this.nowModal.activateKey])) {
-                this.nowModal.command.execute();
+                // this.nowModal.command.execute();
+                app.operator.appendCommand(this.nowModal.command);
+                app.operator.update();
                 this.nowModal = null;
             } else {
                 this.nowModal.update(inputManager);
@@ -49,7 +52,9 @@ export class ModalOperator {
     }
     mousedown(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
-            this.nowModal.mousedown?.(inputManager);
+            app.operator.appendCommand(this.nowModal.command);
+            app.operator.update();
+            this.nowModal = null;
             return true;
         }
         return false;
