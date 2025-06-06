@@ -50,7 +50,7 @@ export class Area_Hierarchy {
                     ]},
                 {type: "section", name: "基本情報", children: [
                     {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
-                        {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "グラフィックメッシュ"},
+                        {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "グラフィックメッシュ"},
                             true: [
                                 {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                 {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 1000, step: 1}},
@@ -58,7 +58,7 @@ export class Area_Hierarchy {
                                 {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
                             ],
                             false: [
-                                {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "ベジェモディファイア"},
+                                {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "ベジェモディファイア"},
                                     true: [
                                         {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                     ],
@@ -72,6 +72,20 @@ export class Area_Hierarchy {
                         }
                     ]}
                 ]},
+                // {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
+                //     {type: "if", formula: {source: {object: "animationBlock/animationBlock", parameter: "length"}, conditions: ">", value: 0},
+                //         true: [
+                //             {type: "section", name: "アニメーション", children: [
+
+                //             ]},
+                //         ],
+                //         false: [
+                //             {type: "section", name: "アニメーション", children: [
+
+                //             ]},
+                //         ]
+                //     }
+                // ]}
             ],
             utility: {
                 "testTest": {}

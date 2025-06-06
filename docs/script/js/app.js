@@ -26,7 +26,7 @@ class AppOptions {
                         0,-100, 0,100,
                     ],
                     relationship: [{
-                        parent: 0,
+                        index: 0,
                         children: [],
                     }],
                     animationKeyDatas: [],
@@ -40,10 +40,10 @@ class AppOptions {
                         100,150, 200, 250
                     ],
                     relationship: [{
-                        parent: 0,
+                        index: 0,
                         children: [
                             {
-                                parent: 1,
+                                index: 1,
                                 children: [],
                             }
                         ],
@@ -94,6 +94,10 @@ class AppConfig {
         this.MAX_BONEMODIFIER = 32; // ボーンモディファイアの最大数
         this.MAX_VERTICES_PER_BONEMODIFIER = 100; // ボーンモディファイアあたりの最大頂点数
         this.MAX_ANIMATIONS_PER_BONEMODIFIER = 10; // ボーンモディファイアあたりの最大アニメーション数
+
+        this.MAX_BEZIERMODIFIER = 32; // ベジェモディファイアの最大数
+        this.MAX_VERTICES_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大頂点数
+        this.MAX_ANIMATIONS_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大アニメーション数
 
         this.areasConfig = {};
         for (const keyName in useClassFromAreaType) {
@@ -316,7 +320,7 @@ const area3 = app.createArea("h", area2.child2);
 const area4 = app.createArea("w", area3.child1);
 app.setAreaType(area1_h,0,"Viewer");
 app.setAreaType(area2,0,"Hierarchy");
-app.setAreaType(area4,0,"Hierarchy");
+app.setAreaType(area4,0,"Viewer");
 // app.setAreaType(area4.child1,"Preview");
 app.setAreaType(area3,1,"Inspector");
 app.setAreaType(area1_h,1,"Timeline");

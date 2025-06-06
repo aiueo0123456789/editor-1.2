@@ -25,8 +25,8 @@ const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getG
 const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/bone.wgsl"), [], "2d", "t");
 const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/relationships.wgsl"), [], "2d", "s");
 
-const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/bezier.wgsl"), [], "2d", "s");
-const bezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/vertices.wgsl"), [], "2d", "t");
+const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/bezier.wgsl"), [], "2d", "s");
+const bezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/vertices.wgsl"), [], "2d", "t");
 
 const alphaBuffers = {
     "0.5": GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [0.5], ["f32"])]),
@@ -80,15 +80,15 @@ export class Area_Viewer {
                                 {type: "separator", size: "10px"},
         
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
+                                    {type: "select", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1,2]},
                                 ]},
-        
+
                                 {type: "separator", size: "10px"},
-        
+
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "boneModifier", "bezierModifier", "grid"]}},
+                                    {type: "input", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
                                 ]},
-        
+
                                 {type: "padding", size: "10px"},
                             ]},
                         ]}
@@ -200,6 +200,10 @@ export class Area_Viewer {
             for (const boneModifier of app.scene.state.selectedObject) {
                 app.scene.gpuData.boneModifierData.selectedForVertices(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
+        } else if (state.currentMode == "ベジェ編集") {
+            for (const bezierModifier of app.scene.state.selectedObject) {
+                app.scene.gpuData.bezierModifierData.selectedForVertices(bezierModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+            }
         }
     }
     mousemove(inputManager) {
@@ -264,7 +268,8 @@ export class Renderer {
     rendering() {
         const view = this.context.getCurrentTexture().createView();
         if (!view) {
-            console.warn("cvsが取得できません")
+            console.warn("レンダリング対象が取得できません");
+            return ;
         }
         const commandEncoder = device.createCommandEncoder();
         for (const value of app.scene.maskTextures) {

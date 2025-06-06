@@ -19,8 +19,8 @@ export class BezierModifier extends ObjectBase {
     constructor(name, id) {
         super(name, "ベジェモディファイア", id);
 
-        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
-        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
+        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_BEZIERMODIFIER;
+        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_BEZIERMODIFIER;
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;

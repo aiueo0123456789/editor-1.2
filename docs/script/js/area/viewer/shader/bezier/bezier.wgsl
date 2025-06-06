@@ -24,6 +24,7 @@ struct Allocation {
 @group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<Bezier>;
+@group(1) @binding(1) var<storage, read> flags: array<u32>;
 @group(2) @binding(0) var<uniform> bezierModifierAllocation: Allocation; // 配分情報
 const size = 5.0;
 

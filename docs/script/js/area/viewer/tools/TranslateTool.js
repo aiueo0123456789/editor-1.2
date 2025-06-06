@@ -11,8 +11,8 @@ export class TranslateModal {
         this.command = null;
         this.values = [
             0,0, // スライド量
-            0, // proportionalEditType
-            0 // proportionalSize
+            app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
+            app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
         ];
         this.modal = {
             inputObject: {"value": this.values},
@@ -40,13 +40,18 @@ export class TranslateModal {
 
     async init() {
         if (app.scene.state.currentMode == "メッシュ編集") {
-            console.log(await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices))
             this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);
         } else if (app.scene.state.currentMode == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
         } else if (app.scene.state.currentMode == "ボーン編集") {
             this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.boneModifierData.renderingVertices, app.scene.gpuData.boneModifierData.selectedVertices);
+        } else if (app.scene.state.currentMode == "ベジェ編集") {
+            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.bezierModifierData.renderingVertices, app.scene.gpuData.bezierModifierData.selectedVertices);
         }
+        this.command.setCenterPoint(this.center);
     }
 
     mousemove(/** @type {InputManager} */inputManager) {

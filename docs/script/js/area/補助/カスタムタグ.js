@@ -27,7 +27,7 @@ export class SelectTag {
                 option.addEventListener("click", () => {
                     select.value = item;
                     // change イベントを手動で発火させる
-                    select.dispatchEvent(new Event("change", { bubbles: true }));
+                    select.dispatchEvent(new Event("input", { bubbles: true }));
                     value.textContent = item;
                     removeFn();
                 })

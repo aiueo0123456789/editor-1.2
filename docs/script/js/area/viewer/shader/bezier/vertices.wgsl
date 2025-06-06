@@ -24,6 +24,7 @@ struct Allocation {
 @group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<Bezier>;
+@group(1) @binding(1) var<storage, read> flags: array<u32>;
 @group(2) @binding(0) var<uniform> bezierModifierAllocation: Allocation; // 配分情報
 
 const size = 20.0;
@@ -32,6 +33,15 @@ struct VertexOutput {
     @builtin(position) position: vec4<f32>, // クリッピング座標系での頂点位置
     @location(0) uv: vec2<f32>,
     @location(1) kind: f32,
+    @location(2) color: vec4<f32>,
+}
+
+fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
+    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+}
+
+fn getBoolFromIndex(index: u32) -> bool {
+    return getBoolFromBit(index / 32u, index % 32u);
 }
 
 fn worldPosToClipPos(position: vec2<f32>) -> vec4<f32> {
@@ -62,6 +72,7 @@ fn vmain(
     output.position = worldPosToClipPos(p + (point * size) / camera.zoom);
     output.uv = point;
     output.kind = select(1.0, 0.0, vertexType == 0);
+    output.color = select(vec4<f32>(0.0,1.0,0.0,1.0), vec4<f32>(1.0,0.0,0.0,1.0), getBoolFromIndex(index * 3u + (vertexIndex % 18) / 6));
     return output;
 }
 
@@ -75,6 +86,7 @@ const edgeWidth = 1.0 - 0.3;
 fn fmain(
     @location(0) uv: vec2<f32>,
     @location(1) kind: f32,
+    @location(2) color: vec4<f32>,
 ) -> FragmentOutput {
     var output: FragmentOutput;
     var colorKind = false;
@@ -87,6 +99,6 @@ fn fmain(
     } else {
         colorKind = abs(uv.x) < edgeWidth && abs(uv.y) < edgeWidth;
     }
-    output.color = select(vec4<f32>(0,1,0,1), vec4<f32>(0,0,0,1), colorKind);
+    output.color = select(color, vec4<f32>(0,0,0,1), colorKind);
     return output;
 }

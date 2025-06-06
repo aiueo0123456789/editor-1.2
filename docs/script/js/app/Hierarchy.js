@@ -177,9 +177,9 @@ export class Hierarchy {
             const child = this.app.scene.searchObjectFromID(myID);
             this.addHierarchy(parent, child);
             if (child.type == "グラフィックメッシュ") {
-                this.app.scene.gpuData.graphicMeshData.updateParent(child);
+                this.app.scene.gpuData.graphicMeshData.updateAllocationData(child);
             } else if (child.type == "ベジェモディファイア") {
-                this.app.scene.gpuData.bezierModifierData.updateParent(child);
+                this.app.scene.gpuData.bezierModifierData.updateAllocationData(child);
             }
         }
         setData = null;
@@ -205,9 +205,9 @@ export class Hierarchy {
         } else {
             targetObject.children.addChild(object);
             if (object.type == "グラフィックメッシュ") {
-                this.app.scene.gpuData.graphicMeshData.updateParent(object);
+                this.app.scene.gpuData.graphicMeshData.updateAllocationData(object);
             } else if (object.type == "ベジェモディファイア") {
-                this.app.scene.gpuData.bezierModifierData.updateParent(object);
+                this.app.scene.gpuData.bezierModifierData.updateAllocationData(object);
             }
             object.parent = targetObject;
             setParentModifierWeight(object); // モディファイアの適応

@@ -39,8 +39,8 @@ class TransformCommand {
         
         this.targets = targets;
         this.type = targets[0].type;
-        const source = this.type == "グラフィックメッシュ" ? app.scene.gpuData.graphicMeshData : app.scene.gpuData.boneModifierData;
-        const groupNum = this.type == "グラフィックメッシュ" ? 1 : 2;
+        const source = this.type == "グラフィックメッシュ" ? app.scene.gpuData.graphicMeshData : this.type == "ボーンモディファイア" ? app.scene.gpuData.boneModifierData : app.scene.gpuData.bezierModifierData;
+        const groupNum = this.type == "グラフィックメッシュ" ? 1 : this.type == "ボーンモディファイア" ? 2 : 3;
         if (this.type == "ボーンアニメーション") {
             let minDepthIndex = [];
             let minDepth = Infinity;

@@ -1,6 +1,6 @@
 import { app } from "../../app.js";
 import { createID, managerForDOMs } from "../../UI/制御.js";
-import { calculateLocalMousePosition } from "../../utility.js";
+import { calculateLocalMousePosition, errorCut } from "../../utility.js";
 import { vec2 } from "../../ベクトル計算.js";
 import { resizeObserver } from "../補助/canvasResizeObserver.js";
 import { CreatorForUI } from "../補助/UIの自動生成.js";
@@ -49,12 +49,12 @@ function update(object, groupID, others, DOMs) {
             for (let y = 0; y < o.canvas.height / o.zoom[1]; y += gap[1]) {
                 const wy = o.worldToCanvas([0, y + leftDown[1] + decimalOffset[1]])[1];
                 line([0, wy], [40, wy], 10, "rgb(255,255,255)");
-                text([50, wy], `${Math.round(y + leftDown[1] + decimalOffset[1])}`, 70, "rgb(255, 255, 255)", "left", "middle");
+                text([50, wy], `${errorCut(y + leftDown[1] + decimalOffset[1])}`, 70, "rgb(255, 255, 255)", "left", "middle");
             }
             for (let x = 0; x < o.canvas.width / o.zoom[0]; x += gap[0]) {
                 const wx = o.worldToCanvas([x + leftDown[0] + decimalOffset[0], 0])[0];
                 line([wx, 0], [wx, 40], 10, "rgb(255,255,255)");
-                text([wx, 50], `${Math.round(x + leftDown[0] + decimalOffset[0])}`, 70, "rgb(255, 255, 255)", "center", "top");
+                text([wx, 50], `${errorCut(x + leftDown[0] + decimalOffset[0])}`, 70, "rgb(255, 255, 255)", "center", "top");
             }
         }
     }
@@ -170,11 +170,11 @@ export class Area_Timeline {
         this.struct = {
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option",style: "height: 15px;", name: "情報", children: [
+                    {type: "option",style: "height: 25px;", name: "情報", children: [
                         {type: "gridBox", style: "height: fit-content;", axis: "c", allocation: "auto 1fr auto", children: [
-                            {type: "gridBox", axis: "c", allocation: "auto", children: [
+                            {type: "gridBox", axis: "c", allocation: "auto auto", children: [
                                 {type: "input", name: "isPlaying", withObject: {object: "animationPlayer", parameter: "isPlaying"}, options: {type: "check", look: "isPlaying"}},
-                                {type: "input", name: "skip", withObject: {object: "animationPlayer", parameter: "isPlaying"}, options: {type: "check", look: "isPlaying"}},
+                                {type: "button", name: "skip", options: {type: "check", look: "skip"}},
                             ]},
                             {type: "padding", size: "10px"},
                             {type: "gridBox", axis: "c", allocation: "auto auto auto", children: [

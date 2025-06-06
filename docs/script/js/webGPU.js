@@ -1316,6 +1316,7 @@ class WebGPU {
                         keep.push(dataView.getUint32(offset, true));
                     } else if (field === "f32") {
                         keep.push(dataView.getFloat32(offset, true));
+                    } else if (field == "bit") {
                     }
                     offset += 4; // フィールドのサイズを加算
                 }
@@ -1333,6 +1334,12 @@ class WebGPU {
                         keep.push(dataView.getUint32(offset, true));
                     } else if (field === "f32") {
                         keep.push(dataView.getFloat32(offset, true));
+                    } else if (field == "bit") {
+                        // 各バイトについて、ビット単位で処理
+                        for (let bI = 0; bI < 8; bI ++) {
+                            const bit = (dataView.getUint32(offset, true) >> bI) & 1;
+                            keep.push(bit === 1);
+                        }
                     }
                     offset += 4; // フィールドのサイズを加算
                 }

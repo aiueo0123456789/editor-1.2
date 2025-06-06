@@ -430,7 +430,7 @@ export class CreatorForUI {
                 //     }
                 // }
                 // element = createSelect(t, this.findSource(child.sourceObject.object, searchTarget));
-                element = new SelectTag(t, this.findSource(child.sourceObject.object, searchTarget));
+                element = new SelectTag(t, Array.isArray(child.sourceObject) ? child.sourceObject : this.findSource(child.sourceObject.object, searchTarget));
                 this.createWith(element.input, child.writeObject, searchTarget);
             } else if (child.type == "dbInput") { // ダブルクッリク入力
                 element = createDoubleClickInput();
@@ -570,7 +570,14 @@ export class CreatorForUI {
                 childrenReset();
             } else if (child.type == "if") {
                 console.log(child)
-                const bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.comparison;
+                let bool = false;
+                if (child.formula.conditions == "==") {
+                    bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.value;
+                } else if (child.formula.conditions == ">") {
+                    bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) > child.formula.value;
+                } else if (child.formula.conditions == "<") {
+                    bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) < child.formula.value;
+                }
                 if (bool) {
                     if (child.true) {
                         myChildrenTag.push(...this.createFromChildren(t, child.true, searchTarget));

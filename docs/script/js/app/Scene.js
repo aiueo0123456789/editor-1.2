@@ -6,7 +6,7 @@ import { RotateModifier } from '../オブジェクト/回転モディファイ�
 import { BezierModifier } from '../オブジェクト/ベジェモディファイア.js';
 import { BoneModifier } from '../オブジェクト/ボーンモディファイア.js';
 import { AnimationCollector } from '../オブジェクト/アニメーションコレクター.js';
-import { createArrayN, indexOfSplice, loadFile, range } from '../utility.js';
+import { createArrayN, indexOfSplice, loadFile } from '../utility.js';
 import { Application } from '../app.js';
 import { vec2 } from '../ベクトル計算.js';
 
@@ -26,7 +26,6 @@ const boneHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_
 
 const bezierModifierHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/bezier/hitTest.wgsl"));
 
-const circleSelectVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/circleSelectVertices.wgsl"));
 const boxSelectVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/boxSelectVertices.wgsl"));
 
 const polygonsHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/polygonsHitTest.wgsl"));
@@ -48,7 +47,7 @@ const objectToNumber = {
 class GraphicMeshData {
     constructor(/** @type {Application} */ app) {
         this.app = app;
-        this.rendering = GPU.createBuffer(0, ["s"]);
+        this.renderingVertices = GPU.createBuffer(0, ["s"]);
         this.baseVertices = GPU.createBuffer(0, ["s"]);
         this.meshes = GPU.createBuffer(0, ["v","s"]);
         this.uv = GPU.createBuffer(0, ["s"]);
@@ -94,22 +93,24 @@ class GraphicMeshData {
         if (meshesData) {
             GPU.writeBuffer(this.meshes, new Uint32Array(meshesData), graphicMesh.meshBufferOffset * this.meshBlockByteLength);
         }
-        this.updateParent(graphicMesh);
+        this.updateAllocationData(graphicMesh);
     }
 
     // 選択
     selectedForVertices(/** @type {GraphicMesh} */ graphicMesh, object, option) {
-        const optionBuffer = GPU.createUniformBuffer(4, [option.add], ["u32"]);
+        const optionBuffer = GPU.createUniformBuffer((2) * 4, [option.add,1], ["u32"]);
         // console.log("最大頂点数", graphicMesh.MAX_VERTICES, "起動されるグループ数", Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
         if (object.box) { // ボックス選択
             const boxBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.box.min, ...object.box.max], ["f32","f32","f32","f32"]);
-            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.rendering, graphicMesh.objectDataBuffer, optionBuffer, boxBuffer]);
-            GPU.runComputeShader(boxSelectVerticesPipeline, [group], Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
+            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, graphicMesh.objectDataBuffer, optionBuffer, boxBuffer]);
+            GPU.runComputeShader(boxSelectVerticesPipeline, [group], Math.ceil(Math.ceil((graphicMesh.MAX_VERTICES * 3) / 32) / 64));
         } else {
             const circleBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.circle, 0], ["f32","f32","f32","f32"]);
-            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.rendering, graphicMesh.objectDataBuffer, optionBuffer, circleBuffer]);
-            GPU.runComputeShader(circleSelectVerticesPipeline, [group], Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
+            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, graphicMesh.objectDataBuffer, optionBuffer, circleBuffer]);
+            GPU.runComputeShader(circleSelectBoneVerticesPipeline, [group], Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
         }
+        // GPU.consoleBufferData(this.selectedVertices, ["u32"], "当たり判定", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
+        // GPU.consoleBufferData(this.selectedVertices, ["bit"], "当たり判定bool", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
     }
 
     setAnimationData(/** @type {GraphicMesh} */graphicMesh, animationData, animtaionIndex) {
@@ -124,7 +125,7 @@ class GraphicMeshData {
         }
     }
 
-    updateParent(/** @type {GraphicMesh} */graphicMesh) {
+    updateAllocationData(/** @type {GraphicMesh} */graphicMesh) {
         // 頂点オフセット, アニメーションオフセット, ウェイトオフセット, 頂点数, 最大アニメーション数, 親の型, 親のインデックス, パディング
         let allocationData = this.getAllocationData(graphicMesh);
         GPU.writeBuffer(this.allocation, allocationData, (graphicMesh.allocationIndex * 8) * 4);
@@ -135,7 +136,7 @@ class GraphicMeshData {
         if (!this.order.includes(graphicMesh)) {
             this.order.push(graphicMesh);
             graphicMesh.meshBufferOffset = this.meshes.size / this.meshBlockByteLength;
-            graphicMesh.vertexBufferOffset = this.rendering.size / this.blockByteLength;
+            graphicMesh.vertexBufferOffset = this.renderingVertices.size / this.blockByteLength;
             graphicMesh.animationBufferOffset = this.animations.size / this.blockByteLength;
             graphicMesh.weightBufferOffset = this.weights.size / (4);
             graphicMesh.allocationIndex = this.order.length - 1;
@@ -150,7 +151,7 @@ class GraphicMeshData {
             GPU.writeBuffer(graphicMesh.objectMeshData, meshAllocationData);
             this.baseVertices = GPU.appendEmptyToBuffer(this.baseVertices, graphicMesh.MAX_VERTICES * this.blockByteLength); // 元の頂点座標用のメモリを確保
             this.meshes = GPU.appendEmptyToBuffer(this.meshes, graphicMesh.MAX_MESHES * this.meshBlockByteLength); // メッシュ用のメモリを確保
-            this.rendering = GPU.appendEmptyToBuffer(this.rendering, graphicMesh.MAX_VERTICES * this.blockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
+            this.renderingVertices = GPU.appendEmptyToBuffer(this.renderingVertices, graphicMesh.MAX_VERTICES * this.blockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
             this.uv = GPU.appendEmptyToBuffer(this.uv, graphicMesh.MAX_VERTICES * this.blockByteLength); // uv用のメモリを確保
             this.animations = GPU.appendEmptyToBuffer(this.animations, graphicMesh.MAX_ANIMATIONS * graphicMesh.MAX_VERTICES * this.blockByteLength); // アニメーション用のメモリを確保
             this.weights = GPU.appendEmptyToBuffer(this.weights, graphicMesh.MAX_ANIMATIONS * 4); // アニメーション用のメモリを確保
@@ -158,10 +159,10 @@ class GraphicMeshData {
             this.allocation = GPU.appendDataToStorageBuffer(this.allocation, allocationData); // 配分を配分を計算するためのデータ
             this.selectedVertices = GPU.appendEmptyToBuffer(this.selectedVertices, Math.ceil(graphicMesh.MAX_VERTICES / 32) * 4); // 選択状態ようのメモリを確保
             this.selectedMesh = GPU.appendEmptyToBuffer(this.selectedMesh, Math.ceil(graphicMesh.MAX_MESHES / 32) * 4); // 選択状態ようのメモリを確保
-            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.rendering, this.uv]); // 表示用
-            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr"), [this.rendering, this.meshes, this.selectedVertices]); // 表示用
-            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.rendering, this.baseVertices, this.animations, this.weights, this.allocation]); // アニメーション用
-            this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.rendering, this.weightGroups, this.allocation]); // 親の変形を適応するた
+            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.renderingVertices, this.uv]); // 表示用
+            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr"), [this.renderingVertices, this.meshes, this.selectedVertices]); // 表示用
+            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.renderingVertices, this.baseVertices, this.animations, this.weights, this.allocation]); // アニメーション用
+            this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.renderingVertices, this.weightGroups, this.allocation]); // 親の変形を適応するた
             console.log("|---グラフィックメッシュメモリ用意---|")
         }
     }
@@ -169,12 +170,15 @@ class GraphicMeshData {
 class BezierModifierData {
     constructor(/** @type {Application} */ app) {
         this.app = app;
-        this.rendering = GPU.createBuffer(0, ["s"]);
-        this.base = GPU.createBuffer(0, ["s"]);
+        this.renderingVertices = GPU.createBuffer(0, ["s"]);
+        this.baseVertices = GPU.createBuffer(0, ["s"]);
         this.animations = GPU.createBuffer(0, ["s"]);
         this.weights = GPU.createBuffer(0, ["s"]);
         this.weightGroups = GPU.createBuffer(0, ["s"]);
         this.allocation = GPU.createBuffer(0, ["s"]);
+
+        this.selectedVertices = GPU.createBuffer(0, ["s"]);
+
         this.renderingGizumoGroup = null;
         this.animationApplyGroup = null;
         this.animationApplyParentGroup = null;
@@ -186,13 +190,46 @@ class BezierModifierData {
         this.order = [];
     }
 
+    // 選択
+    selectedForVertices(/** @type {BezierModifier} */ bezierModifier, object, option) {
+        const optionBuffer = GPU.createUniformBuffer((2) * 4, [option.add,3], ["u32"]);
+        // console.log("最大頂点数", graphicMesh.MAX_VERTICES, "起動されるグループ数", Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
+        if (object.box) { // ボックス選択
+            const boxBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.box.min, ...object.box.max], ["f32","f32","f32","f32"]);
+            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, bezierModifier.objectDataBuffer, optionBuffer, boxBuffer]);
+            GPU.runComputeShader(boxSelectVerticesPipeline, [group], Math.ceil(Math.ceil((bezierModifier.MAX_VERTICES * 3) / 32) / 64));
+        } else {
+            const circleBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.circle, 0], ["f32","f32","f32","f32"]);
+            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, bezierModifier.objectDataBuffer, optionBuffer, circleBuffer]);
+            GPU.runComputeShader(circleSelectBoneVerticesPipeline, [group], Math.ceil(Math.ceil((bezierModifier.MAX_VERTICES * 3) / 32) / 64));
+        }
+        // GPU.consoleBufferData(this.selectedVertices, ["u32"], "当たり判定", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
+        // GPU.consoleBufferData(this.selectedVertices, ["bit"], "当たり判定bool", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
+    }
+
     async getBaseVerticesFromObject(/** @type {BezierModifier} */bezierModifier) {
-        return await GPU.getBufferDataFromIndexs(this.base, {start: bezierModifier.vertexBufferOffset, end: bezierModifier.vertexBufferOffset + bezierModifier.verticesNum}, ["f32", "f32"]);
+        return await GPU.getBufferDataFromIndexs(this.baseVertices, {start: bezierModifier.vertexBufferOffset, end: bezierModifier.vertexBufferOffset + bezierModifier.verticesNum}, ["f32", "f32"]);
     }
 
     setBase(/** @type {BezierModifier} */bezierModifier, bezierPointData, weightGroupData) {
-        GPU.writeBuffer(this.base, new Float32Array(bezierPointData), bezierModifier.vertexBufferOffset * this.blockByteLength);
+        GPU.writeBuffer(this.baseVertices, new Float32Array(bezierPointData), bezierModifier.vertexBufferOffset * this.blockByteLength);
         GPU.writeBuffer(this.weightGroups, GPU.createBitData(weightGroupData, ["u32", "u32", "u32", "u32", "f32", "f32", "f32", "f32"]), bezierModifier.vertexBufferOffset * ((4 + 4) * 4));
+        this.updateAllocationData(bezierModifier);
+    }
+
+    updateAllocationData(/** @type {BezierModifier} */bezierModifier) {
+        // 頂点オフセット, アニメーションオフセット, ウェイトオフセット, 頂点数, 最大アニメーション数, 親の型, 親のインデックス, パディング
+        let allocationData = this.getAllocationData(bezierModifier);
+        GPU.writeBuffer(this.allocation, allocationData, (bezierModifier.allocationIndex * 8) * 4);
+        GPU.writeBuffer(bezierModifier.objectDataBuffer, allocationData);
+    }
+
+    getAllocationData(/** @type {BezierModifier} */bezierModifier) {
+        if (bezierModifier.parent) {
+            return new Uint32Array([bezierModifier.vertexBufferOffset, bezierModifier.animationBufferOffset, bezierModifier.weightBufferOffset, bezierModifier.verticesNum, bezierModifier.MAX_ANIMATIONS, objectToNumber[bezierModifier.parent.type], bezierModifier.parent.allocationIndex, this.myType]);
+        } else {
+            return new Uint32Array([bezierModifier.vertexBufferOffset, bezierModifier.animationBufferOffset, bezierModifier.weightBufferOffset, bezierModifier.verticesNum, bezierModifier.MAX_ANIMATIONS, 0, 0, this.myType]);
+        }
     }
 
     setAnimationData(/** @type {BezierModifier} */bezierModifier, animationData, animtaionIndex) {
@@ -214,7 +251,7 @@ class BezierModifierData {
     prepare(/** @type {BezierModifier} */bezierModifier) {
         if (!this.order.includes(bezierModifier)) {
             this.order.push(bezierModifier);
-            bezierModifier.vertexBufferOffset = this.rendering.size / this.blockByteLength;
+            bezierModifier.vertexBufferOffset = this.renderingVertices.size / this.blockByteLength;
             bezierModifier.animationBufferOffset = this.animations.size / this.blockByteLength;
             bezierModifier.weightBufferOffset = this.weights.size / 4;
             bezierModifier.allocationIndex = this.order.length - 1;
@@ -225,19 +262,22 @@ class BezierModifierData {
                 allocationData = new Uint32Array([bezierModifier.vertexBufferOffset, bezierModifier.animationBufferOffset, bezierModifier.weightBufferOffset, bezierModifier.MAX_VERTICES, bezierModifier.MAX_ANIMATIONS, 0, 0, GPU.padding]);
             }
             GPU.writeBuffer(bezierModifier.objectDataBuffer, allocationData);
-            this.base = GPU.appendEmptyToBuffer(this.base, bezierModifier.MAX_VERTICES * this.blockByteLength); // 元の頂点座標用のメモリを確保
-            this.rendering = GPU.appendEmptyToBuffer(this.rendering, bezierModifier.MAX_VERTICES * this.blockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
+            this.baseVertices = GPU.appendEmptyToBuffer(this.baseVertices, bezierModifier.MAX_VERTICES * this.blockByteLength); // 元の頂点座標用のメモリを確保
+            this.renderingVertices = GPU.appendEmptyToBuffer(this.renderingVertices, bezierModifier.MAX_VERTICES * this.blockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
             this.animations = GPU.appendEmptyToBuffer(this.animations, bezierModifier.MAX_ANIMATIONS * bezierModifier.MAX_VERTICES * this.blockByteLength); // アニメーション用のメモリを確保
             this.weights = GPU.appendEmptyToBuffer(this.weights, bezierModifier.MAX_ANIMATIONS * 4); // アニメーション用のメモリを確保
             this.weightGroups = GPU.appendEmptyToBuffer(this.weightGroups, bezierModifier.MAX_VERTICES * (4 + 4) * 4); // ウェイト用のメモリを確保
             this.allocation = GPU.appendDataToStorageBuffer(this.allocation, allocationData); // 配分を配分を計算するためのデータ
-            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.rendering]); // 表示用
-            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.rendering, this.base, this.animations, this.weights, this.allocation]); // アニメーション用
-            // this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.rendering, this.weightGroups, this.allocation]); // 親の変形を適応するた
-            this.applyParentGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr_Csr"), [this.rendering, this.base, this.allocation]); // 子の変形用データ
-            this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.rendering, this.base, this.allocation, this.weightGroups]); // 親の変形を適応するた
-            // bezierModifier.individualGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu"), [{type: "b", item: {buffer: this.rendering, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * this.blockByteLength}}, {type: "b", item: {buffer: this.weightGroups, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * (4 + 4) * 4}}, bezierModifier.objectDataBuffer]);
-            // bezierModifier.individualGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [{type: "b", item: {buffer: this.rendering, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * this.blockByteLength}}, {type: "b", item: {buffer: this.weightGroups, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * (4 + 4) * 4}}, bezierModifier.objectDataBuffer]);
+
+            this.selectedVertices = GPU.appendEmptyToBuffer(this.selectedVertices, Math.ceil((bezierModifier.MAX_VERTICES * 3) / 32) * 4); // 選択状態ようのメモリを確保
+
+            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.renderingVertices,this.selectedVertices]); // 表示用
+            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.renderingVertices, this.baseVertices, this.animations, this.weights, this.allocation]); // アニメーション用
+            // this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.renderingVertices, this.weightGroups, this.allocation]); // 親の変形を適応するた
+            this.applyParentGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr_Csr"), [this.renderingVertices, this.baseVertices, this.allocation]); // 子の変形用データ
+            this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingVertices, this.baseVertices, this.allocation, this.weightGroups]); // 親の変形を適応するた
+            // bezierModifier.individualGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu"), [{type: "b", item: {buffer: this.renderingVertices, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * this.blockByteLength}}, {type: "b", item: {buffer: this.weightGroups, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * (4 + 4) * 4}}, bezierModifier.objectDataBuffer]);
+            // bezierModifier.individualGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [{type: "b", item: {buffer: this.renderingVertices, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * this.blockByteLength}}, {type: "b", item: {buffer: this.weightGroups, offset: bezierModifier.vertexBufferOffset * this.blockByteLength, size: bezierModifier.MAX_VERTICES * (4 + 4) * 4}}, bezierModifier.objectDataBuffer]);
             bezierModifier.individualGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [bezierModifier.objectDataBuffer]);
             console.log("|---ベジェモディファイアメモリ用意---|")
         }
@@ -285,9 +325,8 @@ class BoneModifierData {
     }
 
     // 選択
-    async selectedForVertices(/** @type {BoneModifier} */ boneModifier, object, option) {
-        const optionBuffer = GPU.createUniformBuffer(4, [option.add], ["u32"]);
-        // console.log("最大頂点数", graphicMesh.MAX_VERTICES, "起動されるグループ数", Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
+    selectedForVertices(/** @type {BoneModifier} */ boneModifier, object, option) {
+        const optionBuffer = GPU.createUniformBuffer((2) * 4, [option.add,2], ["u32"]);
         if (object.box) { // ボックス選択
             const boxBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.box.min, ...object.box.max], ["f32","f32","f32","f32"]);
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, boneModifier.objectDataBuffer, optionBuffer, boxBuffer]);
@@ -296,9 +335,9 @@ class BoneModifierData {
             const circleBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.circle, 0], ["f32","f32","f32","f32"]);
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, boneModifier.objectDataBuffer, optionBuffer, circleBuffer]);
             GPU.runComputeShader(circleSelectBoneVerticesPipeline, [group], Math.ceil(Math.ceil((boneModifier.MAX_BONES * 2) / 32) / 64));
-            GPU.consoleBufferData(this.selectedVertices, ["u32"], "aaaa")
-            console.log(await GPU.getBitArrayFromBuffer(this.selectedVertices))
         }
+        // GPU.consoleBufferData(this.selectedVertices, ["u32"], "当たり判定", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
+        // GPU.consoleBufferData(this.selectedVertices, ["bit"], "当たり判定bool", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
     }
 
     selectedForBone(/** @type {BoneModifier} */ boneModifier, object, option) {
@@ -540,13 +579,13 @@ export class Scene {
         for (const object of this.allObject) {
             if (option.types.includes(object.type)) {
                 if (object.type == "グラフィックメッシュ") {
-                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.graphicMeshData.rendering, this.gpuData.graphicMeshData.meshes, object.objectMeshData, optionBuffer, pointBuffer]);
+                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.graphicMeshData.renderingVertices, this.gpuData.graphicMeshData.meshes, object.objectMeshData, optionBuffer, pointBuffer]);
                     GPU.runComputeShader(polygonsHitTestPipeline, [hitTestGroup], Math.ceil(object.MAX_MESHES / 64));
                 } else if (object.type == "ボーンモディファイア") {
                     const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.boneModifierData.renderingVertices, object.objectDataBuffer, optionBuffer, pointBuffer]);
                     GPU.runComputeShader(boneHitTestPipeline, [hitTestGroup], Math.ceil(object.MAX_BONES / 64));
                 } else if (object.type == "ベジェモディファイア") {
-                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.bezierModifierData.rendering, object.objectDataBuffer, optionBuffer, pointBuffer]);
+                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.bezierModifierData.renderingVertices, object.objectDataBuffer, optionBuffer, pointBuffer]);
                     GPU.runComputeShader(bezierModifierHitTestPipeline, [hitTestGroup], Math.ceil(object.MAX_VERTICES / 64));
                 }
                 const resultBufferData = await GPU.getU32BufferData(resultBuffer, 4);
@@ -642,18 +681,16 @@ export class Scene {
             computePassEncoder.setPipeline(calculateBoneVerticesPipeline);
             computePassEncoder.dispatchWorkgroups(Math.ceil(this.boneModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_BONEMODIFIER / 8), 1); // ワークグループ数をディスパッチ
         }
-        
+
         computePassEncoder.end();
 
         for (const /** @type {GraphicMesh} */object of this.graphicMeshs) {
             if (object.mode == "メッシュ編集") {
-                computeCommandEncoder.copyBufferToBuffer(this.gpuData.graphicMeshData.baseVertices, object.vertexBufferOffset * 2 * 4, this.gpuData.graphicMeshData.rendering, object.vertexBufferOffset * 2 * 4, object.verticesNum * 2 * 4);
+                computeCommandEncoder.copyBufferToBuffer(this.gpuData.graphicMeshData.baseVertices, object.vertexBufferOffset * 2 * 4, this.gpuData.graphicMeshData.renderingVertices, object.vertexBufferOffset * 2 * 4, object.verticesNum * 2 * 4);
             }
         }
 
         device.queue.submit([computeCommandEncoder.finish()]);
-        // GPU.consoleBufferData(this.gpuData.graphicMeshData.baseVertices, ["f32","f32"], "base");
-        // GPU.consoleBufferData(this.gpuData.graphicMeshData.rendering, ["f32","f32"], "rendering");
     }
 
     async getSaveData() {
@@ -687,6 +724,13 @@ export class Scene {
 
     destroy() {
         this.maskTextures.length = 0;
+        this.app.hierarchy.destroy();
+        this.animationCollectors.length = 0;
+        this.modifiers.length = 0;
+        this.bezierModifiers.length = 0;
+        this.rotateModifiers.length = 0;
+        this.graphicMeshs.length = 0;
+        this.boneModifiers.length = 0;
     }
 
     appendMaskTexture(name) {
@@ -883,13 +927,13 @@ class State {
     }
 
     setSelectedObject(object, append = false) {
-        if (!object) return ;
         if (!append) {
             this.selectedObject.forEach((object) => {
                 object.selected = false;
             })
             this.selectedObject.length = 0;
         }
+        if (!object) return ;
         if (!this.isSelect(object)) { // 選択されていない
             this.selectedObject.push(object);
         }

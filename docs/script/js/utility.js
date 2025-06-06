@@ -204,5 +204,8 @@ export function range(start, end) {
 
 export function timeSleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
 
+export function errorCut(num, rate = 1000) {
+    return Math.round(num * rate) / rate;
 }

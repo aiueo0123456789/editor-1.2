@@ -10,6 +10,9 @@ export class ViewerSpaceData {
         this.tools = ["select", "move", "resize", "rotate", "remove", "append"];
         this.useTool = "select";
         this.smooth = false;
+
+        this.proportionalEditType = 0;
+        this.proportionalSize = 100;
     }
 
     createModeSelectList() {

@@ -11,7 +11,7 @@ export class Area_Inspector {
             DOM: [
                 {type: "section", name: "情報", children: [
                     {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
-                        {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "グラフィックメッシュ"},
+                        {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "グラフィックメッシュ"},
                             true: [
                                 {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                 {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 1000, step: 1}},
@@ -19,7 +19,7 @@ export class Area_Inspector {
                                 {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
                             ],
                             false: [
-                                {type: "if", formula: {source: {object: "", parameter: "type"}, comparison: "ベジェモディファイア"},
+                                {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "ベジェモディファイア"},
                                     true: [
                                         {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                     ],

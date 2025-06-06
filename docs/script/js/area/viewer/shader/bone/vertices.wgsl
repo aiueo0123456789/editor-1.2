@@ -72,7 +72,7 @@ fn vmain(
     let lenght = distance(bone.h, bone.t);
     var output: VertexOutput;
 
-    let fixIndex = index * 2u + select(0u, 1u, (vertexIndex % 12) / 6 == 1);
+    let fixIndex = index * 2u + (vertexIndex % 12) / 6;
 
     output.position = worldPosToClipPos(p + point * size * lenght);
     output.uv = point;
