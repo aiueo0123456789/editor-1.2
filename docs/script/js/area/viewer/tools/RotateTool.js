@@ -16,8 +16,8 @@ export class RotateModal {
         this.command = null;
         this.values = [
             0, // 回転量
-            0, // proportionalEditType
-            0 // proportionalSize
+            app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
+            app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
         ];
         this.modal = new Modal();
         this.activateKey = "r";

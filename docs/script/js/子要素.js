@@ -1,4 +1,4 @@
-import { setParentModifierWeight, updateObject } from "./オブジェクト/オブジェクトで共通の処理.js";
+import { setParentModifierWeight } from "./オブジェクト/オブジェクトで共通の処理.js";
 
 export class Children {
     constructor() {
@@ -20,16 +20,6 @@ export class Children {
     weightReset() {
         this.objects.forEach(x => {
             setParentModifierWeight(x);
-        })
-    }
-
-    run() {
-        this.objects.forEach(x => {
-            updateObject(x);
-            if (x.type == "グラフィックメッシュ") {
-            } else {
-                x.children.run();
-            }
         })
     }
 }

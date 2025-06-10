@@ -1,4 +1,5 @@
-import { isPlainObject } from "../utility.js";
+import { indexOfSplice, isPlainObject } from "../utility.js";
+import { managerForDOMs } from "./制御.js";
 
 export class DataBlock {
     constructor(tag, updateFn, others) {
@@ -9,14 +10,45 @@ export class DataBlock {
 }
 
 export class DOMsManager_DataBlock {
-    constructor(dom, fn, others) {
+    constructor(object, groupID, id, flag, dom, fn, others) {
+        this.object = object;
+        this.groupID = groupID;
+        this.id = id;
         this.dom = dom;
         this.fn = fn;
         this.others = others;
+        this.flag = flag;
     }
 
-    appendFn() {
-        
+    remove(maxDepth = 2) {
+        // 全てループしてメモリ解放
+        const fn = (data, depth = 0) => {
+            if (maxDepth <= depth) return ;
+            if (data instanceof HTMLElement) {
+                data.remove();
+            } else if (isPlainObject(data)) {
+                for (const key in data) {
+                    fn(data[key], depth + 1);
+                }
+            } else if (Array.isArray(data)) {
+                for (const value of data) {
+                    fn(value, depth + 1);
+                }
+            }
+        }
+        fn(this.dom);
+        fn(this.others);
+        indexOfSplice(managerForDOMs.flags.get(this.flag), this);
+        const o = managerForDOMs.objectsMap.get(this.object);
+        if (o) {
+            const i = o.get(this.id);
+            if (i) {
+                const g = i.get(this.groupID);
+                if (g) {
+                    indexOfSplice(g, this);
+                }
+            }
+        }
     }
 }
 
@@ -42,9 +74,16 @@ export class DOMsManager {
                 .
             }
         } */
+        this.flags = new Map();
     }
 
-    set(object, groupID, DOM, updateFn, others = null, ID = "defo") {
+    set(IDs, DOM, updateFn, others = null) {
+        if (!IDs.i) IDs.i = "defo";
+        if (!IDs.f) IDs.f = "defo";
+        const object = IDs.o;
+        const groupID = IDs.g;
+        const ID = IDs.i;
+        const flag = IDs.f;
         if (!this.objectsMap.has(object)) {
             this.objectsMap.set(object, new Map());
         }
@@ -53,7 +92,15 @@ export class DOMsManager {
             o.set(ID, new Map());
         }
         const i = o.get(ID);
-        i.set(groupID, [DOM, updateFn, others]);
+        if (!i.has(groupID)) {
+            i.set(groupID, []);
+        }
+        const dataBlock = new DOMsManager_DataBlock(object, groupID, ID, flag, DOM, updateFn, others);
+        const g = i.get(groupID).push(dataBlock);
+        if (!this.flags.has(flag)) {
+            this.flags.set(flag, []);
+        }
+        this.flags.get(flag).push(dataBlock);
     }
 
     deleteDOM(object, groupID, ID) {
@@ -63,40 +110,45 @@ export class DOMsManager {
             if (i) {
                 const g = i.get(groupID);
                 if (g) {
-                    const fn = (data) => {
-                        if (data instanceof HTMLElement) {
-                            data.remove();
-                        } else if (isPlainObject(data)) {
-                            for (const key in data) {
-                                fn(data[key]);
-                            }
-                        } else if (Array.isArray(data)) {
-                            for (const value of data) {
-                                fn(value);
-                            }
-                        }
+                    for (const element of g) {
+                        element.remove();
                     }
-                    fn(g);
                     i.delete(groupID);
                 }
             }
         }
     }
 
-    getDataInObjectAndGroupID(object, groupID) {
-        const o = this.objectsMap.get(object);
-        if (o) {
-            const result = [];
-            o.forEach((i, id) => {
-                const g = i.get(groupID);
-                if (g) {
-                    result.push(g);
-                }
-            });
-            return result;
+    deleteFlag(flag) {
+        console.log(this.flags, flag)
+        if (!this.flags.has(flag)) return ;
+        for (const data of this.flags.get(flag)) {
+            data.remove();
         }
-        return [];
     }
+
+    getFromFlag(flag) {
+        return this.flags.get(flag);
+    }
+
+    get(object, groupID, ID, flag) {
+        const result = [];
+    }
+
+    // getDataInObjectAndGroupID(object, groupID) {
+    //     const o = this.objectsMap.get(object);
+    //     if (o) {
+    //         const result = [];
+    //         o.forEach((i, id) => {
+    //             const g = i.get(groupID);
+    //             if (g) {
+    //                 result.push(g);
+    //             }
+    //         });
+    //         return result;
+    //     }
+    //     return [];
+    // }
 
     getGroupAndID(groupID, ID) {
         const result = new Map();
@@ -105,25 +157,41 @@ export class DOMsManager {
             if (i) {
                 const g = i.get(groupID);
                 if (g) {
-                    result.set(object,g);
+                    for (const element of g) {
+                        result.set(object,element);
+                    }
                 }
             }
         });
         return result;
     }
 
-    getDOMInObjectAndGroupID(object, groupID, ID = "defo") {
+    // getDOMInObjectAndGroupID(object, groupID, ID = "defo") {
+    //     const o = this.objectsMap.get(object);
+    //     if (o) {
+    //         const i = o.get(ID);
+    //         if (i) {
+    //             const g = i.get(groupID);
+    //             if (g) {
+    //                 return g;
+    //             }
+    //         }
+    //     }
+    //     return null;
+    // }
+
+    getObjectAndGroupID(object, groupID, ID = "defo") {
         const o = this.objectsMap.get(object);
         if (o) {
             const i = o.get(ID);
             if (i) {
                 const g = i.get(groupID);
                 if (g) {
-                    return g[0];
+                    return g;
                 }
             }
         }
-        return null;
+        return [];
     }
 
     deleteGroup(groupID) {
@@ -131,20 +199,9 @@ export class DOMsManager {
             o.forEach((i, id) => {
                 const g = i.get(groupID);
                 if (g) {
-                    const fn = (data) => {
-                        if (data instanceof HTMLElement) {
-                            data.remove();
-                        } else if (isPlainObject(data)) {
-                            for (const key in data) {
-                                fn(data[key]);
-                            }
-                        } else if (Array.isArray(data)) {
-                            for (const value of data) {
-                                fn(value);
-                            }
-                        }
+                    for (const element of g) {
+                        element.remove();
                     }
-                    fn(g);
                     i.delete(groupID);
                 }
             });
@@ -156,20 +213,9 @@ export class DOMsManager {
         if (o) {
             o.forEach((i, id) => {
                 i.forEach((g, groupID) => {
-                    const fn = (data) => {
-                        if (data instanceof HTMLElement) {
-                            data.remove();
-                        } else if (isPlainObject(data)) {
-                            for (const key in data) {
-                                fn(data[key]);
-                            }
-                        } else if (Array.isArray(data)) {
-                            for (const value of data) {
-                                fn(value);
-                            }
-                        }
+                    for (const element of g) {
+                        element.remove();
                     }
-                    fn(g);
                     i.delete(groupID);
                 });
             });
@@ -178,14 +224,11 @@ export class DOMsManager {
         }
     }
 
-    submitFn(object, groupID,DOM_Fn) {
-        if (typeof DOM_Fn[1] === 'function') {
-            DOM_Fn[1](object, groupID, DOM_Fn[0], DOM_Fn[2]);
-        } else if (Array.isArray(DOM_Fn[1])) {
-            for (const fn of DOM_Fn[1]) {
-                if (typeof fn === 'function') {
-                    fn(object, groupID, DOM_Fn[0], DOM_Fn[3]);
-                }
+    submitFn(object, groupID, list) {
+        for (const element of list) {
+            if (typeof element.fn === 'function') {
+                // console.log("送信", object, groupID, element);
+                element.fn(object, groupID, element.dom, element.others);
             }
         }
     }
@@ -195,15 +238,15 @@ export class DOMsManager {
         if (o) {
             if (ID == "all") {
                 o.forEach((i, id) => {
-                    i.forEach((DOM_Fn, groupID) => {
-                        this.submitFn(object, groupID,DOM_Fn);
+                    i.forEach((g, groupID) => {
+                        this.submitFn(object, groupID, g);
                     });
                 });
             } else {
                 const i = o.get(ID);
                 if (i) {
-                    i.forEach((DOM_Fn, groupID) => {
-                        this.submitFn(object, groupID,DOM_Fn);
+                    i.forEach((g, groupID) => {
+                        this.submitFn(object, groupID, g);
                     });
                 }
             }
@@ -214,9 +257,9 @@ export class DOMsManager {
         const o = this.objectsMap.get(object);
         if (o) {
             o.forEach((i, id) => {
-                const DOM_Fn = i.get(groupID);
-                if (DOM_Fn) {
-                    this.submitFn(object, groupID,DOM_Fn);
+                const g = i.get(groupID);
+                if (g) {
+                    this.submitFn(object, groupID, g);
                 }
             });
         }
@@ -225,8 +268,8 @@ export class DOMsManager {
     allUpdate() {
         this.objectsMap.forEach((o, object) => {
             o.forEach((i, id) => {
-                i.forEach((DOM_Fn, groupID) => {
-                    this.submitFn(object, groupID,DOM_Fn);
+                i.forEach((g, groupID) => {
+                    this.submitFn(object, groupID, g);
                 });
             });
         });

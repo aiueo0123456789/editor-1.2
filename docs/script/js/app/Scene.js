@@ -2,7 +2,7 @@ import { device, GPU } from '../webGPU.js';
 import { createID, managerForDOMs } from '../UI/制御.js';
 import { GraphicMesh } from '../オブジェクト/グラフィックメッシュ.js';
 import { Modifier } from '../オブジェクト/モディファイア.js';
-import { RotateModifier } from '../オブジェクト/回転モディファイア.js';
+// import { RotateModifier } from '../オブジェクト/回転モディファイア.js';
 import { BezierModifier } from '../オブジェクト/ベジェモディファイア.js';
 import { BoneModifier } from '../オブジェクト/ボーンモディファイア.js';
 import { AnimationCollector } from '../オブジェクト/アニメーションコレクター.js';
@@ -41,6 +41,16 @@ const objectToNumber = {
     "ボーンモディファイア": 3,
     "モディファイア": 4,
 };
+
+function packBuffer(buffer, updateRangeStart, updateRangeNum, packRangeStart) {
+    const newBuffer = this.createStorageBuffer(updateRangeNum * 4, undefined, ["f32"]);
+    // コピーコマンドを発行
+    const commandEncoder = device.createCommandEncoder();
+    commandEncoder.copyBufferToBuffer(buffer, updateRangeStart * 4, newBuffer, 0, updateRangeNum * 4);
+    commandEncoder.copyBufferToBuffer(newBuffer, 0, buffer, packRangeStart * 4);
+    const commandBuffer = commandEncoder.finish();
+    device.queue.submit([commandBuffer]);
+}
 
 // そのうち動的ストレージバッファ（dynamic storage buffer）を使うかも
 // 全てのグラフィックメッシュの頂点データをまとめて管理する
@@ -115,6 +125,11 @@ class GraphicMeshData {
 
     setAnimationData(/** @type {GraphicMesh} */graphicMesh, animationData, animtaionIndex) {
         GPU.writeBuffer(this.animations, new Float32Array(animationData), (graphicMesh.animationBufferOffset + animtaionIndex) * this.blockByteLength);
+    }
+
+    deleteAnimationData(/** @type {GraphicMesh} */graphicMesh, animtaionIndex) {
+        packBuffer(this.animations, (graphicMesh.animationBufferOffset + animtaionIndex) * this.blockByteLength + graphicMesh.MAX_VERTICES * animtaionIndex, graphicMesh.MAX_VERTICES * (graphicMesh.MAX_ANIMATIONS - animtaionIndex), (graphicMesh.animationBufferOffset + animtaionIndex) * this.blockByteLength);
+        graphicMesh.animationBlock.updateAnimationsIndex();
     }
 
     getAllocationData(/** @type {GraphicMesh} */graphicMesh) {
@@ -944,6 +959,7 @@ class State {
     setActiveObject(object) {
         this.activeObject = object;
         managerForDOMs.update("アクティブオブジェクト");
+        managerForDOMs.update(this, "activeObject");
     }
 
     setModeForSelected(mode) {
@@ -952,6 +968,7 @@ class State {
         for (const object of this.selectedObject) {
             object.mode = mode;
         }
+        managerForDOMs.update(this.selectedObject);
     }
 
     isSelect(object) {

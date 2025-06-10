@@ -1,15 +1,16 @@
 import { app } from "../../app.js";
+import { appendAnimationToObject, deleteAnimationToObject } from "../../オブジェクト/オブジェクトで共通の処理.js";
 import { CreatorForUI } from "../補助/UIの自動生成.js";
 
 export class Area_Inspector {
     constructor(/** @type {HTMLElement} */dom) {
         this.dom = dom;
 
-        this.inputObject = {"h": app.hierarchy, "scene": app.scene};
+        this.inputObject = {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]};
 
         this.struct = {
             DOM: [
-                {type: "section", name: "情報", children: [
+                {type: "section", name: "基本情報", children: [
                     {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
                         {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "グラフィックメッシュ"},
                             true: [
@@ -31,6 +32,25 @@ export class Area_Inspector {
                                 }
                             ]
                         }
+                    ]}
+                ]},
+                {type: "path", sourceObject: {object: "scene/state/activeObject"}, updateEventTarget: "アクティブオブジェクト", children: [
+                    {type: "section", name: "アニメーション", children: [
+                        {type: "input", label: "アニメーション最大数", withObject: {object: "", parameter: "MAX_ANIMATIONS"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                        {type: "list", appendEvent: () => {
+                            appendAnimationToObject(app.scene.state.activeObject, "新規");
+                        }, deleteEvent: (animations) => {
+                            for (const animation of animations) {
+                                deleteAnimationToObject(app.scene.state.activeObject, animation);
+                            }
+                        }, withObject: {object: "animationBlock/animationBlock"}, options: {type: "min", selectSource: {object: "areaConfig/selectAnimations"}, activeSource: {object: "areaConfig", parameter: "activeAnimation"}}, liStruct:[
+                            // {type: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
+                            {type: "gridBox", axis: "c", allocation: "50% 1fr", children: [
+                                // {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                                {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                {type: "padding", size: "10px"},
+                            ]},
+                        ]}
                     ]}
                 ]}
             ],

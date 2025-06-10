@@ -32,10 +32,10 @@ export class TranslateModal {
         const update = () => {
             this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
         }
-        managerForDOMs.set(this.values, "_", null, update, null, "0");
-        managerForDOMs.set(this.values, "_", null, update, null, "1");
-        managerForDOMs.set(this.values, "_", null, update, null, "2");
-        managerForDOMs.set(this.values, "_", null, update, null, "3");
+        managerForDOMs.set({o: this.values, g: "_", i: "0"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "1"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "2"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "3"}, null, update, null);
     }
 
     async init() {

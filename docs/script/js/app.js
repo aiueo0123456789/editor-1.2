@@ -15,6 +15,7 @@ import { InputManager } from "./app/InputManager.js";
 import { changeParameter, createArrayFromHashKeys, indexOfSplice } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
 import { ContextmenuOperator } from "./app/ContextMenuOperator.js";
+import { HierarchySpaceData } from "./area/Hierarchy/area_HierarchySpaceData.js";
 
 class AppOptions {
     constructor(app) {
@@ -219,7 +220,6 @@ export class Application { // 全てをまとめる
             this.scene.updateAnimation(this.scene.frame_current);
         }
         this.scene.updateAnimationCollectors();
-        // this.hierarchy.runHierarchy();
         this.scene.update();
         for (const object of this.scene.allObject) {
             object.isChange = false;
@@ -237,7 +237,7 @@ export class Application { // 全てをまとめる
 
 const useClassFromAreaType = {
     "Viewer": {area: Area_Viewer, areaConfig: ViewerSpaceData},
-    "Hierarchy": {area: Area_Hierarchy, areaConfig: ViewerSpaceData},
+    "Hierarchy": {area: Area_Hierarchy, areaConfig: HierarchySpaceData},
     "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
     "Preview": {area: Area_Preview, areaConfig: ViewerSpaceData},
     "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
@@ -313,6 +313,10 @@ class AnimationPlayer {
 
 export const app = new Application(document.getElementById("app"));
 
+// const area1 = app.createArea("w");
+// app.setAreaType(area1,0,"Hierarchy");
+// app.setAreaType(area1,0,"Viewer");
+// app.setAreaType(area1,1,"Hierarchy");
 const area1 = app.createArea("w");
 const area1_h = app.createArea("h", area1.child1);
 const area2 = app.createArea("w", area1.child2);
@@ -320,11 +324,15 @@ const area3 = app.createArea("h", area2.child2);
 const area4 = app.createArea("w", area3.child1);
 app.setAreaType(area1_h,0,"Viewer");
 app.setAreaType(area2,0,"Hierarchy");
+// app.setAreaType(area4,0,"Hierarchy");
 app.setAreaType(area4,0,"Viewer");
-// app.setAreaType(area4.child1,"Preview");
+// app.setAreaType(area4,0,"Preview");
 app.setAreaType(area3,1,"Inspector");
+// app.setAreaType(area3,1,"Viewer");
+// app.setAreaType(area1_h,1,"Viewer");
 app.setAreaType(area1_h,1,"Timeline");
-app.setAreaType(area4,1,"Timeline");
+app.setAreaType(area4,1,"Viewer");
+// app.setAreaType(area4,1,"Timeline");
 app.setAreaType(area4,1,"Property");
 
 function appUpdate() {

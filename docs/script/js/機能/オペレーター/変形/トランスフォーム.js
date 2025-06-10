@@ -6,22 +6,20 @@ import { GPU } from "../../../webGPU.js";
 //     graphicMesh: {rotate: },
 // };
 
+const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/init.wgsl"));
+
 const updateForUVPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/updateForUV.wgsl"));
 
 const createOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./script/js/機能/オペレーター/変形/GPU/createOriginal.wgsl"));
+const setOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./script/js/機能/オペレーター/変形/GPU/setOriginal.wgsl"));
+
 const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/translate.wgsl"));
-
 const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/resize.wgsl"));
-
 const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/rotate.wgsl"));
 
 const boneAnimationTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/translate.wgsl"));
-
 const boneAnimationRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/rotate.wgsl"));
-
 const boneAnimationResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/resize.wgsl"));
-
-const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/init.wgsl"));
 
 class TransformCommand {
     constructor(targets, selectIndexs) {
@@ -32,11 +30,11 @@ class TransformCommand {
         this.proportionalEditTypeBuffer = GPU.createUniformBuffer(4, undefined, ["u32"]);
         this.proportionalSizeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         this.configGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu_Cu"), [{item: this.proportionalEditTypeBuffer, type: "b"}, {item: this.proportionalSizeBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}]);
-        
+
         this.value = [0,0];
         this.proportionalEditType = 0;
         this.proportionalSize = 0;
-        
+
         this.targets = targets;
         this.type = targets[0].type;
         const source = this.type == "グラフィックメッシュ" ? app.scene.gpuData.graphicMeshData : this.type == "ボーンモディファイア" ? app.scene.gpuData.boneModifierData : app.scene.gpuData.bezierModifierData;
@@ -87,10 +85,11 @@ class TransformCommand {
                 this.targetBuffer = source.baseVertices;
                 this.baseBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
                 this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
+                this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.baseVertices, this.subjectIndexBuffer])], this.workNumX);
             }
             this.weightAndIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"),  [{item: this.weightBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.subjectIndexBuffer, type: "b"}]);
             this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.subjectIndexBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
-            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer); // ターゲットのオリジナル状態を保持
         }
     }
 
@@ -135,12 +134,23 @@ class TransformCommand {
 
     // 変形を取り消し
     cancel() {
+        GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
         this.targets.isChange = true;
-        GPU.copyBuffer(this.originalBuffer, this.targetBuffer);
+        if (this.type == "ボーンモディファイア") {
+            for (const target of this.targets) {
+                app.scene.gpuData.boneModifierData.calculateBaseBoneData(target);
+            }
+        } else if (this.type == "グラフィックメッシュ") {
+            for (const target of this.targets) {
+                GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.gpuData.graphicMeshData.uv,app.scene.gpuData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
+                target.editor.createMesh(true);
+            }
+        }
     }
 
     undo() {
-        GPU.copyBuffer(this.originalBuffer, this.targetBuffer);
+        console.log("巻き戻し")
+        GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
         this.targets.isChange = true;
         if (this.type == "ボーンモディファイア") {
             for (const target of this.targets) {
@@ -155,6 +165,7 @@ class TransformCommand {
     }
 
     redo() {
+        console.log("巻き戻しの取り消し",data)
         const object = data.object;
         GPU.copyBuffer(data.undo, data.target);
         object.isChange = true;
@@ -168,6 +179,18 @@ class TransformCommand {
                 target.editor.createMesh(true);
             }
         }
+        // GPU.copyBuffer(this.originalBuffer, this.targetBuffer);
+        // this.targets.isChange = true;
+        // if (this.type == "ボーンモディファイア") {
+        //     for (const target of this.targets) {
+        //         app.scene.gpuData.boneModifierData.calculateBaseBoneData(target);
+        //     }
+        // } else if (this.type == "グラフィックメッシュ") {
+        //     for (const target of this.targets) {
+        //         GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.gpuData.graphicMeshData.uv,app.scene.gpuData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
+        //         target.editor.createMesh(true);
+        //     }
+        // }
     }
 }
 

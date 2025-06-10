@@ -1035,14 +1035,18 @@ class WebGPU {
         return result;
     }
 
-    getSliceBuffer(buffer, range) {
-        const newBuffer = this.createStorageBuffer(range.num * 4, undefined, ["f32"]);
+    getSliceBuffer(buffer, start, num) {
+        const newBuffer = this.createStorageBuffer(num * 4, undefined, ["f32"]);
         // コピーコマンドを発行
         const commandEncoder = device.createCommandEncoder();
-        commandEncoder.copyBufferToBuffer(buffer, range.start * 4, newBuffer, 0, range.num * 4);
+        commandEncoder.copyBufferToBuffer(buffer, start * 4, newBuffer, 0, num * 4);
         const commandBuffer = commandEncoder.finish();
         device.queue.submit([commandBuffer]);
         return newBuffer;
+    }
+
+    getPartPackBuffer(buffer, range, ) {
+
     }
 
     async getBitArrayFromBuffer(buffer) {

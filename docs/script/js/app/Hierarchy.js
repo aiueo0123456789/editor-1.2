@@ -1,10 +1,5 @@
-import { updateObject,setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
+import { setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
-
-export function changeObjectName(object, newName) {
-    object.name = newName;
-    managerForDOMs.update(object);
-}
 
 class Group {
     constructor(name = "グループ", id = null) {
@@ -229,12 +224,5 @@ export class Hierarchy {
             object.children.objects.length = 0;
         }
         managerForDOMs.update(this.root)
-    }
-
-    runHierarchy() { // 伝播の実行
-        this.root.forEach(x => {
-            updateObject(x);
-            x.children?.run();
-        })
     }
 }

@@ -154,18 +154,6 @@ export class Area_Timeline {
 
         this.spaceData.mode = "select";
         this.spaceData.mode = "move";
-        dom.addEventListener("mousemove", () => {
-            if (this.spaceData.mode == "move") {
-                for (const object of app.scene.animationCollectors) {
-                    for (const key of object.keyframe.keys) {
-                        const dom = managerForDOMs.getDOMInObjectAndGroupID(key);
-                        if (dom) {
-                            dom.style.left = `${key.frame}px`;
-                        }
-                    }
-                }
-            }
-        })
 
         this.struct = {
             DOM: [
@@ -187,7 +175,7 @@ export class Area_Timeline {
                     {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "c", allocation: "20% 1fr", name: "", children: [
                         {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "r", allocation: "auto 1fr", name: "", children: [
                             {type: "input", options: {type: "text"}},
-                            {type: "hierarchy", name: "hierarchy", options: {arrange: false}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
+                            {type: "hierarchy", name: "hierarchy", options: {arrange: false, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
                                 {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
                                     {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
                                     {type: "padding", size: "10px"},
@@ -210,7 +198,6 @@ export class Area_Timeline {
         this.creator.create(dom, this, {padding: false});
 
         /** @type {HTMLElement} */
-        // this.canvasForKeys = this.creator.getDOMFromID("timelineCanvasForKeys");
         this.canvas = this.creator.getDOMFromID("timelineCanvasForGrid");
         this.canvasRect = this.canvas.getBoundingClientRect();
         this.context = this.canvas.getContext("2d");//2次元描画
@@ -231,58 +218,8 @@ export class Area_Timeline {
 
         this.groupID = createID();
 
-        managerForDOMs.set("タイムライン-canvas", this.groupID, {object: this}, update);
+        managerForDOMs.set({o: "タイムライン-canvas", g: this.groupID}, {object: this}, update);
         managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
-
-        // this.canvas.addEventListener("mousemove", (event) => {
-        //     const mouseX = (event.clientX - this.canvasRect.left) * this.pixelDensity;
-        //     const mouseY = (event.clientY - this.canvasRect.top) * this.pixelDensity;
-        //     this.mouseState.worldPosition = canvasToWorld([mouseX, mouseY]);
-        //     this.mouseState.movement = [event.movementX,event.movementY];
-        //     update();
-        // })
-
-        // this.canvas.addEventListener("mousedown", (event) => {
-        //     const mouseX = (event.clientX - this.canvasRect.left) * this.pixelDensity;
-        //     const mouseY = (event.clientY - this.canvasRect.top) * this.pixelDensity;
-        //     // this.mouseState.worldPosition = vec2.divR(vec2.addR(vec2.divR(vec2.subR([mouseX, mouseY], [0, 20 * this.pixelDensity]), vec2.scaleR(this.zoom, this.pixelDensity)), this.scroll), [1, this.pixelDensity]);
-        //     this.mouseState.worldPosition = canvasToWorld([mouseX, mouseY]);
-        //     this.mouseState.movement = [event.movementX,event.movementY];
-        //     if (!app.input.keysDown["Shift"]) {
-        //         this.spaceData.selectKeys.length = 0;
-        //         this.spaceData.selectVertices.length = 0;
-        //     }
-        //     for (const keyframe of this.spaceData.getVisibleKeyFrame()) {
-        //         if (vec2.distanceR(keyframe.point, this.mouseState.worldPosition) < 5) {
-        //             this.spaceData.activeKey = keyframe;
-        //             this.spaceData.selectKeys.push(keyframe);
-        //             this.spaceData.selectVertices.push(keyframe.point);
-        //         }
-        //         if (vec2.distanceR(keyframe.wLeftHandle, this.mouseState.worldPosition) < 5) {
-        //             this.spaceData.selectVertices.push(keyframe.leftHandle);
-        //         }
-        //         if (vec2.distanceR(keyframe.wRightHandle, this.mouseState.worldPosition) < 5) {
-        //             this.spaceData.selectVertices.push(keyframe.rightHandle);
-        //         }
-        //     }
-        //     managerForDOMs.update("タイムライン-canvas");
-        //     console.log(this.spaceData.selectVertices)
-        //     update();
-        // })
-
-        // this.canvas.addEventListener("wheel", (event) => {
-        //     if (app.input.keysDown["Alt"]) {
-        //         this.zoom[0] -= event.deltaX / 25;
-        //         this.zoom[1] += event.deltaY / 25;
-        //         this.zoom[0] = Math.max(0.1,this.zoom[0]);
-        //         this.zoom[1] = Math.max(0.1,this.zoom[1]);
-        //     } else {
-        //         this.scroll[0] += event.deltaX / this.zoom[0];
-        //         this.scroll[1] -= event.deltaY / this.zoom[1];
-        //     }
-        //     managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
-        //     event.preventDefault();
-        // }, { passive: false })
     }
 
     clipToCanvas(p) {
