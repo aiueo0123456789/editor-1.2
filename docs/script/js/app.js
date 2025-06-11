@@ -9,7 +9,7 @@ import { Area_Hierarchy } from "./area/Hierarchy/area_Hierarchy.js";
 import { Area_Inspector } from "./area/Inspector/area_Inspector.js";
 import { Area_Preview } from "./area/Preview/area_Preview.js";
 import { Area_Timeline } from "./area/Timeline/area_Timeline.js";
-import { ViewerSpaceData } from "./area/Viewer/area_ViewerApaceData.js";
+import { ViewerSpaceData } from "./area/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
 import { changeParameter, createArrayFromHashKeys, indexOfSplice } from "./utility.js";
