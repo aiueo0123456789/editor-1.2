@@ -14,7 +14,7 @@ import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
 import { changeParameter, createArrayFromHashKeys, indexOfSplice } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
-import { ContextmenuOperator } from "./app/ContextMenuOperator.js";
+import { ContextmenuOperator } from "./app/ContextmenuOperator.js";
 import { HierarchySpaceData } from "./area/Hierarchy/area_HierarchySpaceData.js";
 
 class AppOptions {
