@@ -23,8 +23,12 @@ struct VertexOutput {
     @location(0) color: vec4<f32>,
 }
 
-fn getBit(arrayIndex: u32, bitIndex: u32) -> u32 {
-    return (flags[arrayIndex] >> bitIndex) & 1u;
+fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
+    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+}
+
+fn getBoolFromIndex(index: u32) -> bool {
+    return getBoolFromBit(index / 32u, index % 32u);
 }
 
 const size = 1.0;
@@ -45,15 +49,19 @@ fn vmain(
 
     var position1 = vec2<f32>(0.0);
     var position2 = vec2<f32>(0.0);
+    var b = false;
     if (vertexIndex / 4u == 0u) {
         position1 = verticesPosition[indexs.x];
         position2 = verticesPosition[indexs.y];
+        b = getBoolFromIndex(indexs.x) && getBoolFromIndex(indexs.x);
     } else if (vertexIndex / 4u == 1u) {
         position1 = verticesPosition[indexs.y];
         position2 = verticesPosition[indexs.z];
+        b = getBoolFromIndex(indexs.y) && getBoolFromIndex(indexs.z);
     } else {
         position1 = verticesPosition[indexs.z];
         position2 = verticesPosition[indexs.x];
+        b = getBoolFromIndex(indexs.z) && getBoolFromIndex(indexs.x);
     }
     let sub = position2 - position1;
     let normal = normalize(vec2<f32>(-sub.y, sub.x)); // 仮の法線
@@ -73,6 +81,7 @@ fn vmain(
 
     var output: VertexOutput;
     output.position = vec4f((offset - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+    output.color = select(vec4f(0,0,0,1),vec4f(1,0,0,1),b);
     return output;
 }
 
@@ -85,11 +94,12 @@ struct FragmentOutput {
 // フラグメントシェーダー
 @fragment
 fn fmain(
+    @location(0) color: vec4<f32>,
 ) -> FragmentOutput {
     var output: FragmentOutput;
     // if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
     //     discard ;
     // }
-    output.color = vec4<f32>(0,0,0,1);
+    output.color = color;
     return output;
 }

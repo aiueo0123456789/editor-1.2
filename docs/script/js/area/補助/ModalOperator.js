@@ -5,7 +5,11 @@ import { CreatorForUI } from "./UIの自動生成.js";
 
 export class ModalOperator {
     constructor(dom, modals) {
-        this.dom = createTag(dom, "div", {style: "width: 100%; height: 100%; position: absolute; pointerEvents: none;"});
+        if (dom) {
+            this.dom = createTag(dom, "div", {style: "width: 100%; height: 100%; position: absolute; pointerEvents: none;"});
+        } else {
+            this.dom = null;
+        }
         this.modals = modals;
         this.nowModal = null;
         this.creatorForUI = new CreatorForUI();
@@ -17,12 +21,14 @@ export class ModalOperator {
 
     setModal(model) {
         this.nowModal = new model(this);
-        this.nowModal.init();
-        this.creatorForUI.remove();
-        const template = {type: "div", style: "backgroundColor: rgba(0,0,0,0.5)"};
-        if (this.nowModal.modal) {
-            // struct1.struct.DOM
-            this.creatorForUI.shelfeCreate(this.dom, this.nowModal.modal);
+        this.nowModal.init(app.scene.state.currentMode);
+        if (this.dom) {
+            this.creatorForUI.remove();
+            const template = {type: "div", style: "backgroundColor: rgba(0,0,0,0.5)"};
+            if (this.nowModal.modal) {
+                // struct1.struct.DOM
+                this.creatorForUI.shelfeCreate(this.dom, this.nowModal.modal);
+            }
         }
     }
 

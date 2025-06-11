@@ -6,7 +6,6 @@ import { sampler } from "../../GPUObject.js";
 import { loadFile } from '../../utility.js';
 import { Camera } from '../../カメラ.js';
 import { vec2 } from '../../ベクトル計算.js';
-import { Select } from '../../選択.js';
 import { ConvertCoordinate } from '../../座標の変換.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
 import { CreatorForUI } from '../補助/UIの自動生成.js';

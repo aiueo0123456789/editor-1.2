@@ -1,6 +1,5 @@
 import { device,GPU } from "./webGPU.js";
 import { adaptAllAnimationToVerticesPipeline } from "./GPUObject.js";
-import { arrayMath } from "./配列計算.js";
 import { createID, managerForDOMs } from "./UI/制御.js";
 
 export class AnimationBlock {

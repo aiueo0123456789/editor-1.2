@@ -4,10 +4,56 @@ import { AnimationBlock, BoneAnimation, VerticesAnimation } from "../アニメ�
 import { calculateBaseBoneDataPipeline } from "../GPUObject.js";
 import { createID } from "../UI/制御.js";
 import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { Color } from "../エディタ設定.js";
 import { createArrayN, createStructArrayN, indexOfSplice } from "../utility.js";
 import { Attachments } from "./アタッチメント/attachments.js";
 import { app } from "../app.js";
+
+class ColorAnddWidth {
+    constructor(color = [0,0,0,1], width = 15) {
+        this.color = color;
+        this.colorBuffer = GPU.createUniformBuffer(16, undefined, ["f32"]);
+        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
+        this.width = width;
+        this.widthBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
+        GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
+        this.group = GPU.createGroup(GPU.getGroupLayout("Vu_Fu"), [this.widthBuffer,this.colorBuffer]);
+    }
+
+    setColor(r,g,b,a = 1) {
+        this.color = [r,g,b,a];
+        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
+    }
+
+    setWidth(width) {
+        this.width = width;
+        GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
+    }
+
+    setColorAndWidth(r,g,b,a, width) {
+        this.color = [r,g,b,a];
+        this.width = width;
+        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
+        GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
+    }
+}
+
+class Color {
+    constructor(color = [0,0,0,1]) {
+        this.color = color;
+        this.colorBuffer = GPU.createUniformBuffer(16, undefined, ["f32"]);
+        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
+        this.group = GPU.createGroup(GPU.getGroupLayout("Fu"), [this.colorBuffer]);
+    }
+
+    setColor(r,g,b,a = 1) {
+        this.color = [r,g,b,a];
+        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
+    }
+
+    getRGB() {
+        return this.color.slice(0,3);
+    }
+}
 
 class Bone {
     constructor(armature,index) {

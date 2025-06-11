@@ -160,9 +160,9 @@ export function boolTo0or1(bool) {
     return bool ? 1 : 0;
 }
 
-export function calculateLocalMousePosition(/** @type {HTMLElement} */dom, position) {
+export function calculateLocalMousePosition(/** @type {HTMLElement} */dom, position, pixelDensity = 1) {
     const rect = dom.getBoundingClientRect();
-    return vec2.subR(position, [rect.left, rect.top]);
+    return vec2.scaleR(vec2.subR(position, [rect.left, rect.top]), pixelDensity);
 }
 
 export function createArrayFromHashKeys(hash) {

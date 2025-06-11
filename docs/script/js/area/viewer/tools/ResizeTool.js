@@ -41,15 +41,15 @@ export class ResizeModal {
     }
 
     async init() {
-        if (app.scene.state.currentMode == "メッシュ編集") {
+        if (type == "メッシュ編集") {
             this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);
-        } else if (app.scene.state.currentMode == "頂点アニメーション編集") {
+        } else if (type == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
-        } else if (app.scene.state.currentMode == "ボーン編集") {
+        } else if (type == "ボーン編集") {
             this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.boneModifierData.renderingVertices, app.scene.gpuData.boneModifierData.selectedVertices);
-        } else if (app.scene.state.currentMode == "ベジェ編集") {
+        } else if (type == "ベジェ編集") {
             this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.bezierModifierData.renderingVertices, app.scene.gpuData.bezierModifierData.selectedVertices);
         }

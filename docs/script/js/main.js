@@ -1,8 +1,6 @@
 import { app } from './app.js';
 import { RenderObjectManager } from './レンダー.js';
 import { managerForDOMs, updateLoad } from "./UI/制御.js";
-// import { StateMachine } from './ステートマシーン/状態遷移.js';
-import { EditorPreference } from './エディタ設定.js';
 import { GPU } from './webGPU.js';
 
 // updateLoad("", 100);
@@ -12,7 +10,6 @@ const appendModal = document.getElementById("appendModal");
 const directories = document.getElementById("directories");
 appendModal.classList.add("hidden");
 
-export const editorParameters = new EditorPreference();
 // export const stateMachine = new StateMachine();
 export const renderObjectManager = new RenderObjectManager();
 

@@ -1,5 +1,5 @@
-import { GPU,device } from "../webGPU.js";
-import { adaptAllAnimationToVerticesPipeline,modifierTransformPipeline,rotateModifierTransformPipeline,bezierModifierTransformPipeline, setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, updateCenterPositionPipeline, calculateBoneModifierLocalMatrixPipeline, calculateBoneModifierMatrixPropagatePipeline, calculateBoneModifierWeightToVerticesPipeline, adaptBoneModifierToVerticesPipeline, calculateBoneVerticesPipeline } from "../GPUObject.js";
+import { GPU } from "../webGPU.js";
+import { setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, updateCenterPositionPipeline, calculateBoneModifierWeightToVerticesPipeline } from "../GPUObject.js";
 import { calculateBBoxFromAllVertices } from "../BBox.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createID, managerForDOMs } from "../UI/制御.js";

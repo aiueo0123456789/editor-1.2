@@ -5,7 +5,6 @@ import { sampler } from "../../GPUObject.js";
 import { boolTo0or1, calculateLocalMousePosition, loadFile } from '../../utility.js';
 import { Camera } from '../../カメラ.js';
 import { vec2 } from '../../ベクトル計算.js';
-import { Select } from '../../選択.js';
 import { ConvertCoordinate } from '../../座標の変換.js';
 import { CreatorForUI } from '../補助/UIの自動生成.js';
 import { resizeObserver } from '../補助/canvasResizeObserver.js';
@@ -99,7 +98,7 @@ export class Area_Viewer {
                             {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
                         ]},
                         {type: "div", style: "width: 20px; backgroundColor: rgb(20,20,20);", class: "sharpBoder", children: [
-                            
+
                         ]},
                     ]}
                 ]}
@@ -116,7 +115,6 @@ export class Area_Viewer {
         this.camera = new Camera();
         this.renderer = new Renderer(this.canvas, this.camera, this);
         this.convertCoordinate = new ConvertCoordinate(this.canvas,this.camera);
-        this.select = new Select(this.convertCoordinate);
 
         // this.mouseState = {client: [0,0], click: false, rightClick: false, hold: false, holdFrameCount: 0, clickPosition: [0,0], clickPositionForGPU:[0,0], position: [0,0], lastPosition: [0,0], positionForGPU: [0,0], lastPositionForGPU: [0,0], movementForGPU: [0,0]};
         this.inputs = {click: [0,0], position: [0,0], movement: [0,0], clickPosition: [0,0], lastPosition: [0,0]};
@@ -218,7 +216,6 @@ export class Area_Viewer {
         vec2.sub(this.inputs.movement, local, this.inputs.position);
         this.inputs.position = local;
 
-        // let consumed = this.modalOperator.mouseMove(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
         let consumed = this.modalOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }

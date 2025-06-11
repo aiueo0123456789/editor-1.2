@@ -1,9 +1,14 @@
 import { app } from "../../app.js";
 import { createID, managerForDOMs } from "../../UI/制御.js";
 import { calculateLocalMousePosition, errorCut } from "../../utility.js";
+import { AnimationCollector } from "../../オブジェクト/アニメーションコレクター.js";
 import { vec2 } from "../../ベクトル計算.js";
 import { resizeObserver } from "../補助/canvasResizeObserver.js";
+import { ModalOperator } from "../補助/ModalOperator.js";
 import { CreatorForUI } from "../補助/UIの自動生成.js";
+import { KeyResize } from "./tools/KeyResize.js";
+import { KeyRotate } from "./tools/KeyRotate.js";
+import { KeyTranslate } from "./tools/KeyTranslate.js";
 
 function update(object, groupID, others, DOMs) {
     const o = others.object;
@@ -105,12 +110,12 @@ function update(object, groupID, others, DOMs) {
         o.context.stroke();
     }
     // let offset = 0;
-    for (const AnimationCollector of app.scene.animationCollectors) {
-        if (!o.selectedOnly || app.scene.state.isSelect(AnimationCollector)) {
+    for (const animationCollector of app.scene.animationCollectors) {
+        if (!o.selectedOnly || app.scene.state.isSelect(animationCollector)) {
             o.context.strokeStyle = "rgba(62, 62, 255, 0.5)";
             o.context.lineWidth = 10;
-            let lastData = AnimationCollector.keyframe.keys[0];
-            for (const keyData of AnimationCollector.keyframe.keys.slice(1)) {
+            let lastData = animationCollector.keyframe.keys[0];
+            for (const keyData of animationCollector.keyframe.keys.slice(1)) {
                 // ベジェ曲線を描く
                 o.context.beginPath();
                 o.context.moveTo(...o.worldToCanvas(lastData.point));
@@ -123,28 +128,28 @@ function update(object, groupID, others, DOMs) {
                 o.context.stroke();
                 lastData = keyData;
             }
-            for (const keyData of AnimationCollector.keyframe.keys) {
+            for (const keyData of animationCollector.keyframe.keys) {
                 lastData = keyData;
                 // 制御点と線
                 const check = (vertex) => {
                     return o.spaceData.selectVertices.includes(vertex) ? "rgb(255, 255, 255)" : "rgb(0,0,0)";
                 }
                 circle(o.worldToCanvas(keyData.point), 20, check(keyData.point));
-                circleStroke(o.worldToCanvas(keyData.wLeftHandle), 15, check(keyData.leftHandle), 7);
-                circleStroke(o.worldToCanvas(keyData.wRightHandle), 15, check(keyData.rightHandle), 7);
+                circleStroke(o.worldToCanvas(keyData.wLeftHandle), 15, check(keyData.wLeftHandle), 7);
+                circleStroke(o.worldToCanvas(keyData.wRightHandle), 15, check(keyData.wRightHandle), 7);
             }
         }
         // offset ++;
     }
-    circle(o.worldToCanvas(o.mouseState.worldPosition), 20, "rgb(255, 0, 0)");
+    circle(o.worldToCanvas(o.inputs.position), 20, "rgb(255, 0, 0)");
 }
 
 export class Area_Timeline {
     constructor(/** @type {HTMLElement} */dom) {
-        this.spaceData = app.appConfig.areasConfig["Timeline"];
         this.dom = dom;
+        this.spaceData = app.appConfig.areasConfig["Timeline"];
 
-        this.scroll = [0,0];
+        this.camera = [0,0];
         // this.zoom = [1,1];
         this.zoom = [5,5];
 
@@ -187,9 +192,9 @@ export class Area_Timeline {
                                 ]},
                             ]},
                         ]},
-                        {type: "box", style: "width: 100%; height: 100%; position: relative;", children: [
+                        {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
                             {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
-                        ]}
+                        ]},
                     ]}
                 ]}
             ],
@@ -201,6 +206,8 @@ export class Area_Timeline {
         this.creator = new CreatorForUI();
         this.creator.create(dom, this, {padding: false});
 
+        this.modalOperator = new ModalOperator(this.creator.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize});
+
         /** @type {HTMLElement} */
         this.canvas = this.creator.getDOMFromID("timelineCanvasForGrid");
         this.canvasRect = this.canvas.getBoundingClientRect();
@@ -208,12 +215,13 @@ export class Area_Timeline {
 
         this.canvasSize = [this.canvas.width,this.canvas.height];
 
-        this.mouseState = {worldPosition: [0,0], movement: [0,0]};
+        this.inputs = {click: [0,0], position: [0,0], movement: [0,0], clickPosition: [0,0], lastPosition: [0,0]};
 
         this.pixelDensity = 5;
 
         resizeObserver.push(this.canvas, () => {
             this.canvasRect = this.canvas.getBoundingClientRect();
+            console.log(this.canvasRect, [this.canvas.offsetWidth,this.canvas.offsetHeight])
             this.canvas.width = this.canvasRect.width * this.pixelDensity;
             this.canvas.height = this.canvasRect.height * this.pixelDensity;
             this.canvasSize = [this.canvas.width,this.canvas.height];
@@ -231,11 +239,11 @@ export class Area_Timeline {
     }
 
     worldToCamera(p) {
-        return vec2.mulR(vec2.subR(p, this.scroll), vec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
+        return vec2.mulR(vec2.subR(p, this.camera), vec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
     }
 
     cameraToWorld(p) {
-        return vec2.addR(vec2.divR(p, vec2.scaleR(this.zoom,this.pixelDensity)), this.scroll); // p / (zoom * pixelDensity) + camera
+        return vec2.addR(vec2.divR(p, vec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
     }
 
     worldToClip(p) {
@@ -260,32 +268,52 @@ export class Area_Timeline {
         return this.clipToCanvas(this.worldToClip(p));
     }
 
-    inputUpdate() {
-        if (app.input.keysDown["g"]) {
-            for (const vertex of this.spaceData.selectVertices) {
-                vec2.add(vertex, vertex, this.mouseState.movement);
-            }
-        }
+    keyInput(inputManager) {
+        let consumed = this.modalOperator.keyInput(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        if (consumed) return ;
     }
 
     mousedown(inputManager) {
-        const local = vec2.flipY(vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.pixelDensity), this.canvas.height); // canvasないのlocal座標へ
-        this.mouseState.clickPosition = local;
-        this.mouseState.position = local;
-        this.mouseState.clickPositionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-        this.mouseState.positionForGPU = this.convertCoordinate.screenPosFromGPUPos(this.mouseState.position);
-        this.mouseState.hold = true;
-        this.mouseState.holdFrameCount = 0;
-        this.mouseState.click = true;
+        const local = calculateLocalMousePosition(this.canvas, inputManager.mousePosition, this.pixelDensity);
+        const world = this.canvasToWorld(local);
+        this.inputs.position = world;
+        let consumed = this.modalOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        if (consumed) return ;
+        if (!inputManager.keysDown["Shift"]) this.spaceData.selectVertices.length = 0;
+        for (const /** @type {AnimationCollector} */animationCollector of app.scene.animationCollectors) {
+            for (const keyData of animationCollector.keyframe.keys) {
+                if (vec2.distanceR(world, keyData.point) < 2) {
+                    if (!this.spaceData.selectVertices.includes(keyData.point)) {
+                        this.spaceData.selectVertices.push(keyData.point);
+                    }
+                }
+                if (vec2.distanceR(world, keyData.wLeftHandle) < 2) {
+                    if (!this.spaceData.selectVertices.includes(keyData.wLeftHandle)) {
+                        this.spaceData.selectVertices.push(keyData.wLeftHandle);
+                    }
+                }
+                if (vec2.distanceR(world, keyData.wRightHandle) < 2) {
+                    if (!this.spaceData.selectVertices.includes(keyData.wRightHandle)) {
+                        this.spaceData.selectVertices.push(keyData.wRightHandle);
+                    }
+                }
+            }
+        }
+        managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
     }
     mousemove(inputManager) {
         const local = vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.mousePosition), this.pixelDensity);
-        this.mouseState.worldPosition = this.canvasToWorld(local);
+
+        const world = this.canvasToWorld(local);
+        this.inputs.lastPosition = [...this.inputs.position];
+        vec2.sub(this.inputs.movement, world, this.inputs.position);
+        this.inputs.position = world;
+
+        let consumed = this.modalOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+        if (consumed) return ;
     }
     mouseup(inputManager) {
-        this.mouseState.hold = false;
-        this.mouseState.holdFrameCount = 0;
     }
 
     wheel(inputManager) {
@@ -295,8 +323,8 @@ export class Area_Timeline {
             this.zoom[0] = Math.max(0.1,this.zoom[0]);
             this.zoom[1] = Math.max(0.1,this.zoom[1]);
         } else {
-            this.scroll[0] += inputManager.wheelDelta[0] / this.zoom[0];
-            this.scroll[1] -= inputManager.wheelDelta[1] / this.zoom[1];
+            this.camera[0] += inputManager.wheelDelta[0] / this.zoom[0];
+            this.camera[1] -= inputManager.wheelDelta[1] / this.zoom[1];
         }
         managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
     }

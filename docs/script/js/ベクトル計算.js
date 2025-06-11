@@ -179,6 +179,10 @@ class Vec2 {
         vec[1] = height - vec[1];
         return vec;
     }
+
+    copy(vec) {
+        return [...vec];
+    }
 }
 
 export const vec2 = new Vec2();

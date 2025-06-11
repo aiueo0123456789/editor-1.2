@@ -10,7 +10,7 @@ class Modal {
     }
 }
 
-export class RotateModal {
+export class KeyRotate {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         this.command = null;

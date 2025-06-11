@@ -1,4 +1,5 @@
 import { app } from "../../app.js";
+import { vec2 } from "../../ベクトル計算.js";
 
 export class TimelineSpaceData {
     constructor() {
@@ -22,6 +23,10 @@ export class TimelineSpaceData {
         result.push("test");
 
         return result;
+    }
+
+    getSelectVerticesCenter() {
+        return vec2.averageR(this.selectVertices);
     }
 
     getVisibleKeyFrame() {

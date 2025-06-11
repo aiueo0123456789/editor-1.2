@@ -6,16 +6,10 @@ function bezierInterpolation(keyA, keyB, currentFrame) {
     if (currentFrame <= keyA.frame) return keyA.value;
     if (currentFrame >= keyB.frame) return keyB.value;
     // ベジェ曲線の制御点を設定
-    const p0 = [keyA.frame, keyA.value];
-    const p1 = [
-        keyA.frame + keyA.rightHandle[0],
-        keyA.value + keyA.rightHandle[1]
-    ];
-    const p2 = [
-        keyB.frame + keyB.leftHandle[0],
-        keyB.value + keyB.leftHandle[1]
-    ];
-    const p3 = [keyB.frame, keyB.value];
+    const p0 = keyA.point;
+    const p1 = keyA.wRightHandle;
+    const p2 = keyB.wLeftHandle;
+    const p3 = keyB.point;
     // 特定のx座標（フレーム）に対応するtの値を数値的に求める
     // 二分法を使用して解を求める
     let tLow = 0;
@@ -92,6 +86,13 @@ class Keyframe {
         this.point[1] = value;
         this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
         this.wRightHandle = vec2.addR(this.point, this.rightHandle);
+    }
+
+    updateWorldToLocal() {
+        this.frame = this.point[0];
+        this.value = this.point[1];
+        this.leftHandle = vec2.subR(this.wLeftHandle, this.point);
+        this.rightHandle = vec2.subR(this.wRightHandle, this.point);
     }
 }
 

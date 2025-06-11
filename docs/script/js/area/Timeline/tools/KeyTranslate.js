@@ -2,10 +2,10 @@ import { app } from "../../../app.js";
 import { InputManager } from "../../../app/InputManager.js";
 import { managerForDOMs } from "../../../UI/制御.js";
 import { GPU } from "../../../webGPU.js";
-import { TranslateCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
+import { KeyTranslateCommand } from "../../../機能/オペレーター/キートランスフォーム/キートランスフォーム.js";
 import { ModalOperator } from "../../補助/ModalOperator.js";
 
-export class TranslateModal {
+export class KeyTranslate {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         this.command = null;
@@ -39,19 +39,9 @@ export class TranslateModal {
         managerForDOMs.set({o: this.values, g: "_", i: "3"}, null, update, null);
     }
 
-    async init(type) {
-        if (type == "メッシュ編集") {
-            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);
-        } else if (type == "頂点アニメーション編集") {
-            // this.command = new TranslateCommand(app.scene.state.selectedObject);
-        } else if (type == "ボーン編集") {
-            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.boneModifierData.renderingVertices, app.scene.gpuData.boneModifierData.selectedVertices);
-        } else if (type == "ベジェ編集") {
-            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.bezierModifierData.renderingVertices, app.scene.gpuData.bezierModifierData.selectedVertices);
-        }
+    async init() {
+        this.command = new KeyTranslateCommand(app.appConfig.areasConfig["Timeline"].selectVertices);
+        this.center = app.appConfig.areasConfig["Timeline"].getSelectVerticesCenter();
         this.command.setCenterPoint(this.center);
     }
 
