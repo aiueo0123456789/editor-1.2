@@ -298,7 +298,7 @@ class Area {
 class AnimationPlayer {
     constructor(/** @type {Application} */app) {
         this.app = app;
-        this.isPlaying = true;
+        this.isPlaying = false;
         this.speed = 1.0;
     }
 
@@ -320,20 +320,20 @@ export const app = new Application(document.getElementById("app"));
 const area1 = app.createArea("w");
 const area1_h = app.createArea("h", area1.child1);
 const area2 = app.createArea("w", area1.child2);
-const area3 = app.createArea("h", area2.child2);
-const area4 = app.createArea("w", area3.child1);
+// const area3 = app.createArea("h", area2.child2);
+// const area4 = app.createArea("w", area3.child1);
 app.setAreaType(area1_h,0,"Viewer");
 app.setAreaType(area2,0,"Hierarchy");
 // app.setAreaType(area4,0,"Hierarchy");
-app.setAreaType(area4,0,"Viewer");
+// app.setAreaType(area4,0,"Viewer");
 // app.setAreaType(area4,0,"Preview");
-app.setAreaType(area3,1,"Inspector");
+app.setAreaType(area2,1,"Inspector");
 // app.setAreaType(area3,1,"Viewer");
 // app.setAreaType(area1_h,1,"Viewer");
 app.setAreaType(area1_h,1,"Timeline");
-app.setAreaType(area4,1,"Viewer");
+// app.setAreaType(area4,1,"Viewer");
 // app.setAreaType(area4,1,"Timeline");
-app.setAreaType(area4,1,"Property");
+// app.setAreaType(area4,1,"Property");
 
 function appUpdate() {
     app.update();

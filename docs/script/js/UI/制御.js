@@ -28,6 +28,10 @@ export function createTag(target, type, option = {}) {
     return element;
 }
 
+export function setClass(element, classString) {
+    element.classList.add(...classString.split(" ").filter(Boolean));
+}
+
 export function setStyle(element,style) {
     // style = style.replace(/\s+/g, ""); // 半角・全角スペースを削除
     const styles = style.split(";").filter(Boolean); // ;で区切る
@@ -469,7 +473,7 @@ export function updateRangeStyle(target) {
     const min = target.min;
     const max = target.max;
     const percentage = ((value - min) / (max - min)) * 100;
-    target.style.background = `linear-gradient(to right,rgb(172, 194, 183) ${percentage}%,rgba(0, 0, 0, 0) ${percentage}%)`;
+    target.style.background = `linear-gradient(to right,rgb(172, 194, 183) ${percentage}%,rgb(64, 64, 64) ${percentage}%)`;
 }
 export function setRangeStyle(target) {
     updateRangeStyle(target);

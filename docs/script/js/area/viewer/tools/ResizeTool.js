@@ -2,10 +2,11 @@ import { app } from "../../../app.js";
 import { InputManager } from "../../../app/InputManager.js";
 import { managerForDOMs } from "../../../UI/制御.js";
 import { GPU } from "../../../webGPU.js";
-import { TranslateCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
+import { vec2 } from "../../../ベクトル計算.js";
+import { ResizeCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
 import { ModalOperator } from "../../補助/ModalOperator.js";
 
-export class TranslateModal {
+export class ResizeModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         this.command = null;
@@ -19,7 +20,7 @@ export class TranslateModal {
             struct: {
                 DOM: [
                     {type: "div", class: "shelfe", children: [
-                        {type: "title", text: "TranslateModal", class: "shelfeTitle"},
+                        {type: "title", text: "ResizeModal", class: "shelfeTitle"},
                         {type: "input", label: "x", withObject: {object: "value", parameter: "0"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
                         {type: "input", label: "y", withObject: {object: "value", parameter: "1"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
                         {type: "input", label: "スムーズ", withObject: {object: "value", parameter: "2"}, options: {type: "number",min: 0, max: 2}},
@@ -41,15 +42,15 @@ export class TranslateModal {
 
     async init() {
         if (app.scene.state.currentMode == "メッシュ編集") {
-            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
+            this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);
         } else if (app.scene.state.currentMode == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
         } else if (app.scene.state.currentMode == "ボーン編集") {
-            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
+            this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.boneModifierData.renderingVertices, app.scene.gpuData.boneModifierData.selectedVertices);
         } else if (app.scene.state.currentMode == "ベジェ編集") {
-            this.command = new TranslateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
+            this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.bezierModifierData.renderingVertices, app.scene.gpuData.bezierModifierData.selectedVertices);
         }
         this.command.setCenterPoint(this.center);

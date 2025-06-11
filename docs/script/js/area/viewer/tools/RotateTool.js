@@ -43,7 +43,7 @@ export class RotateModal {
     async mousemove(/** @type {InputManager} */inputManager) {
         // console.log(inputManager)
         this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
-        console.log(this.values)
+        // console.log(this.values)
         this.update();
     }
 

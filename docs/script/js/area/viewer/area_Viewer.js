@@ -12,14 +12,15 @@ import { resizeObserver } from '../補助/canvasResizeObserver.js';
 import { ModalOperator } from '../補助/ModalOperator.js';
 import { TranslateModal } from './tools/TranslateTool.js';
 import { RotateModal } from './tools/RotateTool.js';
+import { ResizeModal } from './tools/ResizeTool.js';
 
 // const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./script/js/area/Viewer/shader/shader.wgsl"), [["u"]], "2d", "t");
 const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./script/js/area/Viewer/shader/maskShader.wgsl"), [["u"]], "mask", "t");
 
-const verticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/verticesShader.wgsl"), [], "2d", "s");
-const graphicMeshsMeshRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/meshShader.wgsl"), [], "2d", "s");
+const verticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/verticesShader.wgsl"), [], "2d", "s");
+const graphicMeshsMeshRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/meshShader.wgsl"), [], "2d", "s");
 
 const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/vertices.wgsl"), [], "2d", "t");
 const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/bone.wgsl"), [], "2d", "t");
@@ -50,7 +51,7 @@ export class Area_Viewer {
         this.struct = {
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option", style: "padding: 5px", name: "情報", children: [
+                    {type: "option", style: "padding: 5px", class: "sharpBoder", name: "情報", children: [
                         {type: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
                             {type: "flexBox", interval: "10px", allocation: "auto auto auto auto auto 1fr", children: [
                                 // {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: "areasConfig/tozols"}},
@@ -80,21 +81,26 @@ export class Area_Viewer {
                                 {type: "separator", size: "10px"},
         
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "select", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1,2]},
+                                    {type: "select", label: "種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1,2]},
                                 ]},
 
                                 {type: "separator", size: "10px"},
 
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "input", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                    {type: "input", label: "影響範囲", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
                                 ]},
 
                                 {type: "padding", size: "10px"},
                             ]},
                         ]}
                     ]},
-                    {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
+                    {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto", children: [
+                        {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
+                            {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
+                        ]},
+                        {type: "div", style: "width: 20px; backgroundColor: rgb(20,20,20);", class: "sharpBoder", children: [
+                            
+                        ]},
                     ]}
                 ]}
             ]
@@ -102,7 +108,7 @@ export class Area_Viewer {
 
         this.creatorForUI.create(dom, this, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();

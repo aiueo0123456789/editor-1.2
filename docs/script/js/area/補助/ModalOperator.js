@@ -19,8 +19,10 @@ export class ModalOperator {
         this.nowModal = new model(this);
         this.nowModal.init();
         this.creatorForUI.remove();
+        const template = {type: "div", style: "backgroundColor: rgba(0,0,0,0.5)"};
         if (this.nowModal.modal) {
-            this.creatorForUI.create(this.dom, this.nowModal.modal, {padding: false});
+            // struct1.struct.DOM
+            this.creatorForUI.shelfeCreate(this.dom, this.nowModal.modal);
         }
     }
 

@@ -1,5 +1,6 @@
 :root {
     --color3: #272727; /* 任意の色 */
+    --colorShelfeBackGroundColor: rgba(0, 0, 0, 0.386);
     --colorAreaBG: rgb(80, 80, 80);
     --colorSection: rgb(115, 115, 115);
     --colorSectionBoder: rgb(130, 130, 130);
@@ -30,6 +31,7 @@
     overflow-y: auto;
     display: flex;
     flex-flow: column;
+    border-radius: 0px;
 }
 .ui_container_0 > *{
     flex-shrink: 0;
@@ -43,6 +45,7 @@
     width: 100%;
     overflow-x: auto;
     overflow-y: auto;
+    border-radius: 0px;
 }
 
 /* エリア */
@@ -84,6 +87,7 @@
     overflow: hidden;
     border-top-right-radius: 0px;
     border-top-left-radius: 0px;
+    border-radius: 0px;
 }
 
 .canvasContainer {
@@ -185,7 +189,17 @@ canvas {
 }
 
 .shelfe {
-    background-color: var(--colorAreaBG);
+    position: absolute;
+    bottom: 0;
+    background-color: var(--colorShelfeBackGroundColor);
+    display: flex;
+    flex-flow: column;
     width: fit-content;
     pointer-events: all;
+    padding: 5px;
+    gap: 3px;
+}
+.shelfe .shelfeTitle {
+    background-color: #686868;
+    padding: 3px;
 }

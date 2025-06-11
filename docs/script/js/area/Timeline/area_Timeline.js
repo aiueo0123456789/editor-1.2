@@ -175,7 +175,11 @@ export class Area_Timeline {
                     {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "c", allocation: "20% 1fr", name: "", children: [
                         {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "r", allocation: "auto 1fr", name: "", children: [
                             {type: "input", options: {type: "text"}},
-                            {type: "hierarchy", name: "hierarchy", options: {arrange: false, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
+                            {type: "hierarchy", name: "hierarchy", options: {arrange: false, clickEventFn: (event, object) => {
+                                app.scene.state.setSelectedObject(object, app.input.keysDown["Shift"]);
+                                app.scene.state.setActiveObject(object);
+                                event.stopPropagation();
+                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
                                 {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
                                     {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
                                     {type: "padding", size: "10px"},

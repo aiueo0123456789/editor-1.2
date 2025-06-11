@@ -27,7 +27,7 @@ fn getBit(arrayIndex: u32, bitIndex: u32) -> u32 {
     return (flags[arrayIndex] >> bitIndex) & 1u;
 }
 
-const size = 2.0;
+const size = 1.0;
 
 fn getMeshLoop(index: u32) -> vec3<u32> {
     return vec3<u32>(meshLoops[index * 3u], meshLoops[index * 3u + 1u], meshLoops[index * 3u + 2u]);

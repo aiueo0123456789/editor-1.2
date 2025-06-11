@@ -1,6 +1,6 @@
 import { app } from "../../app.js";
 import { isFunction, isPlainObject } from "../../utility.js";
-import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setLabel, setStyle, updateRangeStyle } from "../../UI/制御.js";
+import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "../../UI/制御.js";
 import { ResizerForDOM } from "../../UI/resizer.js";
 import { SelectTag } from "./カスタムタグ.js";
 
@@ -84,9 +84,14 @@ function createCheckbox(t, type = "custom-checkbox", text = "") {
 
 const tagCreater = {
     // 要素の作成
+    "title": (this_,appendTarget,t,searchTarget,child,flag) => {
+        let element;
+        element = createTag(t, "div", {textContent: child.text});
+        return element;
+    },
     "div": (this_,appendTarget,t,searchTarget,child,flag) => {
         let element;
-        element = createTag(t, "div", {class: child?.class});
+        element = createTag(t, "div");
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
@@ -651,6 +656,9 @@ export class CreatorForUI {
                 if (child.style) {
                     setStyle(element, child.style);
                 }
+                if (child.class) {
+                    setClass(element, child.class);
+                }
                 if (child.event) {
                     for (const eventName in child.event) {
                         element.addEventListener(eventName, () => {
@@ -950,6 +958,15 @@ export class CreatorForUI {
         }
 
         this.createFromChildren(t,struct.DOM,inputObject);
+    }
+
+    shelfeCreate(/** @type {HTMLElement} */target, object) {
+        target.replaceChildren();
+        const struct = object.struct;
+        const inputObject = object.inputObject;
+        this.root = inputObject;
+
+        this.createFromChildren(target,struct.DOM,inputObject);
     }
 
     getDOMFromID(id) {
