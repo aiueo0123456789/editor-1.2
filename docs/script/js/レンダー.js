@@ -1,7 +1,6 @@
 import { GPU, device } from './webGPU.js';
 import { createID, managerForDOMs } from './UI/制御.js';
-
-const maskTextureSize = [2048,2048];
+import { app } from './app.js';
 
 class MaskTexture {
     constructor(name, size) {
@@ -27,7 +26,7 @@ export class RenderObjectManager {
         this.backgroundColor = { r: 1, g: 1, b: 1, a: 1 };
         this.maskTextures = [
             new MaskTexture("base", [1,1]),
-            new MaskTexture("test1", maskTextureSize),
+            new MaskTexture("test1", app.appConfig.MASKTEXTURESIZE),
         ];
 
         if (true) { // 白のマスクテクスチャ

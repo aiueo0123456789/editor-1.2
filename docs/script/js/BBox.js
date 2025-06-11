@@ -1,19 +1,11 @@
 import { GPU } from "./webGPU.js";
-import { calculateAllBBoxPipeline,calculateLimitBBoxPipeline, calculateLimitedBoneBBoxPipeline } from "./GPUObject.js";
+import { calculateAllBBoxPipeline } from "./GPUObject.js";
 import { vec2 } from "./ベクトル計算.js";
 
 const aaaBuffer = GPU.createStorageBuffer((2 + 2) * 4, undefined, ["f32"]);
 const aaaGroup = GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: aaaBuffer, type: "b"}]);
 export function calculateBBoxFromAllVertices(group, verticesNum) {
     GPU.runComputeShader(calculateAllBBoxPipeline, [group, aaaGroup], Math.ceil(verticesNum / 20 / 64));
-}
-
-export function calculateBBoxFromLimitedVertices(group0, group1, indexsNum) { // 選択されている頂点のBBox計算用
-    GPU.runComputeShader(calculateLimitBBoxPipeline, [group0, group1, aaaGroup], Math.ceil(indexsNum / 20 / 64));
-}
-
-export function calculateBBoxFromLimitedBone(group0, group1, indexsNum) { // 選択されている頂点のBBox計算用
-    GPU.runComputeShader(calculateLimitedBoneBBoxPipeline, [group0, group1, aaaGroup], Math.ceil(indexsNum / 20 / 64));
 }
 
 // export function BBox(points) {

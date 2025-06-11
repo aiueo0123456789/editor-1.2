@@ -1,5 +1,5 @@
 import { GPU } from "../webGPU.js";
-import { setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, updateCenterPositionPipeline, calculateBoneModifierWeightToVerticesPipeline } from "../GPUObject.js";
+import { setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, calculateBoneModifierWeightToVerticesPipeline } from "../GPUObject.js";
 import { calculateBBoxFromAllVertices } from "../BBox.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
@@ -60,21 +60,6 @@ export function setParentModifierWeight(object) {
 export function setBaseBBox(object) {
     calculateBBoxFromAllVertices(object.calculateAllBaseBBoxGroup, object.verticesNum);
     GPU.copyBufferToArray(object.baseBBoxBuffer,object.baseBBox);
-}
-
-const centerPositionBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
-const updateCenterPositionGroup2 = GPU.createGroup(GPU.getGroupLayout("Cu"), [{item: centerPositionBuffer, type: 'b'}]);
-export function updateCenterPosition(object, centerPosition) {
-    if (object.type == "回転モディファイア") {
-        object.updateBaseData([...centerPosition,1,0]);
-    } else {
-        GPU.writeBuffer(centerPositionBuffer, new Float32Array(centerPosition));
-        const baseTransformGroup1 = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.s_baseVerticesPositionBuffer, type: 'b'}, {item: object.baseBBoxBuffer, type: 'b'}]);
-        GPU.runComputeShader(updateCenterPositionPipeline, [baseTransformGroup1, updateCenterPositionGroup2], Math.ceil(object.verticesNum / 64));
-        setBaseBBox(object);
-        setParentModifierWeight(object);
-    }
-    object.isChange = true;
 }
 
 export function searchAnimation(object, animationName) {

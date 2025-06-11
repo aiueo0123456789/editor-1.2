@@ -525,6 +525,7 @@ export class Scene {
         this.rotateModifiers = [];
         this.graphicMeshs = [];
         this.boneModifiers = [];
+        this.keyframeBlocks = [];
 
         this.renderingOrder = [];
 
@@ -725,8 +726,8 @@ export class Scene {
 
     // フレームを適応
     updateAnimation(frame) {
-        for (const object of this.animationCollectors) {
-            object.keyframe.update(frame);
+        for (const keyframeBlock of this.keyframeBlocks) {
+            keyframeBlock.update(frame);
         }
     }
 
@@ -749,7 +750,7 @@ export class Scene {
     }
 
     appendMaskTexture(name) {
-        this.maskTextures.push(new MaskTexture(name, maskTextureSize));
+        this.maskTextures.push(new MaskTexture(name, this.app.appConfig.MASKTEXTURESIZE));
         managerForDOMs.update(this.maskTextures);
     }
 

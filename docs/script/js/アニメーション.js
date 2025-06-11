@@ -1,5 +1,4 @@
-import { device,GPU } from "./webGPU.js";
-import { adaptAllAnimationToVerticesPipeline } from "./GPUObject.js";
+import { GPU } from "./webGPU.js";
 import { createID, managerForDOMs } from "./UI/制御.js";
 
 export class AnimationBlock {
@@ -113,7 +112,7 @@ export class VerticesAnimation extends AnimationBase {
 
     getWorldVerticesPositionBuffer() {
         const resultBuffer = GPU.copyBufferToNewBuffer(this.belongObject.s_baseVerticesPositionBuffer);
-        GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: resultBuffer, type: "b"}]), GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
+        // GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: resultBuffer, type: "b"}]), GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
         return resultBuffer;
     }
 }

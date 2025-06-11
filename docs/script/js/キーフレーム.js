@@ -1,3 +1,4 @@
+import { app } from "./app.js";
 import { managerForDOMs } from "./UI/制御.js";
 import { vec2 } from "./ベクトル計算.js";
 
@@ -101,6 +102,7 @@ export class KeyframeBlock {
         this.belongObject = object;
         this.targetValue = "weight";
         this.keys = [];
+        app.scene.keyframeBlocks.push(this);
     }
 
     addKeyframe(frame, value) {

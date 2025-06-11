@@ -1,6 +1,6 @@
 import { device,GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
-import { AnimationBlock, BoneAnimation, VerticesAnimation } from "../アニメーション.js";
+import { AnimationBlock, BoneAnimation } from "../アニメーション.js";
 import { calculateBaseBoneDataPipeline } from "../GPUObject.js";
 import { createID } from "../UI/制御.js";
 import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";

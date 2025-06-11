@@ -87,6 +87,8 @@ class AppConfig {
         this.app = app;
         this.workSpaceTool = new WorkSpaceTool();
 
+        this.MASKTEXTURESIZE = [1024,1024];
+
         this.MAX_GRAPHICMESH = 100; // グラフィックメッシュの最大数
         this.MAX_VERTICES_PER_GRAPHICMESH = 500; // グラフィックメッシュあたりの最大頂点数
         this.MAX_MESHES_PER_GRAPHICMESH = 700; // グラフィックメッシュあたりの最大頂メッシュ数

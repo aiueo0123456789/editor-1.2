@@ -1,5 +1,4 @@
 import { app } from './app.js';
-import { RenderObjectManager } from './レンダー.js';
 import { managerForDOMs, updateLoad } from "./UI/制御.js";
 import { GPU } from './webGPU.js';
 
@@ -9,9 +8,6 @@ updateLoad("test", 100, "test");
 const appendModal = document.getElementById("appendModal");
 const directories = document.getElementById("directories");
 appendModal.classList.add("hidden");
-
-// export const stateMachine = new StateMachine();
-export const renderObjectManager = new RenderObjectManager();
 
 export const mouseEvent = {};
 let projectName = "名称未設定";
