@@ -24,7 +24,7 @@ export class RotateModal {
         this.center = [0,0];
     }
 
-    async init() {
+    async init(type) {
         if (type == "メッシュ編集") {
             this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);

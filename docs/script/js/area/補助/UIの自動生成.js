@@ -372,6 +372,9 @@ export class CreatorForUI {
     }
 
     createHierarchy(t, withObject, loopTarget, structures, searchTarget, options, flag) {
+        if (!Array.isArray(loopTarget)) {
+            loopTarget = [loopTarget];
+        }
         const hierarchyID = createID();
         let scrollableContainer = t;
         if (options.arrange) {
@@ -395,24 +398,54 @@ export class CreatorForUI {
         const scrollable = createTag(scrollableContainer, "div", {class: "scrollable"});
         const rootObject = this.findSource(withObject.object, searchTarget);
         const getAllObject = () => {
-            const getLoopChildren = (children, result = []) => {
-                for (const child of children) {
-                    result.push(child);
-                    const nextChildren = this.findSource(loopTarget, child);
-                    if (nextChildren) { // 子要素がある場合ループする
-                        getLoopChildren(nextChildren, result);
+            const getLoopChildren = (children, resultObject = []) => {
+                let filterBool_ = false;
+                const filterData = options.filter;
+                if (Array.isArray(children)) {
+                    for (const child of children) {
+                        let filterBool = filterData ? false : true;
+                        if (filterData) {
+                            if (filterData.contains) {
+                                if (child[filterData.contains.parameter] == filterData.contains.value) {
+                                    filterBool = true;
+                                }
+                            }
+                        }
+                        for (const l of loopTarget) {
+                            const nextChildren = this.findSource(l, child);
+                            if (nextChildren) { // 子要素がある場合ループする
+                                const fnResult = getLoopChildren(nextChildren, resultObject);
+                                if (filterData) {
+                                    if (fnResult.filter) {
+                                        filterBool = true;
+                                    }
+                                }
+                            }
+                        }
+                        if (filterBool) {
+                            resultObject.push(child);
+                            filterBool_ = true;
+                        }
+                    }
+                } else {
+                    if (filterData) {
+                        if (filterData.contains) {
+                            if (children[filterData.contains.parameter] == filterData.contains.value) {
+                                filterBool_ = true;
+                                resultObject.push(children);
+                            }
+                        }
                     }
                 }
-                return result;
+                return {filter: filterBool_,result: resultObject};
             }
-            return getLoopChildren(rootObject);
+            return getLoopChildren(rootObject).result;
         }
         const hierarchyUpdate = (o, gID, t) => {
             const allObject = getAllObject();
             for (const object of allObject) {
                 if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, hierarchyID).length) { // タグが存在しない場合新規作成
                     const container = createTag(null, "div", {style: "paddingLeft: 2px;"});
-
                     if (typeof options.clickEventFn === 'function') { // 関数が設定されていたら適応
                         container.addEventListener("click", (event) => {
                             options.clickEventFn(event, object);
@@ -453,13 +486,22 @@ export class CreatorForUI {
                 }
             }
             const looper = (children,targetDOM = scrollable) => {
-                for (const child of children) {
-                    const managerObject = managerForDOMs.getObjectAndGroupID(child, this.groupID, hierarchyID)[0].dom;
-                    targetDOM.append(managerObject.container);
-                    const nextChildren = this.findSource(loopTarget, child);
-                    if (nextChildren) { // 子要素がある場合ループする
-                        looper(nextChildren, managerObject.childrenContainer);
+                if (Array.isArray(children)) {
+                    for (const child of children) {
+                        if (allObject.includes(child)) {
+                            const managerObject = managerForDOMs.getObjectAndGroupID(child, this.groupID, hierarchyID)[0].dom;
+                            targetDOM.append(managerObject.container);
+                            for (const l of loopTarget) {
+                                const nextChildren = this.findSource(l, child);
+                                if (nextChildren) { // 子要素がある場合ループする
+                                    looper(nextChildren, managerObject.childrenContainer);
+                                }
+                            }
+                        }
                     }
+                } else {
+                    const managerObject = managerForDOMs.getObjectAndGroupID(children, this.groupID, hierarchyID)[0].dom;
+                    targetDOM.append(managerObject.container);
                 }
             }
             looper(rootObject);
@@ -491,20 +533,24 @@ export class CreatorForUI {
 
     // パスからオブジェクトの参照を見つける
     findSource(path, searchTarget) {
-        if (path == "") {
-            return searchTarget;
-        } else {
-            // pathをもとに参照
-            const pathRoot = path.split("/");
-            let object = searchTarget;
-            for (const next of pathRoot) {
-                if (next in object) {
-                    object = object[next];
-                } else {
-                    return null;
+        try {
+            if (path == "") {
+                return searchTarget;
+            } else {
+                // pathをもとに参照
+                const pathRoot = path.split("/");
+                let object = searchTarget;
+                for (const next of pathRoot) {
+                    if (next in object) {
+                        object = object[next];
+                    } else {
+                        return null;
+                    }
                 }
+                return object;
             }
-            return object;
+        } catch {
+            console.warn(path, searchTarget, "でエラーが出ました");
         }
     }
 

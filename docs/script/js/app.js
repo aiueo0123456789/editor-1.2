@@ -209,15 +209,9 @@ export class Application { // 全てをまとめる
         this.areaMap.delete(area);
     }
 
-    async update() {
-        for (const area of this.areas) {
-            if ("inputUpdate" in area.uiModel) {
-                area.uiModel.inputUpdate();
-            }
-        }
-        // await stateMachine.stateUpdate();
+    update() {
         // 表示順番の再計算
-        this.scene.updateRenderingOrder(100);
+        this.scene.updateRenderingOrder();
         if (true) {
             this.scene.updateAnimation(this.scene.frame_current);
         }
@@ -232,7 +226,6 @@ export class Application { // 全てをまとめる
         this.areas.forEach((area) => {
             area.update();
         })
-        // renderingParameters.updateKeyfarameCount();
         this.operator.update();
     }
 }

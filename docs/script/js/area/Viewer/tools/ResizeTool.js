@@ -40,7 +40,7 @@ export class ResizeModal {
         managerForDOMs.set({o: this.values, g: "_", i: "3"}, null, update, null);
     }
 
-    async init() {
+    async init(type) {
         if (type == "メッシュ編集") {
             this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);

@@ -95,7 +95,7 @@ export class Area_Viewer {
                     ]},
                     {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto", children: [
                         {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
+                            {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
                         ]},
                         {type: "div", style: "width: 20px; backgroundColor: rgb(20,20,20);", class: "sharpBoder", children: [
 

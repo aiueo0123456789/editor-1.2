@@ -1,5 +1,6 @@
 import { GPU } from "./webGPU.js";
 import { createID, managerForDOMs } from "./UI/制御.js";
+import { KeyframeBlock } from "./キーフレーム.js";
 
 export class AnimationBlock {
     constructor(belongObject,useClass) {
@@ -73,6 +74,7 @@ class AnimationBase {
         this.id = createID();
         this.name = name;
         this.animationOffset = belongObject.animationBlock.animationBlock.length;
+        this.keyframe = new KeyframeBlock(this);
 
         this.weight = 0;
 
@@ -117,34 +119,10 @@ export class VerticesAnimation extends AnimationBase {
     }
 }
 
-export class BoneAnimation {
+export class BoneAnimation extends AnimationBase {
     constructor(name, belongObject) {
-        this.id = createID();
+        super(name, belongObject);
         this.type = "ボーンアニメーション";
-        this.weight = 0;
-        this.beforeWeight = 0;
-        this.s_verticesAnimationBuffer = null;
-        this.u_animationWeightBuffer = GPU.createUniformBuffer(4, undefined, ['f32']);
-        this.adaptAnimationGroup2 = null;
-
-        this.name = name;
-
-        this.belongAnimationCollector = null;
-        this.belongObject = belongObject;
-    }
-
-    // gc対象にしてメモリ解放
-    destroy() {
-        this.type = "ボーンアニメーション";
-        this.weight = 0;
-        this.s_verticesAnimationBuffer = null;
-        this.u_animationWeightBuffer = null;
-        this.adaptAnimationGroup2 = null;
-
-        this.name = null;
-
-        this.belongAnimationCollector = null;
-        this.belongObject = null;
     }
 
     async getSaveData() {

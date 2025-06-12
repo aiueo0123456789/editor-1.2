@@ -24,7 +24,7 @@ export class Area_Preview {
                     {type: "option", name: "情報", children: [
                     ]},
                     {type: "box", style: "width: 100%; height: 100%; position: relative;", children: [
-                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
+                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
                     ]}
                 ]}
             ]

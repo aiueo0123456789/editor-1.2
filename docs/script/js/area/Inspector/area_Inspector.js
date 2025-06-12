@@ -25,9 +25,17 @@ export class Area_Inspector {
                                         {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                     ],
                                     false: [
-                                        {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
-                                        {type: "input", label: "最大ボーン数", withObject: {object: "", parameter: "MAX_BONES"}, options: {type: "number"}, custom: {visual: "1"}},
-                                        {type: "input", label: "ボーン数", withObject: {object: "", parameter: "boneNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                                        {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "ボーンモディファイア"},
+                                            true: [
+                                                {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                                {type: "input", label: "最大ボーン数", withObject: {object: "", parameter: "MAX_BONES"}, options: {type: "number"}, custom: {visual: "1"}},
+                                                {type: "input", label: "ボーン数", withObject: {object: "", parameter: "boneNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                                            ],
+                                            false: [
+                                                {type: "input", label: "対象オブジェクト", withObject: {object: "belongObject", parameter: "name"}, options: {type: "text"}},
+                                                {type: "input", label: "対象値", withObject: {object: "", parameter: "targetValue"}, options: {type: "text"}},
+                                            ]
+                                        }
                                     ]
                                 }
                             ]

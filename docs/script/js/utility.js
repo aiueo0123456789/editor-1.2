@@ -209,3 +209,9 @@ export function timeSleep(ms) {
 export function errorCut(num, rate = 1000) {
     return Math.round(num * rate) / rate;
 }
+
+export function isPointInEllipse(p, c, radius) {
+    const dx = p[0] - c[0];
+    const dy = p[1] - c[1];
+    return (dx * dx) / radius[0] ** 2 + (dy * dy) / radius[1] ** 2 <= 1;
+}

@@ -24,13 +24,15 @@ export class DOMsManager_DataBlock {
         // 全てループしてメモリ解放
         const fn = (data, depth = 0) => {
             if (maxDepth <= depth) return ;
-            if (data instanceof HTMLElement) {
+            if (data instanceof HTMLElement) { // HTMLElementなら削除
                 data.remove();
-            } else if (isPlainObject(data)) {
+            } else if (data?.customTag) { // カスタムタグなら削除
+                data.remove();
+            } else if (isPlainObject(data)) { // 連想配列なら中身をループ
                 for (const key in data) {
                     fn(data[key], depth + 1);
                 }
-            } else if (Array.isArray(data)) {
+            } else if (Array.isArray(data)) { // 配列なら中身をループ
                 for (const value of data) {
                     fn(value, depth + 1);
                 }

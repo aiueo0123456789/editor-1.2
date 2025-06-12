@@ -2,6 +2,7 @@ import { createTag } from "../../UI/制御.js";
 
 export class SelectTag {
     constructor(t, list = []) {
+        this.customTag = true;
         console.log("セレクトの生成", t, list);
         const container = createTag(t, "div");
         const select = createTag(container, "input", {style: "display: none;"});

@@ -1,7 +1,6 @@
 import { app } from "../../../app.js";
 import { InputManager } from "../../../app/InputManager.js";
 import { managerForDOMs } from "../../../UI/制御.js";
-import { GPU } from "../../../webGPU.js";
 import { KeyTranslateCommand } from "../../../機能/オペレーター/キートランスフォーム/キートランスフォーム.js";
 import { ModalOperator } from "../../補助/ModalOperator.js";
 

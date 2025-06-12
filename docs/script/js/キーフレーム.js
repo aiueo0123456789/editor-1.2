@@ -52,7 +52,9 @@ function cubic_bezier(t, p0, p1, p2, p3) {
 }
 
 class Keyframe {
-    constructor(frame, value) {
+    constructor(belongBlock, frame, value) {
+        this.type = "キーフレーム"
+        this.belongBlock = belongBlock;
         this.frame = frame;
         this.value = value;
         this.leftHandle = [-3,0];
@@ -99,6 +101,7 @@ class Keyframe {
 
 export class KeyframeBlock {
     constructor(object) {
+        this.type = "キーフレームブロック"
         this.belongObject = object;
         this.targetValue = "weight";
         this.keys = [];
@@ -116,7 +119,7 @@ export class KeyframeBlock {
                 break ;
             }
         }
-        this.keys.splice(insertIndex,0, new Keyframe(frame, value));
+        this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
         managerForDOMs.update(this);
     }
 
@@ -133,7 +136,7 @@ export class KeyframeBlock {
         for (const key of data) {
             // this.addKeyframe(key.frame,key.value)
             // this.keys.push(key);
-            const keyframe =  new Keyframe();
+            const keyframe =  new Keyframe(this);
             keyframe.setSaveData(key);
             this.keys.push(keyframe);
         }
@@ -197,7 +200,7 @@ export class KeyframeBlockForGPUBuffer {
                 break ;
             }
         }
-        this.keys.splice(insertIndex,0, new Keyframe(frame, value));
+        this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
         managerForDOMs.update(this);
     }
 

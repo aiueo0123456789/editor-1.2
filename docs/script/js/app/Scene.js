@@ -928,7 +928,7 @@ export class Scene {
     //     // this.isChangeObjectsZindex = false;
     //     managerForDOMs.update("表示順番");
     // }
-    updateRenderingOrder(fineness) {
+    updateRenderingOrder() {
         this.renderingOrder = [...this.graphicMeshs].sort((a, b) => a.zIndex - b.zIndex);
         managerForDOMs.update("表示順番");
     }

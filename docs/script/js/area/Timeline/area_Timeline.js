@@ -1,6 +1,6 @@
 import { app } from "../../app.js";
 import { createID, managerForDOMs } from "../../UI/制御.js";
-import { calculateLocalMousePosition, errorCut } from "../../utility.js";
+import { calculateLocalMousePosition, errorCut, isPointInEllipse } from "../../utility.js";
 import { AnimationCollector } from "../../オブジェクト/アニメーションコレクター.js";
 import { vec2 } from "../../ベクトル計算.js";
 import { resizeObserver } from "../補助/canvasResizeObserver.js";
@@ -184,16 +184,26 @@ export class Area_Timeline {
                                 app.scene.state.setSelectedObject(object, app.input.keysDown["Shift"]);
                                 app.scene.state.setActiveObject(object);
                                 event.stopPropagation();
-                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
-                                {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                    {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
-                                    {type: "padding", size: "10px"},
-                                    {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
-                                ]},
+                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}, filter: {contains: {parameter: "type", value: "キーフレームブロック"}}}, withObject: {object: "scene/allObject"}, loopTarget: ["keyframe","animationBlock/animationBlock"], structures: [
+                                {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "キーフレームブロック"},
+                                true: [
+                                    {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                                        {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                                        {type: "padding", size: "10px"},
+                                        {type: "dbInput", withObject: {object: "", parameter: "targetValue"}, options: {type: "text"}},
+                                    ]}
+                                ],
+                                false: [
+                                    {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                                        {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                                        {type: "padding", size: "10px"},
+                                        {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                    ]}
+                                ]}
                             ]},
                         ]},
                         {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; backgroundColor: rgb(52, 52, 52); position: absolute;"},
+                            {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute;"},
                         ]},
                     ]}
                 ]}
@@ -282,17 +292,17 @@ export class Area_Timeline {
         if (!inputManager.keysDown["Shift"]) this.spaceData.selectVertices.length = 0;
         for (const /** @type {AnimationCollector} */animationCollector of app.scene.animationCollectors) {
             for (const keyData of animationCollector.keyframe.keys) {
-                if (vec2.distanceR(world, keyData.point) < 2) {
+                if (isPointInEllipse(world, keyData.point, vec2.divR([10,10],this.zoom))) {
                     if (!this.spaceData.selectVertices.includes(keyData.point)) {
                         this.spaceData.selectVertices.push(keyData.point);
                     }
                 }
-                if (vec2.distanceR(world, keyData.wLeftHandle) < 2) {
+                if (isPointInEllipse(world, keyData.wLeftHandle, vec2.divR([10,10],this.zoom))) {
                     if (!this.spaceData.selectVertices.includes(keyData.wLeftHandle)) {
                         this.spaceData.selectVertices.push(keyData.wLeftHandle);
                     }
                 }
-                if (vec2.distanceR(world, keyData.wRightHandle) < 2) {
+                if (isPointInEllipse(world, keyData.wRightHandle, vec2.divR([10,10],this.zoom))) {
                     if (!this.spaceData.selectVertices.includes(keyData.wRightHandle)) {
                         this.spaceData.selectVertices.push(keyData.wRightHandle);
                     }
