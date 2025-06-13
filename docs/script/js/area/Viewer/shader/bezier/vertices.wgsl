@@ -24,7 +24,7 @@ struct Allocation {
 @group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<Bezier>;
-@group(1) @binding(1) var<storage, read> flags: array<u32>;
+@group(1) @binding(1) var<storage, read> verticesSelected: array<u32>;
 @group(2) @binding(0) var<uniform> bezierModifierAllocation: Allocation; // 配分情報
 
 const size = 20.0;
@@ -37,7 +37,7 @@ struct VertexOutput {
 }
 
 fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 fn getBoolFromIndex(index: u32) -> bool {

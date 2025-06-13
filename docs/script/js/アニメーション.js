@@ -1,6 +1,7 @@
 import { GPU } from "./webGPU.js";
 import { createID, managerForDOMs } from "./UI/制御.js";
 import { KeyframeBlock } from "./キーフレーム.js";
+import { KeyframeBlockManager } from "./オブジェクト/キーフレームブロック管理.js";
 
 export class AnimationBlock {
     constructor(belongObject,useClass) {
@@ -74,7 +75,7 @@ class AnimationBase {
         this.id = createID();
         this.name = name;
         this.animationOffset = belongObject.animationBlock.animationBlock.length;
-        this.keyframe = new KeyframeBlock(this);
+        this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
 
         this.weight = 0;
 

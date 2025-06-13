@@ -1,8 +1,8 @@
 import { searchAnimation } from "./オブジェクトで共通の処理.js";
-import { KeyframeBlock } from "../キーフレーム.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
 import { app } from "../app.js";
 import { changeParameter } from "../utility.js";
+import { KeyframeBlockManager } from "./キーフレームブロック管理.js";
 
 class Editor {
     constructor(animationManager) {
@@ -18,7 +18,7 @@ export class AnimationCollector {
         this.weight = 0;
         this.containedAnimations = [];
         this.isChange = false;
-        this.keyframe = new KeyframeBlock(this);
+        this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
         this.editor = new Editor();
     }
 
@@ -41,7 +41,7 @@ export class AnimationCollector {
     }
 
     init(data) {
-        this.keyframe.setKeyframe(data.keyframe.keys);
+        this.keyframeBlockManager.setSaveData(data.keyframe);
         for (const [id, animationName] of data.containedAnimations) {
             const object = app.scene.searchObjectFromID(id);
             const animation = searchAnimation(object, animationName);
@@ -59,7 +59,7 @@ export class AnimationCollector {
             type: this.type,
             id: this.id,
             name: this.name,
-            keyframe: this.keyframe.getSaveData(),
+            keyframe: this.keyframeBlock.getSaveData(),
             containedAnimations : this.containedAnimations.map(x => {
                 return [x.belongObject.id, x.name];
             }),

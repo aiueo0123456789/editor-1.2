@@ -65,6 +65,12 @@ class AppOptions {
             return null;
         }
     }
+
+    keyframeInsert(object, frame, datas) {
+        for (let i = 0; i < datas.length; i ++) {
+            object.keyframeBlocks[i].insert(frame, datas[i]);
+        }
+    }
 }
 
 // モードごとに使えるツールの管理

@@ -55,6 +55,10 @@ class Keyframe {
     constructor(belongBlock, frame, value) {
         this.type = "キーフレーム"
         this.belongBlock = belongBlock;
+        this.selected = false;
+        this.pointSelected = false;
+        this.leftHandleSelected = false;
+        this.rightHandleSelected = false;
         this.frame = frame;
         this.value = value;
         this.leftHandle = [-3,0];
@@ -100,15 +104,15 @@ class Keyframe {
 }
 
 export class KeyframeBlock {
-    constructor(object) {
+    constructor(object, targetValue) {
         this.type = "キーフレームブロック"
         this.belongObject = object;
-        this.targetValue = "weight";
+        this.targetValue = targetValue;
         this.keys = [];
         app.scene.keyframeBlocks.push(this);
     }
 
-    addKeyframe(frame, value) {
+    insert(frame, value) {
         let insertIndex = this.keys.length;
         for (let i = 0; i < this.keys.length; i ++) {
             if (frame == this.keys[i].frame) {
@@ -123,7 +127,7 @@ export class KeyframeBlock {
         managerForDOMs.update(this);
     }
 
-    deleteKeyframe(key) {
+    delete(key) {
         this.keys.splice(this.keys.indexOf(key),1);
         managerForDOMs.update(this);
     }
@@ -134,8 +138,6 @@ export class KeyframeBlock {
 
     setKeyframe(data) {
         for (const key of data) {
-            // this.addKeyframe(key.frame,key.value)
-            // this.keys.push(key);
             const keyframe =  new Keyframe(this);
             keyframe.setSaveData(key);
             this.keys.push(keyframe);
@@ -170,81 +172,6 @@ export class KeyframeBlock {
         }
         this.belongObject[this.targetValue] = bezierInterpolation(leftKey, rightKey, frame);
         managerForDOMs.update(this.belongObject, "ウェイト");
-    }
-
-    getSaveData() {
-        return {
-            type: "キーブロック",
-            targetValue: this.targetValue,
-            keys: this.keys,
-        };
-    }
-}
-
-export class KeyframeBlockForGPUBuffer {
-    constructor(object) {
-        this.belongObject = object;
-        this.targetValue = "weight";
-        this.targetIndex = 0;
-        this.keys = [];
-    }
-
-    addKeyframe(frame, value) {
-        let insertIndex = this.keys.length;
-        for (let i = 0; i < this.keys.length; i ++) {
-            if (frame == this.keys[i].frame) {
-                this.keys[i].value = value;
-                return ;
-            } else if (frame < this.keys[i].frame) {
-                insertIndex = i;
-                break ;
-            }
-        }
-        this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
-        managerForDOMs.update(this);
-    }
-
-    deleteKeyframe(key) {
-        this.keys.splice(this.keys.indexOf(key),1);
-        managerForDOMs.update(this);
-    }
-
-    updateKeyframe(key,newData) {
-        key.value = newData;
-    }
-
-    setKeyframe(data) {
-        for (const key of data) {
-            this.keys.push(key);
-        }
-    }
-
-    getKeyFromFrame(frame, threshold = 0.5) {
-        for (const key of this.keys) {
-            if (Math.abs(key.frame - frame) < threshold) return key;
-        }
-        return null;
-    }
-
-    hasKeyFromFrame(frame, threshold = 0.5) {
-        for (const key of this.keys) {
-            if (Math.abs(key.frame - frame) < threshold) return true;
-        }
-        return false;
-    }
-
-    update(frame) {
-        if (this.keys.length == 0) return ;
-        let leftKey = this.keys[0];
-        let rightKey = this.keys[0];
-        for (const key of this.keys.slice(1)) {
-            leftKey = rightKey;
-            rightKey = key;
-            if (frame < key.frame) {
-                break ;
-            }
-        }
-        this.belongObject[this.targetValue] = bezierInterpolation(leftKey, rightKey, frame);
     }
 
     getSaveData() {

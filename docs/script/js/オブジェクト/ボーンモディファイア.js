@@ -7,35 +7,8 @@ import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オ�
 import { createArrayN, createStructArrayN, indexOfSplice } from "../utility.js";
 import { Attachments } from "./アタッチメント/attachments.js";
 import { app } from "../app.js";
-
-class ColorAnddWidth {
-    constructor(color = [0,0,0,1], width = 15) {
-        this.color = color;
-        this.colorBuffer = GPU.createUniformBuffer(16, undefined, ["f32"]);
-        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
-        this.width = width;
-        this.widthBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
-        GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
-        this.group = GPU.createGroup(GPU.getGroupLayout("Vu_Fu"), [this.widthBuffer,this.colorBuffer]);
-    }
-
-    setColor(r,g,b,a = 1) {
-        this.color = [r,g,b,a];
-        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
-    }
-
-    setWidth(width) {
-        this.width = width;
-        GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
-    }
-
-    setColorAndWidth(r,g,b,a, width) {
-        this.color = [r,g,b,a];
-        this.width = width;
-        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
-        GPU.writeBuffer(this.widthBuffer, new Float32Array([this.width]));
-    }
-}
+import { KeyframeBlock } from "../キーフレーム.js";
+import { KeyframeBlockManager } from "./キーフレームブロック管理.js";
 
 class Color {
     constructor(color = [0,0,0,1]) {
@@ -57,12 +30,27 @@ class Color {
 
 class Bone {
     constructor(armature,index) {
+        this.type = "ボーン";
+        this.name = "名称未設定";
         this.id = createID();
         this.parent = null;
         this.index = index;
-        this.children = [];
+        this.childrenBone = [];
         this.armature = armature;
         this.color = [0,0,0,1];
+
+        this.x = 0;
+        this.y = 0;
+        this.sx = 0;
+        this.sy = 0;
+        this.r = 0;
+        this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"]);
+
+        app.scene.gpuData.boneModifierData.allBone.push(this);
+    }
+
+    updateAnimationData() {
+        app.scene.gpuData.boneModifierData.runtimeAnimationData
     }
 }
 
@@ -80,12 +68,6 @@ class Colors {
 
     changeColor(index, color) {
 
-    }
-}
-
-class Group {
-    constructor() {
-        this.indexs = [];
     }
 }
 
@@ -136,11 +118,11 @@ class Editor extends ObjectEditorBase {
                     } else {
                         tmpData[depth].push(child.index, parent.index);
                     }
-                    roop(child.children, child, depth + 1);
+                    roop(child.childrenBone, child, depth + 1);
                 }
             } else {
                 for (const child of children) {
-                    roop(child.children, child, 0);
+                    roop(child.childrenBone, child, 0);
                 }
             }
         }
@@ -194,7 +176,7 @@ class Editor extends ObjectEditorBase {
         }
         bone.parent = parent; // 親要素の参照を切り替える
         if (parent) {
-            parent.children.push(bone); // 親要素に自分を子要素として追加
+            parent.childrenBone.push(bone); // 親要素に自分を子要素として追加
         } else {
             this.struct.push(bone); // 親要素に自分を子要素として追加
         }
@@ -203,7 +185,7 @@ class Editor extends ObjectEditorBase {
     setBoneParent(parent, bone) {
         bone.parent = parent; // 親要素の参照を切り替える
         if (parent) {
-            parent.children.push(bone); // 親要素に自分を子要素として追加
+            parent.childrenBone.push(bone); // 親要素に自分を子要素として追加
         } else {
             this.struct.push(bone); // 親要素に自分を子要素として追加
         }
@@ -270,7 +252,7 @@ class Editor extends ObjectEditorBase {
                 const childBone = new Bone(this.boneModifier, child.index);
                 this.allBones.push(childBone);
                 this.setBoneParent(parent,childBone);
-                roopChildren(child.children, childBone, depth + 1);
+                roopChildren(child.childrenBone, childBone, depth + 1);
             }
         }
         roopChildren(boneData);
@@ -320,6 +302,8 @@ export class BoneModifier extends ObjectBase {
         this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectMeshData]);
 
         this.children = new Children();
+        this.root = [];
+        this.allBone = [];
         this.editor = new Editor(this);
         this.parent = "";
 
@@ -353,11 +337,25 @@ export class BoneModifier extends ObjectBase {
         this.baseBoneMatrixBuffer = GPU.createStorageBuffer(this.boneNum * (4 * 3) * 4, undefined, ["f32","f32","f32"]); // ベース行列
         this.boneMatrixBuffer = GPU.createStorageBuffer(this.boneNum * (4 * 3) * 4, undefined, ["f32","f32","f32"]); // ポーズ行列
 
-        this.editor.setSaveData(data.editor);
-        this.editor.setBoneData(data.relationship);
-        this.editor.updatePropagateData();
+        // this.editor.setSaveData(data.editor);
+        // this.editor.setBoneData(data.relationship);
+        // this.editor.updatePropagateData();
 
         this.relationship = data.relationship;
+
+        const roopChildren = (children, parent = null, depth = 0) => {
+            for (const child of children) {
+                const childBone = new Bone(this, this.allBone.length);
+                this.allBone.push(childBone);
+                if (parent) {
+                    parent.childrenBone.push(childBone);
+                } else {
+                    this.root.push(childBone);
+                }
+                roopChildren(child.children, childBone, depth + 1);
+            }
+        }
+        roopChildren(this.relationship);
 
         app.scene.gpuData.boneModifierData.prepare(this);
         app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, data.relationship, createStructArrayN(this.boneNum, [1,1,0,1]));
@@ -365,7 +363,6 @@ export class BoneModifier extends ObjectBase {
             const animationData = keyData.transformData.transformData;
             app.scene.gpuData.boneModifierData.setAnimationData(this, animationData, index);
         })
-        // this.updatePropagateDataForGPU();
 
         this.isInit = true;
         this.isChange = true;

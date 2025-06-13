@@ -15,7 +15,7 @@ struct MeshAllocation {
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
 @group(1) @binding(1) var<storage, read> meshLoops: array<u32>;
-@group(1) @binding(2) var<storage, read> flags: array<u32>;
+@group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
 @group(2) @binding(0) var<uniform> objectData: MeshAllocation; // 配分
 
 struct VertexOutput {
@@ -24,7 +24,7 @@ struct VertexOutput {
 }
 
 fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 fn getBoolFromIndex(index: u32) -> bool {

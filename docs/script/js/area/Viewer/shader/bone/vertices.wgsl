@@ -25,7 +25,8 @@ struct Allocation {
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
 @group(1) @binding(2) var<storage, read> relationships: array<u32>;
-@group(1) @binding(3) var<storage, read> flags: array<u32>;
+@group(1) @binding(3) var<storage, read> verticesSelected: array<u32>;
+@group(1) @binding(4) var<storage, read> bonesSelected: array<u32>;
 @group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
 
 const size = 0.05;
@@ -52,7 +53,7 @@ const pointData = array<vec2<f32>, 6>(
 );
 
 fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 fn getBoolFromIndex(index: u32) -> bool {

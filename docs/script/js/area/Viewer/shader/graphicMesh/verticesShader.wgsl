@@ -25,7 +25,7 @@ struct MeshLoop {
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
 @group(1) @binding(1) var<storage, read> meshLoops: array<MeshLoop>;
-@group(1) @binding(2) var<storage, read> flags: array<u32>;
+@group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
 @group(2) @binding(0) var<uniform> objectData: Allocation;
 
 struct VertexOutput {
@@ -34,7 +34,7 @@ struct VertexOutput {
 }
 
 fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((flags[arrayIndex] >> bitIndex) & 1u) == 1u;
+    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 const size = 5.0;
@@ -54,12 +54,12 @@ fn vmain(
     ) -> VertexOutput {
     var output: VertexOutput;
     let fixIndex = objectData.vertexBufferOffset + instanceIndex;
-    let flagsArrayIndex = fixIndex / 32u;
+    let verticesSelectedArrayIndex = fixIndex / 32u;
     let flagBitIndex = fixIndex % 32u;
 
     let point = pointData[vertexIndex % 4u];
     output.position = vec4f((verticesPosition[fixIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
-    output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), getBoolFromBit(flagsArrayIndex, flagBitIndex));
+    output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), getBoolFromBit(verticesSelectedArrayIndex, flagBitIndex));
     return output;
 }
 

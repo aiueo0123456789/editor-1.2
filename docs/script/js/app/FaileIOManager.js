@@ -42,23 +42,23 @@ export class FaileIOManager {
                 source: {object: "ajRgB51r4iDQTCS9", boneIndex: 1},
             },
         ];
-        for (const data of json.attachments) {
-            if (data.type == "行列コピー") {
-                const target = this.app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
-                const source = this.app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
-                // console.log(target,source)
-                const attachment = this.app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
-                // console.log(attachment)
-                attachment.editor.setSourceBone(source);
-            } else if (data.type == "ボーン追従") {
-                const target = this.app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
-                const source = this.app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
-                // console.log(target,source)
-                const attachment = this.app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
-                // console.log(attachment)
-                attachment.editor.setSourceBone(source);
-            }
-        }
+        // for (const data of json.attachments) {
+        //     if (data.type == "行列コピー") {
+        //         const target = this.app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
+        //         const source = this.app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
+        //         // console.log(target,source)
+        //         const attachment = this.app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
+        //         // console.log(attachment)
+        //         attachment.editor.setSourceBone(source);
+        //     } else if (data.type == "ボーン追従") {
+        //         const target = this.app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
+        //         const source = this.app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
+        //         // console.log(target,source)
+        //         const attachment = this.app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
+        //         // console.log(attachment)
+        //         attachment.editor.setSourceBone(source);
+        //     }
+        // }
         managerForDOMs.allUpdate();
         console.log(this.app)
     }

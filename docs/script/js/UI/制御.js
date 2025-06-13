@@ -392,12 +392,12 @@ export function createIcon(target, imgName) {
     icon.src = `config/画像データ/ui_icon/${imgName}.png`;
     let errorC = 0;
     icon.addEventListener("error", () => {
-        console.warn("画像の読み込みに失敗",imgName)
-        if (errorC < 5) {
+        // console.warn("画像の読み込みに失敗",imgName)
+        if (errorC < 3) {
             errorC ++;
             icon.src = `config/画像データ/ui_icon/${imgName}.png`;
         } else {
-            console.error("画像の読み込みに失敗",imgName,`config/画像データ/ui_icon/${imgName}.png`)
+            // console.error("画像の読み込みに失敗",imgName,`config/画像データ/ui_icon/${imgName}.png`)
         }
     })
     container.append(icon);

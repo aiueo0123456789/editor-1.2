@@ -25,7 +25,8 @@ struct Allocation {
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
 @group(1) @binding(2) var<storage, read> relationships: array<u32>;
-@group(1) @binding(3) var<storage, read> flags: array<u32>;
+@group(1) @binding(3) var<storage, read> verticesSelected: array<u32>;
+@group(1) @binding(4) var<storage, read> bonesSelected: array<u32>;
 @group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
 
 const size = 2;

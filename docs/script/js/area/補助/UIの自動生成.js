@@ -318,7 +318,6 @@ const tagCreater = {
                     }
                 }
                 for (const childTag of Array.from(keep.children).reverse()) {
-                    // if (t) {
                     if (init) {
                         t.insertBefore(childTag,t.children[elementInsertIndex]);
                         init = false;
@@ -339,7 +338,6 @@ const tagCreater = {
         childrenReset();
     },
     "if": (this_,appendTarget,t,searchTarget,child,flag) => {
-        console.log(child)
         let bool = false;
         if (child.formula.conditions == "==") {
             bool = (this_.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.value;
@@ -372,7 +370,10 @@ export class CreatorForUI {
     }
 
     createHierarchy(t, withObject, loopTarget, structures, searchTarget, options, flag) {
-        if (!Array.isArray(loopTarget)) {
+        let loopTargetIsPlainObject = false;
+        if (loopTarget.parameter && loopTarget.loopTargets) {
+            loopTargetIsPlainObject = true;
+        } else if (!Array.isArray(loopTarget)) {
             loopTarget = [loopTarget];
         }
         const hierarchyID = createID();
@@ -401,16 +402,30 @@ export class CreatorForUI {
             const getLoopChildren = (children, resultObject = []) => {
                 let filterBool_ = false;
                 const filterData = options.filter;
-                if (Array.isArray(children)) {
-                    for (const child of children) {
-                        let filterBool = filterData ? false : true;
-                        if (filterData) {
-                            if (filterData.contains) {
-                                if (child[filterData.contains.parameter] == filterData.contains.value) {
-                                    filterBool = true;
+                const fn0 = (child) => {
+                    let filterBool = filterData ? false : true;
+                    if (filterData) {
+                        if (filterData.contains) {
+                            if (child[filterData.contains.parameter] == filterData.contains.value) {
+                                filterBool = true;
+                            }
+                        }
+                    }
+                    if (loopTargetIsPlainObject) {
+                        const targetType = child[loopTarget.parameter];
+                        const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
+                        for (const l of loopTargets) {
+                            const nextChildren = this.findSource(l, child);
+                            if (nextChildren) { // 子要素がある場合ループする
+                                const fnResult = getLoopChildren(nextChildren, resultObject);
+                                if (filterData) {
+                                    if (fnResult.filter) {
+                                        filterBool = true;
+                                    }
                                 }
                             }
                         }
+                    } else {
                         for (const l of loopTarget) {
                             const nextChildren = this.findSource(l, child);
                             if (nextChildren) { // 子要素がある場合ループする
@@ -422,20 +437,18 @@ export class CreatorForUI {
                                 }
                             }
                         }
-                        if (filterBool) {
-                            resultObject.push(child);
-                            filterBool_ = true;
-                        }
+                    }
+                    if (filterBool) {
+                        resultObject.push(child);
+                        filterBool_ = true;
+                    }
+                }
+                if (Array.isArray(children)) {
+                    for (const child of children) {
+                        fn0(child);
                     }
                 } else {
-                    if (filterData) {
-                        if (filterData.contains) {
-                            if (children[filterData.contains.parameter] == filterData.contains.value) {
-                                filterBool_ = true;
-                                resultObject.push(children);
-                            }
-                        }
-                    }
+                    fn0(children);
                 }
                 return {filter: filterBool_,result: resultObject};
             }
@@ -486,22 +499,39 @@ export class CreatorForUI {
                 }
             }
             const looper = (children,targetDOM = scrollable) => {
-                if (Array.isArray(children)) {
-                    for (const child of children) {
-                        if (allObject.includes(child)) {
+                const fn0 = (child) => {
+                    if (allObject.includes(child)) {
+                        try {
                             const managerObject = managerForDOMs.getObjectAndGroupID(child, this.groupID, hierarchyID)[0].dom;
                             targetDOM.append(managerObject.container);
-                            for (const l of loopTarget) {
-                                const nextChildren = this.findSource(l, child);
-                                if (nextChildren) { // 子要素がある場合ループする
-                                    looper(nextChildren, managerObject.childrenContainer);
+                            if (loopTargetIsPlainObject) {
+                                const targetType = child[loopTarget.parameter];
+                                const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
+                                for (const l of loopTargets) {
+                                    const nextChildren = this.findSource(l, child);
+                                    if (nextChildren) { // 子要素がある場合ループする
+                                        looper(nextChildren, managerObject.childrenContainer);
+                                    }
+                                }
+                            } else {
+                                for (const l of loopTarget) {
+                                    const nextChildren = this.findSource(l, child);
+                                    if (nextChildren) { // 子要素がある場合ループする
+                                        looper(nextChildren, managerObject.childrenContainer);
+                                    }
                                 }
                             }
+                        } catch {
+                            console.warn("ヒエラルキが正常に生成できませんでした");
                         }
                     }
+                }
+                if (Array.isArray(children)) {
+                    for (const child of children) {
+                        fn0(child);
+                    }
                 } else {
-                    const managerObject = managerForDOMs.getObjectAndGroupID(children, this.groupID, hierarchyID)[0].dom;
-                    targetDOM.append(managerObject.container);
+                    fn0(children);
                 }
             }
             looper(rootObject);

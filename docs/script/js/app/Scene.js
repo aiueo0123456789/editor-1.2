@@ -15,13 +15,13 @@ const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLa
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./script/js/app/shader/伝播頂点用shader.wgsl"));
 const animationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./script/js/app/shader/ローカルアニメーションvec2.wgsl"));
 const bezierAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./script/js/app/shader/ローカルアニメーションvec2x3.wgsl"));
-const boneAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./script/js/app/shader/ボーン/アニメーション.wgsl"));
+const boneAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr")], await loadFile("./script/js/app/shader/ボーン/アニメーション.wgsl"));
 const calculateBoneBaseDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csr_Csr_Cu")], await loadFile("./script/js/app/shader/ボーン/ベースデータ.wgsl"));
 const propagateBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw"),GPU.getGroupLayout("Csr")], await loadFile("./script/js/app/shader/ボーン/伝播.wgsl"));
 const calculateBoneVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr")], await loadFile("./script/js/app/shader/ボーン/頂点位置の計算.wgsl"));
 
 const circleSelectBoneVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/bone/selectVertices.wgsl"));
-const selectBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/bone/hitTestFromPoint.wgsl"));
+const selectBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/bone/selectBone.wgsl"));
 const boneHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/bone/hitTest.wgsl"));
 
 const bezierModifierHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/bezier/hitTest.wgsl"));
@@ -311,12 +311,13 @@ class BoneModifierData {
         this.baseBone = GPU.createBuffer(0, ["s"]); // ベース時の親とのローカルデータ
 
         this.selectedVertices = GPU.createBuffer(0, ["s"]);
+        this.selectedBones = GPU.createBuffer(0, ["s"]);
 
-        this.animations = GPU.createBuffer(0, ["s"]);
-        this.weights = GPU.createBuffer(0, ["s"]);
         // ボーンの行列データ
         this.renderingBoneMatrix = GPU.createBuffer(0, ["s"]);
         this.baseBoneMatrix = GPU.createBuffer(0, ["s"]);
+
+        this.runtimeAnimationData = GPU.createBuffer(0, ["s"]);
 
         // ボーンの色
         this.relationships = GPU.createBuffer(0, ["s"]); // 親のindex
@@ -335,8 +336,18 @@ class BoneModifierData {
 
         this.allBoneNum = 0;
 
+        this.allBone = [];
+
         this.propagate = [];
         this.order = [];
+    }
+
+    getSelectBone() {
+        return this.allBone.filter(bone => bone.selected);
+    }
+
+    async getAnimationData(/** @type {BoneModifier} */ boneModifier, indexs) {
+        return ;
     }
 
     // 選択
@@ -355,7 +366,7 @@ class BoneModifierData {
         // GPU.consoleBufferData(this.selectedVertices, ["bit"], "当たり判定bool", {start: Math.ceil(boneModifier.vertexBufferOffset * 2 / 32), num: Math.ceil((boneModifier.MAX_BONES) * 2 / 32)});
     }
 
-    selectedForBone(/** @type {BoneModifier} */ boneModifier, object, option) {
+    async selectedForBone(/** @type {BoneModifier} */ boneModifier, object, option) {
         const optionBuffer = GPU.createUniformBuffer(4, [option.add], ["u32"]);
         // console.log("最大頂点数", graphicMesh.MAX_VERTICES, "起動されるグループ数", Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
         if (object.box) { // ボックス選択
@@ -364,8 +375,12 @@ class BoneModifierData {
             GPU.runComputeShader(boxSelectVerticesPipeline, [group], Math.ceil(Math.ceil(boneModifier.MAX_BONES / 32) / 64));
         } else {
             const circleBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.circle, 0], ["f32","f32","f32","f32"]);
-            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices, this.renderingVertices, boneModifier.objectDataBuffer, optionBuffer, circleBuffer]);
+            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedBones, this.renderingVertices, boneModifier.objectDataBuffer, optionBuffer, circleBuffer]);
             GPU.runComputeShader(selectBonePipeline, [group], Math.ceil(Math.ceil(boneModifier.MAX_BONES / 32) / 64));
+        }
+        const result = await GPU.getSelectedFromBufferBit(this.selectedBones,boneModifier.vertexBufferOffset,boneModifier.vertexBufferOffset + boneModifier.boneNum);
+        for (let i = 0; i < result.length; i ++) {
+            boneModifier.allBone[i].selected = result[i];
         }
     }
 
@@ -405,31 +420,37 @@ class BoneModifierData {
         console.log("|---ボーンベース---|")
         GPU.writeBuffer(this.baseVertices, new Float32Array(boneVerticesData), boneModifier.vertexBufferOffset * this.vertexBlockByteLength);
         GPU.writeBuffer(this.colors, new Float32Array(colorsData), boneModifier.vertexBufferOffset * this.colorBlockByteLength);
-        // console.log(parentingData);
-        // const roop = (children, parent = null, depth = 0) => {
-        //     if (parent) {
-        //         for (const child of children) {
-        //             if (this.propagate.length <= depth) {
-        //                 this.propagate.push([child.index + boneModifier.vertexBufferOffset, parent.index + boneModifier.vertexBufferOffset]);
-        //             } else {
-        //                 this.propagate[depth].push(child.index + boneModifier.vertexBufferOffset, parent.index + boneModifier.vertexBufferOffset);
-        //             }
-        //             roop(child.children, child, depth + 1);
-        //         }
-        //     } else {
-        //         for (const child of children) {
-        //             roop(child.children, child, 0);
-        //         }
-        //     }
-        // }
-        // roop(parentingData);
-        // console.log(this.propagate);
-        // GPU.consoleBufferData(boneModifier.parentsBuffer, ["u32"], "親子");
-        // this.calculateBaseBoneData(boneModifier);
+
+        boneModifier.propagateBuffers.length = 0;
+        const parentsData = Array.from({ length: boneModifier.boneNum }, (_, i) => i);
+        const tmpData = [];
+        const roop = (children, parent = null, depth = 0) => {
+            if (parent) {
+                for (const child of children) {
+                    if (tmpData.length <= depth) {
+                        tmpData.push([child.index, parent.index]);
+                    } else {
+                        tmpData[depth].push(child.index, parent.index);
+                    }
+                    roop(child.childrenBone, child, depth + 1);
+                }
+            } else {
+                for (const child of children) {
+                    roop(child.childrenBone, child, 0);
+                }
+            }
+        }
+        roop(boneModifier.root);
+        for (const data of tmpData) {
+            for (let i = 0; i < data.length; i += 2) {
+                parentsData[data[i]] = data[i + 1];
+            }
+        }
+        boneModifier.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
+
         this.updateAllocationData(boneModifier);
         GPU.runComputeShader(calculateBoneBaseDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr_Cu"), [this.baseBone, this.baseBoneMatrix, this.baseVertices, boneModifier.parentsBuffer, boneModifier.objectDataBuffer])], Math.ceil(boneModifier.MAX_BONES / 64));
         this.updatePropagateData();
-        // GPU.consoleBufferData(this.baseBone, ["f32","f32","f32","f32","f32","f32"], "base");
     }
 
     calculateBaseBoneData(boneModifier) {
@@ -451,15 +472,14 @@ class BoneModifierData {
     setAnimationData(/** @type {BoneModifier} */boneModifier, animationData, animtaionIndex) {
         console.log("|---ボーンアニメーション---|")
         console.log(boneModifier, animationData, animtaionIndex)
-        GPU.writeBuffer(this.animations, new Float32Array(animationData), (boneModifier.animationBufferOffset + animtaionIndex) * this.boneBlockByteLength);
+        // GPU.writeBuffer(this.animations, new Float32Array(animationData), (boneModifier.animationBufferOffset + animtaionIndex) * this.boneBlockByteLength);
     }
 
     prepare(/** @type {BoneModifier} */boneModifier) {
         if (!this.order.includes(boneModifier)) {
             this.order.push(boneModifier);
             boneModifier.vertexBufferOffset = this.renderingBoneMatrix.size / this.matrixBlockByteLength;
-            boneModifier.animationBufferOffset = this.animations.size / this.boneBlockByteLength;
-            boneModifier.weightBufferOffset = this.weights.size / 4;
+            boneModifier.animationBufferOffset = this.runtimeAnimationData.size / this.boneBlockByteLength;
             boneModifier.allocationIndex = this.order.length - 1;
             // 頂点分の確保
             this.baseVertices = GPU.appendEmptyToBuffer(this.baseVertices, boneModifier.MAX_BONES * this.vertexBlockByteLength); // 元の頂点座標用のメモリを確保
@@ -469,14 +489,12 @@ class BoneModifierData {
             this.baseBone = GPU.appendEmptyToBuffer(this.baseBone, boneModifier.MAX_BONES * this.boneBlockByteLength); // 元の頂点座標用のメモリを確保
             this.renderingBone = GPU.appendEmptyToBuffer(this.renderingBone, boneModifier.MAX_BONES * this.boneBlockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
 
-            this.animations = GPU.appendEmptyToBuffer(this.animations, boneModifier.MAX_ANIMATIONS * boneModifier.MAX_BONES * this.boneBlockByteLength); // アニメーション用のメモリを確保
-            this.weights = GPU.appendEmptyToBuffer(this.weights, boneModifier.MAX_ANIMATIONS * 4); // アニメーション用のメモリを確保
-
             // 行列分の確保
             this.baseBoneMatrix = GPU.appendEmptyToBuffer(this.baseBoneMatrix, boneModifier.MAX_BONES * this.matrixBlockByteLength); // 元の頂点座標用のメモリを確保
             this.renderingBoneMatrix = GPU.appendEmptyToBuffer(this.renderingBoneMatrix, boneModifier.MAX_BONES * this.matrixBlockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
 
             this.selectedVertices = GPU.appendEmptyToBuffer(this.selectedVertices, Math.ceil((boneModifier.MAX_BONES * 2) / 32) * 4); // 選択状態ようのメモリを確保
+            this.selectedBones = GPU.appendEmptyToBuffer(this.selectedBones, Math.ceil(boneModifier.MAX_BONES / 32) * 4); // 選択状態ようのメモリを確保
 
             this.colors = GPU.appendEmptyToBuffer(this.colors, boneModifier.MAX_BONES * this.colorBlockByteLength); // アニメーション適用後の頂点座標用のメモリを確保
 
@@ -486,11 +504,13 @@ class BoneModifierData {
 
             this.allBoneNum += boneModifier.MAX_BONES;
 
-            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.renderingBoneMatrix, this.baseBone, this.animations, this.weights, this.allocation]); // アニメーション用
+            this.runtimeAnimationData = GPU.appendEmptyToBuffer(this.runtimeAnimationData, boneModifier.MAX_BONES * this.boneBlockByteLength);
+
+            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingBoneMatrix, this.baseBone, this.runtimeAnimationData, this.allocation]); // アニメーション用
             this.propagateGroup = GPU.createGroup(GPU.getGroupLayout("Csrw"), [this.renderingBoneMatrix]); // 伝播用
             this.applyParentGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr_Csr"), [this.renderingBoneMatrix, this.baseBoneMatrix, this.allocation]); // 子の変形用データ
             this.calculateVerticesPositionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingVertices, this.renderingBoneMatrix, this.baseBone, this.allocation]);
-            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr"), [this.renderingVertices, this.colors, this.relationships, this.selectedVertices]); // 表示用
+            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"), [this.renderingVertices, this.colors, this.relationships, this.selectedVertices, this.selectedBones]); // 表示用
             console.log("|---ボーンモディファイアメモリ用意---|")
         }
     }
@@ -530,8 +550,6 @@ export class Scene {
         this.renderingOrder = [];
 
         this.text = [];
-
-        this.keyframes = [];
 
         this.allObject = [];
 
@@ -618,6 +636,7 @@ export class Scene {
 
     update() {
         if (!(this.boneModifiers.length || this.graphicMeshs.length || this.bezierModifiers.length)) return ;
+        // バグ(アニメーションindexを考慮してないのでアニメーションが2個以上あると書き込まれるweightがかぶる)
         for (const graphicMesh of this.graphicMeshs) {
             graphicMesh.animationBlock.animationBlock.forEach(animation => {
                 GPU.writeBuffer(this.gpuData.graphicMeshData.weights, new Float32Array([animation.weight]), graphicMesh.weightBufferOffset * 4);
@@ -629,8 +648,8 @@ export class Scene {
             });
         }
         for (const boneModifier of this.boneModifiers) {
-            boneModifier.animationBlock.animationBlock.forEach(animation => {
-                GPU.writeBuffer(this.gpuData.boneModifierData.weights, new Float32Array([animation.weight]), boneModifier.weightBufferOffset * 4);
+            boneModifier.allBone.forEach(bone => {
+                GPU.writeBuffer(this.gpuData.boneModifierData.runtimeAnimationData, new Float32Array([bone.x, bone.y, bone.sx, bone.sy, bone.r]), (boneModifier.vertexBufferOffset + bone.index) * this.gpuData.boneModifierData.boneBlockByteLength);
             });
         }
 
