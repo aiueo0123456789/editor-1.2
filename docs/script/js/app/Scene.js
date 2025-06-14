@@ -540,6 +540,15 @@ class Objects {
         this.allObject = [];
     }
 
+    destroy() {
+        this.allObject.length = 0;
+        this.animationCollectors.length = 0;
+        this.bezierModifiers.length = 0;
+        this.graphicMeshs.length = 0;
+        this.boneModifiers.length = 0;
+        this.keyframeBlocks.length = 0;
+    }
+
     createObject(data) {
         let object;
         if (data.saveData) { // セーブデータからオブジェクトを作る
@@ -618,8 +627,6 @@ class Objects {
 export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
-        this.animationCollectors = [];
-        this.keyframeBlocks = [];
         this.objects = new Objects();
 
         this.renderingOrder = [];
@@ -829,14 +836,14 @@ export class Scene {
 
     // フレームを適応
     updateAnimation(frame) {
-        for (const keyframeBlock of this.keyframeBlocks) {
+        for (const keyframeBlock of this.objects.keyframeBlocks) {
             keyframeBlock.update(frame);
         }
     }
 
     // アニメーションコレクターの適応
     updateAnimationCollectors() {
-        for (const animtionManager of this.animationCollectors) {
+        for (const animtionManager of this.objects.animationCollectors) {
             animtionManager.update();
         }
     }
@@ -844,10 +851,7 @@ export class Scene {
     destroy() {
         this.maskTextures.length = 0;
         this.app.hierarchy.destroy();
-        this.animationCollectors.length = 0;
-        this.objects.bezierModifiers.length = 0;
-        this.objects.graphicMeshs.length = 0;
-        this.objects.boneModifiers.length = 0;
+        this.objects.destroy();
     }
 
     appendMaskTexture(name) {
@@ -871,10 +875,6 @@ export class Scene {
         return null;
     }
 
-    getObject() {
-
-    }
-
     searchObjectFromID(id) {
         for (const object of this.objects.allObject) {
             if (object.id == id) {
@@ -882,14 +882,6 @@ export class Scene {
             }
         }
         return null;
-    }
-
-    hasObject() {
-
-    }
-
-    destroy() {
-
     }
 
     // 表示順番の再計算
