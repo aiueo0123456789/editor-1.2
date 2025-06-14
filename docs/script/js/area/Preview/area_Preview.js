@@ -161,11 +161,11 @@ export class Renderer {
                 // オブジェクト表示
                 maskRenderPass.setPipeline(maskRenderPipeline);
                 maskRenderPass.setBindGroup(0, this.staticGroup);
-                maskRenderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderGroup);
+                maskRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 for (const graphicMesh of value.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
                     // maskRenderPass.setVertexBuffer(0, graphicMesh.v_meshIndexBuffer);
-                    maskRenderPass.setVertexBuffer(0, app.scene.gpuData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.gpuData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.gpuData.graphicMeshData.meshBlockByteLength);
+                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
                 // 処理の終了と送信
@@ -189,14 +189,14 @@ export class Renderer {
             renderPass.draw(4, 1, 0, 0);
         }
         // オブジェクト表示
-        if (app.scene.graphicMeshs.length) {
+        if (app.scene.objects.graphicMeshs.length) {
             renderPass.setPipeline(renderPipeline);
-            renderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderGroup);
+            renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
             for (const graphicMesh of app.scene.renderingOrder) {
                 if (graphicMesh.isInit) {
                     renderPass.setBindGroup(2, graphicMesh.renderGroup);
                     // renderPass.setVertexBuffer(0, graphicMesh.v_meshIndexBuffer);
-                    renderPass.setVertexBuffer(0, app.scene.gpuData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.gpuData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.gpuData.graphicMeshData.meshBlockByteLength);
+                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }

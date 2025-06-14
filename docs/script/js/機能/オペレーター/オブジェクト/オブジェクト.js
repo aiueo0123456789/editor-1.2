@@ -6,11 +6,11 @@ export class ObjectManager {
     }
 
     createObject(type, data) {
-        return app.scene.createObject({type: type});
+        return app.scene.objects.createObject({type: type});
     }
 
     deleteObject(object) {
-        app.scene.deleteObject(object);
+        app.scene.objects.deleteObject(object);
     }
 
     changeParent(object, newParent) {

@@ -110,7 +110,7 @@ function update(object, groupID, others, DOMs) {
         o.context.stroke();
     }
     // let offset = 0;
-    for (const keyframeBlock of app.scene.keyframeBlocks) {
+    for (const keyframeBlock of app.scene.objects.keyframeBlocks) {
         o.context.strokeStyle = "rgba(62, 62, 255, 0.5)";
         o.context.lineWidth = 10;
         let lastData = keyframeBlock.keys[0];
@@ -184,7 +184,7 @@ export class Area_Timeline {
                                 app.scene.state.setSelectedObject(object, app.input.keysDown["Shift"]);
                                 app.scene.state.setActiveObject(object);
                                 event.stopPropagation();
-                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}, filter: {contains: {parameter: "type", value: "キーフレームブロック"}}}, withObject: {object: "scene/allObject"}, loopTarget: {parameter: "type", loopTargets: {"ボーンモディファイア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/animationBlock","keyframeBlockManager"]}}, structures: [
+                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}, filter: {contains: {parameter: "type", value: "キーフレームブロック"}}}, withObject: {object: "scene/objects/allObject"}, loopTarget: {parameter: "type", loopTargets: {"ボーンモディファイア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/animationBlock","keyframeBlockManager"]}}, structures: [
                                 {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "キーフレームブロック"},
                                 true: [
                                     {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
@@ -304,7 +304,7 @@ export class Area_Timeline {
         let consumed = this.modalOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
         if (!inputManager.keysDown["Shift"]) this.spaceData.selectVertices.length = 0;
-        for (const keyframeBlock of app.scene.keyframeBlocks) {
+        for (const keyframeBlock of app.scene.objects.keyframeBlocks) {
             for (const keyData of keyframeBlock.keys) {
                 if (isPointInEllipse(world, keyData.point, vec2.divR([10,10],this.zoom))) {
                     if (!this.spaceData.selectVertices.includes(keyData.point)) {

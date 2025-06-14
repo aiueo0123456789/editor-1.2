@@ -1,6 +1,5 @@
 import { GPU } from "./webGPU.js";
 import { createID, managerForDOMs } from "./UI/制御.js";
-import { KeyframeBlock } from "./キーフレーム.js";
 import { KeyframeBlockManager } from "./オブジェクト/キーフレームブロック管理.js";
 
 export class AnimationBlock {

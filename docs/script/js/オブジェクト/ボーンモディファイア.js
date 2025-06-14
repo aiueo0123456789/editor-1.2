@@ -6,7 +6,6 @@ import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オ�
 import { createArrayN, createStructArrayN, indexOfSplice } from "../utility.js";
 import { Attachments } from "./アタッチメント/attachments.js";
 import { app } from "../app.js";
-import { KeyframeBlock } from "../キーフレーム.js";
 import { KeyframeBlockManager } from "./キーフレームブロック管理.js";
 
 class Color {
@@ -50,7 +49,7 @@ export class Bone {
     }
 
     async getWorldMatrix() {
-        await app.scene.gpuData.boneModifierData.getBoneWorldMatrix(this);
+        await app.scene.runtimeData.boneModifierData.getBoneWorldMatrix(this);
     }
 
     containsParentBone(targetBones) {
@@ -357,7 +356,7 @@ export class BoneModifier extends ObjectBase {
         // this.editor.updatePropagateData();
 
         this.relationship = data.relationship;
-        app.scene.gpuData.boneModifierData.prepare(this);
+        app.scene.runtimeData.boneModifierData.prepare(this);
 
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
@@ -374,10 +373,10 @@ export class BoneModifier extends ObjectBase {
         }
         roopChildren(this.relationship);
 
-        app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, createStructArrayN(this.boneNum, [1,1,0,1]));
+        app.scene.runtimeData.boneModifierData.setBase(this, data.baseVertices, createStructArrayN(this.boneNum, [1,1,0,1]));
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
-            app.scene.gpuData.boneModifierData.setAnimationData(this, animationData, index);
+            app.scene.runtimeData.boneModifierData.setAnimationData(this, animationData, index);
         })
 
         this.isInit = true;

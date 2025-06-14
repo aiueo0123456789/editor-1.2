@@ -125,10 +125,9 @@ class AppConfig {
             "Viewer": {
                 "オブジェクト": [
                     {label: "オブジェクトを追加", children: [
-                        {label: "グラフィックメッシュ", eventFn: app.scene.createObject.bind(app.scene, {type: "グラフィックメッシュ"})},
-                        {label: "モディファイア", eventFn: app.scene.createObject.bind(app.scene, {type: "モディファイア"})},
-                        {label: "ベジェモディファイア", eventFn: app.scene.createObject.bind(app.scene, {type: "ベジェモディファイア"})},
-                        {label: "ボーンモディファイア", eventFn: app.scene.createObject.bind(app.scene, {type: "ボーンモディファイア"})}
+                        {label: "グラフィックメッシュ", eventFn: app.scene.objects.createObject.bind(app.scene, {type: "グラフィックメッシュ"})},
+                        {label: "ベジェモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene, {type: "ベジェモディファイア"})},
+                        {label: "ボーンモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene, {type: "ボーンモディファイア"})}
                     ]},
                     {label: "test"},
                 ]
@@ -137,7 +136,6 @@ class AppConfig {
                 "オブジェクト": [
                     {label: "オブジェクトを追加", children: [
                         {label: "グラフィックメッシュ"},
-                        {label: "モディファイア"}
                     ]},
                     {label: "test"},
                 ]
@@ -228,9 +226,6 @@ export class Application { // 全てをまとめる
         this.scene.updateRenderingOrder();
         this.scene.updateAnimationCollectors();
         this.scene.update();
-        for (const object of this.scene.allObject) {
-            object.isChange = false;
-        }
         // this.animationPlayer.update(1 / 60);
         this.animationPlayer.update(0.2);
         // ビューの更新

@@ -26,16 +26,16 @@ export class KeyRotate {
 
     async init() {
         if (type == "メッシュ編集") {
-            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.graphicMeshData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.graphicMeshData.renderingVertices, app.scene.gpuData.graphicMeshData.selectedVertices);
+            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.graphicMeshData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices, app.scene.runtimeData.graphicMeshData.selectedVertices);
         } else if (type == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
         } else if (type == "ボーン編集") {
-            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.boneModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.boneModifierData.renderingVertices, app.scene.gpuData.boneModifierData.selectedVertices);
+            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.boneModifierData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.boneModifierData.renderingVertices, app.scene.runtimeData.boneModifierData.selectedVertices);
         } else if (type == "ベジェ編集") {
-            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.bezierModifierData.renderingVertices, app.scene.gpuData.bezierModifierData.selectedVertices);
+            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);
         }
         this.command.setCenterPoint(this.center);
     }

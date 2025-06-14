@@ -111,11 +111,11 @@ export class BezierModifier extends ObjectBase {
                 }
             }
         }
-        app.scene.gpuData.bezierModifierData.prepare(this);
-        app.scene.gpuData.bezierModifierData.setBase(this, data.baseVertices, weightGroupData);
+        app.scene.runtimeData.bezierModifierData.prepare(this);
+        app.scene.runtimeData.bezierModifierData.setBase(this, data.baseVertices, weightGroupData);
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
-            app.scene.gpuData.bezierModifierData.setAnimationData(this, animationData, index);
+            app.scene.runtimeData.bezierModifierData.setAnimationData(this, animationData, index);
         })
         this.verticesNum = data.baseVertices.length / 2;
         this.pointNum = this.verticesNum / 3;
@@ -143,7 +143,7 @@ export class BezierModifier extends ObjectBase {
             id: this.id,
             type: this.type,
             modifierEffectData: modifierEffectData,
-            baseVertices: await app.scene.gpuData.bezierModifierData.getBaseVerticesFromObject(this),
+            baseVertices: await app.scene.runtimeData.bezierModifierData.getBaseVerticesFromObject(this),
             animationKeyDatas: animationKeyDatas,
         };
     }

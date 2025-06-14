@@ -30,7 +30,7 @@ export class TimelineSpaceData {
     }
 
     getVisibleKeyFrame() {
-        this.visibleObject = app.scene.allObject;
+        this.visibleObject = app.scene.objects.allObject;
         const result = [];
         for (const object of this.visibleObject) {
             if (object.keyframe) {

@@ -174,7 +174,7 @@ export class Area_Viewer {
                     }
                 }
                 if (inputManager.consumeKeys(["i"])) {
-                    const bones = app.scene.gpuData.boneModifierData.getSelectBone();
+                    const bones = app.scene.runtimeData.boneModifierData.getSelectBone();
                     bones.forEach(bone => {
                         app.options.keyframeInsert(bone, app.scene.frame_current);
                     })
@@ -208,19 +208,19 @@ export class Area_Viewer {
             state.setActiveObject(frontObject);
         } else if (state.currentMode == "メッシュ編集") {
             for (const graphicMesh of app.scene.state.selectedObject) {
-                app.scene.gpuData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                app.scene.runtimeData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         } else if (state.currentMode == "ボーン編集") {
             for (const boneModifier of app.scene.state.selectedObject) {
-                app.scene.gpuData.boneModifierData.selectedForVertices(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                app.scene.runtimeData.boneModifierData.selectedForVertices(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         } else if (state.currentMode == "ベジェ編集") {
             for (const bezierModifier of app.scene.state.selectedObject) {
-                app.scene.gpuData.bezierModifierData.selectedForVertices(bezierModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                app.scene.runtimeData.bezierModifierData.selectedForVertices(bezierModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         } else if (state.currentMode == "ボーンアニメーション編集") {
             for (const boneModifier of app.scene.state.selectedObject) {
-                await app.scene.gpuData.boneModifierData.selectedForBone(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                await app.scene.runtimeData.boneModifierData.selectedForBone(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
                 console.log(boneModifier.allBone.map(bone => bone.selected))
             }
         }
@@ -305,10 +305,10 @@ export class Renderer {
                 // オブジェクト表示
                 maskRenderPass.setPipeline(maskRenderPipeline);
                 maskRenderPass.setBindGroup(0, this.staticGroup);
-                maskRenderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderGroup);
+                maskRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 for (const graphicMesh of value.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
-                    maskRenderPass.setVertexBuffer(0, app.scene.gpuData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.gpuData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.gpuData.graphicMeshData.meshBlockByteLength);
+                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
                 // 処理の終了と送信
@@ -332,20 +332,20 @@ export class Renderer {
             renderPass.draw(4, 1, 0, 0);
         }
         // オブジェクト表示
-        if (app.scene.graphicMeshs.length) {
+        if (app.scene.objects.graphicMeshs.length) {
             renderPass.setPipeline(renderPipeline);
-            renderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderGroup);
+            renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
             for (const graphicMesh of app.scene.renderingOrder) {
                 if (graphicMesh.isInit && graphicMesh.visible) {
                     renderPass.setBindGroup(2, graphicMesh.renderGroup);
                     // renderPass.setBindGroup(3, alphaBuffers["0.5"]);
                     renderPass.setBindGroup(3, alphaBuffers["1"]);
-                    renderPass.setVertexBuffer(0, app.scene.gpuData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.gpuData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.gpuData.graphicMeshData.meshBlockByteLength);
+                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }
             if (this.viewer.spaceData.visibleObjects.graphicMesh) {
-                renderPass.setBindGroup(1, app.scene.gpuData.graphicMeshData.renderingGizumoGroup);
+                renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderingGizumoGroup);
                 for (const graphicMesh of app.scene.renderingOrder) {
                     if (graphicMesh.isInit && graphicMesh.visible) {
                         // モード別
@@ -370,37 +370,37 @@ export class Renderer {
                 }
             }
         }
-        if (this.viewer.spaceData.visibleObjects.boneModifier && app.scene.boneModifiers.length) {
-            renderPass.setBindGroup(1, app.scene.gpuData.boneModifierData.renderingGizumoGroup);
+        if (this.viewer.spaceData.visibleObjects.boneModifier && app.scene.objects.boneModifiers.length) {
+            renderPass.setBindGroup(1, app.scene.runtimeData.boneModifierData.renderingGizumoGroup);
             renderPass.setPipeline(boneBoneRenderPipeline);
-            for (const armature of app.scene.boneModifiers) {
+            for (const armature of app.scene.objects.boneModifiers) {
                 renderPass.setBindGroup(2, armature.objectDataGroup);
                 renderPass.draw(3 * 2, armature.boneNum, 0, 0);
             }
             renderPass.setPipeline(boneVerticesRenderPipeline);
-            for (const armature of app.scene.boneModifiers) {
+            for (const armature of app.scene.objects.boneModifiers) {
                 if (armature.mode == "ボーン編集") {
                     renderPass.setBindGroup(2, armature.objectDataGroup);
                     renderPass.draw(6 * 2, armature.boneNum, 0, 0);
                 }
             }
             renderPass.setPipeline(boneRelationshipsRenderPipeline);
-            for (const armature of app.scene.boneModifiers) {
+            for (const armature of app.scene.objects.boneModifiers) {
                 if (armature.mode == "ボーン編集" || armature.mode == "ボーンアニメーション編集") {
                     renderPass.setBindGroup(2, armature.objectDataGroup);
                     renderPass.draw(4, armature.boneNum, 0, 0);
                 }
             }
         }
-        if (this.viewer.spaceData.visibleObjects.bezierModifier && app.scene.bezierModifiers.length) {
-            renderPass.setBindGroup(1, app.scene.gpuData.bezierModifierData.renderingGizumoGroup);
+        if (this.viewer.spaceData.visibleObjects.bezierModifier && app.scene.objects.bezierModifiers.length) {
+            renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
             renderPass.setPipeline(bezierRenderPipeline);
-            for (const bezierModifier of app.scene.bezierModifiers) {
+            for (const bezierModifier of app.scene.objects.bezierModifiers) {
                 renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
                 renderPass.draw(2 * 50, bezierModifier.pointNum - 1, 0, 0);
             }
             renderPass.setPipeline(bezierVerticesRenderPipeline);
-            for (const bezierModifier of app.scene.bezierModifiers) {
+            for (const bezierModifier of app.scene.objects.bezierModifiers) {
                 if (bezierModifier.mode == "ベジェ編集") {
                     renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
                     renderPass.draw(6 * 3, bezierModifier.pointNum, 0, 0);

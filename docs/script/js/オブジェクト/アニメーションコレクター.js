@@ -59,7 +59,7 @@ export class AnimationCollector {
             type: this.type,
             id: this.id,
             name: this.name,
-            keyframe: this.keyframeBlock.getSaveData(),
+            keyframeBlockManager: this.keyframeBlockManager.getSaveData(),
             containedAnimations : this.containedAnimations.map(x => {
                 return [x.belongObject.id, x.name];
             }),

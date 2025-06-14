@@ -1,4 +1,4 @@
-import { KeyframeBlock } from "../キーフレーム.js";
+import { KeyframeBlock } from "./キーフレーム.js";
 
 export class KeyframeBlockManager {
     constructor(object,struct) {
@@ -16,5 +16,12 @@ export class KeyframeBlockManager {
         for (const keyframeBlockData of keyframeBlocks) {
             this.blocksMap[keyframeBlockData.targetValue].setKeyframe(keyframeBlockData.keys);
         }
+    }
+
+    getSaveData() {
+        return {
+            type: this.type,
+            blocks: this.blocks.map(block => block.getSaveData())
+        };
     }
 }

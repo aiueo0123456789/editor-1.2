@@ -40,7 +40,6 @@ const objectToNumber = {
     "グラフィックメッシュ": 1,
     "ベジェモディファイア": 2,
     "ボーンモディファイア": 3,
-    "モディファイア": 4,
 };
 
 function packBuffer(buffer, updateRangeStart, updateRangeNum, packRangeStart) {
@@ -510,7 +509,7 @@ class BoneModifierData {
     }
 }
 
-class SceneGPUData {
+class RuntimeData {
     constructor(/** @type {Application} */ app) {
         this.app = app;
         this.graphicMeshData = new GraphicMeshData(app);
@@ -529,23 +528,103 @@ class SceneGPUData {
     }
 }
 
+class Objects {
+    constructor() {
+        this.app = app;
+        this.animationCollectors = [];
+        this.bezierModifiers = [];
+        this.graphicMeshs = [];
+        this.boneModifiers = [];
+        this.keyframeBlocks = [];
+
+        this.allObject = [];
+    }
+
+    createObject(data) {
+        let object;
+        if (data.saveData) { // セーブデータからオブジェクトを作る
+            data = data.saveData;
+            if (!data.type || data.type == "グラフィックメッシュ") {
+                object = new GraphicMesh(data.name,data.id);
+                object.init(data);
+                this.graphicMeshs.push(object);
+                this.isChangeObjectsZindex = true;
+            } else if (data.type == "ベジェモディファイア") {
+                object = new BezierModifier(data.name,data.id);
+                object.init(data);
+                this.bezierModifiers.push(object);
+            } else if (data.type == "ボーンモディファイア") {
+                console.log(data)
+                object = new BoneModifier(data.name,data.id,data);
+                // object.init(data);
+                this.boneModifiers.push(object);
+            } else if (data.type == "アニメーションコレクター" || data.type == "am") {
+                object = new AnimationCollector(data.name,data.id);
+                object.init(data);
+                this.animationCollectors.push(object);
+                managerForDOMs.update(this.animationCollectors);
+            }
+        } else if (data.type) { // 空のオブジェクトを作る
+            let type = data.type;
+            if (type == "アニメーションコレクター") {
+                object = new AnimationCollector("名称未設定");
+                this.animationCollectors.push(object);
+                managerForDOMs.update("タイムライン-チャンネル");
+                managerForDOMs.update("タイムライン-タイムライン-オブジェクト");
+                managerForDOMs.update(this.animationCollectors);
+            } else {
+                if (type == "グラフィックメッシュ") {
+                    object = new GraphicMesh("名称未設定");
+                    this.graphicMeshs.push(object);
+                    this.isChangeObjectsZindex = true;
+                } else if (type == "ベジェモディファイア") {
+                    object = new BezierModifier("名称未設定");
+                    this.bezierModifiers.push(object);
+                } else if (type == "ボーンモディファイア") {
+                    object = new BoneModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bone", "body"));
+                    this.boneModifiers.push(object);
+                }
+                this.app.hierarchy.addHierarchy("", object);
+            }
+        }
+        pushArray(this.allObject,object);
+        return object;
+    }
+
+    // オブジェクトの所属する配列を返す
+    searchArrayFromObject(object) {
+        if (object.type == "グラフィックメッシュ") {
+            return this.graphicMeshs;
+        } else if (object.type == "ベジェモディファイア") {
+            return this.bezierModifiers;
+        } else if (object.type == "ボーンモディファイア") {
+            return this.boneModifiers;
+        } else if (object.type == "アニメーションコレクター") {
+            return this.animationCollectors;
+        } else if (object.type == "キーフレームブロック") {
+            return this.keyframeBlocks;
+        }
+    }
+
+    // オブジェクトの削除
+    deleteObject(object) {
+        this.app.hierarchy.deleteHierarchy(object); // ヒエラルキーから削除
+        indexOfSplice(this.searchArrayFromObject(object), object);
+        indexOfSplice(this.allObject, object);
+    }
+}
+
 // オブジェクトの保持・設定
 export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
         this.animationCollectors = [];
-        this.modifiers = [];
-        this.bezierModifiers = [];
-        this.rotateModifiers = [];
-        this.graphicMeshs = [];
-        this.boneModifiers = [];
         this.keyframeBlocks = [];
+        this.objects = new Objects();
 
         this.renderingOrder = [];
 
         this.text = [];
-
-        this.allObject = [];
 
         // フレーム範囲
         this.frame_start = 0;
@@ -557,7 +636,7 @@ export class Scene {
         // 背景
         this.world = new World(app);
 
-        this.gpuData = new SceneGPUData(app);
+        this.runtimeData = new RuntimeData(app);
 
         this.state = new State(app);
 
@@ -610,16 +689,16 @@ export class Scene {
         const pointBuffer = GPU.createUniformBuffer(2 * 4, [...point], ["f32"]);
         const resultBuffer = GPU.createStorageBuffer(4, [0], ["u32"]);
         const result = [];
-        for (const object of this.allObject) {
+        for (const object of this.objects.allObject) {
             if (option.types.includes(object.type)) {
                 if (object.type == "グラフィックメッシュ") {
-                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.graphicMeshData.renderingVertices, this.gpuData.graphicMeshData.meshes, object.objectMeshData, optionBuffer, pointBuffer]);
+                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu"), [resultBuffer, this.runtimeData.graphicMeshData.renderingVertices, this.runtimeData.graphicMeshData.meshes, object.objectMeshData, optionBuffer, pointBuffer]);
                     GPU.runComputeShader(polygonsHitTestPipeline, [hitTestGroup], Math.ceil(object.MAX_MESHES / 64));
                 } else if (object.type == "ボーンモディファイア") {
-                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.boneModifierData.renderingVertices, object.objectDataBuffer, optionBuffer, pointBuffer]);
+                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.runtimeData.boneModifierData.renderingVertices, object.objectDataBuffer, optionBuffer, pointBuffer]);
                     GPU.runComputeShader(boneHitTestPipeline, [hitTestGroup], Math.ceil(object.MAX_BONES / 64));
                 } else if (object.type == "ベジェモディファイア") {
-                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.gpuData.bezierModifierData.renderingVertices, object.objectDataBuffer, optionBuffer, pointBuffer]);
+                    const hitTestGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [resultBuffer, this.runtimeData.bezierModifierData.renderingVertices, object.objectDataBuffer, optionBuffer, pointBuffer]);
                     GPU.runComputeShader(bezierModifierHitTestPipeline, [hitTestGroup], Math.ceil(object.MAX_VERTICES / 64));
                 }
                 const resultBufferData = await GPU.getU32BufferData(resultBuffer, 4);
@@ -635,47 +714,47 @@ export class Scene {
     }
 
     update() {
-        if (!(this.boneModifiers.length || this.graphicMeshs.length || this.bezierModifiers.length)) return ;
+        if (!(this.objects.boneModifiers.length || this.objects.graphicMeshs.length || this.objects.bezierModifiers.length)) return ;
         // バグ(アニメーションindexを考慮してないのでアニメーションが2個以上あると書き込まれるweightがかぶる)
-        for (const graphicMesh of this.graphicMeshs) {
+        for (const graphicMesh of this.objects.graphicMeshs) {
             graphicMesh.animationBlock.animationBlock.forEach(animation => {
-                GPU.writeBuffer(this.gpuData.graphicMeshData.weights, new Float32Array([animation.weight]), graphicMesh.weightBufferOffset * 4);
+                GPU.writeBuffer(this.runtimeData.graphicMeshData.weights, new Float32Array([animation.weight]), graphicMesh.weightBufferOffset * 4);
             });
         }
-        for (const bezierModifier of this.bezierModifiers) {
+        for (const bezierModifier of this.objects.bezierModifiers) {
             bezierModifier.animationBlock.animationBlock.forEach(animation => {
-                GPU.writeBuffer(this.gpuData.bezierModifierData.weights, new Float32Array([animation.weight]), bezierModifier.weightBufferOffset * 4);
+                GPU.writeBuffer(this.runtimeData.bezierModifierData.weights, new Float32Array([animation.weight]), bezierModifier.weightBufferOffset * 4);
             });
         }
-        for (const boneModifier of this.boneModifiers) {
+        for (const boneModifier of this.objects.boneModifiers) {
             boneModifier.allBone.forEach(bone => {
                 if (bone) {
-                    GPU.writeBuffer(this.gpuData.boneModifierData.runtimeAnimationData, new Float32Array([bone.x, bone.y, bone.sx, bone.sy, bone.r]), (boneModifier.vertexBufferOffset + bone.index) * this.gpuData.boneModifierData.boneBlockByteLength);
+                    GPU.writeBuffer(this.runtimeData.boneModifierData.runtimeAnimationData, new Float32Array([bone.x, bone.y, bone.sx, bone.sy, bone.r]), (boneModifier.vertexBufferOffset + bone.index) * this.runtimeData.boneModifierData.boneBlockByteLength);
                 }
             });
         }
         const computeCommandEncoder = device.createCommandEncoder();
         const computePassEncoder = computeCommandEncoder.beginComputePass();
-        if (this.graphicMeshs.length) {
+        if (this.objects.graphicMeshs.length) {
             computePassEncoder.setPipeline(animationApplyPipeline);
-            computePassEncoder.setBindGroup(0, this.gpuData.graphicMeshData.animationApplyGroup); // 全てのグラフィックスメッシュのデータをバインド
-            computePassEncoder.dispatchWorkgroups(Math.ceil(this.graphicMeshs.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
+            computePassEncoder.setBindGroup(0, this.runtimeData.graphicMeshData.animationApplyGroup); // 全てのグラフィックスメッシュのデータをバインド
+            computePassEncoder.dispatchWorkgroups(Math.ceil(this.objects.graphicMeshs.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
         }
-        if (this.bezierModifiers.length) {
+        if (this.objects.bezierModifiers.length) {
             computePassEncoder.setPipeline(bezierAnimationApplyPipeline);
-            computePassEncoder.setBindGroup(0, this.gpuData.bezierModifierData.animationApplyGroup); // 全てのベジェモディファイアのデータをバインド
-            computePassEncoder.dispatchWorkgroups(Math.ceil(this.bezierModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
+            computePassEncoder.setBindGroup(0, this.runtimeData.bezierModifierData.animationApplyGroup); // 全てのベジェモディファイアのデータをバインド
+            computePassEncoder.dispatchWorkgroups(Math.ceil(this.objects.bezierModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
         }
-        if (this.boneModifiers.length) {
+        if (this.objects.boneModifiers.length) {
             computePassEncoder.setPipeline(boneAnimationApplyPipeline);
-            computePassEncoder.setBindGroup(0, this.gpuData.boneModifierData.animationApplyGroup); // 全てのボーンモディファイアのデータをバインド
-            computePassEncoder.dispatchWorkgroups(Math.ceil(this.boneModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
+            computePassEncoder.setBindGroup(0, this.runtimeData.boneModifierData.animationApplyGroup); // 全てのボーンモディファイアのデータをバインド
+            computePassEncoder.dispatchWorkgroups(Math.ceil(this.objects.boneModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
         }
 
         // ボーンを伝播
         computePassEncoder.setPipeline(propagateBonePipeline);
-        computePassEncoder.setBindGroup(0, this.gpuData.boneModifierData.propagateGroup); // 全てのボーンモディファイアのデータをバインド
-        for (const nowDepthData of this.gpuData.boneModifierData.propagate) {
+        computePassEncoder.setBindGroup(0, this.runtimeData.boneModifierData.propagateGroup); // 全てのボーンモディファイアのデータをバインド
+        for (const nowDepthData of this.runtimeData.boneModifierData.propagate) {
             computePassEncoder.setBindGroup(1, nowDepthData.group); // 全てのボーンモディファイアのデータをバインド
             computePassEncoder.dispatchWorkgroups(Math.ceil(nowDepthData.boneNum / 64), 1, 1); // ワークグループ数をディスパッチ
         }
@@ -692,48 +771,52 @@ export class Scene {
                 }
             }
         }
-        computePassEncoder.setBindGroup(1, this.gpuData.bezierModifierData.parentApplyGroup);
-        computePassEncoder.setBindGroup(2, this.gpuData.boneModifierData.applyParentGroup);
+        computePassEncoder.setBindGroup(1, this.runtimeData.bezierModifierData.parentApplyGroup);
+        computePassEncoder.setBindGroup(2, this.runtimeData.boneModifierData.applyParentGroup);
         computePassEncoder.setPipeline(treeAnimationApplyPipeline);
         childrenRoop(this.app.hierarchy.root);
 
         // グラフィックメッシュ親の変形を適応
-        if (this.graphicMeshs.length) {
-            computePassEncoder.setBindGroup(1, this.gpuData.bezierModifierData.applyParentGroup);
-            computePassEncoder.setBindGroup(0, this.gpuData.graphicMeshData.parentApplyGroup);
+        if (this.objects.graphicMeshs.length) {
+            computePassEncoder.setBindGroup(1, this.runtimeData.bezierModifierData.applyParentGroup);
+            computePassEncoder.setBindGroup(0, this.runtimeData.graphicMeshData.parentApplyGroup);
             computePassEncoder.setPipeline(parallelAnimationApplyPipeline);
-            computePassEncoder.dispatchWorkgroups(Math.ceil(this.graphicMeshs.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
+            computePassEncoder.dispatchWorkgroups(Math.ceil(this.objects.graphicMeshs.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
         }
 
         
-        // for (const object of this.bezierModifiers) {
+        // for (const object of this.objects.bezierModifiers) {
         // }
         
-        // for (const object of this.boneModifiers) {
+        // for (const object of this.objects.boneModifiers) {
         // }
         
-        if (this.boneModifiers.length) {
-            computePassEncoder.setBindGroup(0, this.gpuData.boneModifierData.calculateVerticesPositionGroup);
+        if (this.objects.boneModifiers.length) {
+            computePassEncoder.setBindGroup(0, this.runtimeData.boneModifierData.calculateVerticesPositionGroup);
             computePassEncoder.setPipeline(calculateBoneVerticesPipeline);
-            computePassEncoder.dispatchWorkgroups(Math.ceil(this.boneModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_BONEMODIFIER / 8), 1); // ワークグループ数をディスパッチ
+            computePassEncoder.dispatchWorkgroups(Math.ceil(this.objects.boneModifiers.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_BONEMODIFIER / 8), 1); // ワークグループ数をディスパッチ
         }
 
         computePassEncoder.end();
 
-        for (const /** @type {GraphicMesh} */object of this.graphicMeshs) {
+        for (const /** @type {GraphicMesh} */object of this.objects.graphicMeshs) {
             if (object.mode == "メッシュ編集") {
-                computeCommandEncoder.copyBufferToBuffer(this.gpuData.graphicMeshData.baseVertices, object.vertexBufferOffset * 2 * 4, this.gpuData.graphicMeshData.renderingVertices, object.vertexBufferOffset * 2 * 4, object.verticesNum * 2 * 4);
+                computeCommandEncoder.copyBufferToBuffer(this.runtimeData.graphicMeshData.baseVertices, object.vertexBufferOffset * 2 * 4, this.runtimeData.graphicMeshData.renderingVertices, object.vertexBufferOffset * 2 * 4, object.verticesNum * 2 * 4);
             }
         }
 
         device.queue.submit([computeCommandEncoder.finish()]);
     }
 
+    getAllObjectFromType(types) {
+        return this.objects.allObject.filter(object => types.includes(object.type));
+    }
+
     async getSaveData() {
-        const conversion = {"グラフィックメッシュ": "graphicMeshs", "モディファイア": "modifiers", "ベジェモディファイア": "bezierModifiers", "ボーンモディファイア": "boneModifiers", "アニメーションコレクター": "animationCollectors"};
-        const result = {graphicMeshs: [], modifiers: [], bezierModifiers: [], boneModifiers: [], rotateMOdifiers: [], animationCollectors: []};
+        const conversion = {"グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "ボーンモディファイア": "boneModifiers", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks"};
+        const result = {graphicMeshs: [], bezierModifiers: [], boneModifiers: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: []};
         // 各オブジェクトの保存処理を並列化
-        const promises = this.allObject.map(async (object) => {
+        const promises = this.objects.allObject.map(async (object) => {
             return { type: object.type, data: await object.getSaveData() };
         });
         const resolved = await Promise.all(promises);
@@ -762,28 +845,13 @@ export class Scene {
         this.maskTextures.length = 0;
         this.app.hierarchy.destroy();
         this.animationCollectors.length = 0;
-        this.modifiers.length = 0;
-        this.bezierModifiers.length = 0;
-        this.rotateModifiers.length = 0;
-        this.graphicMeshs.length = 0;
-        this.boneModifiers.length = 0;
+        this.objects.bezierModifiers.length = 0;
+        this.objects.graphicMeshs.length = 0;
+        this.objects.boneModifiers.length = 0;
     }
 
     appendMaskTexture(name) {
-        this.maskTextures.push(new MaskTexture(name, this.app.appConfig.MASKTEXTURESIZE));
-        managerForDOMs.update(this.maskTextures);
-    }
-
-    deleteMaskTextureFromName(name) {
-    }
-
-    deleteMaskTextureFromID(id) {
-        for (let i = this.maskTextures.length - 1; i >= 0; i --) {
-            if (this.maskTextures[i].id == id) {
-                this.deleteMaskTexture(this.maskTextures[i]);
-                return ;
-            }
-        }
+        pushArray(this.maskTextures, new MaskTexture(name, this.app.appConfig.MASKTEXTURESIZE));
     }
 
     deleteMaskTexture(maskTexture) {
@@ -803,106 +871,17 @@ export class Scene {
         return null;
     }
 
-    createObject(data) {
-        let object;
-        if (data.saveData) { // セーブデータからオブジェクトを作る
-            data = data.saveData;
-            if (!data.type || data.type == "グラフィックメッシュ") {
-                object = new GraphicMesh(data.name,data.id);
-                object.init(data);
-                this.graphicMeshs.push(object);
-                this.isChangeObjectsZindex = true;
-            } else if (data.type == "モディファイア") {
-                object = new Modifier(data.name,data.id);
-                object.init(data);
-                this.modifiers.push(object);
-            } else if (data.type == "回転モディファイア") {
-                object = new RotateModifier(data.name,data.id);
-                object.init(data);
-                this.rotateModifiers.push(object);
-            } else if (data.type == "ベジェモディファイア") {
-                object = new BezierModifier(data.name,data.id);
-                object.init(data);
-                this.bezierModifiers.push(object);
-            } else if (data.type == "ボーンモディファイア") {
-                console.log(data)
-                object = new BoneModifier(data.name,data.id,data);
-                // object.init(data);
-                this.boneModifiers.push(object);
-            } else if (data.type == "アニメーションコレクター" || data.type == "am") {
-                object = new AnimationCollector(data.name,data.id);
-                object.init(data);
-                this.animationCollectors.push(object);
-                managerForDOMs.update(this.animationCollectors);
-            }
-        } else if (data.type) { // 空のオブジェクトを作る
-            let type = data.type;
-            if (type == "アニメーションコレクター") {
-                object = new AnimationCollector("名称未設定");
-                this.animationCollectors.push(object);
-                managerForDOMs.update("タイムライン-チャンネル");
-                managerForDOMs.update("タイムライン-タイムライン-オブジェクト");
-                managerForDOMs.update(this.animationCollectors);
-            } else {
-                if (type == "グラフィックメッシュ") {
-                    object = new GraphicMesh("名称未設定");
-                    this.graphicMeshs.push(object);
-                    this.isChangeObjectsZindex = true;
-                } else if (type == "モディファイア") {
-                    object = new Modifier("名称未設定");
-                    this.modifiers.push(object);
-                } else if (type == "回転モディファイア") {
-                    object = new RotateModifier("名称未設定");
-                    this.rotateModifiers.push(object);
-                } else if (type == "ベジェモディファイア") {
-                    object = new BezierModifier("名称未設定");
-                    this.bezierModifiers.push(object);
-                } else if (type == "ボーンモディファイア") {
-                    object = new BoneModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bone", "body"));
-                    this.boneModifiers.push(object);
-                }
-                this.app.hierarchy.addHierarchy("", object);
-            }
-        }
-        pushArray(this.allObject,object);
-        return object;
-    }
-
-    // オブジェクトの削除
-    deleteObject(object) {
-        this.app.hierarchy.deleteHierarchy(object); // ヒエラルキーから削除
-        const [array, indexe] = this.searchObject(object); // 所属している配列とindexを取得
-        array.splice(indexe, 1);
-        indexOfSplice(this.allObject, object);
-    }
-
     getObject() {
 
     }
 
     searchObjectFromID(id) {
-        for (const object of this.allObject) {
+        for (const object of this.objects.allObject) {
             if (object.id == id) {
                 return object;
             }
         }
         return null;
-    }
-
-    searchObject(object) {
-        if (object.type == "グラフィックメッシュ") {
-            return [this.graphicMeshs, this.graphicMeshs.indexOf(object)];
-        } else if (object.type == "モディファイア") {
-            return [this.modifiers, this.modifiers.indexOf(object)];
-        } else if (object.type == "ベジェモディファイア") {
-            return [this.bezierModifiers, this.bezierModifiers.indexOf(object)];
-        } else if (object.type == "回転モディファイア") {
-            return [this.rotateModifiers, this.rotateModifiers.indexOf(object)];
-        } else if (object.type == "ボーンモディファイア") {
-            return [this.boneModifiers, this.boneModifiers.indexOf(object)];
-        } else if (object.type == "アニメーションコレクター") {
-            return [this.animationCollectors, this.animationCollectors.indexOf(object)];
-        }
     }
 
     hasObject() {
@@ -914,42 +893,8 @@ export class Scene {
     }
 
     // 表示順番の再計算
-    // updateRenderingOrder(fineness) {
-    //     // if (!this.isChangeObjectsZindex) return ;
-    //     const createEmptyArray = (length) => {
-    //         const result = [];
-    //         for (let i = 0; i < length; i ++) {
-    //             result.push([]);
-    //         }
-    //         return result;
-    //     }
-    //     const supportFn = (graphicMeshs) => {
-    //         const belongChunk = Math.floor(graphicMeshs.zIndex / chunkRate);
-    //         for (let i = 0; i < chunks[belongChunk].length; i ++) {
-    //             if (chunks[belongChunk][i][1] > graphicMeshs.zIndex) {
-    //                 chunks[belongChunk].splice(i,0,[graphicMeshs, graphicMeshs.zIndex]);
-    //                 return ;
-    //             }
-    //         }
-    //         chunks[belongChunk].push([graphicMeshs, graphicMeshs.zIndex]);
-    //         return ;
-    //     }
-    //     const chunkRate = 1000 / fineness;
-    //     const chunks = createEmptyArray(fineness);
-    //     this.graphicMeshs.forEach(graphicMesh => {
-    //         supportFn(graphicMesh);
-    //     });
-    //     this.renderingOrder.length = 0;
-    //     for (const datas of chunks) {
-    //         for (const data of datas) {
-    //             this.renderingOrder.push(data[0]);
-    //         }
-    //     }
-    //     // this.isChangeObjectsZindex = false;
-    //     managerForDOMs.update("表示順番");
-    // }
     updateRenderingOrder() {
-        this.renderingOrder = [...this.graphicMeshs].sort((a, b) => a.zIndex - b.zIndex);
+        this.renderingOrder = [...this.objects.graphicMeshs].sort((a, b) => a.zIndex - b.zIndex);
         managerForDOMs.update("表示順番");
     }
 }

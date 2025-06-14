@@ -44,9 +44,6 @@ async function init() {
     } else {
         updateLoad("読み込み", 0);
         app.hierarchy.destroy();
-        for (const data of loadData.modifiers) {
-            app.hierarchy.setSaveObject(data,"");
-        }
         for (const data of loadData.bezierModifiers) {
             app.hierarchy.setSaveObject(data,"");
         }

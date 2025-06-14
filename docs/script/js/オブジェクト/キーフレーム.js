@@ -1,6 +1,6 @@
-import { app } from "./app.js";
-import { managerForDOMs } from "./UI/制御.js";
-import { vec2 } from "./ベクトル計算.js";
+import { app } from "../app.js";
+import { managerForDOMs } from "../UI/制御.js";
+import { vec2 } from "../ベクトル計算.js";
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す
@@ -109,7 +109,7 @@ export class KeyframeBlock {
         this.belongObject = object;
         this.targetValue = targetValue;
         this.keys = [];
-        app.scene.keyframeBlocks.push(this);
+        app.scene.objects.keyframeBlocks.push(this);
     }
 
     insert(frame, value) {

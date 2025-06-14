@@ -101,9 +101,9 @@ class Editor extends ObjectEditorBase {
     async createMesh(compulsion = false) {
         if (compulsion || Date.now() - this.lastCreateMeshTime > 0.1 * 1000) { // 処理が重いので
             this.lastCreateMeshTime = Date.now();
-            const vertices = await GPU.getVerticesBufferPartToArray(app.scene.gpuData.graphicMeshData.baseVertices, this.graphicMesh.vertexBufferOffset, this.graphicMesh.verticesNum);
+            const vertices = await GPU.getVerticesBufferPartToArray(app.scene.runtimeData.graphicMeshData.baseVertices, this.graphicMesh.vertexBufferOffset, this.graphicMesh.verticesNum);
             const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
-            app.scene.gpuData.graphicMeshData.setBase(this.graphicMesh, undefined, undefined, undefined, meshData.flat());
+            app.scene.runtimeData.graphicMeshData.setBase(this.graphicMesh, undefined, undefined, undefined, meshData.flat());
         }
     }
 
@@ -366,11 +366,11 @@ export class GraphicMesh extends ObjectBase {
                     }
                 }
             }
-            app.scene.gpuData.graphicMeshData.prepare(this);
-            app.scene.gpuData.graphicMeshData.setBase(this, data.baseVerticesPosition, data.baseVerticesUV, weightGroupData, data.meshIndex.filter((x,i) => (i + 1) % 4 != 0));
+            app.scene.runtimeData.graphicMeshData.prepare(this);
+            app.scene.runtimeData.graphicMeshData.setBase(this, data.baseVerticesPosition, data.baseVerticesUV, weightGroupData, data.meshIndex.filter((x,i) => (i + 1) % 4 != 0));
             data.animationKeyDatas.forEach((keyData,index) => {
                 const animationData = keyData.transformData.transformData;
-                app.scene.gpuData.graphicMeshData.setAnimationData(this, animationData, index);
+                app.scene.runtimeData.graphicMeshData.setAnimationData(this, animationData, index);
             })
 
             if (data.texture) {
@@ -448,9 +448,9 @@ export class GraphicMesh extends ObjectBase {
             type: this.type,
             baseTransformIsLock: this.baseTransformIsLock,
             zIndex: this.zIndex,
-            baseVerticesPosition: await app.scene.gpuData.graphicMeshData.getBaseVerticesFromObject(this),
-            baseVerticesUV: await app.scene.gpuData.graphicMeshData.getVerticesUVFromObject(this),
-            meshIndex: await app.scene.gpuData.graphicMeshData.getMeshFromObject(this),
+            baseVerticesPosition: await app.scene.runtimeData.graphicMeshData.getBaseVerticesFromObject(this),
+            baseVerticesUV: await app.scene.runtimeData.graphicMeshData.getVerticesUVFromObject(this),
+            meshIndex: await app.scene.runtimeData.graphicMeshData.getMeshFromObject(this),
             animationKeyDatas: animationKeyDatas,
             modifierEffectData: modifierEffectData,
             texture: await GPU.textureToBase64(this.texture),

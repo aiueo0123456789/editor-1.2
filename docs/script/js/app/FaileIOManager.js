@@ -1,8 +1,9 @@
+import { Application } from "../app.js";
 import { managerForDOMs } from "../UI/制御.js";
 
 // 入力を受け取って指示を出す
 export class FaileIOManager {
-    constructor(app) {
+    constructor(/** @type {Application} */app) {
         this.app = app;
     }
 
@@ -12,7 +13,7 @@ export class FaileIOManager {
         this.app.scene.destroy();
         for (const objectType of ["modifiers", "bezierModifiers", "boneModifiers", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
             for (const data of json.scene[objectType]) {
-                this.app.scene.createObject({saveData: data});
+                this.app.scene.objects.createObject({saveData: data});
             }
         }
         // ヒエラルキーを構築
@@ -61,5 +62,23 @@ export class FaileIOManager {
         // }
         managerForDOMs.allUpdate();
         console.log(this.app)
+    }
+
+    async save() {
+        // JSONデータを作成
+        const data = await this.app.getSaveData();
+        console.log(data)
+        // JSONデータを文字列化
+        const jsonString = JSON.stringify(data, null, 2);
+        // Blobを作成
+        const blob = new Blob([jsonString], { type: "application/json" });
+        // ダウンロード用のリンクを作成
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${projectName}.anm`;
+        // リンクをクリックしてダウンロードを開始
+        a.click();
+        // メモリ解放
+        URL.revokeObjectURL(a.href);
     }
 }
