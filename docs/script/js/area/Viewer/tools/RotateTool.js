@@ -5,11 +5,6 @@ import { vec2 } from "../../../ベクトル計算.js";
 import { RotateCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
 import { ModalOperator } from "../../補助/ModalOperator.js";
 
-class Modal {
-    constructor() {
-    }
-}
-
 export class RotateModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
@@ -19,7 +14,7 @@ export class RotateModal {
             app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
             app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
         ];
-        this.modal = new Modal();
+        this.modal = null;
         this.activateKey = "r";
         this.center = [0,0];
     }
@@ -36,6 +31,10 @@ export class RotateModal {
         } else if (type == "ベジェ編集") {
             this.command = new RotateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.gpuData.bezierModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.gpuData.bezierModifierData.renderingVertices, app.scene.gpuData.bezierModifierData.selectedVertices);
+        } else if (type == "ボーンアニメーション編集") {
+            this.command = new RotateCommand(type, app.scene.gpuData.boneModifierData.getSelectBone());
+            // this.center = await app.scene.getSelectRootBoneCenter(app.scene.gpuData);
+            this.center = [0,0];
         }
         this.command.setCenterPoint(this.center);
     }

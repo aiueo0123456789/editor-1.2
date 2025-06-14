@@ -14,7 +14,6 @@ const setBezierModifierWeightToGraphicMesh = GPU.createShaderModule(shaders.get(
 export const calculateBoneModifierLocalMatrixPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/適応.wgsl')));
 export const calculateBoneModifierMatrixPropagatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw"),GPU.getGroupLayout("Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/伝播.wgsl')));
 export const calculateBoneModifierWeightToVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Csr_Cu")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/ウェイト付与.wgsl')));
-export const calculateBaseBoneDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csr_Csr")], GPU.createShaderModule(await loadFile('./script/wgsl/compute/ボーンモディファイア/ベースボーンのデータを作る.wgsl')));
 
 export const calculateAllBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"),GPU.getGroupLayout("Csrw")], calculateAllBBox);
 export const setModifierWeightToGraphicMeshPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr"), GPU.getGroupLayout("Cu_Cu")], setModifierWeightToGraphicMesh);

@@ -4,11 +4,12 @@ import { GraphicMesh } from '../オブジェクト/グラフィックメッシ�
 import { Modifier } from '../オブジェクト/モディファイア.js';
 // import { RotateModifier } from '../オブジェクト/回転モディファイア.js';
 import { BezierModifier } from '../オブジェクト/ベジェモディファイア.js';
-import { BoneModifier } from '../オブジェクト/ボーンモディファイア.js';
+import { Bone, BoneModifier } from '../オブジェクト/ボーンモディファイア.js';
 import { AnimationCollector } from '../オブジェクト/アニメーションコレクター.js';
-import { createArrayN, indexOfSplice, loadFile } from '../utility.js';
+import { createArrayN, indexOfSplice, loadFile, pushArray } from '../utility.js';
 import { Application } from '../app.js';
 import { vec2 } from '../ベクトル計算.js';
+import { mathMat3x3 } from '../MathMat.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./script/js/app/shader/並列shader.wgsl"));
 // const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./script/js/app/shader/伝播shader.wgsl"));
@@ -342,6 +343,10 @@ class BoneModifierData {
         this.order = [];
     }
 
+    async getBoneWorldMatrix(/** @type {Bone} */bone) {
+        bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await GPU.getF32BufferPartsData(this.renderingBoneMatrix, bone.armature.vertexBufferOffset + bone.index, this.matrixBlockByteLength / 4));
+    }
+
     getSelectBone() {
         return this.allBone.filter(bone => bone.selected);
     }
@@ -416,45 +421,32 @@ class BoneModifierData {
         GPU.writeBuffer(this.relationships, new Uint32Array(relationshipsKeep));
     }
 
-    setBase(/** @type {BoneModifier} */boneModifier, boneVerticesData, parentingData, colorsData) {
+    setBase(/** @type {BoneModifier} */boneModifier, boneVerticesData, colorsData) {
         console.log("|---ボーンベース---|")
         GPU.writeBuffer(this.baseVertices, new Float32Array(boneVerticesData), boneModifier.vertexBufferOffset * this.vertexBlockByteLength);
         GPU.writeBuffer(this.colors, new Float32Array(colorsData), boneModifier.vertexBufferOffset * this.colorBlockByteLength);
 
-        boneModifier.propagateBuffers.length = 0;
-        const parentsData = Array.from({ length: boneModifier.boneNum }, (_, i) => i);
-        const tmpData = [];
-        const roop = (children, parent = null, depth = 0) => {
-            if (parent) {
-                for (const child of children) {
-                    if (tmpData.length <= depth) {
-                        tmpData.push([child.index, parent.index]);
-                    } else {
-                        tmpData[depth].push(child.index, parent.index);
-                    }
-                    roop(child.childrenBone, child, depth + 1);
-                }
+        const parentsData = Array(boneModifier.boneNum).fill(0);
+        for (const bone of boneModifier.allBone) {
+            if (bone.parent) {
+                parentsData[bone.index] = bone.parent.index;
             } else {
-                for (const child of children) {
-                    roop(child.childrenBone, child, 0);
-                }
-            }
-        }
-        roop(boneModifier.root);
-        for (const data of tmpData) {
-            for (let i = 0; i < data.length; i += 2) {
-                parentsData[data[i]] = data[i + 1];
+                parentsData[bone.index] = bone.index;
             }
         }
         boneModifier.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
+        console.log(parentsData);
+
+        for (const bone of boneModifier.allBone) {
+            this.allBone[boneModifier.vertexBufferOffset + bone.index] = bone;
+        }
 
         this.updateAllocationData(boneModifier);
-        GPU.runComputeShader(calculateBoneBaseDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr_Cu"), [this.baseBone, this.baseBoneMatrix, this.baseVertices, boneModifier.parentsBuffer, boneModifier.objectDataBuffer])], Math.ceil(boneModifier.MAX_BONES / 64));
+        this.calculateBaseBoneData(boneModifier);
         this.updatePropagateData();
     }
 
     calculateBaseBoneData(boneModifier) {
-        // GPU.consoleBufferData(this.baseVertices, ["f32","f32","f32","f32"], "base");
         GPU.runComputeShader(calculateBoneBaseDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr_Cu"), [this.baseBone, this.baseBoneMatrix, this.baseVertices, boneModifier.parentsBuffer, boneModifier.objectDataBuffer])], Math.ceil(boneModifier.boneNum / 64));
     }
 
@@ -503,6 +495,8 @@ class BoneModifierData {
             this.allocation = GPU.appendEmptyToBuffer(this.allocation, 8 * 4); // 配分を配分を計算するためのデータ
 
             this.allBoneNum += boneModifier.MAX_BONES;
+
+            this.allBone.length += boneModifier.MAX_BONES;
 
             this.runtimeAnimationData = GPU.appendEmptyToBuffer(this.runtimeAnimationData, boneModifier.MAX_BONES * this.boneBlockByteLength);
 
@@ -589,6 +583,12 @@ export class Scene {
             maskRenderPass.end();
             device.queue.submit([commandEncoder.finish()]);
         }
+
+        const updateKeyframe = () => {
+            this.updateAnimation(this.frame_current);
+        }
+
+        managerForDOMs.set({o: this, g: "_", i: "frame_current"}, null, updateKeyframe);
     }
 
     // 選択している頂点のBBoxを取得
@@ -649,10 +649,11 @@ export class Scene {
         }
         for (const boneModifier of this.boneModifiers) {
             boneModifier.allBone.forEach(bone => {
-                GPU.writeBuffer(this.gpuData.boneModifierData.runtimeAnimationData, new Float32Array([bone.x, bone.y, bone.sx, bone.sy, bone.r]), (boneModifier.vertexBufferOffset + bone.index) * this.gpuData.boneModifierData.boneBlockByteLength);
+                if (bone) {
+                    GPU.writeBuffer(this.gpuData.boneModifierData.runtimeAnimationData, new Float32Array([bone.x, bone.y, bone.sx, bone.sy, bone.r]), (boneModifier.vertexBufferOffset + bone.index) * this.gpuData.boneModifierData.boneBlockByteLength);
+                }
             });
         }
-
         const computeCommandEncoder = device.createCommandEncoder();
         const computePassEncoder = computeCommandEncoder.beginComputePass();
         if (this.graphicMeshs.length) {
@@ -863,7 +864,7 @@ export class Scene {
                 this.app.hierarchy.addHierarchy("", object);
             }
         }
-        this.allObject.push(object);
+        pushArray(this.allObject,object);
         return object;
     }
 

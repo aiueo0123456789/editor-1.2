@@ -171,7 +171,7 @@ export class KeyframeBlock {
             }
         }
         this.belongObject[this.targetValue] = bezierInterpolation(leftKey, rightKey, frame);
-        managerForDOMs.update(this.belongObject, "ウェイト");
+        managerForDOMs.update(this.belongObject, this.targetValue);
     }
 
     getSaveData() {

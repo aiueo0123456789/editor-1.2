@@ -174,11 +174,10 @@ export class Area_Viewer {
                     }
                 }
                 if (inputManager.consumeKeys(["i"])) {
-                    const bones = app.scene.state.selectedObject.map(object => {
-                        object.allBone.filter(bone => bone.selected);
-                    }).flat();
-                    const animationData = await app.scene.gpuData.boneModifierData.getAnimationData(app.scene.state.activeObject, bones.map(bone => bone.index + bone.armature.vertexBufferOffset));
-                    app.options.keyframeInsert(bones, app.scene.frame_current, animationData);
+                    const bones = app.scene.gpuData.boneModifierData.getSelectBone();
+                    bones.forEach(bone => {
+                        app.options.keyframeInsert(bone, app.scene.frame_current);
+                    })
                 }
             } else if (state.activeObject.type == "ベジェモディファイア") {
                 if (inputManager.consumeKeys(["Tab"])) {

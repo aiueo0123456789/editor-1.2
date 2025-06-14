@@ -1,6 +1,8 @@
 import { app } from "../../../app.js";
+import { mathMat3x3 } from "../../../MathMat.js";
 import { loadFile } from "../../../utility.js";
 import { GPU } from "../../../webGPU.js";
+import { Bone } from "../../../オブジェクト/ボーンモディファイア.js";
 
 // const pipelines = {
 //     graphicMesh: {rotate: },
@@ -16,10 +18,6 @@ const setOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_
 const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/translate.wgsl"));
 const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/resize.wgsl"));
 const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/rotate.wgsl"));
-
-const boneAnimationTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/translate.wgsl"));
-const boneAnimationRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/rotate.wgsl"));
-const boneAnimationResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/boneAnimation/resize.wgsl"));
 
 class TransformCommand {
     constructor(type, targets, selectIndexs) {
@@ -40,29 +38,20 @@ class TransformCommand {
         const source = this.type == "メッシュ編集" ? app.scene.gpuData.graphicMeshData : this.type == "ボーン編集" ? app.scene.gpuData.boneModifierData : app.scene.gpuData.bezierModifierData;
         const groupNum = this.type == "メッシュ編集" ? 1 : this.type == "ボーン編集" ? 2 : 3;
         if (this.type == "ボーンアニメーション編集") {
-            // let minDepthIndex = [];
-            // let minDepth = Infinity;
-            // for (let index of selectIndexs) {
-            //     const depth = targets.belongObject.editor.getBoneDepthFromIndex(index);
-            //     console.log(depth)
-            //     if (depth < minDepth) {
-            //         minDepth = depth;
-            //         minDepthIndex = [index];
-            //     } else if (depth == minDepth) {
-            //         minDepthIndex.push(index);
-            //     }
-            // }
-            // if (minDepthIndex.length) {
-            //     const selectIndexBuffer = GPU.createStorageBuffer(minDepthIndex.length * 4, minDepthIndex, ["u32"]);
-            //     this.selectIndexs = minDepthIndex;
-            //     this.targetBuffer = targets.s_verticesAnimationBuffer;
-            //     this.worldOriginalBuffer = GPU.copyBufferToNewBuffer(targets.s_verticesAnimationBuffer); // ターゲットの頂点のワールド座標を取得
-            //     this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: targets.getWorldVerticesMatrixBuffer(), type: "b"}, {item: targets.belongObject.parentsBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
-            //     this.workNumX = Math.ceil(this.targets.belongObject.boneNum / 64);
-            //     this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer); // ターゲットのオリジナル状態を保持
-            // } else {
-            //     this.workNumX = 0;
-            // }
+            this.parentWorldMatrix = [];
+            this.root = [];
+            for (const bone of targets) {
+                if (!bone.containsParentBone(targets)) {
+                    this.root.push(bone);
+                }
+            }
+            for (const bone of this.root) {
+                bone.parent.getWorldMatrix();
+            }
+            this.originalBones = new Map();
+            for (const bone of targets) {
+                this.originalBones.set(bone, {"x": bone.x, "y": bone.y, "sx": bone.sx, "sy": bone.sy, "r": bone.r});
+            }
         } else {
             const selectIndexBuffer = GPU.createStorageBuffer(selectIndexs.length * 4, selectIndexs, ["u32"]);
             if (this.type == "頂点アニメーション") {
@@ -100,10 +89,20 @@ class TransformCommand {
     transform(pipeline) {
         GPU.writeBuffer(this.valueBuffer, new Float32Array(this.value));
         if (this.type == "ボーンアニメーション編集") {
-            if (pipeline = "Translate") {
-                this.targets.forEach(bone => {
-                    bone.x += this.value[0];
-                    bone.y += this.value[1];
+            if (pipeline == "Translate") {
+                this.root.forEach(bone => {
+                    if (bone.parent) {
+                        const localValue = mathMat3x3.getLocalVec2(bone.parent.matrix, this.value);
+                        bone.x = this.originalBones.get(bone).x + localValue[0];
+                        bone.y = this.originalBones.get(bone).y + localValue[1];
+                    } else {
+                        bone.x = this.value[0] + this.originalBones.get(bone).x;
+                        bone.y = this.value[1] + this.originalBones.get(bone).y;
+                    }
+                });
+            } else if (pipeline == "Rotate") {
+                this.root.forEach(bone => {
+                    bone.r = this.value[0] + this.originalBones.get(bone).r;
                 });
             }
         } else {
@@ -255,7 +254,7 @@ export class RotateCommand extends TransformCommand {
         } else {
         }
         if (this.type == "ボーンアニメーション編集") {
-            this.transform();
+            this.transform("Rotate");
         } else {
             this.transform(verticesRotatePipeline);
         }
@@ -263,7 +262,7 @@ export class RotateCommand extends TransformCommand {
 
     execute() {
         if (this.type == "ボーンアニメーション編集") {
-            this.transform();
+            this.transform("Rotate");
         } else {
             this.transform(verticesRotatePipeline);
         }

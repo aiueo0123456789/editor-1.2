@@ -1,7 +1,6 @@
 import { device,GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
 import { AnimationBlock, BoneAnimation } from "../アニメーション.js";
-import { calculateBaseBoneDataPipeline } from "../GPUObject.js";
 import { createID } from "../UI/制御.js";
 import { ObjectBase, ObjectEditorBase, setBaseBBox, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { createArrayN, createStructArrayN, indexOfSplice } from "../utility.js";
@@ -28,7 +27,7 @@ class Color {
     }
 }
 
-class Bone {
+export class Bone {
     constructor(armature,index) {
         this.type = "ボーン";
         this.name = "名称未設定";
@@ -36,6 +35,7 @@ class Bone {
         this.parent = null;
         this.index = index;
         this.childrenBone = [];
+        /** @type {BoneModifier} */
         this.armature = armature;
         this.color = [0,0,0,1];
 
@@ -46,11 +46,25 @@ class Bone {
         this.r = 0;
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"]);
 
-        app.scene.gpuData.boneModifierData.allBone.push(this);
+        this.matrix = new Float32Array(4 * 3);
     }
 
-    updateAnimationData() {
-        app.scene.gpuData.boneModifierData.runtimeAnimationData
+    async getWorldMatrix() {
+        await app.scene.gpuData.boneModifierData.getBoneWorldMatrix(this);
+    }
+
+    containsParentBone(targetBones) {
+        if (!this.parent) return false;
+        const looper = (bone) => {
+            if (targetBones.includes(bone)) {
+                return targetBones.indexOf(bone);
+            }
+            if (bone.parent) {
+                return looper(bone.parent);
+            }
+            return false;
+        }
+        return looper(this.parent);
     }
 }
 
@@ -135,6 +149,7 @@ class Editor extends ObjectEditorBase {
                 parentsData[data[i]] = data[i + 1];
             }
         }
+        console.log("kどあkぢじゃ",parentsData)
         this.boneModifier.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
         this.boneModifier.relationshipRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.boneModifier.RVrt_coBuffer, this.boneModifier.parentsBuffer]);
     }
@@ -252,7 +267,7 @@ class Editor extends ObjectEditorBase {
                 const childBone = new Bone(this.boneModifier, child.index);
                 this.allBones.push(childBone);
                 this.setBoneParent(parent,childBone);
-                roopChildren(child.childrenBone, childBone, depth + 1);
+                roopChildren(child.children, childBone, depth + 1);
             }
         }
         roopChildren(boneData);
@@ -342,10 +357,12 @@ export class BoneModifier extends ObjectBase {
         // this.editor.updatePropagateData();
 
         this.relationship = data.relationship;
+        app.scene.gpuData.boneModifierData.prepare(this);
 
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
-                const childBone = new Bone(this, this.allBone.length);
+                const childBone = new Bone(this, child.index);
+                childBone.parent = parent;
                 this.allBone.push(childBone);
                 if (parent) {
                     parent.childrenBone.push(childBone);
@@ -357,8 +374,7 @@ export class BoneModifier extends ObjectBase {
         }
         roopChildren(this.relationship);
 
-        app.scene.gpuData.boneModifierData.prepare(this);
-        app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, data.relationship, createStructArrayN(this.boneNum, [1,1,0,1]));
+        app.scene.gpuData.boneModifierData.setBase(this, data.baseVertices, createStructArrayN(this.boneNum, [1,1,0,1]));
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
             app.scene.gpuData.boneModifierData.setAnimationData(this, animationData, index);
@@ -367,7 +383,6 @@ export class BoneModifier extends ObjectBase {
         this.isInit = true;
         this.isChange = true;
 
-        this.calculateBaseBoneData();
         this.setGroup();
         setBaseBBox(this);
     }
@@ -379,10 +394,6 @@ export class BoneModifier extends ObjectBase {
     // indexを指定して行列を書き込み
     setBoneMatrixFromIndex(index,matrix) {
         GPU.writeBuffer(this.boneMatrixBuffer, matrix, (index + 4 * 3) * 4);
-    }
-
-    calculateBaseBoneData() {
-        GPU.runComputeShader(calculateBaseBoneDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr"), [this.baseBoneBuffer, this.baseBoneMatrixBuffer, this.s_baseVerticesPositionBuffer, this.parentsBuffer])], Math.ceil(this.boneNum / 64));
     }
 
     // updatePropagateDataForGPU() {

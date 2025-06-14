@@ -13,8 +13,9 @@ export function IsString(value) {
     return typeof value === "string" || value instanceof String;
 }
 
-export function indexOfSplice(array, deleteTarget) {
-    array.splice(array.indexOf(deleteTarget), 1);
+export function indexOfSplice(array, deleteValue) {
+    array.splice(array.indexOf(deleteValue), 1);
+    managerForDOMs.update(array);
 }
 
 export function hitTestPointTriangle(a, b, c, p) {
@@ -176,6 +177,11 @@ export function createArrayFromHashKeys(hash) {
 export function changeParameter(object, parameter, newValue) {
     object[parameter] = newValue;
     managerForDOMs.update(object, parameter);
+}
+
+export function pushArray(array, value) {
+    array.push(value);
+    managerForDOMs.update(array);
 }
 
 export function looper(object, loopTarget, fn, firstParent) {

@@ -16,6 +16,7 @@ import { changeParameter, createArrayFromHashKeys, indexOfSplice } from "./utili
 import { SelectTag } from "./area/補助/カスタムタグ.js";
 import { ContextmenuOperator } from "./app/ContextmenuOperator.js";
 import { HierarchySpaceData } from "./area/Hierarchy/area_HierarchySpaceData.js";
+import { Area_Property } from "./area/Property/area_Property.js";
 
 class AppOptions {
     constructor(app) {
@@ -38,14 +39,20 @@ class AppOptions {
                 "body": {
                     baseVertices: [
                         0,-100, 0,100,
-                        100,150, 200, 250
+                        100,150, 200, 250,
+                        0,250, 0, 300
                     ],
                     relationship: [{
                         index: 0,
                         children: [
                             {
                                 index: 1,
-                                children: [],
+                                children: [
+                                    {
+                                        index: 2,
+                                        children: [],
+                                    }
+                                ],
                             }
                         ],
                     }],
@@ -66,9 +73,10 @@ class AppOptions {
         }
     }
 
-    keyframeInsert(object, frame, datas) {
-        for (let i = 0; i < datas.length; i ++) {
-            object.keyframeBlocks[i].insert(frame, datas[i]);
+    keyframeInsert(object, frame) {
+        const datas = object.keyframeBlockManager.blocksMap;
+        for (const data in datas) {
+            object.keyframeBlockManager.blocksMap[data].insert(frame, object[data]);
         }
     }
 }
@@ -218,9 +226,6 @@ export class Application { // 全てをまとめる
     update() {
         // 表示順番の再計算
         this.scene.updateRenderingOrder();
-        if (true) {
-            this.scene.updateAnimation(this.scene.frame_current);
-        }
         this.scene.updateAnimationCollectors();
         this.scene.update();
         for (const object of this.scene.allObject) {
@@ -242,6 +247,7 @@ const useClassFromAreaType = {
     "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
     "Preview": {area: Area_Preview, areaConfig: ViewerSpaceData},
     "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
+    "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
 };
 
 // UIのエリア管理
@@ -301,6 +307,7 @@ class AnimationPlayer {
         this.app = app;
         this.isPlaying = false;
         this.speed = 1.0;
+        this.beforeFrame = app.scene.frame_current;
     }
 
     update(dt) {
@@ -308,36 +315,31 @@ class AnimationPlayer {
             this.app.scene.frame_current += dt * this.speed;
             managerForDOMs.update("タイムライン-canvas");
         }
-        changeParameter(this.app.scene, "frame_current", this.app.scene.frame_start + (this.app.scene.frame_current - this.app.scene.frame_start) % (this.app.scene.frame_end - this.app.scene.frame_start)); // フレームスタートを下回ったらエンドに戻す
+        if (this.beforeFrame != this.app.scene.frame_current) {
+            this.beforeFrame = this.app.scene.frame_current;
+            changeParameter(this.app.scene, "frame_current", this.app.scene.frame_start + (this.app.scene.frame_current - this.app.scene.frame_start) % (this.app.scene.frame_end - this.app.scene.frame_start)); // フレームスタートを下回ったらエンドに戻す
+        }
     }
 }
 
 export const app = new Application(document.getElementById("app"));
 
-// const area1 = app.createArea("w");
-// app.setAreaType(area1,0,"Hierarchy");
-// app.setAreaType(area1,0,"Viewer");
-// app.setAreaType(area1,1,"Hierarchy");
 const area1 = app.createArea("w");
 const area1_h = app.createArea("h", area1.child1);
 const area2 = app.createArea("w", area1.child2);
-// const area3 = app.createArea("h", area2.child2);
-// const area4 = app.createArea("w", area3.child1);
+const area3 = app.createArea("h", area2.child2);
 app.setAreaType(area1_h,0,"Viewer");
-app.setAreaType(area2,0,"Hierarchy");
-// app.setAreaType(area4,0,"Hierarchy");
-// app.setAreaType(area4,0,"Viewer");
-// app.setAreaType(area4,0,"Preview");
-app.setAreaType(area2,1,"Inspector");
-// app.setAreaType(area3,1,"Viewer");
-// app.setAreaType(area1_h,1,"Viewer");
 app.setAreaType(area1_h,1,"Timeline");
-// app.setAreaType(area4,1,"Viewer");
-// app.setAreaType(area4,1,"Timeline");
-// app.setAreaType(area4,1,"Property");
+app.setAreaType(area2,0,"Hierarchy");
+app.setAreaType(area3,0,"Property");
+app.setAreaType(area3,1,"Inspector");
 
 function appUpdate() {
-    app.update();
+    try {
+        app.update();
+    } catch(error) {
+        console.error(error)
+    }
     requestAnimationFrame(appUpdate);
 }
 
