@@ -529,7 +529,7 @@ class RuntimeData {
 }
 
 class Objects {
-    constructor() {
+    constructor(app) {
         this.app = app;
         this.animationCollectors = [];
         this.bezierModifiers = [];
@@ -627,7 +627,7 @@ class Objects {
 export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
-        this.objects = new Objects();
+        this.objects = new Objects(app);
 
         this.renderingOrder = [];
 

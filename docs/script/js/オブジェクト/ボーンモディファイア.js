@@ -27,16 +27,19 @@ class Color {
 }
 
 export class Bone {
-    constructor(armature,index) {
+    constructor(armature,index = armature.allBone.length, head, tail) {
         this.type = "ボーン";
         this.name = "名称未設定";
         this.id = createID();
+        /** @type {BoneModifier} */
+        this.armature = armature;
         this.parent = null;
         this.index = index;
         this.childrenBone = [];
-        /** @type {BoneModifier} */
-        this.armature = armature;
         this.color = [0,0,0,1];
+
+        this.head = [...head];
+        this.tail = [...tail];
 
         this.x = 0;
         this.y = 0;

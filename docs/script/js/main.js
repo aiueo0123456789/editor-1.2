@@ -316,7 +316,7 @@ document.getElementById('ps-open-btn').addEventListener('change', (event) => {
                 layer.zIndex = layers.length - i;
             }
         }
-        loadData = {ps: true, data: data};
+        app.fileIO.loadFile({ps: true, data: data});
         console.log('画像ファイル:', images);
         console.log('JSONファイル:', jsonFiles);
     }).catch(error => {

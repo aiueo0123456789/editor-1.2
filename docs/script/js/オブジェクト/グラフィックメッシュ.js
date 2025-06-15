@@ -373,7 +373,9 @@ export class GraphicMesh extends ObjectBase {
                 app.scene.runtimeData.graphicMeshData.setAnimationData(this, animationData, index);
             })
 
-            if (data.texture) {
+            if (data.texture instanceof GPUTexture) {
+                this.texture = data.texture;
+            } else if (data.texture) {
                 this.texture = GPU.createTexture2D([data.texture.width, data.texture.height, 1],"rgba8unorm");
                 GPU.copyBase64ToTexture(this.texture, data.texture.data);
             } else {

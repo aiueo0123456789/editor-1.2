@@ -125,9 +125,9 @@ class AppConfig {
             "Viewer": {
                 "オブジェクト": [
                     {label: "オブジェクトを追加", children: [
-                        {label: "グラフィックメッシュ", eventFn: app.scene.objects.createObject.bind(app.scene, {type: "グラフィックメッシュ"})},
-                        {label: "ベジェモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene, {type: "ベジェモディファイア"})},
-                        {label: "ボーンモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene, {type: "ボーンモディファイア"})}
+                        {label: "グラフィックメッシュ", eventFn: app.scene.objects.createObject.bind(app.scene.objects, {type: "グラフィックメッシュ"})},
+                        {label: "ベジェモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene.objects, {type: "ベジェモディファイア"})},
+                        {label: "ボーンモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene.objects, {type: "ボーンモディファイア"})}
                     ]},
                     {label: "test"},
                 ]
@@ -163,6 +163,24 @@ export class Application { // 全てをまとめる
     constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
 
+        this.scene = new Scene(this);
+        this.appConfig = new AppConfig(this);
+
+        this.options = new AppOptions(this);
+
+        this.areas = [];
+        this.areaMap = new Map();
+        this.activeArea = null;
+        this.animationPlayer = new AnimationPlayer(this);
+        this.hierarchy = new Hierarchy(this);
+        this.fileIO = new FaileIOManager(this);
+        this.input = new InputManager(this);
+        this.operator = new Operator(this);
+
+        this.contextmenu = new ContextmenuOperator(this);
+    }
+
+    init() {
         this.scene = new Scene(this);
         this.appConfig = new AppConfig(this);
 

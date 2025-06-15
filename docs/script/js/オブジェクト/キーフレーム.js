@@ -105,7 +105,7 @@ class Keyframe {
 
 export class KeyframeBlock {
     constructor(object, targetValue) {
-        this.type = "キーフレームブロック"
+        this.type = "キーフレームブロック";
         this.belongObject = object;
         this.targetValue = targetValue;
         this.keys = [];
