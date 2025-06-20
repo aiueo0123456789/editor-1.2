@@ -17,7 +17,6 @@ export function createTag(target, type, option = {}) {
     }
     for (const key in option) {
         if (key == "class") {
-            console.log("クラス", option[key].split(" ").filter(Boolean))
             element.classList.add(...option[key].split(" ").filter(Boolean));
         } else if (key == "style") {
             setStyle(element, option[key]);

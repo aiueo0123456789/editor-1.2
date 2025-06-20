@@ -1,4 +1,4 @@
-import { setParentModifierWeight } from "./オブジェクト/オブジェクトで共通の処理.js";
+import { app } from "./app.js";
 
 export class Children {
     constructor() {
@@ -11,6 +11,7 @@ export class Children {
 
     addChild(object) {
         this.objects.push(object);
+        app.options.assignWeights(object);
     }
 
     deleteChild(object) {
@@ -19,7 +20,7 @@ export class Children {
 
     weightReset() {
         this.objects.forEach(x => {
-            setParentModifierWeight(x);
+            app.options.assignWeights(addObject);
         })
     }
 }

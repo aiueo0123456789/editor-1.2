@@ -12,54 +12,101 @@ import { Area_Timeline } from "./area/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "./area/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
-import { changeParameter, createArrayFromHashKeys, indexOfSplice } from "./utility.js";
+import { changeParameter, createArrayFromHashKeys, indexOfSplice, loadFile } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
 import { ContextmenuOperator } from "./app/ContextmenuOperator.js";
 import { HierarchySpaceData } from "./area/Hierarchy/area_HierarchySpaceData.js";
 import { Area_Property } from "./area/Property/area_Property.js";
+import { GraphicMesh } from "./オブジェクト/グラフィックメッシュ.js";
+import { GPU } from "./webGPU.js";
+
+const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/ボーン/重み設定.wgsl"));
 
 class AppOptions {
-    constructor(app) {
+    constructor(/** @type {Application} */app) {
         this.app = app;
         this.primitives = {
-            "bone": {
+            "boneModifer": {
                 "normal": {
-                    baseVertices: [
-                        0,-100, 0,100,
-                    ],
+                    type: "アーマチュア",
+                    // boneNum: 1,
+                    // relationship: [{
+                    //     index: 0,
+                    //     children: [],
+                    //     baseHead: [0,-100],
+                    //     baseTail: [0,100],
+                    //     animations: [],
+                    // }],
+                    boneNum: 3,
                     relationship: [{
                         index: 0,
-                        children: [],
+                        children: [
+                            {
+                                index: 2,
+                                children: [
+                                    {
+                                        index: 1,
+                                        children: [],
+                                        baseHead: [0,220],
+                                        baseTail: [0,330],
+                                        animations: [],
+                                    }
+                                ],
+                                baseHead: [0,110],
+                                baseTail: [0,210],
+                                animations: [],
+                            }
+                        ],
+                        baseHead: [0,-100],
+                        baseTail: [0,100],
+                        animations: [],
                     }],
-                    animationKeyDatas: [],
                     editor: {
                         boneColor: [0,0,0,1]
                     }
                 },
                 "body": {
-                    baseVertices: [
-                        0,-100, 0,100,
-                        100,150, 200, 250,
-                        0,250, 0, 300
-                    ],
+                    type: "アーマチュア",
+                    boneNum: 2,
                     relationship: [{
                         index: 0,
                         children: [
                             {
                                 index: 1,
-                                children: [
-                                    {
-                                        index: 2,
-                                        children: [],
-                                    }
-                                ],
+                                children: [],
+                                baseHead: [0,110],
+                                baseTail: [0,210],
+                                animations: [],
                             }
                         ],
+                        baseHead: [0,-100],
+                        baseTail: [0,100],
+                        animations: [],
                     }],
-                    animationKeyDatas: [],
                     editor: {
                         boneColor: [0,0,0,1]
                     }
+                }
+            },
+            "bezierModifier": {
+                "normal": {
+                    type: "ベジェモディファイア",
+                    baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0],
+                    animationKeyDatas: [],
+                    modifierEffectData: {data: [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], type: "u32*4,f32*4"}
+                }
+            },
+            "graphicMesh": {
+                "normal": {
+                    zIndex: 0, baseVerticesPosition: [0,0, 500,0, 500,500, 0,500], baseVerticesUV: [0,1, 1,1, 1,0, 0,0], meshIndex: [0,1,2,0, 0,2,3,0], animationKeyDatas: [], modifierEffectData: {data: [
+                        0,0,0,0, 0,0,0,0,
+                        0,0,0,0, 0,0,0,0,
+                        0,0,0,0, 0,0,0,0,
+                        0,0,0,0, 0,0,0,0,
+                    ], type: "u32*4,f32*4"},
+                    renderingTargetTexture: null,
+                    maskTargetTexture: "base",
+                    editor: {baseSilhouetteEdges: [[0,1],[1,2],[2,3],[3,0]], baseEdges: [], imageBBox: {min: [0,0], max: [500,500], width: 500, height: 500, center: [250,250]}}
                 }
             }
         }
@@ -77,6 +124,40 @@ class AppOptions {
         const datas = object.keyframeBlockManager.blocksMap;
         for (const data in datas) {
             object.keyframeBlockManager.blocksMap[data].insert(frame, object[data]);
+        }
+    }
+
+    // 自動ウェイトペイント
+    async assignWeights(object) {
+        if (!object.parent) return ;
+        let parentVerticesBuffer;
+        let parentAllocationBuffer;
+        if (object.parent.type == "アーマチュア") {
+            parentVerticesBuffer = this.app.scene.runtimeData.armatureData.baseVertices;
+            parentAllocationBuffer = object.parent.objectDataBuffer;
+        } else {
+            parentVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices;
+            parentAllocationBuffer = object.parent.objectDataBuffer;
+        }
+        let objectWeightsBuffer;
+        let objectVerticesBuffer;
+        let objectAllocationBuffer;
+        if (object.type == "グラフィックメッシュ") {
+            objectWeightsBuffer = this.app.scene.runtimeData.graphicMeshData.weightBlocks;
+            objectVerticesBuffer = this.app.scene.runtimeData.graphicMeshData.baseVertices;
+            objectAllocationBuffer = object.objectDataBuffer;
+        } else {
+            objectWeightsBuffer = this.app.scene.runtimeData.bezierModifierData.weightBlocks;
+            objectVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices;
+            objectAllocationBuffer = object.objectDataBuffer;
+        }
+        const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu"), [objectWeightsBuffer, objectVerticesBuffer, objectAllocationBuffer, parentVerticesBuffer, parentAllocationBuffer]);
+        GPU.runComputeShader(calculateParentWeightForBone, [group], Math.ceil(object.verticesNum / 64));
+        const result = await GPU.getStructDataFromGPUBuffer(objectWeightsBuffer, ["u32","u32","u32","u32", "f32","f32","f32","f32"], object.vertexBufferOffset, object.verticesNum);
+        console.log(result)
+        for (const vertex of object.allVertices) {
+            vertex.parentWeight.indexs = result[vertex.index].slice(0,4);
+            vertex.parentWeight.weights = result[vertex.index].slice(4,8);
         }
     }
 }
@@ -97,20 +178,20 @@ class WorkSpaceTool {
 
 // アプリの設定
 class AppConfig {
-    constructor(app) {
+    constructor(/** @type {Application} */ app) {
         this.app = app;
+        this.projectName = "名称未設定";
         this.workSpaceTool = new WorkSpaceTool();
 
         this.MASKTEXTURESIZE = [1024,1024];
 
         this.MAX_GRAPHICMESH = 100; // グラフィックメッシュの最大数
-        this.MAX_VERTICES_PER_GRAPHICMESH = 500; // グラフィックメッシュあたりの最大頂点数
-        this.MAX_MESHES_PER_GRAPHICMESH = 700; // グラフィックメッシュあたりの最大頂メッシュ数
+        this.MAX_VERTICES_PER_GRAPHICMESH = 1000; // グラフィックメッシュあたりの最大頂点数
+        this.MAX_MESHES_PER_GRAPHICMESH = 2000; // グラフィックメッシュあたりの最大頂メッシュ数
         this.MAX_ANIMATIONS_PER_GRAPHICMESH = 10; // グラフィックメッシュあたりの最大アニメーション数
 
-        this.MAX_BONEMODIFIER = 32; // ボーンモディファイアの最大数
-        this.MAX_VERTICES_PER_BONEMODIFIER = 100; // ボーンモディファイアあたりの最大頂点数
-        this.MAX_ANIMATIONS_PER_BONEMODIFIER = 10; // ボーンモディファイアあたりの最大アニメーション数
+        this.MAX_BONEMODIFIER = 32; // アーマチュアの最大数
+        this.MAX_VERTICES_PER_BONEMODIFIER = 100; // アーマチュアあたりの最大頂点数
 
         this.MAX_BEZIERMODIFIER = 32; // ベジェモディファイアの最大数
         this.MAX_VERTICES_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大頂点数
@@ -121,16 +202,28 @@ class AppConfig {
             this.areasConfig[keyName] = new useClassFromAreaType[keyName]["areaConfig"]();
         }
 
+        this.contextmenusItems = {}
+    }
+
+    stContextmenuItems() {
         this.contextmenusItems = {
             "Viewer": {
                 "オブジェクト": [
                     {label: "オブジェクトを追加", children: [
-                        {label: "グラフィックメッシュ", eventFn: app.scene.objects.createObject.bind(app.scene.objects, {type: "グラフィックメッシュ"})},
-                        {label: "ベジェモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene.objects, {type: "ベジェモディファイア"})},
-                        {label: "ボーンモディファイア", eventFn: app.scene.objects.createObject.bind(app.scene.objects, {type: "ボーンモディファイア"})}
+                        {label: "グラフィックメッシュ", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "グラフィックメッシュ"})},
+                        {label: "ベジェモディファイア", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "ベジェモディファイア"})},
+                        {label: "アーマチュア", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "アーマチュア"})}
                     ]},
+                    {label: "メッシュの生成", eventFn: () => {
+                        this.app.scene.state.selectedObject.forEach((/** @type {GraphicMesh} */graphicMesh) => {
+                            graphicMesh.editor.createEdgeFromTexture(1, 1);
+                        })
+                    }},
                     {label: "test"},
-                ]
+                ],
+                // "メッシュ編集": [
+                //     {label: "test"},
+                // ],
             },
             "Hierarchy": {
                 "オブジェクト": [
@@ -162,17 +255,17 @@ class AreaOperator {
 export class Application { // 全てをまとめる
     constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
-
-        this.scene = new Scene(this);
         this.appConfig = new AppConfig(this);
-
         this.options = new AppOptions(this);
+
+        this.hierarchy = new Hierarchy(this);
+        this.scene = new Scene(this);
+        this.appConfig.stContextmenuItems();
+        this.animationPlayer = new AnimationPlayer(this);
 
         this.areas = [];
         this.areaMap = new Map();
         this.activeArea = null;
-        this.animationPlayer = new AnimationPlayer(this);
-        this.hierarchy = new Hierarchy(this);
         this.fileIO = new FaileIOManager(this);
         this.input = new InputManager(this);
         this.operator = new Operator(this);
@@ -181,21 +274,7 @@ export class Application { // 全てをまとめる
     }
 
     init() {
-        this.scene = new Scene(this);
-        this.appConfig = new AppConfig(this);
-
-        this.options = new AppOptions(this);
-
-        this.areas = [];
-        this.areaMap = new Map();
-        this.activeArea = null;
-        this.animationPlayer = new AnimationPlayer(this);
-        this.hierarchy = new Hierarchy(this);
-        this.fileIO = new FaileIOManager(this);
-        this.input = new InputManager(this);
-        this.operator = new Operator(this);
-
-        this.contextmenu = new ContextmenuOperator(this);
+        this.scene.init();
     }
 
     async getSaveData() {
@@ -346,6 +425,8 @@ app.setAreaType(area1_h,1,"Timeline");
 app.setAreaType(area2,0,"Hierarchy");
 app.setAreaType(area3,0,"Property");
 app.setAreaType(area3,1,"Inspector");
+
+app.init();
 
 function appUpdate() {
     try {

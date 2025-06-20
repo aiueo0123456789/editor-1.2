@@ -2,7 +2,7 @@ import { app } from "../../../app.js";
 import { mathMat3x3 } from "../../../MathMat.js";
 import { loadFile } from "../../../utility.js";
 import { GPU } from "../../../webGPU.js";
-import { Bone } from "../../../オブジェクト/ボーンモディファイア.js";
+import { Bone } from "../../../オブジェクト/アーマチュア.js";
 
 // const pipelines = {
 //     graphicMesh: {rotate: },
@@ -35,7 +35,7 @@ class TransformCommand {
 
         this.targets = targets;
         this.type = type;
-        const source = this.type == "メッシュ編集" ? app.scene.runtimeData.graphicMeshData : this.type == "ボーン編集" ? app.scene.runtimeData.boneModifierData : app.scene.runtimeData.bezierModifierData;
+        const source = this.type == "メッシュ編集" ? app.scene.runtimeData.graphicMeshData : this.type == "ボーン編集" ? app.scene.runtimeData.armatureData : app.scene.runtimeData.bezierModifierData;
         const groupNum = this.type == "メッシュ編集" ? 1 : this.type == "ボーン編集" ? 2 : 3;
         if (this.type == "ボーンアニメーション編集") {
             this.parentWorldMatrix = [];
@@ -46,7 +46,9 @@ class TransformCommand {
                 }
             }
             for (const bone of this.root) {
-                bone.parent.getWorldMatrix();
+                if (bone.parent) {
+                    bone.parent.getWorldMatrix();
+                }
             }
             this.originalBones = new Map();
             for (const bone of targets) {
@@ -67,6 +69,7 @@ class TransformCommand {
                         subjectIndex.push(i);
                     }
                 }
+                console.log(subjectIndex,selectIndexs);
                 this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
                 this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
                 this.workNumX = Math.ceil(subjectIndex.length / 64);
@@ -86,7 +89,7 @@ class TransformCommand {
         GPU.writeBuffer(this.centerPointBuffer, new Float32Array(centerPoint));
     }
 
-    transform(pipeline) {
+    async transform(pipeline) {
         GPU.writeBuffer(this.valueBuffer, new Float32Array(this.value));
         if (this.type == "ボーンアニメーション編集") {
             if (pipeline == "Translate") {
@@ -115,22 +118,25 @@ class TransformCommand {
 
             GPU.runComputeShader(pipeline, [this.transformGroup], this.workNumX);
             if (this.type == "ボーン編集") {
+                // await Promise.all(
+                //     this.targets.map(target => {
+                //         app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
+                //         return app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
+                //     })
+                // );
                 for (const target of this.targets) {
-                    app.scene.runtimeData.boneModifierData.calculateBaseBoneData(target);
+                    app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
+                    app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
                 }
             } else if (this.type == "メッシュ編集") {
                 for (const target of this.targets) {
                     GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
+                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target);
                     target.editor.createMesh();
                 }
             }
             if (this.type == "頂点アニメーション") {
                 this.targets.belongObject.isChange = true;
-            } else {
-                // this.targets.children?.weightReset();
-                // setBaseBBox(this.targets);
-                // setParentModifierWeight(this.targets);
-                this.targets.isChange = true;
             }
         }
     }
@@ -138,10 +144,9 @@ class TransformCommand {
     // 変形を取り消し
     cancel() {
         GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
-        this.targets.isChange = true;
         if (this.type == "ボーン編集") {
             for (const target of this.targets) {
-                app.scene.runtimeData.boneModifierData.calculateBaseBoneData(target);
+                app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
             }
         } else if (this.type == "メッシュ編集") {
             for (const target of this.targets) {
@@ -154,10 +159,9 @@ class TransformCommand {
     undo() {
         console.log("巻き戻し")
         GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
-        this.targets.isChange = true;
         if (this.type == "ボーン編集") {
             for (const target of this.targets) {
-                app.scene.runtimeData.boneModifierData.calculateBaseBoneData(target);
+                app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
             }
         } else if (this.type == "メッシュ編集") {
             for (const target of this.targets) {
@@ -174,7 +178,7 @@ class TransformCommand {
         object.isChange = true;
         if (object.type == "ボーン編集") {
             for (const target of this.targets) {
-                app.scene.runtimeData.boneModifierData.calculateBaseBoneData(target);
+                app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
             }
         } else if (object.type == "メッシュ編集") {
             for (const target of this.targets) {

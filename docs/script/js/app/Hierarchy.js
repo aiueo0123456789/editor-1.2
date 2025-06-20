@@ -1,5 +1,5 @@
-import { setParentModifierWeight } from "../オブジェクト/オブジェクトで共通の処理.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
+import { Application } from "../app.js";
 
 class Group {
     constructor(name = "グループ", id = null) {
@@ -109,7 +109,7 @@ class Editor {
 }
 
 export class Hierarchy {
-    constructor(app) {
+    constructor(/** @type {Application} */ app) {
         this.app = app;
 
         this.root = [];
@@ -185,27 +185,27 @@ export class Hierarchy {
             this.root.push(addObject);
             addObject.parent = "";
         } else {
-            parentObject.children.addChild(addObject);
             addObject.parent = parentObject;
-            setParentModifierWeight(addObject); // モディファイアの適応
+            parentObject.children.addChild(addObject);
+            this.app.options.assignWeights(addObject);
         }
         managerForDOMs.update(this.root)
     }
 
-    sortHierarchy(targetObject, object) { // ヒエラルキーの並び替え
+    sortHierarchy(newParentObject, object) { // ヒエラルキーの並び替え
         this.deleteHierarchy(object);
-        if (targetObject == "") {
+        if (newParentObject == "") {
             this.root.push(object);
             object.parent = "";
         } else {
-            targetObject.children.addChild(object);
+            object.parent = newParentObject;
+            newParentObject.children.addChild(object);
             if (object.type == "グラフィックメッシュ") {
                 this.app.scene.runtimeData.graphicMeshData.updateAllocationData(object);
             } else if (object.type == "ベジェモディファイア") {
                 this.app.scene.runtimeData.bezierModifierData.updateAllocationData(object);
             }
-            object.parent = targetObject;
-            setParentModifierWeight(object); // モディファイアの適応
+            this.app.options.assignWeights(object);
         }
         managerForDOMs.update(this.root)
     }

@@ -15,6 +15,7 @@ export class Area_Inspector {
                         {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "グラフィックメッシュ"},
                             true: [
                                 {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                {type: "input", label: "親", withObject: {object: "parent", parameter: "name"}, options: {type: "text"}},
                                 {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 1000, step: 1}},
                                 {type: "input", label: "最大頂点数", withObject: {object: "", parameter: "MAX_VERTICES"}, options: {type: "number"}, custom: {visual: "1"}},
                                 {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
@@ -25,14 +26,14 @@ export class Area_Inspector {
                                         {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                     ],
                                     false: [
-                                        {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "ボーンモディファイア"},
+                                        {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "アーマチュア"},
                                             true: [
                                                 {type: "input", label: "名前", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                                 {type: "input", label: "最大ボーン数", withObject: {object: "", parameter: "MAX_BONES"}, options: {type: "number"}, custom: {visual: "1"}},
                                                 {type: "input", label: "ボーン数", withObject: {object: "", parameter: "boneNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
                                             ],
                                             false: [
-                                                {type: "input", label: "対象オブジェクト", withObject: {object: "belongObject", parameter: "name"}, options: {type: "text"}},
+                                                {type: "input", label: "対象オブジェクト", withObject: {object: "targetObject", parameter: "name"}, options: {type: "text"}},
                                                 {type: "input", label: "対象値", withObject: {object: "", parameter: "targetValue"}, options: {type: "text"}},
                                             ]
                                         }

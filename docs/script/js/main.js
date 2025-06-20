@@ -2,7 +2,6 @@ import { app } from './app.js';
 import { managerForDOMs, updateLoad } from "./UI/制御.js";
 import { GPU } from './webGPU.js';
 
-// updateLoad("", 100);
 updateLoad("test", 100, "test");
 
 const appendModal = document.getElementById("appendModal");
@@ -10,106 +9,7 @@ const directories = document.getElementById("directories");
 appendModal.classList.add("hidden");
 
 export const mouseEvent = {};
-let projectName = "名称未設定";
 const projectNameInputTag = document.getElementById("projectName-input");
-let loadData = null;
-
-export let activeView = null;
-
-async function init() {
-    if (loadData.append) {
-        for (const data of loadData.objects) {
-            app.hierarchy.addHierarchy("", app.hierarchy.setSaveObject(data,""));
-        }
-        loadData = null;
-        managerForDOMs.allUpdate();
-    } else if (loadData.ps) {
-        updateLoad("読み込み", 0);
-        app.hierarchy.destroy();
-        for (const data of loadData.data.GraphicMesh) {
-            if (data.texture) {
-                app.hierarchy.addHierarchy("", app.hierarchy.setSaveObject(Object.assign({ps: true},data),""));
-            }
-        }
-        console.log(loadData)
-        app.hierarchy.editor.layer.setSaveData(loadData.data.struct);
-        updateLoad("読み込み", 60);
-        // hierarchy.setHierarchy(loadData.hierarchy);
-        loadData = null;
-        updateLoad("読み込み", 70);
-        updateLoad("読み込み", 80);
-        managerForDOMs.allUpdate();
-        updateLoad("読み込み", 100);
-        console.log(app.hierarchy)
-    } else {
-        updateLoad("読み込み", 0);
-        app.hierarchy.destroy();
-        for (const data of loadData.bezierModifiers) {
-            app.hierarchy.setSaveObject(data,"");
-        }
-        for (const data of loadData.rotateModifiers) {
-            app.hierarchy.setSaveObject(data,"");
-        }
-        for (const data of loadData.boneModifiers) {
-            app.hierarchy.setSaveObject(data,"");
-        }
-        for (const data of loadData.graphicMeshs) {
-            app.hierarchy.setSaveObject(data,"");
-        }
-        for (const data of loadData.animationCollectors) {
-            app.hierarchy.setSaveObject(data,"");
-        }
-        updateLoad("読み込み", 60);
-        app.hierarchy.setHierarchy(loadData.hierarchy);
-        loadData.attachments = [
-            {
-                // type: "行列コピー",
-                type: "ボーン追従",
-                target: {object: "vRTze5673ffMCNPT", boneIndex: 0},
-                source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
-            },
-            // {
-            //     type: "行列コピー",
-            //     target: {object: "oz3KO5BnvB0Nr95d", boneIndex: 0},
-            //     source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
-            // },
-            {
-                type: "ボーン追従",
-                target: {object: "oz3KO5BnvB0Nr95d", boneIndex: 0},
-                source: {object: "ajRgB51r4iDQTCS9", boneIndex: 32},
-            },
-            {
-                type: "ボーン追従",
-                target: {object: "fTt6iJ1ahSIyxAbI", boneIndex: 0},
-                source: {object: "ajRgB51r4iDQTCS9", boneIndex: 1},
-            },
-        ];
-        for (const data of loadData.attachments) {
-            if (data.type == "行列コピー") {
-                const target = app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
-                const source = app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
-                console.log(target,source)
-                const attachment = app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
-                console.log(attachment)
-                attachment.editor.setSourceBone(source);
-            } else if (data.type == "ボーン追従") {
-                const target = app.scene.searchObjectFromID(data.target.object).editor.getBoneFromIndex(data.target.boneIndex);
-                const source = app.scene.searchObjectFromID(data.source.object).editor.getBoneFromIndex(data.source.boneIndex);
-                console.log(target,source)
-                const attachment = app.scene.searchObjectFromID(data.target.object).attachments.append(data.type, {targetBone: target});
-                console.log(attachment)
-                attachment.editor.setSourceBone(source);
-            }
-        }
-        loadData = null;
-        updateLoad("読み込み", 70);
-        updateLoad("読み込み", 80);
-        managerForDOMs.allUpdate();
-        updateLoad("読み込み", 100);
-        console.log(app.hierarchy)
-    }
-    update();
-}
 
 // マウスイベント管理
 document.addEventListener("mousedown", (e) => {
@@ -123,32 +23,9 @@ document.addEventListener("mouseup", (e) => {
     mouseEvent.position = [e.clientX,e.clientY];
 })
 
-async function save() {
-    updateLoad("書き出し", 0);
-    // JSONデータを作成
-    const data = await app.getSaveData();
-    console.log(data)
-
-    // JSONデータを文字列化
-    const jsonString = JSON.stringify(data, null, 2);
-    // Blobを作成
-    const blob = new Blob([jsonString], { type: "application/json" });
-    updateLoad("書き出し", 95);
-    // ダウンロード用のリンクを作成
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    // a.download = `${projectName}.json`;
-    a.download = `${projectName}.anm`;
-    // リンクをクリックしてダウンロードを開始
-    a.click();
-    updateLoad("書き出し", 100);
-    // メモリ解放
-    URL.revokeObjectURL(a.href);
-}
-
 // セーブ
 document.getElementById("save-btn").addEventListener("click", () => {
-    save();
+    app.fileIO.save();
 });
 
 // 他のファイルから追加
@@ -338,5 +215,5 @@ function readTextFile(file) {
 }
 
 projectNameInputTag.addEventListener("change", async (event) => {
-    projectName = event.target.value;
+    app.appConfig.projectName = event.target.value;
 });

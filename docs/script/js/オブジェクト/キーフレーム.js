@@ -101,12 +101,20 @@ class Keyframe {
         this.leftHandle = vec2.subR(this.wLeftHandle, this.point);
         this.rightHandle = vec2.subR(this.wRightHandle, this.point);
     }
+
+    getSaveData() {
+        return {
+            point: this.point,
+            leftHandle: this.leftHandle,
+            rightHandle: this.rightHandle,
+        };
+    }
 }
 
 export class KeyframeBlock {
     constructor(object, targetValue) {
         this.type = "キーフレームブロック";
-        this.belongObject = object;
+        this.targetObject = object;
         this.targetValue = targetValue;
         this.keys = [];
         app.scene.objects.keyframeBlocks.push(this);
@@ -125,6 +133,7 @@ export class KeyframeBlock {
         }
         this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
         managerForDOMs.update(this);
+        managerForDOMs.update("タイムライン-canvas")
     }
 
     delete(key) {
@@ -170,15 +179,16 @@ export class KeyframeBlock {
                 break ;
             }
         }
-        this.belongObject[this.targetValue] = bezierInterpolation(leftKey, rightKey, frame);
-        managerForDOMs.update(this.belongObject, this.targetValue);
+        this.targetObject[this.targetValue] = bezierInterpolation(leftKey, rightKey, frame);
+        managerForDOMs.update(this.targetObject, this.targetValue);
     }
 
     getSaveData() {
         return {
             type: "キーブロック",
+            targetObjectID: this.targetObject.id,
             targetValue: this.targetValue,
-            keys: this.keys,
+            keys: this.keys.map(key => key.getSaveData()),
         };
     }
 }

@@ -31,6 +31,7 @@ export class TranslateModal {
         this.activateKey = "g";
 
         const update = () => {
+            if (!this.command) return ;
             this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
         }
         managerForDOMs.set({o: this.values, g: "_", i: "0"}, null, update, null);
@@ -46,25 +47,29 @@ export class TranslateModal {
         } else if (type == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
         } else if (type == "ボーン編集") {
-            this.command = new TranslateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.boneModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.boneModifierData.renderingVertices, app.scene.runtimeData.boneModifierData.selectedVertices);
+            this.command = new TranslateCommand(type,app.scene.state.selectedObject, app.scene.runtimeData.armatureData.getSelectVerticesIndex());
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedVertices);
         } else if (type == "ベジェ編集") {
             this.command = new TranslateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);
         } else if (type == "ボーンアニメーション編集") {
-            this.command = new TranslateCommand(type,app.scene.runtimeData.boneModifierData.getSelectBone());
+            this.command = new TranslateCommand(type,app.scene.runtimeData.armatureData.getSelectBone());
             this.center = [0,0];
         }
         this.command.setCenterPoint(this.center);
+        managerForDOMs.update(this.values);
     }
 
     mousemove(/** @type {InputManager} */inputManager) {
         this.values[0] += inputManager.movement[0];
         this.values[1] += inputManager.movement[1];
         managerForDOMs.update(this.values);
+        return true;
     }
 
     mousedown(/** @type {InputManager} */inputManager) {
-        this.operator.execute();
+        app.operator.appendCommand(this.command);
+        app.operator.update();
+        return {complete: true};
     }
 }

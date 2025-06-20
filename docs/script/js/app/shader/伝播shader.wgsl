@@ -9,13 +9,13 @@ struct Allocation {
     myType: u32,
 }
 
-struct WeightGroup {
+struct WeightBlock {
     indexs: vec4<u32>,
     weights: vec4<f32>,
 }
 
 @group(0) @binding(0) var<storage, read_write> renderingVertices: array<vec2<f32>>; // 出力
-@group(0) @binding(1) var<storage, read> weightGroups: array<WeightGroup>; // indexと重みのデータ
+@group(0) @binding(1) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
 @group(0) @binding(2) var<uniform> allocation: Allocation; // 配分
 
 // ベジェモディファイ
@@ -52,7 +52,7 @@ fn rotate2D(point: vec2<f32>, angle: f32) -> vec2<f32> {
     return vec2<f32>(xPrime, yPrime);
 }
 
-// ボーンモディファイア
+// アーマチュア
 @group(2) @binding(0) var<storage, read> boneMatrix: array<mat3x3<f32>>; // ボーンの行列
 @group(2) @binding(1) var<storage, read> baseBoneMatrix: array<mat3x3<f32>>; // ベースボーンの行列
 @group(2) @binding(2) var<storage, read> boneAllocationArray: array<Allocation>; // ボーンのメモリ配分
@@ -102,9 +102,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
     let fixVertexIndex = allocation.vertexBufferOffset + vertexIndex;
     if (allocation.parentType == 2) { // 親がベジェモディファイア
-        let weightGroup = weightGroups[fixVertexIndex];
-        let bezierIndex = weightGroup.indexs[0] + bezierAllocationArray[allocation.parentIndex].vertexBufferOffset; // ベジェのindex
-        let t = weightGroup.weights[0]; // ベジェのt
+        let weightBlock = weightBlocks[fixVertexIndex];
+        let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocation.parentIndex].vertexBufferOffset; // ベジェのindex
+        let t = weightBlock.weights[0]; // ベジェのt
 
         // 元のベジェ
         let a1 = baseBezier[bezierIndex - 1];
@@ -122,11 +122,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
         let rotatePosition = rotate2D(renderingVertices[fixVertexIndex] + (position2 - position1) - position2, calculateRotation(normal1, normal2));
         renderingVertices[fixVertexIndex] = rotatePosition + position2;
-    } else if (allocation.parentType == 3) { // 親がボーンモディファイア
-        let weightGroup = weightGroups[fixVertexIndex];
+    } else if (allocation.parentType == 3) { // 親がアーマチュア
+        let weightBlock = weightBlocks[fixVertexIndex];
         let position = vec3<f32>(renderingVertices[fixVertexIndex],1.0);
-        let indexs = weightGroup.indexs;
-        let weights = weightGroup.weights;
+        let indexs = weightBlock.indexs;
+        let weights = weightBlock.weights;
         var skinnedPosition = vec2<f32>(0.0, 0.0);
         // 各ボーンのワールド行列を用いてスキニング
         for (var i = 0u; i < 4u; i = i + 1u) {

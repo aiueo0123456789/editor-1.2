@@ -31,8 +31,8 @@ export class KeyRotate {
         } else if (type == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
         } else if (type == "ボーン編集") {
-            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.boneModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.boneModifierData.renderingVertices, app.scene.runtimeData.boneModifierData.selectedVertices);
+            this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.armatureData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedVertices);
         } else if (type == "ベジェ編集") {
             this.command = new RotateCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);

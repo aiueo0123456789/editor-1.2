@@ -29,7 +29,7 @@ export function initSelectShelf(groupID, DOM) {
 export function updateMeshShelf(object, groupID, DOM, others) {
     /** @type {HTMLElement} */
     const t = DOM.inner;
-    if (others.object.type == "ボーンモディファイア") {
+    if (others.object.type == "アーマチュア") {
         const selectNum = createLabeledP(t, "選択中");
         selectNum.textContent = others;
     }
@@ -43,7 +43,6 @@ export function initMeshShelf(groupID, DOM) {
     createMeshButton.textContent = "自動";
     createMeshButton.addEventListener("click", () => {
         stateMachine.state.data.activeObject.editor.createEdgeFromTexture(6,10);
-        // activeView.addFunctionTranceShelfe({object: stateMachine.state.data.activeObject.editor, targetFn: "createEdgeFromTexture"}, [{name: "ピクセル密度", type: {type: "入力", inputType: "数字", option: {initValue: 6}}}, {name: "余白", type: {type: "入力", inputType: "数字", option: {initValue: 10}}}]);
     })
 
     const appenButton = createCheckbox("button-checkbox", "追加");

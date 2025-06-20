@@ -2,7 +2,7 @@ import { GPU } from "../../../webGPU.js";
 import { GraphicMesh } from "../../../オブジェクト/グラフィックメッシュ.js";
 import { setBaseBBox, setParentModifierWeight } from "../../../オブジェクト/オブジェクトで共通の処理.js";
 import { vec2 } from "../../../ベクトル計算.js";
-import { BoneModifier } from "../../../オブジェクト/ボーンモディファイア.js";
+import { Armature } from "../../../オブジェクト/アーマチュア.js";
 
 export class MeshManager {
     constructor(target) {
@@ -11,7 +11,7 @@ export class MeshManager {
 }
 
 export class BoneAppendCommand {
-    constructor(/** @type {BoneManager} */ manager, /** @type {BoneModifier} */ target, parentIndex, head, tail) {
+    constructor(/** @type {BoneManager} */ manager, /** @type {Armature} */ target, parentIndex, head, tail) {
         this.manager = manager;
         this.target = target;
         this.parentIndex = parentIndex;
@@ -30,7 +30,7 @@ export class BoneAppendCommand {
 }
 
 export class BoneDeleteCommand {
-    constructor(/** @type {BoneManager} */ manager, /** @type {BoneModifier} */ target, index) {
+    constructor(/** @type {BoneManager} */ manager, /** @type {Armature} */ target, index) {
         this.manager = manager;
         this.target = target;
         this.index = index;
@@ -46,7 +46,7 @@ export class BoneDeleteCommand {
 }
 
 export class BoneJoinCommand {
-    constructor(/** @type {BoneManager} */ manager, /** @type {BoneModifier} */ target, parentIndex, index) {
+    constructor(/** @type {BoneManager} */ manager, /** @type {Armature} */ target, parentIndex, index) {
         this.manager = manager;
         this.target = target;
         this.parentIndex = parentIndex;
@@ -67,7 +67,7 @@ export class BoneManager {
     constructor() {
     }
 
-    append(/** @type {BoneModifier} */ target, parentIndex, head, tail) {
+    append(/** @type {Armature} */ target, parentIndex, head, tail) {
         // 親ボーンのindex
         if (parentIndex == "last") {
             parentIndex = target.boneNum - 1;
@@ -103,7 +103,7 @@ export class BoneManager {
         return target.boneNum - 1;
     }
 
-    delete(/** @type {BoneModifier} */ target, deleteIndexs) {
+    delete(/** @type {Armature} */ target, deleteIndexs) {
         const indexs = deleteIndexs;
         // for (let index of deleteIndexs) {
         //     index = Math.floor(index / 2);
@@ -142,7 +142,7 @@ export class BoneManager {
         setParentModifierWeight(target);
     }
 
-    join(/** @type {BoneModifier} */ target, parentIndex, index) {
+    join(/** @type {Armature} */ target, parentIndex, index) {
         // index = Math.floor(index / 2);
         // parentIndex = Math.floor(parentIndex / 2);
         // 親子データを更新
@@ -212,7 +212,7 @@ export class Mesh {
         }
     }
 
-    appendBone(/** @type {BoneModifier} */ target, parentIndex, head, tail, coordinate) {
+    appendBone(/** @type {Armature} */ target, parentIndex, head, tail, coordinate) {
         if (coordinate) {
             // console.log(await GPU.getF32BufferPartsData(target.s_baseVerticesPositionBuffer,parentIndex,2))
             // vec2.add(head, await GPU.getF32BufferPartsData(target.s_baseVerticesPositionBuffer,parentIndex,2), head);
@@ -255,7 +255,7 @@ export class Mesh {
         return [target.verticesNum - 1];
     }
 
-    deleteBone(/** @type {BoneModifier} */ target, deleteIndexs) {
+    deleteBone(/** @type {Armature} */ target, deleteIndexs) {
         console.log("yobidasi ", deleteIndexs)
         const indexs = [];
         for (let index of deleteIndexs) {
@@ -295,7 +295,7 @@ export class Mesh {
         setParentModifierWeight(target);
     }
 
-    joinBone(/** @type {BoneModifier} */ target, index, parentIndex) {
+    joinBone(/** @type {Armature} */ target, index, parentIndex) {
         index = Math.floor(index / 2);
         parentIndex = Math.floor(parentIndex / 2);
         // 親子データを更新

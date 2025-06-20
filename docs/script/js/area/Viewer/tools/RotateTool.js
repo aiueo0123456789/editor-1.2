@@ -26,13 +26,13 @@ export class RotateModal {
         } else if (type == "頂点アニメーション編集") {
             // this.command = new TranslateCommand(app.scene.state.selectedObject);
         } else if (type == "ボーン編集") {
-            this.command = new RotateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.boneModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.boneModifierData.renderingVertices, app.scene.runtimeData.boneModifierData.selectedVertices);
+            this.command = new RotateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.armatureData.selectedVertices));
+            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedVertices);
         } else if (type == "ベジェ編集") {
             this.command = new RotateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices));
             this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);
         } else if (type == "ボーンアニメーション編集") {
-            this.command = new RotateCommand(type, app.scene.runtimeData.boneModifierData.getSelectBone());
+            this.command = new RotateCommand(type, app.scene.runtimeData.armatureData.getSelectBone());
             // this.center = await app.scene.getSelectRootBoneCenter(app.scene.runtimeData);
             this.center = [0,0];
         }
@@ -44,10 +44,13 @@ export class RotateModal {
         this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         // console.log(this.values)
         this.update();
+        return true;
     }
 
     mousedown(/** @type {InputManager} */inputManager) {
-        this.operator.execute();
+        app.operator.appendCommand(this.command);
+        app.operator.update();
+        return {complete: true};
     }
 
     update() {

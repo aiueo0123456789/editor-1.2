@@ -2565,7 +2565,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 }`)
 // 子の変形.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/子の変形.wgsl',`struct AnimationData {
+shaders.set('./script/wgsl/compute/アーマチュア/子の変形.wgsl',`struct AnimationData {
     index: vec4<u32>,
     weight: vec4<f32>,
 }
@@ -2637,7 +2637,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     outputData[vertexIndex] = skinnedPosition;
 }`)
 // ベースボーンのデータを作る.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/ベースボーンのデータを作る.wgsl',`struct Bone {
+shaders.set('./script/wgsl/compute/アーマチュア/ベースボーンのデータを作る.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
     angle: f32,
@@ -2702,7 +2702,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     baseBoneMatrix[boneIndex] = createTransformMatrix(boneData.scale, boneData.angle, boneData.position);
 }`)
 // 適応.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/適応.wgsl',`struct Bone {
+shaders.set('./script/wgsl/compute/アーマチュア/適応.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
     angle: f32,
@@ -2737,7 +2737,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     localBonewMatrix[boneIndex] = createTransformMatrix(localBoneData.scale, localBoneData.angle, localBoneData.position);
 }`)
 // 当たり判定.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/当たり判定.wgsl',`struct BoneVertices {
+shaders.set('./script/wgsl/compute/アーマチュア/当たり判定.wgsl',`struct BoneVertices {
     h: vec2<f32>,
     t: vec2<f32>,
 }
@@ -2794,7 +2794,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 }`)
 // 表示頂点を計算.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/表示頂点を計算.wgsl',`struct Bone {
+shaders.set('./script/wgsl/compute/アーマチュア/表示頂点を計算.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
     angle: f32,
@@ -2825,7 +2825,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     outputData[boneIndex] = output;
 }`)
 // 伝播非採用.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/伝播非採用.wgsl',`struct Bone {
+shaders.set('./script/wgsl/compute/アーマチュア/伝播非採用.wgsl',`struct Bone {
     position: vec2<f32>,
     scale: f32,
     angle: f32,
@@ -2883,7 +2883,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 }`)
 // ウェイト付与.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/ウェイト付与.wgsl',`struct Output {
+shaders.set('./script/wgsl/compute/アーマチュア/ウェイト付与.wgsl',`struct Output {
     index: vec4<u32>,
     weight: vec4<f32>,
 }
@@ -3040,7 +3040,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     outputData[verticesIndex] = calculateWeight(baseVertices[verticesIndex]);
 }`)
 // 伝播.wgsl
-shaders.set('./script/wgsl/compute/ボーンモディファイア/伝播.wgsl',`struct Relationship {
+shaders.set('./script/wgsl/compute/アーマチュア/伝播.wgsl',`struct Relationship {
     child: u32,
     parent: u32,
 }

@@ -1,5 +1,5 @@
 import { GPU } from "../webGPU.js";
-import { setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, calculateBoneModifierWeightToVerticesPipeline } from "../GPUObject.js";
+import { setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, calculateArmatureWeightToVerticesPipeline } from "../GPUObject.js";
 import { calculateBBoxFromAllVertices } from "../BBox.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
@@ -40,16 +40,16 @@ export function setParentModifierWeight(object) {
         object.isChange = true;
         if (object.parent.type == "モディファイア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (4 + 4) * 4, undefined, ["f32"]);
-            const setParentModifierWeightGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
-            GPU.runComputeShader(setModifierWeightToGraphicMeshPipeline, [setParentModifierWeightGroup, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
+            const setParentModifierWeightBlock = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
+            GPU.runComputeShader(setModifierWeightToGraphicMeshPipeline, [setParentModifierWeightBlock, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
         } else if (object.parent.type == "ベジェモディファイア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (1 + 1) * 4, undefined, ["f32"]);
-            const setParentModifierWeightGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
-            GPU.runComputeShader(setBezierModifierWeightToGraphicMeshPipeline, [setParentModifierWeightGroup, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
-        } else if (object.parent.type == "ボーンモディファイア") {
+            const setParentModifierWeightBlock = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
+            GPU.runComputeShader(setBezierModifierWeightToGraphicMeshPipeline, [setParentModifierWeightBlock, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
+        } else if (object.parent.type == "アーマチュア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (4 + 4) * 4, undefined, ["f32"]);
-            const setParentModifierWeightGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
-            GPU.runComputeShader(calculateBoneModifierWeightToVerticesPipeline, [setParentModifierWeightGroup, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
+            const setParentModifierWeightBlock = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr"), [{item: object.parentWeightBuffer, type: 'b'}, {item: object.s_baseVerticesPositionBuffer, type: 'b'}]);
+            GPU.runComputeShader(calculateArmatureWeightToVerticesPipeline, [setParentModifierWeightBlock, object.parent.modifierDataGroup], Math.ceil(object.verticesNum / 64));
             // GPU.consoleBufferData(object.parentWeightBuffer, ["u32","u32","u32","u32","f32","f32","f32","f32"]);
         }
         object.renderWegihtGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [{item: object.RVrt_coBuffer, type: 'b'}, {item: object.parentWeightBuffer, type: 'b'}]);
@@ -101,8 +101,6 @@ export class BoundingBox {
             this.max = data.max;
             vec2.reverseScale(this.center, vec2.addR(this.min,this.max), 2);
             [this.width,this.height] = vec2.subR(this.max,this.min);
-        } else {
-            
         }
     }
 

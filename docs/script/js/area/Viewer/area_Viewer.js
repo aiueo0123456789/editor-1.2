@@ -12,6 +12,9 @@ import { ModalOperator } from '../補助/ModalOperator.js';
 import { TranslateModal } from './tools/TranslateTool.js';
 import { RotateModal } from './tools/RotateTool.js';
 import { ResizeModal } from './tools/ResizeTool.js';
+import { ExtrudeMove } from './tools/ExtrudeMove.js';
+import { ParentPickModal } from './tools/ParentPick.js';
+import { DeleteTool } from './tools/Delete.js';
 
 // const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
@@ -35,7 +38,7 @@ const alphaBuffers = {
 
 class SpaceData {
     constructor() {
-        this.visibleObjects = {graphicMesh: true, boneModifier: true, bezierModifier: true, grid: true};
+        this.visibleObjects = {graphicMesh: true, armature: true, bezierModifier: true, grid: true};
     }
 }
 
@@ -64,7 +67,7 @@ export class Area_Viewer {
                                 ]},
         
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "boneModifier", "bezierModifier", "grid"]}},
+                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "armature", "bezierModifier", "grid"]}},
                                 ]},
                             ]},
     
@@ -107,7 +110,7 @@ export class Area_Viewer {
 
         this.creatorForUI.create(dom, this, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
@@ -161,7 +164,7 @@ export class Area_Viewer {
                         state.setModeForSelected("メッシュ編集");
                     }
                 }
-            } else if (state.activeObject.type == "ボーンモディファイア") {
+            } else if (state.activeObject.type == "アーマチュア") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (state.currentMode == "オブジェクト") {
                         if (inputManager.consumeKeys(["a"])) {
@@ -174,7 +177,7 @@ export class Area_Viewer {
                     }
                 }
                 if (inputManager.consumeKeys(["i"])) {
-                    const bones = app.scene.runtimeData.boneModifierData.getSelectBone();
+                    const bones = app.scene.runtimeData.armatureData.getSelectBone();
                     bones.forEach(bone => {
                         app.options.keyframeInsert(bone, app.scene.frame_current);
                     })
@@ -208,20 +211,19 @@ export class Area_Viewer {
             state.setActiveObject(frontObject);
         } else if (state.currentMode == "メッシュ編集") {
             for (const graphicMesh of app.scene.state.selectedObject) {
-                app.scene.runtimeData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                app.scene.runtimeData.graphicMeshData.selectedForVertices(graphicMesh, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         } else if (state.currentMode == "ボーン編集") {
-            for (const boneModifier of app.scene.state.selectedObject) {
-                app.scene.runtimeData.boneModifierData.selectedForVertices(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+            for (const armature of app.scene.state.selectedObject) {
+                app.scene.runtimeData.armatureData.selectedForVertices(armature, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         } else if (state.currentMode == "ベジェ編集") {
             for (const bezierModifier of app.scene.state.selectedObject) {
-                app.scene.runtimeData.bezierModifierData.selectedForVertices(bezierModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
+                app.scene.runtimeData.bezierModifierData.selectedForVertices(bezierModifier, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         } else if (state.currentMode == "ボーンアニメーション編集") {
-            for (const boneModifier of app.scene.state.selectedObject) {
-                await app.scene.runtimeData.boneModifierData.selectedForBone(boneModifier, {circle: [...this.inputs.clickPosition, 100]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
-                console.log(boneModifier.allBone.map(bone => bone.selected))
+            for (const armature of app.scene.state.selectedObject) {
+                await app.scene.runtimeData.armatureData.selectedForBone(armature, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(app.input.keysDown["Shift"])});
             }
         }
     }
@@ -370,22 +372,22 @@ export class Renderer {
                 }
             }
         }
-        if (this.viewer.spaceData.visibleObjects.boneModifier && app.scene.objects.boneModifiers.length) {
-            renderPass.setBindGroup(1, app.scene.runtimeData.boneModifierData.renderingGizumoGroup);
+        if (this.viewer.spaceData.visibleObjects.armature && app.scene.objects.armatures.length) {
+            renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
             renderPass.setPipeline(boneBoneRenderPipeline);
-            for (const armature of app.scene.objects.boneModifiers) {
+            for (const armature of app.scene.objects.armatures) {
                 renderPass.setBindGroup(2, armature.objectDataGroup);
                 renderPass.draw(3 * 2, armature.boneNum, 0, 0);
             }
             renderPass.setPipeline(boneVerticesRenderPipeline);
-            for (const armature of app.scene.objects.boneModifiers) {
+            for (const armature of app.scene.objects.armatures) {
                 if (armature.mode == "ボーン編集") {
                     renderPass.setBindGroup(2, armature.objectDataGroup);
                     renderPass.draw(6 * 2, armature.boneNum, 0, 0);
                 }
             }
             renderPass.setPipeline(boneRelationshipsRenderPipeline);
-            for (const armature of app.scene.objects.boneModifiers) {
+            for (const armature of app.scene.objects.armatures) {
                 if (armature.mode == "ボーン編集" || armature.mode == "ボーンアニメーション編集") {
                     renderPass.setBindGroup(2, armature.objectDataGroup);
                     renderPass.draw(4, armature.boneNum, 0, 0);

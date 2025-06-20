@@ -9,7 +9,7 @@ struct Allocation {
     myType: u32,
 }
 
-struct WeightGroup {
+struct WeightBlock {
     indexs: vec4<u32>,
     weights: vec4<f32>,
 }
@@ -25,7 +25,7 @@ struct BezierData {
 @group(1) @binding(0) var<storage, read_write> renderingBezier: array<vec2<f32>>; // 変形後のベジェ
 @group(1) @binding(1) var<storage, read> baseBezier: array<vec2<f32>>; // 元のベジェ
 @group(1) @binding(2) var<storage, read> bezierAllocationArray: array<Allocation>; // ベジェのメモリ配分
-@group(1) @binding(3) var<storage, read> bezierWeightGroups: array<WeightGroup>; // indexと重みのデータ
+@group(1) @binding(3) var<storage, read> bezierWeightBlocks: array<WeightBlock>; // indexと重みのデータ
 fn getRenderingBezierData(index: u32) -> BezierData {
     return BezierData(
         renderingBezier[index * 3u],
@@ -65,7 +65,7 @@ fn rotate2D(point: vec2<f32>, angle: f32) -> vec2<f32> {
     return vec2<f32>(xPrime, yPrime);
 }
 
-// ボーンモディファイア
+// アーマチュア
 @group(2) @binding(0) var<storage, read> boneMatrix: array<mat3x3<f32>>; // ボーンの行列
 @group(2) @binding(1) var<storage, read> baseBoneMatrix: array<mat3x3<f32>>; // ベースボーンの行列
 @group(2) @binding(2) var<storage, read> boneAllocationArray: array<Allocation>; // ボーンのメモリ配分
@@ -113,16 +113,16 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         return ;
     }
 
-    let weightGroupIndex = allocation.vertexBufferOffset + vertexIndex;
+    let weightBlockIndex = allocation.vertexBufferOffset + vertexIndex;
     let fixVertexIndex = allocation.vertexBufferOffset * 3 + vertexIndex;
     let targetVertices = select(vec2<f32>(0.0), renderingBezier[fixVertexIndex], allocation.myType == 2u);
     // var newPosition = targetVertices;
     // var newPosition = renderingBezier[fixVertexIndex];
     var newPosition = vec2<f32>(0.0);
     if (allocation.parentType == 2) { // 親がベジェモディファイア
-        let weightGroup = bezierWeightGroups[fixVertexIndex];
-        let bezierIndex = weightGroup.indexs[0] + bezierAllocationArray[allocation.parentIndex].vertexBufferOffset; // ベジェのindex
-        let t = weightGroup.weights[0]; // ベジェのt
+        let weightBlock = bezierWeightBlocks[fixVertexIndex];
+        let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocation.parentIndex].vertexBufferOffset; // ベジェのindex
+        let t = weightBlock.weights[0]; // ベジェのt
 
         // 元のベジェ
         let a1 = getBaseBezierData(bezierIndex - 1);
@@ -140,11 +140,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
         let rotatePosition = rotate2D(targetVertices + (position2 - position1) - position2, calculateRotation(normal1, normal2));
         newPosition = rotatePosition + position2;
-    } else if (allocation.parentType == 3) { // 親がボーンモディファイア
-        let weightGroup = bezierWeightGroups[weightGroupIndex];
+    } else if (allocation.parentType == 3) { // 親がアーマチュア
+        let weightBlock = bezierWeightBlocks[weightBlockIndex];
         let position = vec3<f32>(targetVertices,1.0);
-        let indexs = weightGroup.indexs;
-        let weights = weightGroup.weights;
+        let indexs = weightBlock.indexs;
+        let weights = weightBlock.weights;
         // 各ボーンのワールド行列を用いてスキニング
         for (var i = 0u; i < 4u; i = i + 1u) {
             let weight = weights[i];

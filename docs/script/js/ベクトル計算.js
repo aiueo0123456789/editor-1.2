@@ -6,6 +6,10 @@ class Vec2 {
         return new Float32Array(2);
     }
 
+    random(range) {
+        return this.scaleR(this.subR(this.scaleR([Math.random(),Math.random()],2),[1,1]), range);
+    }
+
     set(t,a) {
         t[0] = a[0];
         t[1] = a[1];

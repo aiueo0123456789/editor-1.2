@@ -14,12 +14,11 @@ export class FaileIOManager {
         if (json.ps) { // psフォルダのアップロードの場合
             for (const data of json.data.GraphicMesh) {
                 if (data.texture) {
-                    console.log(data)
-                    this.app.scene.objects.createObject({saveData: data});
+                    this.app.hierarchy.addHierarchy("", this.app.scene.objects.createObject({saveData: data}));
                 }
             }
         } else {
-            for (const objectType of ["modifiers", "bezierModifiers", "boneModifiers", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
+            for (const objectType of ["modifiers", "bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
                 for (const data of json.scene[objectType]) {
                     this.app.scene.objects.createObject({saveData: data});
                 }
@@ -84,7 +83,7 @@ export class FaileIOManager {
         // ダウンロード用のリンクを作成
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `${projectName}.anm`;
+        a.download = `${this.app.appConfig.projectName}.anm`;
         // リンクをクリックしてダウンロードを開始
         a.click();
         // メモリ解放

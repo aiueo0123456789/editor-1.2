@@ -105,6 +105,15 @@ class WebGPU {
         return device.createShaderModule({ label: label, code: code });
     }
 
+    // ビットデータから実数
+    bitsToNumber(bits) {
+        let result = 0;
+        for (let i = 0; i < bits.length; i++) {
+            result = (result << 1) | (bits[i] & 1); // 左にシフトしてビットを追加
+        }
+        return result;
+    }
+
     // ビットデータの作成
     createBitData(array, struct) {
         const bufferLength = array.length / struct.filter(x => x != "padding").length;
@@ -1190,7 +1199,52 @@ class WebGPU {
         return dataArray;
     }
 
-    async getVerticesBufferPartToArray(sourceBuffer,startIndex,readNum) {
+    async getStructDataFromGPUBuffer(sourceBuffer,struct,startIndex,readNum) {
+        const sourceOffset = startIndex * struct.length * 4;
+        const sizeToRead = readNum * struct.length * 4;
+        // 1. 読み出し用のバッファを作成
+        const readBuffer = device.createBuffer({
+            size: sizeToRead,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+
+        // 2. コピーコマンドエンコード
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(
+            sourceBuffer,  // GPUから読み出したいバッファ
+            sourceOffset,  // 取得開始位置（バイト単位）
+            readBuffer,
+            0,             // 読み出しバッファは先頭から書き込む
+            sizeToRead     // 読み出したいバイト数
+        );
+        device.queue.submit([commandEncoder.finish()]);
+
+        // 一時バッファの内容をマップ
+        await readBuffer.mapAsync(GPUMapMode.READ);
+        const mappedRange = readBuffer.getMappedRange();
+        const rawData = new Uint8Array(mappedRange);
+        // 構造体に基づいてデータを解析
+        const dataView = new DataView(rawData.buffer);
+        const structSize = struct.length * 4; // 各フィールドのサイズが 4 バイト固定 (u32, f32)
+        const result = [];
+        let offset = 0;
+        for (let i = 0; i < sizeToRead / structSize; i++) {
+            const structResult = [];
+            for (const field of struct) {
+                if (field === "u32") {
+                    structResult.push(dataView.getUint32(offset, true));
+                } else if (field === "f32") {
+                    structResult.push(dataView.getFloat32(offset, true));
+                }
+                offset += 4; // フィールドのサイズを加算
+            }
+            result.push(structResult);
+        }
+        readBuffer.unmap();
+        return result;
+    }
+
+    async getVerticesDataFromGPUBuffer(sourceBuffer,startIndex,readNum) {
         const sourceOffset = startIndex * 2 * 4;
         const sizeToRead = readNum * 2 * 4;
         // 1. 読み出し用のバッファを作成

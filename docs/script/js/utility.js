@@ -184,6 +184,14 @@ export function pushArray(array, value) {
     managerForDOMs.update(array);
 }
 
+export function arrayToSet(array, data, index, structSize = 0) {
+    let offset = index * structSize;
+    for (let i = 0; i < data.length; i ++) {
+        array[offset + i] = data[i];
+    }
+    managerForDOMs.update(array);
+}
+
 export function looper(object, loopTarget, fn, firstParent) {
     const a = (children, parent, depth = 0) => {
         for (const child of children) {
@@ -220,4 +228,27 @@ export function isPointInEllipse(p, c, radius) {
     const dx = p[0] - c[0];
     const dy = p[1] - c[1];
     return (dx * dx) / radius[0] ** 2 + (dy * dy) / radius[1] ** 2 <= 1;
+}
+
+export function removeDuplicates(array) {
+    const result = [];
+    for (const value of array) {
+        if (!result.includes(value)) {
+            result.push(value);
+        }
+    }
+    return result;
+}
+
+export function waitUntilFrame(conditionFn) {
+    return new Promise(resolve => {
+        function check() {
+            if (conditionFn()) {
+                resolve();
+            } else {
+                requestAnimationFrame(check);
+            }
+        }
+        check();
+    });
 }

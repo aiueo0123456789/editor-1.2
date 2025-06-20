@@ -184,7 +184,7 @@ export class Area_Timeline {
                                 app.scene.state.setSelectedObject(object, app.input.keysDown["Shift"]);
                                 app.scene.state.setActiveObject(object);
                                 event.stopPropagation();
-                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}, filter: {contains: {parameter: "type", value: "キーフレームブロック"}}}, withObject: {object: "scene/objects/allObject"}, loopTarget: {parameter: "type", loopTargets: {"ボーンモディファイア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/animationBlock","keyframeBlockManager"]}}, structures: [
+                            }, activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}, filter: {contains: {parameter: "type", value: "キーフレームブロック"}}}, withObject: {object: "scene/objects/allObject"}, loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/animationBlock","keyframeBlockManager"]}}, structures: [
                                 {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "キーフレームブロック"},
                                 true: [
                                     {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [

@@ -63,7 +63,6 @@ export class Area_Preview {
 
         this.canvas.addEventListener('mousedown', (event) => {
             if (event.button == 0) {
-                // activeViewUpdate(this);
                 const mouseX = (event.clientX - this.canvasRect.left) * this.pixelDensity; // Calculate mouse X relative to canvas
                 const mouseY = this.canvas.height - ((event.clientY - this.canvasRect.top) * this.pixelDensity); // Calculate mouse Y relative to
                 this.mouseState.client = [event.clientX,event.clientY];

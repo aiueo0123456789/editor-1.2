@@ -70,17 +70,17 @@ function isSquareConvex(p1,p2,p3,p4) {
 
 export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保持") {
     // 制約線分が交差している場合はエラー
-    for (let i = 0; i < cnEdges.length; i ++) {
-        const line0Start = inputVertices[cnEdges[i][0]];
-        const line0End = inputVertices[cnEdges[i][1]];
-        for (let j = i + 1; j < cnEdges.length; j ++) {
-            const line1Start = inputVertices[cnEdges[j][0]];
-            const line1End = inputVertices[cnEdges[j][1]];
-            if (!(edgeIncludeIndex(cnEdges[i], cnEdges[j][0]) || edgeIncludeIndex(cnEdges[i], cnEdges[j][1])) && isIntersecting(line0Start, line0End, line1Start, line1End)) {
-                console.warn("制約線分同士に交差が見つかりました");
-            }
-        }
-    }
+    // for (let i = 0; i < cnEdges.length; i ++) {
+    //     const line0Start = inputVertices[cnEdges[i][0]];
+    //     const line0End = inputVertices[cnEdges[i][1]];
+    //     for (let j = i + 1; j < cnEdges.length; j ++) {
+    //         const line1Start = inputVertices[cnEdges[j][0]];
+    //         const line1End = inputVertices[cnEdges[j][1]];
+    //         if (!(edgeIncludeIndex(cnEdges[i], cnEdges[j][0]) || edgeIncludeIndex(cnEdges[i], cnEdges[j][1])) && isIntersecting(line0Start, line0End, line1Start, line1End)) {
+    //             console.warn("制約線分同士に交差が見つかりました");
+    //         }
+    //     }
+    // }
 
     // 頂点全てを包む三角形を作る
     const vertices = [
@@ -93,6 +93,19 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
         [0,1,2],
     ];
     const edges = [];
+
+    // const edgesMap = new Map();
+    // edgesMap.set(0, [0]);
+    // edgesMap.set(1, [0]);
+    // edgesMap.set(2, [0]);
+
+    class Mesh {
+        constructor(vertices) {
+            this.index = meshes.length;
+            this.vertices = vertices;
+            meshes.push(this);
+        }
+    }
 
     const findTriangleContainsPoint = (point) => {
         for (let i = 0; i < meshes.length; i ++) {
@@ -132,12 +145,23 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
                 }
             }
         }
+        // const resultIndex = [];
+        // const A = edgesMap.get(edge[0]);
+        // const B = edgesMap.get(edge[1]);
+        // for (const index of A) {
+        //     if (B.includes(index)) {
+        //         resultIndex.push(index);
+        //         if (resultIndex.length == 2) {
+        //             return resultIndex;
+        //         }
+        //     }
+        // }
         return [-1,-1];
     }
 
     const edgecnContainsEdge = (edge) => {
         for (const cn of cnEdges) {
-            if (sameEdge(edge, cn, true)) {
+            if (sameEdge(edge, cn)) {
                 return true;
             }
         }
@@ -152,11 +176,42 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
         return result;
     }
 
+    const setMesh = (mesh, index = -1) => {
+        if (index == -1) {
+            index = meshes.length;
+            meshes.push(mesh);
+        } else {
+            meshes[index].forEach(vertexIndex => {
+                const source = edgesMap.get(vertexIndex);
+                source.splice(source.indexOf(index),1);
+            })
+            meshes[index] = mesh;
+        }
+        mesh.forEach(vertexIndex => {
+            if (edgesMap.has(vertexIndex)) {
+                const source = edgesMap.get(vertexIndex);
+                source.push(index);
+            } else {
+                edgesMap.set(vertexIndex, [index]);
+            }
+        })
+    }
+
+    const deleteMesh = (index) => {
+        const mesh = meshes.splice(index, 1)[0];
+        mesh.forEach(vertexIndex => {
+            const source = edgesMap.get(vertexIndex);
+            source.splice(source.indexOf(index),1);
+        })
+        return mesh;
+    }
+
     const roopStack = () => {
         // スタックSが空になるまで
         while (S.length != 0) {
             const AB = S.pop(); // スタックから辺ABをpop
             const [ABCi, ABDi] = findTriangleContainsEdge(AB); // 辺ABを含む三角形ABCとABDを見つける
+
             if (ABCi != -1) { // 辺が2つ見つからない(外周の辺)場合スキップ
                 // const ABC = meshes[ABCi]; // 辺ABを含む三角形ABCとABDを見つける
                 // const ABD = meshes[ABDi]; // 辺ABを含む三角形ABCとABDを見つける
@@ -176,6 +231,8 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
                     // flip
                     meshes[ABCi] = [A,C,D]; // ABCをACDに
                     meshes[ABDi] = [B,C,D]; // ABDをBCDに
+                    // setMesh([A,C,D],ABCi);
+                    // setMesh([B,C,D],ABDi);
                     S.push([A,D]);
                     S.push([D,B]);
                     S.push([B,C]);
@@ -184,6 +241,8 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
                     // flip
                     meshes[ABCi] = [A,C,D]; // ABCをACDに
                     meshes[ABDi] = [B,C,D]; // ABDをBCDに
+                    // setMesh([A,C,D],ABCi);
+                    // setMesh([B,C,D],ABDi);
                     S.push([A,D]);
                     S.push([D,B]);
                     S.push([B,C]);
@@ -200,10 +259,14 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
             const traingleIndex = findTriangleContainsPoint(P); // Pを含む三角形のindexを取得
             vertices.push(P);
             const [A,B,C] = meshes.splice(traingleIndex, 1)[0]; // Pを含む三角形A,B,Cを取得して削除
+            // const [A,B,C] = deleteMesh(traingleIndex); // Pを含む三角形A,B,Cを取得して削除
             // ABCをABP,BCP,CAPの3個の三角形に分割
             meshes.push([A,B,Pindex]);
             meshes.push([B,C,Pindex]);
             meshes.push([C,A,Pindex]);
+            // setMesh([A,B,Pindex]);
+            // setMesh([B,C,Pindex]);
+            // setMesh([C,A,Pindex]);
             // 辺AB,BC,CAをスタックに追加
             S.push([A,B]);
             S.push([B,C]);
@@ -212,14 +275,19 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
         roopStack();
     }
 
-    function sameEdge(edge1, edge2, option = false) {
-        if (option) {
-            return (inputIndexFromIndex[edge1[0]] == edge2[0] || inputIndexFromIndex[edge1[0]] == edge2[1]) && (inputIndexFromIndex[edge1[1]] == edge2[0] || inputIndexFromIndex[edge1[1]] == edge2[1]);
-        } else {
-            return (edge1[0] == edge2[0] || edge1[0] == edge2[1]) && (edge1[1] == edge2[0] || edge1[1] == edge2[1]);
-        }
+    function sortEdge(edge) {
+        return edge[0] < edge[1] ? edge : edge.reverse();
     }
 
+    // 辺1(入力時の頂点index)と辺2が同じ辺か
+    function sameEdge(edge1, edge2) {
+        const sort0 = sortEdge([inputIndexFromIndex[edge1[0]],inputIndexFromIndex[edge1[1]]]);
+        const sort1 = sortEdge(edge2);
+        // return (inputIndexFromIndex[edge1[0]] == edge2[0] || inputIndexFromIndex[edge1[0]] == edge2[1]) && (inputIndexFromIndex[edge1[1]] == edge2[0] || inputIndexFromIndex[edge1[1]] == edge2[1]);
+        return sort0[0] == sort1[0] && sort0[1] == sort1[1];
+    }
+
+    // 辺にindexが含まれるか
     function edgeIncludeIndex(edge, index) {
         return edge[0] == index || edge[1] == index;
     }
@@ -248,6 +316,8 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
     }
     // console.log("線分制約に関わる頂点Pを図形に追加")
 
+    const edgesIncludes = new Map();
+
     // 制約線分の復帰
     const K = []; // キュー
     for (const cnEdge of cnEdges) {
@@ -255,12 +325,16 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
         for (const [i0,i1,i2] of meshes) {
             const appendEdge = (edge) => {
                 const sortedEdge = edge[0] < edge[1] ? edge : [edge[1], edge[0]];
-                for (const edge_ of edges) {
-                    if (edge_[0] == sortedEdge[0] && edge_[1] == sortedEdge[1]) {
-                        return ;
-                    }
+                // for (const edge_ of edges) {
+                //     if (edge_[0] == sortedEdge[0] && edge_[1] == sortedEdge[1]) {
+                //         return ;
+                //     }
+                // }
+                const hash = `${sortedEdge[0]}_${sortedEdge[1]}`;
+                if (!edgesIncludes.has(hash)) {
+                    edgesIncludes.set(hash);
+                    edges.push(sortedEdge);
                 }
-                edges.push(sortedEdge);
             }
             appendEdge([i0,i1]);
             appendEdge([i1,i2]);
@@ -295,6 +369,8 @@ export function cdt(inputVertices, cnEdges, option = "頂点の並び順を保�
                     // flip
                     meshes[CDEi] = [C,E,F]; // CDEをCEF
                     meshes[CDFi] = [D,E,F]; // CDFをDEF
+                    // setMesh([C,E,F],CDEi);
+                    // setMesh([D,E,F],CDFi);
                     S.push([E,F]);
                 } else {
                     K.push(CD);

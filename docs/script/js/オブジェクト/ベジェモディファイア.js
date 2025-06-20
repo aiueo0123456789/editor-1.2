@@ -16,7 +16,7 @@ class Editor extends ObjectEditorBase {
 }
 
 export class BezierModifier extends ObjectBase {
-    constructor(name, id) {
+    constructor(name, id, data) {
         super(name, "ベジェモディファイア", id);
 
         this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_BEZIERMODIFIER;
@@ -63,7 +63,7 @@ export class BezierModifier extends ObjectBase {
 
         this.mode = "オブジェクト";
 
-        this.init({baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0], animationKeyDatas: [], modifierEffectData: {data: [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], type: "u32*4,f32*4"}});
+        this.init(data);
     }
 
     // gc対象にしてメモリ解放
@@ -134,7 +134,7 @@ export class BezierModifier extends ObjectBase {
                 modifierEffectData = {type: "u32*4,f32*4", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (4 + 4) * 4, ["u32","u32","u32","u32","f32","f32","f32","f32"])};
             } else if (this.parent.type == "ベジェモディファイア") {
                 modifierEffectData = {type: "u32,f32", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (1 + 1) * 4, ["u32","f32"])};
-            } else if (this.parent.type == "ボーンモディファイア") {
+            } else if (this.parent.type == "アーマチュア") {
                 modifierEffectData = {type: "u32*4,f32*4", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (4 + 4) * 4, ["u32","u32","u32","u32","f32","f32","f32","f32"])};
             }
         }

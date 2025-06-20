@@ -1,6 +1,7 @@
 import { app } from "../../app.js";
 import { InputManager } from "../../app/InputManager.js";
 import { createTag } from "../../UI/制御.js";
+import { isFunction } from "../../utility.js";
 import { CreatorForUI } from "./UIの自動生成.js";
 
 export class ModalOperator {
@@ -15,13 +16,19 @@ export class ModalOperator {
         this.creatorForUI = new CreatorForUI();
     }
 
-    execute() {
+    reset() {
         this.nowModal = null;
     }
 
     setModal(model) {
         this.nowModal = new model(this);
-        this.nowModal.init(app.scene.state.currentMode);
+        const consumed = this.nowModal?.init(app.scene.state.currentMode);
+        if (consumed) {
+            if (consumed.complete) {
+                this.reset();
+            }
+            return true;
+        }
         if (this.dom) {
             this.creatorForUI.remove();
             const template = {type: "div", style: "backgroundColor: rgba(0,0,0,0.5)"};
@@ -40,7 +47,9 @@ export class ModalOperator {
                 app.operator.update();
                 this.nowModal = null;
             } else {
-                this.nowModal.update(inputManager);
+                if (isFunction(this.nowModal.update)) {
+                    this.nowModal.update(inputManager);
+                }
             }
         } else {
             for (const key in this.modals) {
@@ -53,17 +62,25 @@ export class ModalOperator {
 
     mousemove(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
-            this.nowModal.mousemove?.(inputManager);
-            return true;
+            const consumed = this.nowModal?.mousemove(inputManager);
+            if (consumed) {
+                if (consumed.complete) {
+                    this.reset();
+                }
+                return true;
+            }
         }
         return false;
     }
     mousedown(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
-            app.operator.appendCommand(this.nowModal.command);
-            app.operator.update();
-            this.nowModal = null;
-            return true;
+            const consumed = this.nowModal?.mousedown(inputManager);
+            if (consumed) {
+                if (consumed.complete) {
+                    this.reset();
+                }
+                return true;
+            }
         }
         return false;
     }
