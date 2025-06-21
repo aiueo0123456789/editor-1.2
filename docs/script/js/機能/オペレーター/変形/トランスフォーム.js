@@ -147,6 +147,7 @@ class TransformCommand {
         if (this.type == "ボーン編集") {
             for (const target of this.targets) {
                 app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
+                app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
             }
         } else if (this.type == "メッシュ編集") {
             for (const target of this.targets) {
@@ -157,33 +158,27 @@ class TransformCommand {
     }
 
     undo() {
-        console.log("巻き戻し")
-        GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
-        if (this.type == "ボーン編集") {
-            for (const target of this.targets) {
-                app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
+        if (this.type == "ボーンアニメーション編集") {
+            for (const bone of this.targets) {
+                const data = this.originalBones.get(bone);
+                bone.x = data.x;
+                bone.y = data.y;
+                bone.sx = data.sx;
+                bone.sy = data.sy;
+                bone.r = data.r;
             }
-        } else if (this.type == "メッシュ編集") {
-            for (const target of this.targets) {
-                GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
-                target.editor.createMesh(true);
-            }
-        }
-    }
-
-    redo() {
-        console.log("巻き戻しの取り消し",data)
-        const object = data.object;
-        GPU.copyBuffer(data.undo, data.target);
-        object.isChange = true;
-        if (object.type == "ボーン編集") {
-            for (const target of this.targets) {
-                app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
-            }
-        } else if (object.type == "メッシュ編集") {
-            for (const target of this.targets) {
-                GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
-                target.editor.createMesh(true);
+        } else {
+            GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
+            if (this.type == "ボーン編集") {
+                for (const target of this.targets) {
+                    app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
+                    app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
+                }
+            } else if (this.type == "メッシュ編集") {
+                for (const target of this.targets) {
+                    GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
+                    target.editor.createMesh(true);
+                }
             }
         }
     }

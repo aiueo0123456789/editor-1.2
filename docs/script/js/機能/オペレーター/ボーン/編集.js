@@ -18,10 +18,10 @@ export class BoneExtrudeMoveCommand extends Base {
         this.createBones = [];
         targets.forEach(parentBone => {
             if (parentBone.selectedHead) {
-                this.createBones.push(new Bone(parentBone.armature, undefined, parentBone, parentBone.baseHead,[0,0]));
+                this.createBones.push(new Bone(parentBone.armature, parentBone, parentBone.baseHead,[0,0]));
             }
             if (parentBone.selectedTail) {
-                this.createBones.push(new Bone(parentBone.armature, undefined, parentBone, parentBone.baseTail,[0,0]));
+                this.createBones.push(new Bone(parentBone.armature, parentBone, parentBone.baseTail,[0,0]));
             }
         });
         this.value = [0,0];
@@ -43,20 +43,13 @@ export class BoneExtrudeMoveCommand extends Base {
             app.scene.runtimeData.armatureData.updateBaseData(armature);
         }
     }
-}
 
-export class BoneDelete extends Base{
-    constructor(targets) {
-        super(targets);
-    }
-
-    update() {
-    }
-
-    execute() {
-        console.log("実行", this.targets)
-        this.targets.forEach(bone => {
-            bone.armature.deleteBone(bone);
+    redo() {
+        this.createBones.forEach(bone => {
+            if (bone.parent) {
+                bone.parent.childrenBone.push(bone);
+            }
+            bone.armature.allBone.push(bone);
         });
         for (const armature of this.armatures) {
             app.scene.runtimeData.armatureData.updateBaseData(armature);
@@ -64,8 +57,46 @@ export class BoneDelete extends Base{
     }
 
     undo() {
-        this.targets.forEach(bone => {
-            bone.armature.insertBone(bone, true);
+        this.createBones.forEach(bone => {
+            if (bone.parent) {
+                indexOfSplice(bone.parent.childrenBone, bone);
+            }
+            indexOfSplice(bone.armature.allBone, bone);
+        });
+        for (const armature of this.armatures) {
+            app.scene.runtimeData.armatureData.updateBaseData(armature);
+        }
+    }
+}
+
+export class BoneDelete extends Base{
+    constructor(targets) {
+        super(targets);
+        this.indexsMeta = new Array(targets.lenght);
+    }
+
+    update() {
+    }
+
+    execute() {
+        console.log("実行", this.targets)
+        this.targets.forEach((bone,index) => {
+            if (bone.parent) {
+                indexOfSplice(bone.parent.childrenBone, bone);
+            }
+            this.indexsMeta[index] = bone.armature.allBone.indexOf(bone);
+            bone.armature.allBone.splice(this.indexsMeta[index], 1);
+            bone.armature.fixBoneIndex();
+        });
+        for (const armature of this.armatures) {
+            app.scene.runtimeData.armatureData.updateBaseData(armature);
+        }
+    }
+
+    undo() {
+        this.targets.forEach((bone,index) => {
+            bone.armature.allBone.splice(this.indexsMeta[index], 0, bone);
+            bone.parent.childrenBone.push(bone);
         });
         for (const armature of this.armatures) {
             app.scene.runtimeData.armatureData.updateBaseData(armature);

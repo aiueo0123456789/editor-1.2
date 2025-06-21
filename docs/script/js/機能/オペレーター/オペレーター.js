@@ -1,4 +1,5 @@
 import { createID, managerForDOMs } from "../../UI/制御.js";
+import { isFunction } from "../../utility.js";
 import { AnimationManager } from "./アニメーション/アニメーション.js";
 import { CreateObjectCommand, ObjectManager } from "./オブジェクト/オブジェクト.js";
 import { BoneManager } from "./メッシュ/メッシュ.js";
@@ -22,6 +23,7 @@ class CommandStack {
     undo() {
         if (this.history.length > 0) {
             const command = this.history.pop();
+            console.log("undo",command);
             command.undo();
             this.redoStack.push(command);
             managerForDOMs.update(this.history);
@@ -31,7 +33,12 @@ class CommandStack {
     redo() {
         if (this.redoStack.length > 0) {
             const command = this.redoStack.pop();
-            command.execute();
+            console.log("redo",command);
+            if (isFunction(command.redo)) {
+                command.redo();
+            } else {
+                command.execute();
+            }
             this.history.push(command);
             managerForDOMs.update(this.history);
         }

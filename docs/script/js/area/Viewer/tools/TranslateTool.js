@@ -54,7 +54,7 @@ export class TranslateModal {
             this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);
         } else if (type == "ボーンアニメーション編集") {
             this.command = new TranslateCommand(type,app.scene.runtimeData.armatureData.getSelectBone());
-            this.center = [0,0];
+            this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedBones);
         }
         this.command.setCenterPoint(this.center);
         managerForDOMs.update(this.values);

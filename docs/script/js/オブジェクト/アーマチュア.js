@@ -26,7 +26,7 @@ class Color {
 }
 
 export class Bone {
-    constructor(armature, index = armature.allBone.length, parent = null, baseHead, baseTail, animations = []) {
+    constructor(armature, parent = null, baseHead, baseTail, animations = []) {
         this.type = "ボーン";
         this.name = "名称未設定";
         this.id = createID();
@@ -39,8 +39,8 @@ export class Bone {
         } else {
             armature.root.push(this);
         }
-        this.index = index;
-        armature.insertBone(this);
+        this.index = -1;
+        armature.appendBone(this);
         console.log(armature.allBone);
         this.childrenBone = [];
         this.color = [0,0,0,1];
@@ -155,33 +155,25 @@ export class Armature extends ObjectBase {
         }
     }
 
+    // ボーンを削除してindexを返す
     deleteBone(bone) {
         if (bone.parent) {
             indexOfSplice(bone.parent.childrenBone, bone);
         }
-        indexOfSplice(this.allBone, bone);
+        const index = this.allBone.indexOf(bone);
+        this.allBone.splice(index, 1);
         this.fixBoneIndex();
+        return index;
     }
 
-    insertBone(bone, indexFix = false) {
-        for (let i = 0; i < this.allBone.length; i ++) {
-            const bone_ = this.allBone[i];
-            if (bone_.index > bone.index) {
-                this.allBone.splice(i, 0, bone);
-                if (indexFix) {
-                    this.fixBoneIndex();
-                }
-                return ;
-            }
-        }
-        this.allBone.push(bone);
-        if (indexFix) {
-            this.fixBoneIndex();
-        }
+    insertBone(bone, insertIndex) {
+        this.allBone.splice(insertIndex, 0, bone);
+        this.fixBoneIndex();
     }
 
     appendBone(bone) {
         this.allBone.push(bone);
+        this.fixBoneIndex();
     }
 
     // gc対象にしてメモリ解放
@@ -200,7 +192,7 @@ export class Armature extends ObjectBase {
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
                 // const childBone = new Bone(this, child.index, parent, child.baseHead, child.baseTail, child.animations);
-                const childBone = new Bone(this, undefined, parent, child.baseHead, child.baseTail, child.animations);
+                const childBone = new Bone(this, parent, child.baseHead, child.baseTail, child.animations);
                 roopChildren(child.children, childBone, depth + 1);
             }
         }

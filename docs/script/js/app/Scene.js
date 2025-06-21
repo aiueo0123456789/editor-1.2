@@ -32,7 +32,8 @@ const boxSelectVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout(
 
 const polygonsHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu")], await loadFile("./script/js/app/shader/選択/polygonsHitTest.wgsl"));
 
-const calculateLimitBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Csr_Csr")], await loadFile("./script/js/app/shader/BBox/vertices.wgsl"));
+const calculateLimitBoneBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Csr_Csr")], await loadFile("./script/js/app/shader/BBox/bone.wgsl"));
+const calculateLimitVerticesBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Csr_Csr")], await loadFile("./script/js/app/shader/BBox/vertices.wgsl"));
 const BBoxResultBuffer = GPU.createStorageBuffer(2 * 4 * 2, undefined, ["f32"]);
 const BBoxCalculateBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["i32"]);
 const BBoxGroup0 = GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw"), [BBoxResultBuffer,BBoxCalculateBuffer]);
@@ -255,6 +256,8 @@ class BezierModifierData {
     }
 
     setBase(/** @type {BezierModifier} */bezierModifier, bezierPointData, weightGroupData) {
+        bezierModifier.verticesNum = bezierPointData.length / 2;
+        bezierModifier.pointNum = bezierModifier.verticesNum / 3;
         GPU.writeBuffer(this.baseVertices, new Float32Array(bezierPointData), bezierModifier.vertexBufferOffset * this.blockByteLength);
         GPU.writeBuffer(this.weightBlocks, GPU.createBitData(weightGroupData, ["u32", "u32", "u32", "u32", "f32", "f32", "f32", "f32"]), bezierModifier.vertexBufferOffset * ((4 + 4) * 4));
         this.updateAllocationData(bezierModifier);
@@ -484,8 +487,6 @@ class ArmatureData {
             const group = GPU.createGroup(GPU.getGroupLayout("Csr"), [buffer]);
             this.propagate.push({boneNum: data.length / 2, buffer: buffer, group: group, array: data});
         }
-        console.log(relationshipsKeep)
-        console.log(propagateCPU)
         GPU.writeBuffer(this.relationships, new Uint32Array(relationshipsKeep));
     }
 
@@ -502,7 +503,6 @@ class ArmatureData {
         armature.boneNum = armature.allBone.length;
         armature.verticesNum = armature.boneNum * 2;
         console.log("|---ボーンベース---|")
-        console.log(armature)
         const boneVerticesData = Array(armature.boneNum * this.vertexBlockByteLength / 4).fill(0);
         const colorsData = Array(armature.boneNum * this.colorBlockByteLength / 4).fill(0);
 
@@ -514,10 +514,8 @@ class ArmatureData {
                 parentsData[bone.index] = bone.index;
             }
             arrayToSet(boneVerticesData, bone.baseHead.concat(bone.baseTail), bone.index, 4);
-
             arrayToSet(colorsData, bone.color, bone.index, 4);
         }
-        console.log(parentsData)
         armature.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
 
         GPU.writeBuffer(this.baseVertices, new Float32Array(boneVerticesData), armature.vertexBufferOffset * this.vertexBlockByteLength);
@@ -770,14 +768,25 @@ export class Scene {
 
     // 選択している頂点のBBoxを取得
     async getSelectVerticesBBox(verticesBuffer, selectBuffer) {
-        GPU.runComputeShader(calculateLimitBBoxPipeline, [BBoxGroup0, GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [verticesBuffer, selectBuffer])], Math.ceil(verticesBuffer.size / 4 / 2 / 64));
+        GPU.runComputeShader(calculateLimitVerticesBBoxPipeline, [BBoxGroup0, GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [verticesBuffer, selectBuffer])], Math.ceil(verticesBuffer.size / 4 / 2 / 64));
+        return await GPU.getBBoxBuffer(BBoxResultBuffer);
+    }
+
+    // 選択しているボーンのBBoxを取得
+    async getSelectBonesBBox(bonesBuffer, selectBuffer) {
+        GPU.runComputeShader(calculateLimitBoneBBoxPipeline, [BBoxGroup0, GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [bonesBuffer, selectBuffer])], Math.ceil(bonesBuffer.size / 4 / 2 / 64));
         return await GPU.getBBoxBuffer(BBoxResultBuffer);
     }
 
     // 選択している頂点の中央点を取得
     async getSelectVerticesCenter(verticesBuffer, selectBuffer) {
         const BBox = await this.getSelectVerticesBBox(verticesBuffer, selectBuffer);
-        console.log(BBox);
+        return vec2.averageR(BBox);
+    }
+
+    // 選択している頂点の中央点を取得
+    async getSelectBonesCenter(bonesBuffer, selectBuffer) {
+        const BBox = await this.getSelectBonesBBox(bonesBuffer, selectBuffer);
         return vec2.averageR(BBox);
     }
 
@@ -859,10 +868,12 @@ export class Scene {
 
         const childrenRoop = (children) => {
             for (const child of children) {
-                if (child.type == "ベジェモディファイア") {
-                    // ベジェモディファイア親の変形を適応
-                    computePassEncoder.setBindGroup(0, child.individualGroup);
-                    computePassEncoder.dispatchWorkgroups(Math.ceil(child.verticesNum / 64), 1, 1); // ワークグループ数をディスパッチ
+                if (child.parent) {
+                    if (child.type == "ベジェモディファイア") {
+                        // ベジェモディファイア親の変形を適応
+                        computePassEncoder.setBindGroup(0, child.individualGroup);
+                        computePassEncoder.dispatchWorkgroups(Math.ceil(child.verticesNum / 64), 1, 1); // ワークグループ数をディスパッチ
+                    }
                 }
                 if (child.children) { // 子要素がある場合ループする
                     childrenRoop(child.children.objects);
@@ -882,13 +893,6 @@ export class Scene {
             computePassEncoder.dispatchWorkgroups(Math.ceil(this.objects.graphicMeshs.length / 8), Math.ceil(this.app.appConfig.MAX_VERTICES_PER_GRAPHICMESH / 8), 1); // ワークグループ数をディスパッチ
         }
 
-        
-        // for (const object of this.objects.bezierModifiers) {
-        // }
-        
-        // for (const object of this.objects.armatures) {
-        // }
-        
         if (this.objects.armatures.length) {
             computePassEncoder.setBindGroup(0, this.runtimeData.armatureData.calculateVerticesPositionGroup);
             computePassEncoder.setPipeline(calculateBoneVerticesPipeline);
