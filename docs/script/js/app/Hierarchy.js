@@ -187,7 +187,6 @@ export class Hierarchy {
         } else {
             addObject.parent = parentObject;
             parentObject.children.addChild(addObject);
-            this.app.options.assignWeights(addObject);
         }
         managerForDOMs.update(this.root)
     }
@@ -205,7 +204,9 @@ export class Hierarchy {
             } else if (object.type == "ベジェモディファイア") {
                 this.app.scene.runtimeData.bezierModifierData.updateAllocationData(object);
             }
-            this.app.options.assignWeights(object);
+            if (object.autoWeight) {
+                this.app.options.assignWeights(object);
+            }
         }
         managerForDOMs.update(this.root)
     }

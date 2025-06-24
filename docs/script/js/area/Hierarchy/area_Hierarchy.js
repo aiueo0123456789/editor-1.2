@@ -37,13 +37,20 @@ export class Area_Hierarchy {
                 ]},
                 {type: "input", options: {type: "text"}},
                     {type: "hierarchy", name: "hierarchy", options: {arrange: true, clickEventFn: (event, object) => {
-                        app.scene.state.setSelectedObject(object, app.input.keysDown["Shift"]);
+                        app.scene.state.setSelectedObject(object, app.input.keysDown["Ctrl"]);
                         app.scene.state.setActiveObject(object);
                         event.stopPropagation();
+                    }, rangeSelectEventFn: (event, array, startIndex, endIndex) => {
+                        let minIndex = Math.min(startIndex, endIndex);
+                        let maxIndex = Math.max(startIndex, endIndex);
+                        for (let i = minIndex; i < maxIndex; i ++) {
+                            app.scene.state.setSelectedObject(array[i], true);
+                        }
+                        app.scene.state.setActiveObject(array[endIndex]);
                     },
                     activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
                     {type: "gridBox", axis: "c", allocation: "auto auto 50% 1fr 20%", children: [
-                        {type: "input", name: "visibleCheck", withObject: {object: "", parameter: "visible"}, options: {type: "check", look: "eye-icon"}},
+                        {type: "input", name: "visibleCheck", withObject: {object: "", parameter: "visible"}, options: {type: "checkbox", look: "eye-icon"}},
                         {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
                         {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                         {type: "padding", size: "10px"},

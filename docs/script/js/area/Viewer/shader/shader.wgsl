@@ -32,7 +32,7 @@ struct VertexOutput {
 fn vmain(
     // @builtin(vertex_index) vertexIndex: u32,
     @location(0) index: u32,
-    ) -> VertexOutput {
+) -> VertexOutput {
     var output: VertexOutput;
     let fixIndex = objectData.vertexBufferOffset + index;
     output.position = vec4f((verticesPosition[fixIndex] - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
@@ -63,8 +63,8 @@ fn fmain(
     }
     let value = textureSample(maskTexture, mySampler, uvForMask).r;
     let maskValue = select(1.0 - value, value, maskType == 0.0);
-    // output.color = textureSample(myTexture, mySampler, uv).bgra * maskValue;
     output.color = textureSample(myTexture, mySampler, uv) * maskValue;
     output.color.a *= alpha;
+    // output.color = select(vec4<f32>(0.0), vec4<f32>(1.0,0.0,0.0,1.0), textureSample(myTexture, mySampler, uv).a > 0.05);
     return output;
 }

@@ -4,19 +4,21 @@ import { vec2 } from "../../ベクトル計算.js";
 import { cdt } from "./cdt.js";
 
 export const MarchingSquaresPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Ct")], GPU.createShaderModule(`
-    fn binary4ToU32Direct(b0: u32, b1: u32, b2: u32, b3: u32) -> u32 {
+fn binary4ToU32Direct(b0: u32, b1: u32, b2: u32, b3: u32) -> u32 {
     return (b0 << 3u) | (b1 << 2u) | (b2 << 1u) | b3;
 }
 
 @group(0) @binding(0) var<storage, read_write> outputData: array<u32>; // 出力
 @group(0) @binding(1) var inputTexture: texture_2d<f32>;
 
+const threshold = 0.05;
+
 fn sampleValue(samplePoint: vec2<i32>, dimensions: vec2<i32>) -> u32 {
     if (samplePoint.x >= dimensions.x || samplePoint.x < 0 ||
         samplePoint.y >= dimensions.y || samplePoint.y < 0) {
         return 0u;
     }
-    return select(0u,1u,textureLoad(inputTexture, samplePoint, 0).a != 0.0);
+    return select(0u,1u,textureLoad(inputTexture, samplePoint, 0).a > threshold);
 }
 
 @compute @workgroup_size(16, 16)
@@ -131,7 +133,8 @@ function fixSelfIntersectingPolygon(vertices) {
     return fixedVertices;
 }
 
-export async function createEdgeFromTexture(texture, pixelDensity, padding, option = "center") {
+// export async function createEdgeFromTexture(texture, pixelDensity, padding, simplEpsilon = Math.max(texture.width, texture.height) / 50, option = "center") {
+export async function createEdgeFromTexture(texture, pixelDensity, padding, simplEpsilon = 5.0, option = "center") {
     const imageSize = [texture.width, texture.height];
     const imageBufferSize = vec2.addR(imageSize, [1,1]);
     const validImageSize = vec2.reverseScaleR(imageSize, pixelDensity);
@@ -341,36 +344,45 @@ export async function createEdgeFromTexture(texture, pixelDensity, padding, opti
     collectedLines = connectLines(collectedLines); // 重複頂点を接続
 
     collectedLines = collectedLines.map((x) => {
-        return simplifyPolygon(x, 1.5, vec2.max(imageBufferSize) / 50);
+        return simplifyPolygon(x, simplEpsilon, vec2.max(imageBufferSize) / 2);
     });
 
-    console.log("制約線分",collectedLines)
+    // console.log("制約線分",collectedLines)
+
+    let maxLenghtLine = [];
+    for (const line of collectedLines) {
+        if (maxLenghtLine.length < line.length) {
+            maxLenghtLine = line;
+        }
+    }
 
     const resultData = {vertices: [], uv: [], edges: []};
     let verticesNumOffset = 0;
-    for (const data of collectedLines) {
-        if (data.length < 3) break;
-        // 膨らませる
-        // const vertices = fixSelfIntersectingPolygon(data.map((vert, i) => {
-        //     const left = data[modClamp(i - 1, data.length)];
-        //     const right = data[(i + 1) % data.length];
-        //     let vec = vec2.normalizeR(vec2.addR(vec2.subAndnormalizeR(right, vert),vec2.subAndnormalizeR(vert, left)));
-        //     vec = [-vec[1], vec[0]];
-        //     return vec2.addR(vert,vec2.scaleR(vec, padding));
-        // }));
-        const vertices = data.map((vert, i) => {
-            const left = data[modClamp(i - 1, data.length)];
-            const right = data[(i + 1) % data.length];
-            let vec = vec2.normalizeR(vec2.addR(vec2.subAndnormalizeR(right, vert),vec2.subAndnormalizeR(vert, left)));
-            vec = [-vec[1], vec[0]];
-            return vec2.addR(vert,vec2.scaleR(vec, padding));
-        });
-        const cnEdges = [...Array(vertices.length)].map((_, i) => [i + verticesNumOffset,(i + 1) % vertices.length + verticesNumOffset]);
-        const fixVertices = createUVAndFixVertices(vertices);
-        resultData.vertices.push(...fixVertices.vertices);
-        resultData.uv.push(...fixVertices.uv);
-        resultData.edges.push(...cnEdges);
-        verticesNumOffset += vertices.length;
+    // for (const data of collectedLines) {
+    for (const data of [maxLenghtLine]) {
+        if (2 < data.length) {
+            // 膨らませる
+            // const vertices = fixSelfIntersectingPolygon(data.map((vert, i) => {
+            //     const left = data[modClamp(i - 1, data.length)];
+            //     const right = data[(i + 1) % data.length];
+            //     let vec = vec2.normalizeR(vec2.addR(vec2.subAndnormalizeR(right, vert),vec2.subAndnormalizeR(vert, left)));
+            //     vec = [-vec[1], vec[0]];
+            //     return vec2.addR(vert,vec2.scaleR(vec, padding));
+            // }));
+            const vertices = data.map((vert, i) => {
+                const left = data[modClamp(i - 1, data.length)];
+                const right = data[(i + 1) % data.length];
+                let vec = vec2.normalizeR(vec2.addR(vec2.subAndnormalizeR(right, vert),vec2.subAndnormalizeR(vert, left)));
+                vec = [-vec[1], vec[0]];
+                return vec2.addR(vert,vec2.scaleR(vec, padding));
+            });
+            const cnEdges = [...Array(vertices.length)].map((_, i) => [i + verticesNumOffset,(i + 1) % vertices.length + verticesNumOffset]);
+            const fixVertices = createUVAndFixVertices(vertices);
+            resultData.vertices.push(...fixVertices.vertices);
+            resultData.uv.push(...fixVertices.uv);
+            resultData.edges.push(...cnEdges);
+            verticesNumOffset += vertices.length;
+        }
     }
     return resultData;
 }

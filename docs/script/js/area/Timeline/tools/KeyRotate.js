@@ -49,6 +49,7 @@ export class KeyRotate {
 
     mousedown(/** @type {InputManager} */inputManager) {
         this.operator.execute();
+        return {complete: true};
     }
 
     update() {

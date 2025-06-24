@@ -134,9 +134,8 @@ document.getElementById("open-btn").addEventListener("change", (event) => {
         reader.onload = function(e) {
             try {
                 // JSONの内容をパースする
-                projectName = file.name.split(".")[0];
-                projectNameInputTag.value = projectName;
-                loadData = JSON.parse(e.target.result);
+                app.appConfig.projectName = file.name.split(".")[0];
+                projectNameInputTag.value = app.appConfig.projectName;
                 app.fileIO.loadFile(JSON.parse(e.target.result));
                 // init();
             } catch (error) {

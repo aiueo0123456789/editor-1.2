@@ -16,10 +16,22 @@ struct Bezier {
     c2: vec2<f32>,
 }
 
+struct Allocation {
+    vertexBufferOffset: u32,
+    animationBufferOffset: u32,
+    weightBufferOffset: u32,
+    MAX_VERTICES: u32,
+    MAX_ANIMATIONS: u32,
+    parentType: u32, // 親がなければ0
+    parentIndex: u32, // 親がなければ0
+    myType: u32,
+}
+
 @group(0) @binding(0) var<storage, read_write> indexAndWeight: array<Output>;
 @group(0) @binding(1) var<storage, read> originalIndexAndWeight: array<Output>;
 @group(0) @binding(2) var<storage, read_write> maxWeights: array<f32>;
 @group(0) @binding(3) var<storage, read> vertices: array<vec2<f32>>;
+@group(0) @binding(4) var<uniform> allocation: Allocation;
 @group(1) @binding(0) var<uniform> config: Config;
 @group(1) @binding(1) var<uniform> centerPoint: vec2<f32>;
 @group(1) @binding(2) var<storage, read> decayBezier: array<Bezier>;
@@ -88,14 +100,13 @@ fn bezier_interpolation(
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    let index = global_id.x;
-    if (arrayLength(&vertices) <= index) {
+    if (allocation.MAX_VERTICES <= global_id.x) {
         return;
     }
+    let fixIndex = global_id.x + allocation.vertexBufferOffset;
+    let index = global_id.x + allocation.vertexBufferOffset;
     let dist = distance(centerPoint, vertices[index]);
-    // let decay = (config.decaySize - dist) / config.decaySize;
     let decay = bezier_interpolation(dist);
-    // let decay = 0.8;
     if (dist < config.decaySize) {
         let weight = config.weight * decay;
         maxWeights[index] = max(maxWeights[index],weight);
@@ -114,12 +125,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     }
     if (minWeight < maxWeights[index]) {
-        indexAndWeight[index].indexs[minIndex] = config.index;
-        indexAndWeight[index].weights[minIndex] = maxWeights[index];
+        indexAndWeight[fixIndex].indexs[minIndex] = config.index;
+        indexAndWeight[fixIndex].weights[minIndex] = maxWeights[index];
         var sumWeight = 0.0;
         for (var i = 0u; i < 4u; i ++) {
-            sumWeight += indexAndWeight[index].weights[i];
+            sumWeight += indexAndWeight[fixIndex].weights[i];
         }
-        indexAndWeight[index].weights /= sumWeight; // 正規化
+        indexAndWeight[fixIndex].weights /= sumWeight; // 正規化
     }
+    indexAndWeight[fixIndex].weights = vec4<f32>(1.0,0.0,0.0,0.0); // 正規化
+    indexAndWeight[fixIndex].indexs = vec4<u32>(config.index,1u,2u,3u); // 正規化
 }

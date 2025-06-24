@@ -16,6 +16,7 @@ class Vertex {
         this.base = [...base];
         this.uv = [...uv];
         this.parentWeight = parentWeight;
+        this.updated = true;
         graphicMesh.allVertices.push(this);
     }
 
@@ -23,6 +24,7 @@ class Vertex {
         return {
             index: this.index,
             base: this.base,
+            uv: this.uv,
             parentWeight: this.parentWeight,
         };
     }
@@ -70,17 +72,6 @@ class Editor extends ObjectEditorBase {
         this.graphicMesh = null;
     }
 
-    setDataForGPU() {
-        // if (this.baseSilhouetteEdges.length) {
-        //     this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(this.baseSilhouetteEdges.length * 2 * 4, this.baseSilhouetteEdges.flat(), ["u32","u32"]);
-        //     this.baseSilhouetteEdgesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.graphicMesh.RVrt_coBuffer, this.baseSilhouetteEdgesBuffer]);
-        // }
-        // if (this.baseEdges.length) {
-        //     this.baseEdgesBuffer = GPU.createStorageBuffer(this.baseEdges.length * 2 * 4, this.baseEdges.flat(), ["u32","u32"]);
-        //     this.baseEdgesRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.graphicMesh.RVrt_coBuffer, this.baseEdgesBuffer]);
-        // }
-    }
-
     setImageBBox(bbox) {
         // this.imageBBox = bbox;
         this.imageBBox.set(bbox);
@@ -99,13 +90,11 @@ class Editor extends ObjectEditorBase {
         this.baseEdges = [...data.baseEdges];
         this.baseSilhouetteEdges = [...data.baseSilhouetteEdges];
         this.setImageBBox(data.imageBBox);
-        this.setDataForGPU();
     }
 
     setBaseSilhouetteEdges(edges) {
         this.baseEdges = [...edges];
         this.baseSilhouetteEdges = [...edges];
-        this.setDataForGPU();
     }
 
     async createEdgeFromTexture(pixelDensity, scale) {
@@ -120,22 +109,21 @@ class Editor extends ObjectEditorBase {
         app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh, undefined, undefined);
         this.setBaseSilhouetteEdges(result.edges)
         this.createMesh(true);
-        this.graphicMesh.weightAuto = true;
         app.options.assignWeights(this.graphicMesh);
     }
 
     async createMesh(compulsion = false) {
-        await waitUntilFrame(() => {return !app.scene.runtimeData.graphicMeshData.write});
         if (compulsion || Date.now() - this.lastCreateMeshTime > 0.1 * 1000) { // 処理が重いので
+            await waitUntilFrame(() => {return !app.scene.runtimeData.graphicMeshData.write});
             this.lastCreateMeshTime = Date.now();
-            // const vertices = await GPU.getVerticesDataFromGPUBuffer(app.scene.runtimeData.graphicMeshData.baseVertices, this.graphicMesh.vertexBufferOffset, this.graphicMesh.verticesNum);
             const vertices = this.graphicMesh.allVertices.map(vertex => vertex.base);
             const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
+            // const meshData = createMeshFromTexture(vertices, this.baseEdges); // メッシュの作成とシルエットの外の三角形を削除
             this.graphicMesh.allMeshes.length = 0;
             for (let i = 0; i < meshData.length; i ++) {
                 new Mesh(this.graphicMesh,undefined, meshData[i]);
             }
-            app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh, undefined, undefined);
+            app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
         }
     }
 
@@ -160,7 +148,6 @@ class Editor extends ObjectEditorBase {
                 }
             }
         }
-        this.setDataForGPU();
     }
 
     appendBaseEdge(edge) {
@@ -173,7 +160,6 @@ class Editor extends ObjectEditorBase {
             }
         }
         this.baseEdges.push(edge);
-        this.setDataForGPU();
     }
 
     deleteBaseEdge(edge) {
@@ -184,7 +170,6 @@ class Editor extends ObjectEditorBase {
                 edge[0] == edge_[1] && edge[1] == edge_[0]
             ) {
                 this.baseEdges.splice(i, 1);
-                this.setDataForGPU();
             }
         }
     }
@@ -245,6 +230,8 @@ export class GraphicMesh extends ObjectBase {
         this.visible = true;
         this.zIndex = 0;
         this.delete = false;
+
+        this.autoWeight = true;
 
         // バッファの宣言
         this.modifierType = 0;
@@ -312,13 +299,12 @@ export class GraphicMesh extends ObjectBase {
         this.meshesNum = null;
 
         this.parent = "";
-        this.weightAuto = false;
     }
 
     init(data) {
         this.zIndex = data.zIndex;
-        this.verticesNum = data.baseVertices.length;
-        this.meshesNum = data.meshIndex.length;
+        this.verticesNum = data.vertices.length;
+        this.meshesNum = data.meshes.length;
 
         // let weightGroupData = [];
         // if (data.modifierEffectData) {
@@ -334,11 +320,16 @@ export class GraphicMesh extends ObjectBase {
         //     }
         // }
         console.log(data)
-        for (const vertex of data.baseVertices) {
-            new Vertex(this, undefined, vertex.base, vertex.uv, vertex.weightBlock);
+        for (const vertex of data.vertices) {
+            new Vertex(this, undefined, vertex.base, vertex.uv, vertex.parentWeight);
+            for (const weight of vertex.parentWeight.weights) {
+                if (weight != 0) {
+                    this.autoWeight = false;
+                }
+            }
         }
-        for (const mesh of data.meshIndex) {
-            new Mesh(this, undefined, mesh);
+        for (const mesh of data.meshes) {
+            new Mesh(this, undefined, mesh.indexs);
         }
         app.scene.runtimeData.graphicMeshData.prepare(this);
         app.scene.runtimeData.graphicMeshData.updateBaseData(this);
@@ -401,17 +392,6 @@ export class GraphicMesh extends ObjectBase {
 
     async getSaveData() {
         const animationKeyDatas = await this.animationBlock.getSaveData()
-        let modifierEffectData = null;
-        if (this.parent) {
-            if (this.parent.type == "モディファイア") {
-                modifierEffectData = {type: "u32*4,f32*4", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (4 + 4) * 4, ["u32","u32","u32","u32","f32","f32","f32","f32"])};
-            } else if (this.parent.type == "ベジェモディファイア") {
-                modifierEffectData = {type: "u32,f32", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (1 + 1) * 4, ["u32","f32"])};
-            } else if (this.parent.type == "アーマチュア") {
-                modifierEffectData = {type: "u32*4,f32*4", data: await GPU.getBufferDataAsStruct(this.parentWeightBuffer, this.verticesNum * (4 + 4) * 4, ["u32","u32","u32","u32","f32","f32","f32","f32"])};
-            }
-        }
-
         return {
             name: this.name,
             id: this.id,

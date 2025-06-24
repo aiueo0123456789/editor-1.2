@@ -4,7 +4,7 @@ export class InputManager {
     constructor(/** @type {Application} **/app) {
         this.app = app;
         this.mousedown = false;
-        this.mousePosition = [0,0];
+        this.position = [0,0];
         this.click = true;
         this.clickPosition = [0,0];
         this.movement = [0,0];
@@ -25,8 +25,8 @@ export class InputManager {
                 this.mousedown = true;
                 this.clickPosition[0] = e.clientX;
                 this.clickPosition[1] = e.clientY;
-                this.mousePosition[0] = e.clientX;
-                this.mousePosition[1] = e.clientY;
+                this.position[0] = e.clientX;
+                this.position[1] = e.clientY;
                 if (app.activeArea.uiModel.mousedown) {
                     app.activeArea.uiModel.mousedown(this);
                 }
@@ -36,8 +36,8 @@ export class InputManager {
             if (!(e.target instanceof HTMLCanvasElement)) return ;
             if (this.mouseButtonType == 0) {
                 this.mousedown = false;
-                this.mousePosition[0] = e.clientX;
-                this.mousePosition[1] = e.clientY;
+                this.position[0] = e.clientX;
+                this.position[1] = e.clientY;
                 if (app.activeArea.uiModel.mouseup) {
                     app.activeArea.uiModel.mouseup(this);
                 }
@@ -47,8 +47,8 @@ export class InputManager {
         app.dom.addEventListener("mousemove", (e) => {
             if (!(e.target instanceof HTMLCanvasElement)) return ;
             if (this.mouseButtonType == 2) { // 右クリック
-                this.mousePosition[0] = e.clientX;
-                this.mousePosition[1] = e.clientY;
+                this.position[0] = e.clientX;
+                this.position[1] = e.clientY;
                 this.movement[0] = e.movementX;
                 this.movement[1] = e.movementY;
                 if (app.activeArea.uiModel.mousemove) {
@@ -59,8 +59,8 @@ export class InputManager {
                 this.wheelDelta[1] = e.movementY;
                 app.activeArea.uiModel?.wheel(this);
             } else {
-                this.mousePosition[0] = e.clientX;
-                this.mousePosition[1] = e.clientY;
+                this.position[0] = e.clientX;
+                this.position[1] = e.clientY;
                 this.movement[0] = e.movementX;
                 this.movement[1] = e.movementY;
                 if (app.activeArea.uiModel.mousemove) {

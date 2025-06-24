@@ -26,7 +26,7 @@ class Color {
 }
 
 export class Bone {
-    constructor(armature, parent = null, baseHead, baseTail, animations = []) {
+    constructor(armature, parent = null, baseHead, baseTail, animations = {blocks: []}) {
         this.type = "ボーン";
         this.name = "名称未設定";
         this.id = createID();
@@ -41,9 +41,10 @@ export class Bone {
         }
         this.index = -1;
         armature.appendBone(this);
-        console.log(armature.allBone);
+        /** @type {Bone[]} */
         this.childrenBone = [];
         this.color = [0,0,0,1];
+        // this.color = [Math.random(),Math.random(),Math.random(),1];
 
         this.baseHead = [...baseHead];
         this.baseTail = [...baseTail];
@@ -57,8 +58,7 @@ export class Bone {
         this.sx = 0;
         this.sy = 0;
         this.r = 0;
-        this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"]);
-        this.keyframeBlockManager.setSaveData(animations);
+        this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"], animations);
 
         this.matrix = new Float32Array(4 * 3);
     }
@@ -88,24 +88,8 @@ export class Bone {
             baseHead: this.baseHead,
             baseTail: this.baseTail,
             animations: this.keyframeBlockManager.getSaveData(),
+            childrenBone: this.childrenBone.map(bone => bone.getSaveData()),
         };
-    }
-}
-
-class Colors {
-    constructor(armature) {
-        this.armature = armature;
-        this.buffer = null;
-        this.group = null;
-    }
-
-    setColor() {
-        this.buffer = GPU.createStorageBuffer(4 * this.armature.armature.boneNum * 4, createArrayN(4 * this.armature.armature.boneNum, [1,0,0,1, 0,1,0,1, 0,0,1,1]), ["f32", "f32", "f32", "f32"]);
-        this.group = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.buffer]);
-    }
-
-    changeColor(index, color) {
-
     }
 }
 
@@ -113,7 +97,7 @@ export class Armature extends ObjectBase {
     constructor(name, id, data) {
         super(name, "アーマチュア", id);
 
-        this.MAX_BONES = app.appConfig.MAX_VERTICES_PER_BONEMODIFIER;
+        this.MAX_BONES = app.appConfig.MAX_BONES_PER_ARMATURE;
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
@@ -144,9 +128,12 @@ export class Armature extends ObjectBase {
         this.mode = "オブジェクト";
 
         this.attachments = new Attachments(this);
-        this.relationship = null;
 
         this.init(data);
+    }
+
+    getSelectBones() {
+        return this.allBone.filter(bone => bone.selectedBone);
     }
 
     fixBoneIndex() {
@@ -186,17 +173,16 @@ export class Armature extends ObjectBase {
         this.boneNum = data.boneNum;
         this.propagateBuffers = [];
 
-        this.relationship = data.relationship;
         app.scene.runtimeData.armatureData.prepare(this);
 
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
                 // const childBone = new Bone(this, child.index, parent, child.baseHead, child.baseTail, child.animations);
                 const childBone = new Bone(this, parent, child.baseHead, child.baseTail, child.animations);
-                roopChildren(child.children, childBone, depth + 1);
+                roopChildren(child.childrenBone, childBone, depth + 1);
             }
         }
-        roopChildren(this.relationship);
+        roopChildren(data.bones);
 
         app.scene.runtimeData.armatureData.updateBaseData(this);
 
@@ -214,32 +200,12 @@ export class Armature extends ObjectBase {
     }
 
     async getSaveData() {
-        // const relationship = [{
-        //     parent: 0,
-        //     children: [],
-        // }];
-        // // const propagateDatas = this.editor.getPropagateData();
-        // let parentsOfDepthNow = new Map();
-        // parentsOfDepthNow.set(0, relationship[0].children)
-        // for (let depth = 0; depth < propagateDatas.length; depth ++) {
-        //     const nowDepthData = propagateDatas[depth];
-        //     for (let i = 0; i < nowDepthData.length; i += 2) {
-        //         const myBoneIndex = nowDepthData[i];
-        //         const parentBoneIndex = nowDepthData[i + 1];
-        //         const myData = {
-        //             parent: myBoneIndex,
-        //             children: [],
-        //         };
-        //         parentsOfDepthNow.set(myBoneIndex, myData.children);
-        //         parentsOfDepthNow.get(parentBoneIndex).push(myData);
-        //     }
-        // }
-        // console.log(relationship);
         return {
             name: this.name,
             id: this.id,
             type: this.type,
-            bones: this.allBone.map(bone => bone.getSaveData()),
+            // bones: this.allBone.map(bone => bone.getSaveData()),
+            bones: this.root.map(bone => bone.getSaveData()),
         };
     }
 }

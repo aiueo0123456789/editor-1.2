@@ -29,37 +29,13 @@ class AppOptions {
             "boneModifer": {
                 "normal": {
                     type: "アーマチュア",
-                    // boneNum: 1,
-                    // relationship: [{
-                    //     index: 0,
-                    //     children: [],
-                    //     baseHead: [0,-100],
-                    //     baseTail: [0,100],
-                    //     animations: [],
-                    // }],
-                    boneNum: 3,
-                    relationship: [{
+                    boneNum: 1,
+                    bones: [{
                         index: 0,
-                        children: [
-                            {
-                                index: 2,
-                                children: [
-                                    {
-                                        index: 1,
-                                        children: [],
-                                        baseHead: [0,220],
-                                        baseTail: [0,330],
-                                        animations: [],
-                                    }
-                                ],
-                                baseHead: [0,110],
-                                baseTail: [0,210],
-                                animations: [],
-                            }
-                        ],
-                        baseHead: [0,-100],
+                        childrenBone: [],
+                        baseHead: [0,0],
                         baseTail: [0,100],
-                        animations: [],
+                        animations: {blocks: []},
                     }],
                     editor: {
                         boneColor: [0,0,0,1]
@@ -68,12 +44,12 @@ class AppOptions {
                 "body": {
                     type: "アーマチュア",
                     boneNum: 2,
-                    relationship: [{
+                    bones: [{
                         index: 0,
-                        children: [
+                        childrenBone: [
                             {
                                 index: 1,
-                                children: [],
+                                childrenBone: [],
                                 baseHead: [0,110],
                                 baseTail: [0,210],
                                 animations: [],
@@ -81,7 +57,7 @@ class AppOptions {
                         ],
                         baseHead: [0,-100],
                         baseTail: [0,100],
-                        animations: [],
+                        animations: {blocks: []},
                     }],
                     editor: {
                         boneColor: [0,0,0,1]
@@ -142,10 +118,12 @@ class AppOptions {
         let objectWeightsBuffer;
         let objectVerticesBuffer;
         let objectAllocationBuffer;
+        let runtimeObject;
         if (object.type == "グラフィックメッシュ") {
             objectWeightsBuffer = this.app.scene.runtimeData.graphicMeshData.weightBlocks;
             objectVerticesBuffer = this.app.scene.runtimeData.graphicMeshData.baseVertices;
             objectAllocationBuffer = object.objectDataBuffer;
+            runtimeObject = this.app.scene.runtimeData.graphicMeshData;
         } else {
             objectWeightsBuffer = this.app.scene.runtimeData.bezierModifierData.weightBlocks;
             objectVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices;
@@ -153,12 +131,7 @@ class AppOptions {
         }
         const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu"), [objectWeightsBuffer, objectVerticesBuffer, objectAllocationBuffer, parentVerticesBuffer, parentAllocationBuffer]);
         GPU.runComputeShader(calculateParentWeightForBone, [group], Math.ceil(object.verticesNum / 64));
-        const result = await GPU.getStructDataFromGPUBuffer(objectWeightsBuffer, ["u32","u32","u32","u32", "f32","f32","f32","f32"], object.vertexBufferOffset, object.verticesNum);
-        console.log(result)
-        for (const vertex of object.allVertices) {
-            vertex.parentWeight.indexs = result[vertex.index].slice(0,4);
-            vertex.parentWeight.weights = result[vertex.index].slice(4,8);
-        }
+        runtimeObject.updateCPUDataFromGPUBuffer(object, {vertex: {weight: true}});
     }
 }
 
@@ -185,13 +158,13 @@ class AppConfig {
 
         this.MASKTEXTURESIZE = [1024,1024];
 
-        this.MAX_GRAPHICMESH = 100; // グラフィックメッシュの最大数
+        this.MAX_GRAPHICMESH = 200; // グラフィックメッシュの最大数
         this.MAX_VERTICES_PER_GRAPHICMESH = 1000; // グラフィックメッシュあたりの最大頂点数
         this.MAX_MESHES_PER_GRAPHICMESH = 2000; // グラフィックメッシュあたりの最大頂メッシュ数
         this.MAX_ANIMATIONS_PER_GRAPHICMESH = 10; // グラフィックメッシュあたりの最大アニメーション数
 
         this.MAX_BONEMODIFIER = 32; // アーマチュアの最大数
-        this.MAX_VERTICES_PER_BONEMODIFIER = 100; // アーマチュアあたりの最大頂点数
+        this.MAX_BONES_PER_ARMATURE = 200; // アーマチュアあたりの最大頂点数
 
         this.MAX_BEZIERMODIFIER = 32; // ベジェモディファイアの最大数
         this.MAX_VERTICES_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大頂点数
@@ -214,10 +187,10 @@ class AppConfig {
                         {label: "ベジェモディファイア", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "ベジェモディファイア"})},
                         {label: "アーマチュア", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "アーマチュア"})}
                     ]},
-                    {label: "メッシュの生成", eventFn: () => {
-                        this.app.scene.state.selectedObject.forEach((/** @type {GraphicMesh} */graphicMesh) => {
-                            graphicMesh.editor.createEdgeFromTexture(1, 1);
-                        })
+                    {label: "メッシュの生成", eventFn: async () => {
+                        for (const /** @type {GraphicMesh} */graphicMesh of this.app.scene.state.selectedObject) {
+                            await graphicMesh.editor.createEdgeFromTexture(1, 10);
+                        }
                     }},
                     {label: "test"},
                 ],

@@ -235,6 +235,7 @@ export function createMinWorkSpace(target, listName, workSpace = null, buttons =
 export function createSection(target, sectionName, section, className = "section") {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
+    checkbox.style.display = "none";
     checkbox.checked = true;
     const label = document.createElement("label");
     const span = document.createElement("span");
@@ -287,6 +288,7 @@ export function createChecks(target, checks) {
 function createCheckbox2(target, icon, text) {
     const check = document.createElement("input");
     check.type = "checkbox";
+    check.style.display = "none";
     const label = document.createElement("label");
     label.classList.add("box");
     const div = document.createElement("div");
@@ -302,6 +304,7 @@ function createCheckbox2(target, icon, text) {
 export function createCheckbox(type = "custom-checkbox", text = "") {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
+    checkbox.style.display = "none";
     const label = document.createElement("label");
     label.classList.add("box");
     label.setAttribute("name", "checkbox");

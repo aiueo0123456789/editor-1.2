@@ -4,18 +4,37 @@ struct Camera {
     padding: f32,
 }
 
-struct IndexAndWeight {
-    index: vec4<u32>,
-    weight: vec4<f32>,
+struct Allocation {
+    vertexBufferOffset: u32,
+    animationBufferOffset: u32,
+    weightBufferOffset: u32,
+    MAX_VERTICES: u32,
+    MAX_ANIMATIONS: u32,
+    parentType: u32, // 親がなければ0
+    parentIndex: u32, // 親がなければ0
+    myType: u32,
+}
+
+
+struct MeshLoop {
+    indexs: vec4<f32>,
+}
+
+struct WeightBlock {
+    indexs: vec4<u32>,
+    weights: vec4<f32>,
 }
 
 @group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
-@group(1) @binding(1) var<storage, read> verticesIndexAndWeight: array<IndexAndWeight>;
-@group(2) @binding(0) var<storage, read> targetIndex: u32;
+@group(1) @binding(1) var<storage, read> meshLoops: array<MeshLoop>;
+@group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
+@group(1) @binding(3) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
+@group(2) @binding(0) var<uniform> objectData: Allocation;
+@group(3) @binding(0) var<uniform> targetIndex: u32;
 
-const size = 50;
+const size = 10;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>, // クリッピング座標系での頂点位置
@@ -37,15 +56,16 @@ fn vmain(
     @builtin(vertex_index) vertexIndex: u32
 ) -> VertexOutput {
     // 頂点データを取得
+    let fixIndex = objectData.vertexBufferOffset + instanceIndex;
     let point = pointData[vertexIndex % 4u];
 
     var output: VertexOutput;
-    output.position = vec4f((verticesPosition[instanceIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+    output.position = vec4f((verticesPosition[fixIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
     output.uv = point.zw;
     // 表示ターゲットのindexを検索する
-    let data = verticesIndexAndWeight[instanceIndex];
-    let indexs = data.index;
-    let weights = data.weight;
+    let data = weightBlocks[fixIndex];
+    let indexs = data.indexs;
+    let weights = data.weights;
     var weight = 0.0;
     for (var i = 0u; i < 4u; i ++) {
         if (indexs[i] == targetIndex) {

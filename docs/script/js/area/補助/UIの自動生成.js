@@ -56,6 +56,7 @@ export function createSelect(t, list = []) {
 function createCheckbox(t, type = "custom-checkbox", text = "") {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
+    checkbox.style.display = "none";
     const label = document.createElement("label");
     label.classList.add("box");
     label.setAttribute("name", "checkbox");
@@ -103,8 +104,12 @@ const tagCreater = {
         if (child.options.type == "text") {
             element = createTag(t, "input", child.options);
             this_.createWith(element, child.withObject, searchTarget, flag);
-        } else if (child.options.type == "check") {
-            element = createCheckbox(t, child.options.look);
+        } else if (child.options.type == "checkbox") {
+            if (child.options.look && child.options.look != "defo") {
+                element = createCheckbox(t, child.options.look);
+            } else {
+                element = createTag(t, "input", child.options);
+            }
             this_.createWith(element, child.withObject, searchTarget, flag);
         } else { // 数字型
             if (child.custom?.visual) {
@@ -396,7 +401,10 @@ export class CreatorForUI {
         } else {
             activeSource = {object: result, parameter: "active"};
         }
+        let rangeStartIndex = 0;
+        let rangeEndIndex = 0;
         const scrollable = createTag(scrollableContainer, "div", {class: "scrollable"});
+        const array = [];
         const rootObject = this.findSource(withObject.object, searchTarget);
         const getAllObject = () => {
             const getLoopChildren = (children, resultObject = []) => {
@@ -455,27 +463,34 @@ export class CreatorForUI {
             return getLoopChildren(rootObject).result;
         }
         const hierarchyUpdate = (o, gID, t) => {
+            array.length = 0;
             const allObject = getAllObject();
             for (const object of allObject) {
                 if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, hierarchyID).length) { // タグが存在しない場合新規作成
                     const container = createTag(null, "div", {style: "paddingLeft: 2px;"});
-                    if (typeof options.clickEventFn === 'function') { // 関数が設定されていたら適応
-                        container.addEventListener("click", (event) => {
-                            options.clickEventFn(event, object);
-                        });
-                    } else {
-                        container.addEventListener("click", (event) => {
-                            activeSource.object[activeSource.parameter] = object;
-                            result.active = object;
-                            if (!app.input.keysDown["Shift"]) {
-                                result.selects.length = 0;
+                    container.addEventListener("click", (event) => {
+                        if (app.input.keysDown["Shift"]) {
+                            rangeEndIndex = array.indexOf(object);
+                            if (isFunction(options.rangeSelectEventFn)) {
+                                options.rangeSelectEventFn(event, array, rangeStartIndex, rangeEndIndex);
                             }
-                            result.selects.push(object);
-                            console.log(result,activeSource);
-                            event.stopPropagation();
-                            // managerForDOMs.update(list, "選択情報");
-                        });
-                    }
+                        } else {
+                            rangeStartIndex = array.indexOf(object);
+                            if (isFunction(options.clickEventFn)) { // 関数が設定されていたら適応
+                                options.clickEventFn(event, object);
+                            } else {
+                                activeSource.object[activeSource.parameter] = object;
+                                result.active = object;
+                                if (!app.input.keysDown["Shift"]) {
+                                    result.selects.length = 0;
+                                }
+                                result.selects.push(object);
+                                console.log(result,activeSource);
+                                event.stopPropagation();
+                                // managerForDOMs.update(list, "選択情報");
+                            }
+                        }
+                    });
 
                     const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr;"});
                     const visibleCheck = createCheckbox(upContainer, "arrow");
@@ -521,8 +536,9 @@ export class CreatorForUI {
                                     }
                                 }
                             }
+                            array.push(child);
                         } catch {
-                            console.warn("ヒエラルキが正常に生成できませんでした");
+                            console.warn("ヒエラルキーが正常に生成できませんでした");
                         }
                     }
                 }
@@ -780,7 +796,7 @@ export class CreatorForUI {
     //             if (child.options.type == "text") {
     //                 element = createTag(t, "input", child.options);
     //                 this.createWith(element, child.withObject, searchTarget);
-    //             } else if (child.options.type == "check") {
+    //             } else if (child.options.type == "checkbox") {
     //                 element = createCheckbox(t, child.options.look);
     //                 this.createWith(element, child.withObject, searchTarget);
     //             } else { // 数字型

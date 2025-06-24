@@ -942,16 +942,16 @@ class WebGPU {
         device.queue.submit([copyCommandBuffer]);
     }
 
-    copyBufferToNewBuffer(resource) {
-        const newBuffer = this.createStorageBuffer(resource.size, undefined, ["f32"]);
+    copyBufferToNewBuffer(resource, offset = 0, copyBytlen = resource.size) {
+        const newBuffer = this.createStorageBuffer(copyBytlen, undefined, ["f32"]);
         const copyCommandEncoder = device.createCommandEncoder();
 
         copyCommandEncoder.copyBufferToBuffer(
             resource,  // コピー元
-            0,        // コピー元のオフセット
+            offset,        // コピー元のオフセット
             newBuffer,  // コピー先
             0,        // コピー先のオフセット
-            resource.size  // コピーするバイト数
+            copyBytlen  // コピーするバイト数
         );
 
         const copyCommandBuffer = copyCommandEncoder.finish();

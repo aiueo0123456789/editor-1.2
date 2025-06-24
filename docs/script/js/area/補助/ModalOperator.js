@@ -39,7 +39,7 @@ export class ModalOperator {
         }
     }
 
-    keyInput(/** @type {InputManager} */inputManager) {
+    async keyInput(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
             if (inputManager.consumeKeys([this.nowModal.activateKey])) {
                 // this.nowModal.command.execute();
@@ -60,9 +60,9 @@ export class ModalOperator {
         }
     }
 
-    mousemove(/** @type {InputManager} */inputManager) {
+    async mousemove(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
-            const consumed = this.nowModal?.mousemove(inputManager);
+            const consumed = await this.nowModal?.mousemove(inputManager);
             if (consumed) {
                 if (consumed.complete) {
                     this.reset();
@@ -72,9 +72,21 @@ export class ModalOperator {
         }
         return false;
     }
-    mousedown(/** @type {InputManager} */inputManager) {
+    async mousedown(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
-            const consumed = this.nowModal?.mousedown(inputManager);
+            const consumed = await this.nowModal?.mousedown(inputManager);
+            if (consumed) {
+                if (consumed.complete) {
+                    this.reset();
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+    async mouseup(/** @type {InputManager} */inputManager) {
+        if (this.nowModal) {
+            const consumed = await this.nowModal?.mouseup(inputManager);
             if (consumed) {
                 if (consumed.complete) {
                     this.reset();

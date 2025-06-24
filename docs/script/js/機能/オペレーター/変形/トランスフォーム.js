@@ -79,6 +79,7 @@ class TransformCommand {
                 this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
                 this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
                 GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.baseVertices, this.subjectIndexBuffer])], this.workNumX);
+                // GPU.consoleBufferData(this.originalBuffer, ["f32","f32"], "original");
             }
             this.weightAndIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"),  [{item: this.weightBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.subjectIndexBuffer, type: "b"}]);
             this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.subjectIndexBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
@@ -131,7 +132,7 @@ class TransformCommand {
             } else if (this.type == "メッシュ編集") {
                 for (const target of this.targets) {
                     GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
-                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target);
+                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target, {vertex: {base: true, uv: true}});
                     target.editor.createMesh();
                 }
             }
@@ -169,6 +170,8 @@ class TransformCommand {
             }
         } else {
             GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
+            // GPU.consoleBufferData(this.originalBuffer, ["f32","f32"], "original");
+            // GPU.consoleBufferData(this.targetBuffer, ["f32","f32"], "original");
             if (this.type == "ボーン編集") {
                 for (const target of this.targets) {
                     app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
@@ -177,6 +180,7 @@ class TransformCommand {
             } else if (this.type == "メッシュ編集") {
                 for (const target of this.targets) {
                     GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
+                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target, {vertex: {base: true, uv: true}});
                     target.editor.createMesh(true);
                 }
             }

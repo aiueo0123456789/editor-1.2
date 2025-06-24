@@ -1,17 +1,16 @@
 import { app } from "../../../app.js";
 import { InputManager } from "../../../app/InputManager.js";
 import { managerForDOMs } from "../../../UI/制御.js";
-import { KeyTranslateCommand } from "../../../機能/オペレーター/キートランスフォーム/キートランスフォーム.js";
+import { GPU } from "../../../webGPU.js";
+import { WeightPaintCommand } from "../../../機能/オペレーター/メッシュ/ウェイトペイント.js";
 import { ModalOperator } from "../../補助/ModalOperator.js";
 
-export class KeyTranslate {
+export class WeightPaintModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
-        this.command = null;
+        this.command = new WeightPaintCommand(app.scene.state.activeObject, app.appConfig.areasConfig["Viewer"].weightEditBoneIndex, 1, 0, 50);
         this.values = [
             0,0, // スライド量
-            app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
-            app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
         ];
         this.modal = {
             inputObject: {"value": this.values},
@@ -21,37 +20,34 @@ export class KeyTranslate {
                         {type: "title", text: "TranslateModal", class: "shelfeTitle"},
                         {type: "input", label: "x", withObject: {object: "value", parameter: "0"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
                         {type: "input", label: "y", withObject: {object: "value", parameter: "1"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
-                        {type: "input", label: "スムーズ", withObject: {object: "value", parameter: "2"}, options: {type: "number",min: 0, max: 2}},
-                        {type: "input", label: "半径", withObject: {object: "value", parameter: "3"}, options: {type: "number",min: 0, max: 10000}},
                     ]}
                 ]
             }
         };
-        this.activateKey = "g";
+        this.activateKey = "mouseup";
 
         const update = () => {
-            this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
+            this.command.update([this.values[0],this.values[1]]);
         }
         managerForDOMs.set({o: this.values, g: "_", i: "0"}, null, update, null);
         managerForDOMs.set({o: this.values, g: "_", i: "1"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "2"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "3"}, null, update, null);
     }
 
-    async init() {
-        this.command = new KeyTranslateCommand(app.appConfig.areasConfig["Timeline"].getSelectVertices());
-        this.center = app.appConfig.areasConfig["Timeline"].getSelectVerticesCenter();
-        this.command.setCenterPoint(this.center);
+    async init(type) {
     }
 
     mousemove(/** @type {InputManager} */inputManager) {
-        this.values[0] += inputManager.movement[0];
-        this.values[1] += inputManager.movement[1];
+        this.values[0] = inputManager.position[0];
+        this.values[1] = inputManager.position[1];
         managerForDOMs.update(this.values);
         return true;
     }
 
-    mousedown(/** @type {InputManager} */inputManager) {
+    mousedown() {
+        
+    }
+
+    mouseup(/** @type {InputManager} */inputManager) {
         app.operator.appendCommand(this.command);
         app.operator.update();
         return {complete: true};

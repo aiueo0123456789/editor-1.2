@@ -19,6 +19,7 @@ export class Area_Inspector {
                                 {type: "input", label: "表示順番", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 1000, step: 1}},
                                 {type: "input", label: "最大頂点数", withObject: {object: "", parameter: "MAX_VERTICES"}, options: {type: "number"}, custom: {visual: "1"}},
                                 {type: "input", label: "頂点数", withObject: {object: "", parameter: "verticesNum"}, options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                                {type: "input", label: "自動のウェイト", withObject: {object: "", parameter: "autoWeight"}, options: {type: "checkbox", look: "defo"}},
                             ],
                             false: [
                                 {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "ベジェモディファイア"},

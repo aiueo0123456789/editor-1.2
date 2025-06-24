@@ -11,7 +11,9 @@ export class Children {
 
     addChild(object) {
         this.objects.push(object);
-        app.options.assignWeights(object);
+        if (object.autoWeight) {
+            app.options.assignWeights(object);
+        }
     }
 
     deleteChild(object) {
@@ -20,7 +22,9 @@ export class Children {
 
     weightReset() {
         this.objects.forEach(x => {
-            app.options.assignWeights(addObject);
+            if (object.autoWeight) {
+                app.options.assignWeights(addObject);
+            }
         })
     }
 }

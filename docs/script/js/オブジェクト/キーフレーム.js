@@ -4,8 +4,8 @@ import { vec2 } from "../ベクトル計算.js";
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す
-    if (currentFrame <= keyA.frame) return keyA.value;
-    if (currentFrame >= keyB.frame) return keyB.value;
+    if (currentFrame <= keyA.point[0]) return keyA.point[1];
+    if (currentFrame >= keyB.point[0]) return keyB.point[1];
     // ベジェ曲線の制御点を設定
     const p0 = keyA.point;
     const p1 = keyA.wRightHandle;
@@ -59,8 +59,7 @@ class Keyframe {
         this.pointSelected = false;
         this.leftHandleSelected = false;
         this.rightHandleSelected = false;
-        this.frame = frame;
-        this.value = value;
+
         this.leftHandle = [-3,0];
         this.rightHandle = [3,0];
         this.point = [frame, value];
@@ -69,26 +68,26 @@ class Keyframe {
     }
 
     setSaveData(data) {
-        this.setFrameAndValue(data.frame, data.value);
+        this.point = [...data.point];
+        this.leftHandle = [...data.leftHandle];
+        this.rightHandle= [...data.rightHandle];
+        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
+        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 
     setFrame(frame) {
-        this.frame = frame;
         this.point[0] = frame;
         this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
         this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 
     setValue(value) {
-        this.value = value;
         this.point[1] = value;
         this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
         this.wRightHandle = vec2.addR(this.point, this.rightHandle);
     }
 
     setFrameAndValue(frame,value) {
-        this.frame = frame;
-        this.value = value;
         this.point[0] = frame;
         this.point[1] = value;
         this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
@@ -96,8 +95,6 @@ class Keyframe {
     }
 
     updateWorldToLocal() {
-        this.frame = this.point[0];
-        this.value = this.point[1];
         this.leftHandle = vec2.subR(this.wLeftHandle, this.point);
         this.rightHandle = vec2.subR(this.wRightHandle, this.point);
     }
@@ -112,7 +109,7 @@ class Keyframe {
 }
 
 export class KeyframeBlock {
-    constructor(object, targetValue) {
+    constructor(object, targetValue, data = {keys: []}) {
         this.type = "キーフレームブロック";
         this.targetObject = object;
         this.targetValue = targetValue;
@@ -123,10 +120,10 @@ export class KeyframeBlock {
     insert(frame, value) {
         let insertIndex = this.keys.length;
         for (let i = 0; i < this.keys.length; i ++) {
-            if (frame == this.keys[i].frame) {
-                this.keys[i].value = value;
+            if (frame == this.keys[i].point[0]) {
+                this.keys[i].point[1] = value;
                 return ;
-            } else if (frame < this.keys[i].frame) {
+            } else if (frame < this.keys[i].point[0]) {
                 insertIndex = i;
                 break ;
             }
@@ -141,10 +138,6 @@ export class KeyframeBlock {
         managerForDOMs.update(this);
     }
 
-    updateKeyframe(key,newData) {
-        key.value = newData;
-    }
-
     setKeyframe(data) {
         for (const key of data) {
             const keyframe =  new Keyframe(this);
@@ -156,14 +149,14 @@ export class KeyframeBlock {
 
     getKeyFromFrame(frame, threshold = 0.5) {
         for (const key of this.keys) {
-            if (Math.abs(key.frame - frame) < threshold) return key;
+            if (Math.abs(key.point[0] - frame) < threshold) return key;
         }
         return null;
     }
 
     hasKeyFromFrame(frame, threshold = 0.5) {
         for (const key of this.keys) {
-            if (Math.abs(key.frame - frame) < threshold) return true;
+            if (Math.abs(key.point[0] - frame) < threshold) return true;
         }
         return false;
     }
@@ -175,7 +168,7 @@ export class KeyframeBlock {
         for (const key of this.keys) {
             leftKey = rightKey;
             rightKey = key;
-            if (frame < key.frame) {
+            if (frame < key.point[0]) {
                 break ;
             }
         }

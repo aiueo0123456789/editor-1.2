@@ -7,7 +7,7 @@ import { ModalOperator } from "../../補助/ModalOperator.js";
 export class ParentPickModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
-        this.command = new ChangeParentCommand(app.scene.state.activeObject);
+        this.command = new ChangeParentCommand(app.scene.state.selectedObject);
         this.values = [null];
         this.modal = {
             inputObject: {"values": this.values},
@@ -32,7 +32,11 @@ export class ParentPickModal {
     async init(type) {
     }
 
+    mousemove(/** @type {InputManager} */inputManager) {
+    }
+
     async mousedown(/** @type {InputManager} */inputManager) {
+        console.log("親変更")
         const parent = await app.scene.selectedForObject(inputManager.position, {types: ["アーマチュア", "ベジェモディファイア"]});
         this.values[0] = parent[0];
         managerForDOMs.update(this.values);

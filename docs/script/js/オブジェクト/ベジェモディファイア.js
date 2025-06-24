@@ -59,7 +59,7 @@ export class BezierModifier extends ObjectBase {
         this.editor = new Editor(this);
 
         this.parent = "";
-        this.weightAuto = false;
+        this.autoWeight = false;
 
         this.mode = "オブジェクト";
 

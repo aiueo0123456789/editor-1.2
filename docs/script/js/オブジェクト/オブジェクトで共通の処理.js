@@ -36,7 +36,7 @@ export class ObjectEditorBase {
 }
 
 export function setParentModifierWeight(object) {
-    if (object.parent != "" && object.weightAuto) {
+    if (object.parent != "" && object.autoWeight) {
         object.isChange = true;
         if (object.parent.type == "モディファイア") {
             object.parentWeightBuffer = GPU.createStorageBuffer(object.verticesNum * (4 + 4) * 4, undefined, ["f32"]);

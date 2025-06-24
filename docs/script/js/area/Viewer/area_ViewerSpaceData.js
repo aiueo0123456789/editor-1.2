@@ -1,3 +1,6 @@
+import { managerForDOMs } from "../../UI/制御.js";
+import { GPU } from "../../webGPU.js";
+
 export class ViewerSpaceData {
     constructor() {
         this.mode = "オブジェクト";
@@ -13,6 +16,17 @@ export class ViewerSpaceData {
 
         this.proportionalEditType = 0;
         this.proportionalSize = 100;
+
+        this.weightEditBoneIndex = 0;
+        this.weightEditBoneIndexBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
+        this.targetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.weightEditBoneIndexBuffer]);
+        this.cTargetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.weightEditBoneIndexBuffer]);
+
+        const weightIndexUpdate = () => {
+            GPU.writeBuffer(this.weightEditBoneIndexBuffer, new Uint32Array([this.weightEditBoneIndex]));
+        }
+
+        managerForDOMs.set({o: this, i: "weightEditBoneIndex"}, null, weightIndexUpdate);
     }
 
     createModeSelectList() {

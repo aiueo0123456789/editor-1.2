@@ -39,4 +39,50 @@ export class TimelineSpaceData {
         }
         return result;
     }
+
+    getAllKeyframe() {
+        const result = [];
+        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
+                for (const keyData of keyframeBlock.keys) {
+                    result.push(keyData);
+                }
+            }
+        }
+        return result;
+    }
+
+    getSelectVertices() {
+        const result = [];
+        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
+                for (const keyData of keyframeBlock.keys) {
+                    if (keyData.pointSelected) {
+                        result.push(keyData.point);
+                    }
+                    if (keyData.leftHandleSelected) {
+                        result.push(keyData.wLeftHandle);
+                    }
+                    if (keyData.rightHandleSelected) {
+                        result.push(keyData.wRightHandle);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    getSelectedContainsKeys() {
+        const result = [];
+        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
+                for (const keyData of keyframeBlock.keys) {
+                    if (keyData.pointSelected || keyData.leftHandleSelected || keyData.rightHandleSelected) {
+                        result.push(keyData);
+                    }
+                }
+            }
+        }
+        return result;
+    }
 }

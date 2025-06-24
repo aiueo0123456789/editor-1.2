@@ -57,7 +57,7 @@ export class Modifier extends ObjectBase {
         this.modifierDataGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu"), [{item: this.u_boundingBoxBuffer, type: 'b'}, {item: this.u_finenessBuffer, type: 'b'}]);
 
         this.parent = "";
-        this.weightAuto = true;
+        this.autoWeight = true;
 
         this.children = new Children();
         this.editor = new Editor(this);

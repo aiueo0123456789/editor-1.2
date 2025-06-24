@@ -18,7 +18,8 @@ export class FaileIOManager {
                 }
             }
         } else {
-            for (const objectType of ["modifiers", "bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
+            console.log(json)
+            for (const objectType of ["bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
                 for (const data of json.scene[objectType]) {
                     this.app.scene.objects.createObject({saveData: data});
                 }

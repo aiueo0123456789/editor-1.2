@@ -119,9 +119,9 @@ input[type="number"] {
 }
 
 /* チェックボックスを非表示（ただし、操作は可能） */
-input[type="checkbox"] {
+/* input[type="checkbox"] {
     display: none;
-}
+} */
 
 .box {
     width: 100%;

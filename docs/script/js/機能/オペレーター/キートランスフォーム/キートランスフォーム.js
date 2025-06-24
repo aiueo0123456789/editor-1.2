@@ -1,3 +1,4 @@
+import { managerForDOMs } from "../../../UI/制御.js";
 import { vec2 } from "../../../ベクトル計算.js";
 
 class KeyTransformCommand {
@@ -5,7 +6,7 @@ class KeyTransformCommand {
         this.value = vec2.create();
         this.targets = [...targets];
         this.center = vec2.create();
-        this.original = targets.map(vec => vec2.copy(vec));
+        this.original = targets.map(vec => [...vec]);
     }
 
     setCenterPoint(centerPoint) {
@@ -22,19 +23,14 @@ class KeyTransformCommand {
                 vec2.add(vertex,vertex,this.value);
             }
         }
-    }
-
-    // 変形を取り消し
-    cancel() {
-        for (let i = 0; i < this.targets.length; i ++) {
-            this.targets[i] = this.original[i];
-        }
+        managerForDOMs.update("タイムライン-canvas");
     }
 
     undo() {
         for (let i = 0; i < this.targets.length; i ++) {
-            this.targets[i] = this.original[i];
+            vec2.set(this.targets[i], this.original[i]);
         }
+        managerForDOMs.update("タイムライン-canvas");
     }
 }
 
