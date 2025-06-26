@@ -193,10 +193,14 @@ export class Area_Viewer {
                 }
             } else if (state.activeObject.type == "ベジェモディファイア") {
                 if (inputManager.consumeKeys(["Tab"])) {
-                    if (state.currentMode == "ベジェ編集") {
-                        state.setModeForSelected("オブジェクト");
+                    if (state.currentMode == "オブジェクト") {
+                        if (inputManager.consumeKeys(["a"])) {
+                            state.setModeForSelected("ベジェアニメーション編集");
+                        } else {
+                            state.setModeForSelected("ベジェ編集");
+                        }
                     } else {
-                        state.setModeForSelected("ベジェ編集");
+                        state.setModeForSelected("オブジェクト");
                     }
                 }
             }

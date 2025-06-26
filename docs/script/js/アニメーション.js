@@ -7,6 +7,9 @@ export class AnimationBlock {
         this.animationBlock = [];
         this.belongObject = belongObject;
         this.useClass = useClass;
+
+        this.activeAnimationIndex = 0;
+        this.activeAnimation = null;
     }
 
     destroy() {

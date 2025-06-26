@@ -21,7 +21,6 @@ const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cs
 
 class TransformCommand {
     constructor(type, targets, selectIndexs) {
-        this.targets = [];
         this.worldOriginalBuffer = null;
         this.valueBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
         this.centerPointBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32","f32"]);
@@ -33,7 +32,7 @@ class TransformCommand {
         this.proportionalEditType = 0;
         this.proportionalSize = 0;
 
-        this.targets = targets;
+        this.targets = [...targets];
         this.type = type;
         const source = this.type == "メッシュ編集" ? app.scene.runtimeData.graphicMeshData : this.type == "ボーン編集" ? app.scene.runtimeData.armatureData : app.scene.runtimeData.bezierModifierData;
         const groupNum = this.type == "メッシュ編集" ? 1 : this.type == "ボーン編集" ? 2 : 3;

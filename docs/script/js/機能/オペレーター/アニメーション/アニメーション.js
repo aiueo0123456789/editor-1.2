@@ -8,7 +8,7 @@ export class AnimationManager {
     }
 
     execute() {
-        this.objectId = this.manager.createObject(this.type, this.data);
+        this.objectId = this.manager.createObjectAndSetUp(this.type, this.data);
     }
 
     undo() {

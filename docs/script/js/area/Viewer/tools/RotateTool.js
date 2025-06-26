@@ -58,7 +58,7 @@ export class RotateModal {
 
     mousedown(/** @type {InputManager} */inputManager) {
         app.operator.appendCommand(this.command);
-        app.operator.update();
+        app.operator.execute();
         return {complete: true};
     }
 

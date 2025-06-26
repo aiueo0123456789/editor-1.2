@@ -44,24 +44,6 @@ export function setStyle(element,style) {
     }
 }
 
-export function createLabeledVecInput(target, axis, name, inputId) {
-    const container = document.createElement("div");
-    container.classList.add("flex-0");
-    target.append(container);
-
-    const inputForAxis0 = createLabeledInput(container,axis[0], "number", "", true);
-    const inputForAxis1 = createLabeledInput(container,axis[1], "number", "", true);
-    if (name) {
-        container.setAttribute("name", name);
-        inputForAxis0.setAttribute("name", `${name}-${axis[0]}`);
-        inputForAxis1.setAttribute("name", `${name}-${axis[1]}`);
-    }
-    inputForAxis0.step = 0.0001;
-    inputForAxis1.step = 0.0001;
-    // return {[axis[0]]: inputForAxis0, [axis[1]]: inputForAxis1, container: container};
-    return {axis0: inputForAxis0, axis1: inputForAxis1, container: container};
-}
-
 export function setLabel(target, labelText, inner) {
     const label = document.createElement("label");
     label.textContent = labelText;
@@ -71,78 +53,6 @@ export function setLabel(target, labelText, inner) {
     div.append(label,inner);
     target.append(div);
     return div;
-}
-
-export function createLabeledInput(target, labelText, inputType, name, isCoordinate = false, inputId) {
-    const label = document.createElement("label");
-    label.textContent = labelText;
-    if (!inputId) inputId = createID();
-
-    const div = document.createElement("div");
-    if (name) {
-        div.setAttribute("name", name); // name を設定
-    }
-    if (isCoordinate) {
-        div.className = "coordinate-input";
-    } else {
-        div.className = "label-input";
-    }
-    let input;
-    if (inputType == "checkbox") {
-        input = createCheckbox();
-    } else {
-        input = document.createElement("input");
-    }
-    input.type = inputType;
-    input.id = inputId;
-    label.setAttribute("for", inputId); // for属性を設定
-    div.append(label,input);
-    target.append(div);
-
-    return input;
-}
-
-export function createLabeledP(target, labelText, name, isCoordinate = false, pID) {
-    const label = document.createElement("label");
-    label.textContent = labelText;
-    if (!pID) pID = createID();
-
-    const div = document.createElement("div");
-    if (name) {
-        div.setAttribute("name", name); // name を設定
-    }
-    if (isCoordinate) {
-        div.className = "coordinate-input";
-    } else {
-        div.className = "label-input";
-    }
-    let input;
-    input = document.createElement("p");
-    label.setAttribute("for", pID); // for属性を設定
-    div.append(label,input);
-    target.append(div);
-
-    return input;
-}
-
-export function createLabeledSelect(target, labelText, name, ID) {
-    const label = document.createElement("label");
-    label.textContent = labelText;
-    if (!ID) ID = createID();
-
-    console.log(ID)
-    const select = document.createElement("select");
-    const div = document.createElement("div");
-    div.className = "label-input";
-    if (name) {
-        div.setAttribute("name", name); // name を設定
-    }
-    div.append(label,select);
-    target.append(div);
-    select.id = ID;
-    label.setAttribute("for", ID); // for属性を設定
-
-    return select;
 }
 
 export function createMinButton(target, text) {
@@ -482,23 +392,6 @@ export function setRangeStyle(target) {
     target.addEventListener("input", () => {
         updateRangeStyle(target);
     });
-}
-
-export const views = [];
-export function addShelfToAllView(shelfName, initFn, updateFn) {
-    for (const view of views) {
-        view.addShelf(shelfName, initFn, updateFn);
-    }
-}
-
-export function deleteAllShelfForAllView() {
-    for (const view of views) {
-        view.deleteAll();
-    }
-}
-
-export function deleteShelfForAllView(shelfName) {
-    
 }
 
 export function updateLoad(processName,percentage,processDetail = "") {

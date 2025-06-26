@@ -19,6 +19,7 @@ import { HierarchySpaceData } from "./area/Hierarchy/area_HierarchySpaceData.js"
 import { Area_Property } from "./area/Property/area_Property.js";
 import { GraphicMesh } from "./オブジェクト/グラフィックメッシュ.js";
 import { GPU } from "./webGPU.js";
+import { CreateObjectCommand, DeleteObjectCommand } from "./機能/オペレーター/オブジェクト/オブジェクト.js";
 
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/ボーン/重み設定.wgsl"));
 const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/bezier/重み設定.wgsl"));
@@ -220,16 +221,55 @@ class AppConfig {
             "Viewer": {
                 "オブジェクト": [
                     {label: "オブジェクトを追加", children: [
-                        {label: "グラフィックメッシュ", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "グラフィックメッシュ"})},
-                        {label: "ベジェモディファイア", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "ベジェモディファイア"})},
-                        {label: "アーマチュア", eventFn: this.app.scene.objects.createObject.bind(this.app.scene.objects, {type: "アーマチュア"})}
+                        {label: "グラフィックメッシュ", children: [
+                            {label: "normal", eventFn: () => {
+                                const command = new CreateObjectCommand({objectType: "グラフィックメッシュ", dataType: "normal"});
+                                app.operator.appendCommand(command);
+                                app.operator.execute();
+                            }},
+                            {label: "body", eventFn: () => {
+                                const command = new CreateObjectCommand({objectType: "グラフィックメッシュ", dataType: "body"});
+                                app.operator.appendCommand(command);
+                                app.operator.execute();
+                            }},
+                        ]},
+                        {label: "ベジェモディファイア", children: [
+                            {label: "normal", eventFn: () => {
+                                const command = new CreateObjectCommand({objectType: "ベジェモディファイア", dataType: "normal"});
+                                app.operator.appendCommand(command);
+                                app.operator.execute();
+                            }},
+                            {label: "body", eventFn: () => {
+                                const command = new CreateObjectCommand({objectType: "ベジェモディファイア", dataType: "body"});
+                                app.operator.appendCommand(command);
+                                app.operator.execute();
+                            }},
+                        ]},
+                        {label: "アーマチュア", children: [
+                            {label: "normal", eventFn: () => {
+                                const command = new CreateObjectCommand({objectType: "アーマチュア", dataType: "normal"});
+                                app.operator.appendCommand(command);
+                                app.operator.execute();
+                            }},
+                            {label: "body", eventFn: () => {
+                                const command = new CreateObjectCommand({objectType: "アーマチュア", dataType: "body"});
+                                app.operator.appendCommand(command);
+                                app.operator.execute();
+                            }},
+                        ]},
                     ]},
                     {label: "メッシュの生成", eventFn: async () => {
                         for (const /** @type {GraphicMesh} */graphicMesh of this.app.scene.state.selectedObject) {
                             await graphicMesh.editor.createEdgeFromTexture(1, 10);
                         }
                     }},
-                    {label: "test"},
+                    {label: "削除", children: [
+                        {label: "選択物", eventFn: () => {
+                            const command = new DeleteObjectCommand(this.app.scene.state.selectedObject);
+                            app.operator.appendCommand(command);
+                            app.operator.execute();
+                        }},
+                    ]},
                 ],
                 // "メッシュ編集": [
                 //     {label: "test"},
@@ -339,7 +379,7 @@ export class Application { // 全てをまとめる
         this.areas.forEach((area) => {
             area.update();
         })
-        this.operator.update();
+        // this.operator.execute();
     }
 }
 

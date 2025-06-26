@@ -688,6 +688,20 @@ class Objects {
     }
 
     createObject(data) {
+        let objectType = data.objectType;
+        let dataType = data.dataType
+        if (objectType == "アニメーションコレクター") {
+            return new AnimationCollector("名称未設定");
+        }else if (objectType == "グラフィックメッシュ") {
+            return new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
+        } else if (objectType == "ベジェモディファイア") {
+            return new BezierModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bezierModifier", dataType));
+        } else if (objectType == "アーマチュア") {
+            return new Armature("名称未設定", undefined, this.app.options.getPrimitiveData("boneModifer", dataType));
+        }
+    }
+
+    createObjectAndSetUp(data) {
         let object;
         if (data.saveData) { // セーブデータからオブジェクトを作る
             data = data.saveData;
@@ -710,24 +724,24 @@ class Objects {
                 managerForDOMs.update(this.animationCollectors);
             }
         } else { // 空のオブジェクトを作る
-            let type = data.type;
-            if (type == "アニメーションコレクター") {
+            let objectType = data.objectType;
+            let dataType = data.dataType
+            if (objectType == "アニメーションコレクター") {
                 object = new AnimationCollector("名称未設定");
                 this.animationCollectors.push(object);
                 managerForDOMs.update(this.animationCollectors);
             } else {
-                if (type == "グラフィックメッシュ") {
-                    object = new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", "normal"));
+                if (objectType == "グラフィックメッシュ") {
+                    object = new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
                     this.graphicMeshs.push(object);
                     this.isChangeObjectsZindex = true;
-                } else if (type == "ベジェモディファイア") {
-                    object = new BezierModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bezierModifier", "normal"));
+                } else if (objectType == "ベジェモディファイア") {
+                    object = new BezierModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bezierModifier", dataType));
                     this.bezierModifiers.push(object);
-                } else if (type == "アーマチュア") {
-                    object = new Armature("名称未設定", undefined, this.app.options.getPrimitiveData("boneModifer", "normal"));
+                } else if (objectType == "アーマチュア") {
+                    object = new Armature("名称未設定", undefined, this.app.options.getPrimitiveData("boneModifer", dataType));
                     this.armatures.push(object);
                 }
-                this.app.hierarchy.addHierarchy("", object);
             }
         }
         pushArray(this.allObject,object);
@@ -749,11 +763,31 @@ class Objects {
         }
     }
 
+    // 属性から所属する配列を返す
+    searchArrayFromType(type) {
+        if (type == "グラフィックメッシュ") {
+            return this.graphicMeshs;
+        } else if (type == "ベジェモディファイア") {
+            return this.bezierModifiers;
+        } else if (type == "アーマチュア") {
+            return this.armatures;
+        } else if (type == "アニメーションコレクター") {
+            return this.animationCollectors;
+        } else if (type == "キーフレームブロック") {
+            return this.keyframeBlocks;
+        }
+    }
+
     // オブジェクトの削除
     deleteObject(object) {
-        this.app.hierarchy.deleteHierarchy(object); // ヒエラルキーから削除
         indexOfSplice(this.searchArrayFromObject(object), object);
         indexOfSplice(this.allObject, object);
+    }
+
+    appendObject(object) {
+        this.app.hierarchy.addHierarchy("",object); // ヒエラルキーから削除
+        this.searchArrayFromType(object.type).push(object);
+        this.allObject.push(object);
     }
 }
 
@@ -812,8 +846,6 @@ export class Scene {
     }
 
     init() {
-        // this.objects.createObject(this.app.options.getPrimitiveData("boneModifer", "normal"));
-        // this.objects.createObject(this.app.options.getPrimitiveData("bezierModifier", "normal"));
     }
 
     // 選択している頂点のBBoxを取得

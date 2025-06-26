@@ -14,14 +14,14 @@ export class FaileIOManager {
         if (json.ps) { // psフォルダのアップロードの場合
             for (const data of json.data.GraphicMesh) {
                 if (data.texture) {
-                    this.app.hierarchy.addHierarchy("", this.app.scene.objects.createObject({saveData: data}));
+                    this.app.hierarchy.addHierarchy("", this.app.scene.objects.createObjectAndSetUp({saveData: data}));
                 }
             }
         } else {
             console.log(json)
             for (const objectType of ["bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
                 for (const data of json.scene[objectType]) {
-                    this.app.scene.objects.createObject({saveData: data});
+                    this.app.scene.objects.createObjectAndSetUp({saveData: data});
                 }
             }
             // ヒエラルキーを構築

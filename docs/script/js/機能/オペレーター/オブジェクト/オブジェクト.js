@@ -1,82 +1,61 @@
 import { app } from "../../../app.js";
 
-// 管理クラス
-export class ObjectManager {
-    constructor() {
-    }
-
-    createObject(type, data) {
-        return app.scene.objects.createObject({type: type});
-    }
-
-    deleteObject(object) {
-        app.scene.objects.deleteObject(object);
-    }
-
-    changeParent(object, newParent) {
-        app.hierarchy.sortHierarchy(newParent,object);
-    }
-
-    changeMode(object, newMode) {
-        object.mode = newMode;
-    }
-}
-
 // 追加のコマンド
 export class CreateObjectCommand {
-    constructor(manager, type, data) {
-        this.manager = manager;
-        this.type = type;
-        this.data = data;
+    constructor(data) {
         this.object = null;
+        this.object = app.scene.objects.createObject(data);
     }
 
     execute() {
-        this.object = this.manager.createObject(this.type, this.data);
+        app.scene.objects.appendObject(this.object);
+        app.hierarchy.addHierarchy("", this.object)
     }
 
     undo() {
-        if (this.object !== null) {
-            this.manager.deleteObject(this.object);
-        }
+        app.hierarchy.deleteHierarchy(this.object); // ヒエラルキーから削除
+        app.scene.objects.deleteObject(this.object);
     }
 }
 
 // 削除コマンド
 export class DeleteObjectCommand {
-    constructor(manager, type, data) {
-        this.manager = manager;
-        this.object = null;
+    constructor(objects) {
+        this.objects = [...objects];
     }
 
     execute() {
-        this.object = this.manager.createObject(this.type, this.data);
+        for (const object of this.objects) {
+            app.hierarchy.deleteHierarchy(object); // ヒエラルキーから削除
+            app.scene.objects.deleteObject(object);
+        }
     }
 
     undo() {
-        if (this.object !== null) {
-            this.manager.createObject(this.object);
+        for (const object of this.objects) {
+            app.scene.objects.appendObject(object);
+            app.hierarchy.addHierarchy("", object)
         }
     }
 }
 
-export class SetParentObjectManager {
-    constructor(manager, target, parent) {
-        this.manager = manager;
-        this.target = target;
-        this.parent = parent;
-        this.beforeParent = null;
+// 親要素の変更
+export class ChangeParentCommand {
+    constructor(targets, newParent) {
+        this.targets = [...targets];
+        this.originalParent = targets.map(target => target.parent);
+        this.newParent = newParent;
     }
 
     execute() {
-        console.log("実行",this.parent,this.target)
-        this.beforeParent = this.target.parent;
-        this.manager.changeParent(this.target, this.parent);
+        this.targets.forEach((target) => {
+            app.hierarchy.sortHierarchy(this.newParent, target);
+        })
     }
 
     undo() {
-        console.log("巻き戻し",this.beforeParent,this.target)
-        this.manager.changeParent(this.target, this.beforeParent);
-
+        this.targets.forEach((target, index) => {
+            app.hierarchy.sortHierarchy(this.originalParent[index], target);
+        })
     }
 }

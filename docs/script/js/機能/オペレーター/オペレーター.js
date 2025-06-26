@@ -1,8 +1,5 @@
 import { createID, managerForDOMs } from "../../UI/制御.js";
 import { isFunction } from "../../utility.js";
-import { AnimationManager } from "./アニメーション/アニメーション.js";
-import { CreateObjectCommand, ObjectManager } from "./オブジェクト/オブジェクト.js";
-import { BoneManager } from "./メッシュ/メッシュ.js";
 
 // undoとredoを実行
 class CommandStack {
@@ -11,35 +8,30 @@ class CommandStack {
         this.redoStack = [];
     }
 
-    execute(command) {
-        const result = command.execute();
-        this.history.push(command);
-        this.redoStack = []; // 新しい操作をしたらRedoはリセット
-        managerForDOMs.update(this.history);
-        console.log("実行")
-        return result;
-    }
-
     undo() {
         if (this.history.length > 0) {
-            const command = this.history.pop();
-            console.log("undo",command);
-            command.undo();
-            this.redoStack.push(command);
+            const commands = this.history.pop();
+            for (const command of commands) {
+                console.log("undo",command);
+                command.undo();
+            }
+            this.redoStack.push(commands);
             managerForDOMs.update(this.history);
         }
     }
 
     redo() {
         if (this.redoStack.length > 0) {
-            const command = this.redoStack.pop();
-            console.log("redo",command);
-            if (isFunction(command.redo)) {
-                command.redo();
-            } else {
-                command.execute();
+            const commands = this.redoStack.pop();
+            for (const command of commands) {
+                console.log("redo",command);
+                if (isFunction(command.redo)) {
+                    command.redo();
+                } else {
+                    command.execute();
+                }
             }
-            this.history.push(command);
+            this.history.push(commands);
             managerForDOMs.update(this.history);
         }
     }
@@ -49,9 +41,6 @@ class CommandStack {
 export class Operator {
     constructor(app) {
         this.app = app;
-        this.animation = new AnimationManager();
-        this.object = new ObjectManager();
-        this.bone = new BoneManager();
         this.stack = new CommandStack();
         this.commands = [];
         this.errorLog = [];
@@ -67,16 +56,21 @@ export class Operator {
         managerForDOMs.update(this.errorLog);
     }
 
-    update() {
+    execute() {
+        const commandsToStack = [];
         while (this.commands.length != 0) {
             const command = this.commands.pop();
-            const result = this.stack.execute(command);
+            const result = command.execute();
             if (result) {
                 if (result.error) {
                     this.errorLog.push(result.error);
                 }
             }
+            commandsToStack.push(command);
         }
+        this.stack.history.push(commandsToStack);
+        this.stack.redoStack.length = 0; // 新しい操作をしたらRedoはリセット
+        managerForDOMs.update(this.stack.history);
     }
 }
 

@@ -10,7 +10,7 @@ export class DeleteTool {
 
     init() {
         app.operator.appendCommand(this.command);
-        app.operator.update();
+        app.operator.execute();
         return {complete: true};
     }
 }

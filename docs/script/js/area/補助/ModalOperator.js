@@ -18,6 +18,10 @@ export class ModalOperator {
 
     reset() {
         this.nowModal = null;
+        if (this.dom) {
+            console.log("削除")
+            this.creatorForUI.remove();
+        }
     }
 
     async setModal(model) {
@@ -31,9 +35,7 @@ export class ModalOperator {
         }
         if (this.dom) {
             this.creatorForUI.remove();
-            const template = {type: "div", style: "backgroundColor: rgba(0,0,0,0.5)"};
             if (this.nowModal.modal) {
-                // struct1.struct.DOM
                 this.creatorForUI.shelfeCreate(this.dom, this.nowModal.modal);
             }
         }
@@ -44,7 +46,7 @@ export class ModalOperator {
             if (inputManager.consumeKeys([this.nowModal.activateKey])) {
                 // this.nowModal.command.execute();
                 app.operator.appendCommand(this.nowModal.command);
-                app.operator.update();
+                app.operator.execute();
                 this.nowModal = null;
             } else {
                 if (isFunction(this.nowModal.update)) {

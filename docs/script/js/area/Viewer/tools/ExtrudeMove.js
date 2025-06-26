@@ -29,7 +29,7 @@ export class ExtrudeMove {
 
     mousedown(/** @type {InputManager} */inputManager) {
         app.operator.appendCommand(this.command);
-        app.operator.update();
+        app.operator.execute();
         return {complete: true};
     }
 }

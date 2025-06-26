@@ -371,6 +371,7 @@ const tagCreater = {
 export class CreatorForUI {
     constructor() {
         this.groupID = createID();
+        this.dom = null;
         this.lists = new Map();
 
         this.root = {};
@@ -405,6 +406,8 @@ export class CreatorForUI {
         } else {
             activeSource = {object: result, parameter: "active"};
         }
+        // 最後の更新時に更新されたオブジェクトたち
+        let lastUpdateObjects = [];
         let rangeStartIndex = 0;
         let rangeEndIndex = 0;
         const scrollable = createTag(scrollableContainer, "div", {class: "scrollable"});
@@ -469,8 +472,16 @@ export class CreatorForUI {
         const hierarchyUpdate = (o, gID, t) => {
             array.length = 0;
             const allObject = getAllObject();
+            // 削除があった場合新たいうするDOMを削除
+            for (const object of lastUpdateObjects) {
+                if (!allObject.includes(object)) {
+                    managerForDOMs.deleteDOM(object, this.groupID, hierarchyID);
+                }
+            }
+            // 追加があった場合新規作成
             for (const object of allObject) {
-                if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, hierarchyID).length) { // タグが存在しない場合新規作成
+                // if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, hierarchyID).length) {
+                if (!lastUpdateObjects.includes(object)) {
                     const container = createTag(null, "div", {style: "paddingLeft: 2px;"});
                     container.addEventListener("click", (event) => {
                         if (app.input.keysDown["Shift"]) {
@@ -514,6 +525,7 @@ export class CreatorForUI {
                     managerForDOMs.set({o: object, g: this.groupID, i: hierarchyID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
                 }
             }
+            lastUpdateObjects = allObject;
             const looper = (children,targetDOM = scrollable) => {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {
@@ -777,259 +789,9 @@ export class CreatorForUI {
         }
         return myChildrenTag;
     }
-    // createFromChildren(/** @type {HTMLElement} */ struct, searchTarget, childrenTag = []) {
-    //     let t = document.createDocumentFragment();
-    //     const myChildrenTag = [...childrenTag];
-    //     for (const child of struct) {
-    //         /** @type {HTMLElement} */
-    //         let element;
-    //         // 要素の作成
-    //         if (child.type == "div") {
-    //             element = createTag(t, "div", {class: child?.class});
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "input") { // 入力
-    //             if (!child.options) return ;
-    //             if (child.options.type == "text") {
-    //                 element = createTag(t, "input", child.options);
-    //                 this.createWith(element, child.withObject, searchTarget);
-    //             } else if (child.options.type == "checkbox") {
-    //                 element = createCheckbox(t, child.options.look);
-    //                 this.createWith(element, child.withObject, searchTarget);
-    //             } else { // 数字型
-    //                 if (child.custom?.visual) {
-    //                     element = createTag(t, "input", child.options);
-    //                     this.createWith(element, child.withObject, searchTarget);
-    //                 } else {
-    //                     element = createTag(t, "div");
-    //                     element.style.width = "100%";
-    //                     element.style.display = "grid";
-    //                     element.style.gridTemplateColumns = "1fr 50px";
-    //                     /** @type {HTMLElement} */
-    //                     const range = createRange(element, child.options);
-    //                     range.style.gridColumn = "1/2";
-    //                     range.style.borderTopRightRadius = "0px";
-    //                     range.style.borderBottomRightRadius = "0px";
-    //                     this.createWith(range, child.withObject, searchTarget);
-    //                     /** @type {HTMLElement} */
-    //                     const number = createTag(element, "input", child.options);
-    //                     number.style.gridColumn = "2/3";
-    //                     number.style.borderTopLeftRadius = "0px";
-    //                     number.style.borderBottomLeftRadius = "0px";
-    //                     this.createWith(number, child.withObject, searchTarget);
-    //                 }
-    //             }
-    //             if (child.custom && "collision" in child.custom && !child.custom.collision) {
-    //                 element.style.pointerEvents = "none";
-    //             }
-    //         } else if (child.type == "button") {
-    //             createButton(t, "グループ", child.label);
-    //         } else if (child.type == "buttons") {
-    //             createGroupButton(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
-    //         } else if (child.type == "radios") {
-    //             createRadios(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
-    //         } else if (child.type == "checks") {
-    //             const a = (child.withObject.customIndex).map((parameterName, index) => {
-    //                 return {icon: "グループ", label: parameterName};
-    //             });
-    //             const result = createChecks(t, a);
-    //             element = result.html;
-    //             this.createListWith(result.checkList, child.withObject, searchTarget);
-    //         } else if (child.type == "select") {
-    //             element = new SelectTag(t, Array.isArray(child.sourceObject) ? child.sourceObject : this.findSource(child.sourceObject.object, searchTarget));
-    //             this.createWith(element.input, child.writeObject, searchTarget);
-    //         } else if (child.type == "dbInput") { // ダブルクッリク入力
-    //             element = createDoubleClickInput();
-    //             t.append(element);
-    //             this.createWith(element, child.withObject, searchTarget);
-    //         } else if (child.type == "list") {
-    //             if (child.options.type == "min") {
-    //                 element = createMinList(t,child.name);
-    //                 const listOutputData = this.createListChildren(element.list, child.liStruct, child.withObject, searchTarget, child.options);
-    //                 if (child.appendEvent) {
-    //                     if (isFunction(child.appendEvent)) {
-    //                         element.appendButton.addEventListener("click", child.appendEvent);
-    //                     }
-    //                 } else {
-    //                     element.appendButton.classList.add("color2");
-    //                     element.appendButton.style.pointerEvents = "none";
-    //                 }
-    //                 if (child.deleteEvent) {
-    //                     if (isFunction(child.deleteEvent)) {
-    //                         element.deleteButton.addEventListener("click", () => {
-    //                             console.log("削除", listOutputData)
-    //                             child.deleteEvent(listOutputData.selects);
-    //                         });
-    //                     }
-    //                 } else {
-    //                     element.deleteButton.classList.add("color2");
-    //                     element.deleteButton.style.pointerEvents = "none";
-    //                 }
-    //             } else if (child.options.type == "noScroll") {
-    //                 element = createTag(t, "ul");
-    //                 this.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options);
-    //             } else if (child.options.type == "row") {
-    //                 element = createTag(t, "ul", {class: "flexRow"});
-    //                 this.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options);
-    //             } else {
-    //                 element = createTag(t, "ul", {class: "scrollable"});
-    //                 this.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options);
-    //             }
-    //         } else if (child.type == "container") {
-    //             element = createTag(t, "ul");
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "section") {
-    //             const div = document.createElement("div");
-    //             div.classList.add("section-main");
-    //             element = createSection(t,child.name,div);
-    //             if (child.children) {
-    //                 this.createFromChildren(div, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "option") {
-    //             element = createTag(t, "div", {class: "ui_options"});
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "icon-img") {
-    //             element = createIcon(t, this.findSource(child.withObject.object, searchTarget)[child.withObject.parameter]);
-    //         } else if (child.type == "looper") {
-    //         } else if (child.type == "flexBox") {
-    //             element = createTag(t, "div");
-    //             element.style.display = "flex";
-    //             element.style.gap = child.interval;
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "gridBox") {
-    //             element = createTag(t, "div");
-    //             element.style.display = "grid";
-    //             if (child.axis == "r") {
-    //                 element.style.gridTemplateRows = child.allocation;
-    //             } else {
-    //                 element.style.gridTemplateColumns = child.allocation;
-    //             }
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "padding") {
-    //             element = createTag(t, "div");
-    //             element.style.width = child.size;
-    //         } else if (child.type == "separator") {
-    //             element = createTag(t, "span");
-    //             element.classList.add("separator");
-    //             element.style.width = child.size;
-    //         } else if (child.type == "hierarchy") {
-    //             this.createHierarchy(t, child.withObject, child.loopTarget, child.structures, searchTarget, child.options);
-    //         } else if (child.type == "scrollable") {
-    //             element = createTag(t, "div", {class: "scrollable"});
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "box") {
-    //             element = createTag(t, "div");
-    //             if (child.children) {
-    //                 this.createFromChildren(element, child.children, searchTarget);
-    //             }
-    //         } else if (child.type == "canvas") {
-    //             element = createTag(t, "canvas");
-    //         } else if (child.type == "path") {
-    //             const elementInsertIndex = t.children.length;
-    //             let children = [];
-    //             const childrenReset = () => {
-    //                 for (const childTag of children) {
-    //                     childTag.remove();
-    //                 }
-    //                 const o = this.findSource(child.sourceObject.object, searchTarget);
-    //                 if (o) {
-    //                     children.length = 0;
-    //                     const keep = createTag(null, "div");
-    //                     if ("parameter" in child.sourceObject) {
-    //                         const o2 = isPlainObject(child.sourceObject.parameter) ? this.findSource(child.sourceObject.parameter.object, searchTarget) : false;
-    //                         if (o2) {
-    //                             const p = o2[child.sourceObject.parameter.parameter];
-    //                             if (child.children) {
-    //                                 children = this.createFromChildren(keep, child.children, o[p]);
-    //                             }
-    //                         } else {
-    //                             const p = "";
-    //                             if (child.children) {
-    //                                 children = this.createFromChildren(keep, child.children, o[p]);
-    //                             }
-    //                         }
-    //                     } else {
-    //                         if (child.children) {
-    //                             children = this.createFromChildren(keep, child.children, o);
-    //                         }
-    //                     }
-    //                     for (const childTag of Array.from(keep.children).reverse()) {
-    //                         if (t) {
-    //                             t.insertBefore(childTag,t.children[elementInsertIndex]);
-    //                         } else {
-    //                             appendTarget.insertBefore(childTag,appendTarget.children[elementInsertIndex]);
-    //                         }
-    //                     }
-    //                     keep.remove();
-    //                 }
-    //             }
-    //             let updateEventTarget = null;
-    //             if (isPlainObject(child.updateEventTarget)) {
-    //                 updateEventTarget = this.findSource(child.updateEventTarget.object, searchTarget);
-    //             } else { // 文字列に対応
-    //                 updateEventTarget = child.updateEventTarget;
-    //             }
-    //             managerForDOMs.set(updateEventTarget,this.groupID,null,childrenReset);
-    //             childrenReset();
-    //         } else if (child.type == "if") {
-    //             console.log(child)
-    //             let bool = false;
-    //             if (child.formula.conditions == "==") {
-    //                 bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.value;
-    //             } else if (child.formula.conditions == ">") {
-    //                 bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) > child.formula.value;
-    //             } else if (child.formula.conditions == "<") {
-    //                 bool = (this.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) < child.formula.value;
-    //             }
-    //             if (bool) {
-    //                 if (child.true) {
-    //                     myChildrenTag.push(...this.createFromChildren(t, child.true, searchTarget));
-    //                 }
-    //             } else {
-    //                 if (child.false) {
-    //                     myChildrenTag.push(...this.createFromChildren(t, child.false, searchTarget));
-    //                 }
-    //             }
-    //         }
-    //         if (element) {
-    //             if (child.style) {
-    //                 setStyle(element, child.style);
-    //             }
-    //             if (child.event) {
-    //                 for (const eventName in child.event) {
-    //                     element.addEventListener(eventName, () => {
-    //                         child.event[eventName](searchTarget, element);
-    //                     })
-    //                 }
-    //             }
-    //             if (child.id) {
-    //                 this.domKeeper.set(child.id, element);
-    //             }
-    //             if (child.label) {
-    //                 if (element instanceof HTMLElement) {
-    //                     element = setLabel(t, child.label, element);
-    //                 }
-    //             }
-    //             myChildrenTag.push(element);
-    //         }
-    //     }
-    //     appendTarget.append(t);
-    //     t = null;
-    //     return myChildrenTag;
-    // }
 
     create(/** @type {HTMLElement} */target, object, options = {heightCN: false, padding: true}) {
+        this.dom = target;
         target.replaceChildren();
         const struct = object.struct;
         const inputObject = object.inputObject;
@@ -1051,6 +813,7 @@ export class CreatorForUI {
     }
 
     shelfeCreate(/** @type {HTMLElement} */target, object) {
+        this.dom = target;
         target.replaceChildren();
         const struct = object.struct;
         const inputObject = object.inputObject;
@@ -1064,6 +827,9 @@ export class CreatorForUI {
     }
 
     remove() {
+        if (this.dom instanceof HTMLElement) {
+            this.dom.replaceChildren();
+        }
         this.root = {};
         this.lists.clear();
         this.domKeeper.clear();
