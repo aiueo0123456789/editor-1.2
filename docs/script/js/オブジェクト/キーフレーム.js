@@ -113,6 +113,7 @@ export class KeyframeBlock {
         this.type = "キーフレームブロック";
         this.targetObject = object;
         this.targetValue = targetValue;
+        this.visible = true;
         this.keys = [];
         app.scene.objects.keyframeBlocks.push(this);
     }

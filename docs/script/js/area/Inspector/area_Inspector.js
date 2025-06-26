@@ -54,12 +54,10 @@ export class Area_Inspector {
                                 deleteAnimationToObject(app.scene.state.activeObject, animation);
                             }
                         }, withObject: {object: "animationBlock/animationBlock"}, options: {type: "min", selectSource: {object: "areaConfig/selectAnimations"}, activeSource: {object: "areaConfig", parameter: "activeAnimation"}}, liStruct:[
-                            // {type: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
                             {type: "gridBox", axis: "c", allocation: "50% 1fr 10%", children: [
-                                // {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
                                 {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                 {type: "padding", size: "10px"},
-                                {type: "input", withObject: {object: "", parameter: "weight"}, options: {type: "number", min: 0, max: 1}, custom: {visual: "1"}},
+                                {type: "input", withObject: {object: "", parameter: "weight"}, options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
                             ]},
                         ]}
                     ]}

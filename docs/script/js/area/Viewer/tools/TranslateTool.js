@@ -41,23 +41,27 @@ export class TranslateModal {
     }
 
     async init(type) {
-        if (type == "メッシュ編集") {
-            this.command = new TranslateCommand(type, app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.graphicMeshData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices, app.scene.runtimeData.graphicMeshData.selectedVertices);
-        } else if (type == "頂点アニメーション編集") {
-            // this.command = new TranslateCommand(app.scene.state.selectedObject);
-        } else if (type == "ボーン編集") {
-            this.command = new TranslateCommand(type,app.scene.state.selectedObject, app.scene.runtimeData.armatureData.getSelectVerticesIndex());
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedVertices);
-        } else if (type == "ベジェ編集") {
-            this.command = new TranslateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);
-        } else if (type == "ボーンアニメーション編集") {
-            this.command = new TranslateCommand(type,app.scene.runtimeData.armatureData.getSelectBone());
-            this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedBones);
+        try {
+            if (type == "メッシュ編集") {
+                this.command = new TranslateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.graphicMeshData.selectedVertices));
+                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices, app.scene.runtimeData.graphicMeshData.selectedVertices);
+            } else if (type == "頂点アニメーション編集") {
+                // this.command = new TranslateCommand(app.scene.state.selectedObject);
+            } else if (type == "ボーン編集") {
+                this.command = new TranslateCommand(type,app.scene.state.selectedObject, app.scene.runtimeData.armatureData.getSelectVerticesIndex());
+                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedVertices);
+            } else if (type == "ベジェ編集") {
+                this.command = new TranslateCommand(type,app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices));
+                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices, app.scene.runtimeData.bezierModifierData.selectedVertices);
+            } else if (type == "ボーンアニメーション編集") {
+                this.command = new TranslateCommand(type,app.scene.runtimeData.armatureData.getSelectBone());
+                this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedBones);
+            }
+            this.command.setCenterPoint(this.center);
+            managerForDOMs.update(this.values);
+        } catch (error) {
+            return {complete: true};
         }
-        this.command.setCenterPoint(this.center);
-        managerForDOMs.update(this.values);
     }
 
     mousemove(/** @type {InputManager} */inputManager) {

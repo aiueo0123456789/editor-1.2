@@ -105,7 +105,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     let fixVertexIndex = allocationArray[objectIndex].vertexBufferOffset + vertexIndex;
-    if (allocationArray[objectIndex].parentType == 2) { // 親がベジェモディファイア
+    if (allocationArray[objectIndex].parentType == 2u) { // 親がベジェモディファイア
         let weightBlock = weightBlocks[fixVertexIndex];
         let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocationArray[objectIndex].parentIndex].vertexBufferOffset; // ベジェのindex
         let t = weightBlock.weights[0]; // ベジェのt
@@ -126,20 +126,22 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
         let rotatePosition = rotate2D(renderingVertices[fixVertexIndex] + (position2 - position1) - position2, calculateRotation(normal1, normal2));
         renderingVertices[fixVertexIndex] = rotatePosition + position2;
-    } else if (allocationArray[objectIndex].parentType == 3) { // 親がアーマチュア
+    } else if (allocationArray[objectIndex].parentType == 3u) { // 親がアーマチュア
         let weightBlock = weightBlocks[fixVertexIndex];
         let position = vec3<f32>(renderingVertices[fixVertexIndex],1.0);
-        let indexs = weightBlock.indexs;
+        // let indexs = vec4<u32>(0u,0u,0u,0u) + boneAllocationArray[allocationArray[objectIndex].parentIndex].vertexBufferOffset;
+        // let weights = vec4<f32>(1.0,0.0,0.0,0.0);
+        let indexs = weightBlock.indexs + boneAllocationArray[allocationArray[objectIndex].parentIndex].vertexBufferOffset;
         let weights = weightBlock.weights;
-        var skinnedPosition = vec2<f32>(0.0, 0.0);
+        var skinnedPosition = vec3<f32>(0.0,0.0,1.0);
         // 各ボーンのワールド行列を用いてスキニング
         for (var i = 0u; i < 4u; i = i + 1u) {
             let weight = weights[i];
             if (0.0 < weight) {
-                let boneIndex = indexs[i] + boneAllocationArray[allocationArray[objectIndex].parentIndex].vertexBufferOffset;
-                skinnedPosition += weight * (boneMatrix[boneIndex] * inverseMat3x3(baseBoneMatrix[boneIndex]) * position).xy;
+                let boneIndex = indexs[i];
+                skinnedPosition += weight * boneMatrix[boneIndex] * inverseMat3x3(baseBoneMatrix[boneIndex]) * position;
             }
         }
-        renderingVertices[fixVertexIndex] = skinnedPosition;
+        renderingVertices[fixVertexIndex] = skinnedPosition.xy;
     }
 }

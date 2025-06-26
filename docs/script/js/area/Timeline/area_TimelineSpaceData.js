@@ -9,7 +9,6 @@ export class TimelineSpaceData {
         this.activeKey = null;
         this.sleectBlock = [];
         this.smooth = false;
-        this.visibleObject = [];
         this.selectObject = [];
         this.activeObject = null;
     }
@@ -29,23 +28,14 @@ export class TimelineSpaceData {
         return vec2.averageR(this.selectVertices);
     }
 
-    getVisibleKeyFrame() {
-        this.visibleObject = app.scene.objects.allObject;
-        const result = [];
-        for (const object of this.visibleObject) {
-            if (object.keyframe) {
-                result.push(...object.keyframe.keys);
-            }
-        }
-        return result;
-    }
-
     getAllKeyframe() {
         const result = [];
         for (const bone of app.scene.state.activeObject.getSelectBones()) {
             for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
-                for (const keyData of keyframeBlock.keys) {
-                    result.push(keyData);
+                if (keyframeBlock.visible) {
+                    for (const keyData of keyframeBlock.keys) {
+                        result.push(keyData);
+                    }
                 }
             }
         }

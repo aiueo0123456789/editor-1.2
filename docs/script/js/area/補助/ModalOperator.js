@@ -20,9 +20,9 @@ export class ModalOperator {
         this.nowModal = null;
     }
 
-    setModal(model) {
+    async setModal(model) {
         this.nowModal = new model(this);
-        const consumed = this.nowModal?.init(app.scene.state.currentMode);
+        const consumed = await this.nowModal?.init(app.scene.state.currentMode);
         if (consumed) {
             if (consumed.complete) {
                 this.reset();

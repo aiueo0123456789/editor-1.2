@@ -124,6 +124,14 @@ export class Hierarchy {
         this.root.length = 0;
     }
 
+    updateParent(object) {
+        if (object.type == "グラフィックメッシュ") {
+            this.app.scene.runtimeData.graphicMeshData.updateAllocationData(object);
+        } else if (object.type == "ベジェモディファイア") {
+            this.app.scene.runtimeData.bezierModifierData.updateAllocationData(object);
+        }
+    }
+
     getSaveData() {
         const allObject = this.getAllObject();
         const saveData = [];
@@ -188,6 +196,7 @@ export class Hierarchy {
             addObject.parent = parentObject;
             parentObject.children.addChild(addObject);
         }
+        this.updateParent(addObject);
         managerForDOMs.update(this.root)
     }
 
@@ -208,6 +217,7 @@ export class Hierarchy {
                 this.app.options.assignWeights(object);
             }
         }
+        this.updateParent(object);
         managerForDOMs.update(this.root)
     }
 

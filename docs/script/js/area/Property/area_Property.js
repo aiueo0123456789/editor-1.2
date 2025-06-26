@@ -13,7 +13,7 @@ export class Area_Property {
                 {type: "section", name: "アニメーション", children: [
                     {type: "input", label: "開始", withObject: {object: "scene", parameter: "frame_start"}, options: {type: "number", min: 0, max: 1000, step: 1}},
                     {type: "input", label: "終了", withObject: {object: "scene", parameter: "frame_end"}, options: {type: "number", min: 0, max: 1000, step: 1}},
-                    {type: "input", label: "再生速度", withObject: {object: "app/animationPlayer", parameter: "speed"}, options: {type: "number", min: 0, max: 1000, step: 1}},
+                    {type: "input", label: "再生速度", withObject: {object: "app/animationPlayer", parameter: "speed"}, options: {type: "number", min: 0, max: 1000, step: 0.1}},
                 ]},
                 {type: "section", name: "マスク", children: [
                     {type: "list", appendEvent: () => {

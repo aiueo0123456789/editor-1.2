@@ -21,6 +21,7 @@ import { GraphicMesh } from "./オブジェクト/グラフィックメッシュ
 import { GPU } from "./webGPU.js";
 
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/ボーン/重み設定.wgsl"));
+const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/bezier/重み設定.wgsl"));
 
 class AppOptions {
     constructor(/** @type {Application} */app) {
@@ -67,22 +68,53 @@ class AppOptions {
             "bezierModifier": {
                 "normal": {
                     type: "ベジェモディファイア",
-                    baseVertices: [-100,0, -150,0, -50,50, 100,0, 50,-50, 150,0],
+                    points: [
+                        {point: {co: [-100,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, leftControlPoint: {co: [-150,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, rightControlPoint: {co: [-50,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}},
+                        {point: {co: [100,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, leftControlPoint: {co: [50,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, rightControlPoint: {co: [150,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}},
+                    ],
                     animationKeyDatas: [],
-                    modifierEffectData: {data: [0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0], type: "u32*4,f32*4"}
                 }
             },
             "graphicMesh": {
                 "normal": {
-                    zIndex: 0, baseVerticesPosition: [0,0, 500,0, 500,500, 0,500], baseVerticesUV: [0,1, 1,1, 1,0, 0,0], meshIndex: [0,1,2,0, 0,2,3,0], animationKeyDatas: [], modifierEffectData: {data: [
-                        0,0,0,0, 0,0,0,0,
-                        0,0,0,0, 0,0,0,0,
-                        0,0,0,0, 0,0,0,0,
-                        0,0,0,0, 0,0,0,0,
-                    ], type: "u32*4,f32*4"},
+                    zIndex: 0,
+                    imageBBox: {
+                        min: [0, 0],
+                        max: [100, 100]
+                    },
+                    vertices: [
+                        {base: [0,0], uv: [0,1], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
+                        {base: [100,0], uv: [1,1], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
+                        {base: [100,100], uv: [1,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
+                        {base: [0,100], uv: [0,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
+                    ],
+                    meshes: [
+                        {indexs: [0,1,2]},
+                        {indexs: [2,3,0]},
+                    ],
                     renderingTargetTexture: null,
                     maskTargetTexture: "base",
-                    editor: {baseSilhouetteEdges: [[0,1],[1,2],[2,3],[3,0]], baseEdges: [], imageBBox: {min: [0,0], max: [500,500], width: 500, height: 500, center: [250,250]}}
+                    editor: {
+                        baseSilhouetteEdges: [[0,1],[1,2],[2,3],[3,0]],
+                        baseEdges: [[0,1],[1,2],[2,3],[3,0]],
+                        imageBBox: {
+                            min: [
+                                0,
+                                0
+                            ],
+                            max: [
+                                100,
+                                100
+                            ],
+                            width: 100,
+                            height: 100,
+                            center: [
+                                (100 + 0) / 2,
+                                (100 + 0) / 2,
+                            ]
+                        }
+                    },
+                    animationKeyDatas: [],
                 }
             }
         }
@@ -128,9 +160,14 @@ class AppOptions {
             objectWeightsBuffer = this.app.scene.runtimeData.bezierModifierData.weightBlocks;
             objectVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices;
             objectAllocationBuffer = object.objectDataBuffer;
+            runtimeObject = this.app.scene.runtimeData.bezierModifierData;
         }
         const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu"), [objectWeightsBuffer, objectVerticesBuffer, objectAllocationBuffer, parentVerticesBuffer, parentAllocationBuffer]);
-        GPU.runComputeShader(calculateParentWeightForBone, [group], Math.ceil(object.verticesNum / 64));
+        if (object.parent.type == "アーマチュア") {
+            GPU.runComputeShader(calculateParentWeightForBone, [group], Math.ceil(object.verticesNum / 64));
+        } else {
+            GPU.runComputeShader(calculateParentWeightForBezier, [group], Math.ceil(object.verticesNum / 64));
+        }
         runtimeObject.updateCPUDataFromGPUBuffer(object, {vertex: {weight: true}});
     }
 }
@@ -381,8 +418,14 @@ class AnimationPlayer {
             managerForDOMs.update("タイムライン-canvas");
         }
         if (this.beforeFrame != this.app.scene.frame_current) {
+            if (this.app.scene.frame_end < this.app.scene.frame_current) {
+                this.app.scene.frame_current = this.app.scene.frame_start;
+            }
+            if (this.app.scene.frame_current < this.app.scene.frame_start) {
+                this.app.scene.frame_current = this.app.scene.frame_end;
+            }
             this.beforeFrame = this.app.scene.frame_current;
-            changeParameter(this.app.scene, "frame_current", this.app.scene.frame_start + (this.app.scene.frame_current - this.app.scene.frame_start) % (this.app.scene.frame_end - this.app.scene.frame_start)); // フレームスタートを下回ったらエンドに戻す
+            managerForDOMs.update(this.app.scene, "frame_current");
         }
     }
 }

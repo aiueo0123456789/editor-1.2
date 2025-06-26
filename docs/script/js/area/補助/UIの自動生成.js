@@ -85,12 +85,12 @@ function createCheckbox(t, type = "custom-checkbox", text = "") {
 
 const tagCreater = {
     // 要素の作成
-    "title": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "title": (this_,t,searchTarget,child,flag) => {
         let element;
         element = createTag(t, "div", {textContent: child.text});
         return element;
     },
-    "div": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "div": (this_,t,searchTarget,child,flag) => {
         let element;
         element = createTag(t, "div");
         if (child.children) {
@@ -98,7 +98,7 @@ const tagCreater = {
         }
         return element;
     },
-    "input": (this_,appendTarget,t,searchTarget,child,flag) => { // 入力
+    "input": (this_,t,searchTarget,child,flag) => { // 入力
         let element;
         if (!child.options) return ;
         if (child.options.type == "text") {
@@ -139,16 +139,16 @@ const tagCreater = {
         }
         return element;
     },
-    "button": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "button": (this_,t,searchTarget,child,flag) => {
         createButton(t, "グループ", child.label);
     },
-    "buttons": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "buttons": (this_,t,searchTarget,child,flag) => {
         createGroupButton(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
     },
-    "radios": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "radios": (this_,t,searchTarget,child,flag) => {
         createRadios(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
     },
-    "checks": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "checks": (this_,t,searchTarget,child,flag) => {
         const a = (child.withObject.customIndex).map((parameterName, index) => {
             return {icon: "グループ", label: parameterName};
         });
@@ -157,20 +157,20 @@ const tagCreater = {
         this_.createListWith(result.checkList, child.withObject, searchTarget, flag);
         return element;
     },
-    "select": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "select": (this_,t,searchTarget,child,flag) => {
         let element = new SelectTag(t, Array.isArray(child.sourceObject) ? child.sourceObject : this_.findSource(child.sourceObject.object, searchTarget));
 
         managerForDOMs.set({o: "", g: this_.groupID, f: flag}, element.element, null);
         this_.createWith(element.input, child.writeObject, searchTarget, flag);
         return element;
     },
-    "dbInput": (this_,appendTarget,t,searchTarget,child,flag) => { // ダブルクッリク入力
+    "dbInput": (this_,t,searchTarget,child,flag) => { // ダブルクッリク入力
         let element = createDoubleClickInput();
         t.append(element);
         this_.createWith(element, child.withObject, searchTarget, flag);
         return element;
     },
-    "list": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "list": (this_,t,searchTarget,child,flag) => {
         let element;
         if (child.options.type == "min") {
             element = createMinList(t,child.name);
@@ -207,14 +207,14 @@ const tagCreater = {
         // managerForDOMs.set({o: "", g: this_.groupID, f: flag}, element, null);
         return element;
     },
-    "container": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "container": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "ul");
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "section": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "section": (this_,t,searchTarget,child,flag) => {
         const div = document.createElement("div");
         div.classList.add("section-main");
         let element = createSection(t,child.name,div);
@@ -224,18 +224,18 @@ const tagCreater = {
         // managerForDOMs.set({o: "", g: this_.groupID, f: flag}, div, null);
         return element;
     },
-    "option": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "option": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "ui_options"});
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "icon-img": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "icon-img": (this_,t,searchTarget,child,flag) => {
         let element = createIcon(t, this_.findSource(child.withObject.object, searchTarget)[child.withObject.parameter]);
         return element;
     },
-    "flexBox": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "flexBox": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         element.style.display = "flex";
         element.style.gap = child.interval;
@@ -244,7 +244,7 @@ const tagCreater = {
         }
         return element;
     },
-    "gridBox": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "gridBox": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         element.style.display = "grid";
         if (child.axis == "r") {
@@ -257,39 +257,39 @@ const tagCreater = {
         }
         return element;
     },
-    "padding": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "padding": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         element.style.width = child.size;
         return element;
     },
-    "separator": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "separator": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "span");
         element.classList.add("separator");
         element.style.width = child.size;
         return element;
     },
-    "hierarchy": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "hierarchy": (this_,t,searchTarget,child,flag) => {
         this_.createHierarchy(t, child.withObject, child.loopTarget, child.structures, searchTarget, child.options, flag);
     },
-    "scrollable": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "scrollable": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "scrollable"});
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "box": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "box": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "canvas": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "canvas": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "canvas");
         return element;
     },
-    "path": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "path": (this_,t,searchTarget,child,flag) => {
         const elementInsertIndex = t.children.length;
         let children = [];
         let init = true;
@@ -301,37 +301,41 @@ const tagCreater = {
                 childTag.remove();
             }
             children.length = 0;
-            const o = this_.findSource(child.sourceObject.object, searchTarget);
-            if (o) {
-                const keep = createTag(null, "div");
-                if ("parameter" in child.sourceObject) {
-                    const o2 = isPlainObject(child.sourceObject.parameter) ? this_.findSource(child.sourceObject.parameter.object, searchTarget) : false;
-                    if (o2) {
-                        const p = o2[child.sourceObject.parameter.parameter];
-                        if (child.children) {
-                            children = this_.createFromChildren(keep, child.children, o[p], myFlag, true);
-                        }
-                    } else {
-                        const p = "";
-                        if (child.children) {
-                            children = this_.createFromChildren(keep, child.children, o[p], myFlag, true);
-                        }
-                    }
-                } else {
+            const keep = createTag(null, "div");
+            if (child.sourceObject.function) {
+                const o = this_.findSource(child.sourceObject.function.object, searchTarget);
+                if (o) {
                     if (child.children) {
-                        children = this_.createFromChildren(keep, child.children, o, myFlag, true);
+                        children = this_.createFromChildren(keep, child.children, o[child.sourceObject.function.function](), myFlag, true);
                     }
                 }
-                for (const childTag of Array.from(keep.children).reverse()) {
-                    if (init) {
-                        t.insertBefore(childTag,t.children[elementInsertIndex]);
-                        init = false;
+            } else {
+                const o = this_.findSource(child.sourceObject.object, searchTarget);
+                if (o) {
+                    if ("parameter" in child.sourceObject) {
+                        const o2 = isPlainObject(child.sourceObject.parameter) ? this_.findSource(child.sourceObject.parameter.object, searchTarget) : false;
+                        if (o2) {
+                            const p = o2[child.sourceObject.parameter.parameter];
+                            if (child.children) {
+                                children = this_.createFromChildren(keep, child.children, o[p], myFlag, true);
+                            }
+                        } else {
+                            const p = "";
+                            if (child.children) {
+                                children = this_.createFromChildren(keep, child.children, o[p], myFlag, true);
+                            }
+                        }
                     } else {
-                        appendTarget.insertBefore(childTag,appendTarget.children[elementInsertIndex]);
+                        if (child.children) {
+                            children = this_.createFromChildren(keep, child.children, o, myFlag, true);
+                        }
                     }
                 }
-                keep.remove();
             }
+            for (const childTag of Array.from(keep.children).reverse()) {
+                t.insertBefore(childTag,t.children[elementInsertIndex]);
+            }
+            keep.remove();
         }
         let updateEventTarget = null;
         if (isPlainObject(child.updateEventTarget)) {
@@ -342,7 +346,7 @@ const tagCreater = {
         managerForDOMs.set({o: updateEventTarget, g: this_.groupID, f: flag},null,childrenReset);
         childrenReset();
     },
-    "if": (this_,appendTarget,t,searchTarget,child,flag) => {
+    "if": (this_,t,searchTarget,child,flag) => {
         let bool = false;
         if (child.formula.conditions == "==") {
             bool = (this_.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.value;
@@ -497,9 +501,6 @@ export class CreatorForUI {
                     visibleCheck.checked = true;
                     /** @type {HTMLElement} */
                     const myContainer = createTag(upContainer, "div");
-                    myContainer.addEventListener("mousedown", () => {
-                        app.scene.state.setActiveObject(object);
-                    })
                     const childrenContainer = createTag(container, "div");
                     this.createFromChildren(myContainer, structures, object, flag);
                     childrenContainer.style.marginLeft = "10px";
@@ -735,15 +736,14 @@ export class CreatorForUI {
     }
 
     // 構造の配列をもとにDOMの構築
-    createFromChildren(/** @type {HTMLElement} */appendTarget, struct, searchTarget, flag = "defo", getChildren = false) {
-        let t = document.createDocumentFragment();
+    createFromChildren(/** @type {HTMLElement} */t, struct, searchTarget, flag = "defo", getChildren = false) {
         // const myChildrenTag = [...childrenTag];
         const myChildrenTag = [];
         for (const child of struct) {
             /** @type {HTMLElement} */
             let element;
             // 要素の作成
-            element = tagCreater[child.type](this, appendTarget, t, searchTarget, child, flag);
+            element = tagCreater[child.type](this, t, searchTarget, child, flag);
             if (element) {
                 if (child.style) {
                     setStyle(element, child.style);
@@ -775,11 +775,9 @@ export class CreatorForUI {
                 }
             }
         }
-        appendTarget.append(t);
-        t = null;
         return myChildrenTag;
     }
-    // createFromChildren(/** @type {HTMLElement} */appendTarget, struct, searchTarget, childrenTag = []) {
+    // createFromChildren(/** @type {HTMLElement} */ struct, searchTarget, childrenTag = []) {
     //     let t = document.createDocumentFragment();
     //     const myChildrenTag = [...childrenTag];
     //     for (const child of struct) {

@@ -20,7 +20,7 @@ export class AnimationBlock {
 
     updateAnimationsIndex() {
         for (let i = 0; i < this.animationBlock.length; i ++) {
-            this.animationBlock[i].animationOffset = i;
+            this.animationBlock[i].index = i;
         }
     }
 
@@ -73,7 +73,7 @@ class AnimationBase {
     constructor(name, belongObject) {
         this.id = createID();
         this.name = name;
-        this.animationOffset = belongObject.animationBlock.animationBlock.length;
+        this.index = belongObject.animationBlock.animationBlock.length;
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
 
         this.weight = 0;

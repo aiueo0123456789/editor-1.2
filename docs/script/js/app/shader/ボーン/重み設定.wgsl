@@ -84,7 +84,7 @@ fn calculateWeight(position: vec2<f32>) -> WeightBlock {
             }
         }
         if (weight < maxValue) {
-            output.indexs[maxIndex] = boneIndex;
+            output.indexs[maxIndex] = boneIndex - allocationBone.boneOffset;
             output.weights[maxIndex] = weight;
         }
     }

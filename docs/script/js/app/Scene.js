@@ -247,7 +247,8 @@ class BezierModifierData {
 
         this.myType = 2;
 
-        this.blockByteLength = 2 * 3 * 4; // データ一塊のバイト数: vec2<f32> * 3
+        this.blockByteLength = 2 * 4 * 3; // データ一塊のバイト数: vec2<f32> * 3
+        this.weightBlockByteLength = (4 + 4) * 4 * 3;
 
         this.order = [];
     }
@@ -273,11 +274,47 @@ class BezierModifierData {
         return await GPU.getBufferDataFromIndexs(this.baseVertices, {start: bezierModifier.vertexBufferOffset, end: bezierModifier.vertexBufferOffset + bezierModifier.verticesNum}, ["f32", "f32"]);
     }
 
-    setBase(/** @type {BezierModifier} */bezierModifier, bezierPointData, weightGroupData) {
-        bezierModifier.verticesNum = bezierPointData.length / 2;
-        bezierModifier.pointNum = bezierModifier.verticesNum / 3;
-        GPU.writeBuffer(this.baseVertices, new Float32Array(bezierPointData), bezierModifier.vertexBufferOffset * this.blockByteLength);
-        GPU.writeBuffer(this.weightBlocks, GPU.createBitData(weightGroupData, ["u32", "u32", "u32", "u32", "f32", "f32", "f32", "f32"]), bezierModifier.vertexBufferOffset * ((4 + 4) * 4));
+    async updateCPUDataFromGPUBuffer(/** @type {BezierModifier} */bezierModifier, updateContent = {base: true, weight: true}) {
+        this.write = true;
+        const baseArray = updateContent.base ? await GPU.getVerticesDataFromGPUBuffer(this.baseVertices, bezierModifier.vertexBufferOffset * 3, bezierModifier.verticesNum) : [];
+        const weightBlockArray = updateContent.weight ? await GPU.getStructDataFromGPUBuffer(this.weightBlocks, ["u32","u32","u32","u32","f32","f32","f32","f32"], bezierModifier.vertexBufferOffset * 3, bezierModifier.verticesNum) : [];
+        for (const point of bezierModifier.allPoint) {
+            for (let i = 0; i < 3; i ++) {
+                let vertex;
+                if (i == 0) {
+                    vertex = point.basePoint;
+                } else if (i == 1) {
+                    vertex = point.baseLeftControlPoint;
+                } else {
+                    vertex = point.baseRightControlPoint;
+                }
+                if (updateContent.base) {
+                    vertex.co = baseArray[point.index * 3 + i];
+                }
+                if (updateContent.weight) {
+                    vertex.parentWeight.indexs = weightBlockArray[point.index * 3 + i].slice(0,4);
+                    vertex.parentWeight.weights = weightBlockArray[point.index * 3 + i].slice(4,8);
+                }
+            }
+        }
+        this.write = false;
+    }
+
+    updateBaseData(/** @type {BezierModifier} */bezierModifier) {
+        bezierModifier.pointNum = bezierModifier.allPoint.length;
+        bezierModifier.verticesNum = bezierModifier.pointNum * 3;
+        const verticesBases = [];
+        const verticesParentWeight = [];
+        for (const point of bezierModifier.allPoint) {
+            verticesBases.push(...point.basePoint.co);
+            verticesBases.push(...point.baseLeftControlPoint.co);
+            verticesBases.push(...point.baseRightControlPoint.co);
+            verticesParentWeight.push(...point.basePoint.parentWeight.indexs.concat(point.basePoint.parentWeight.weights));
+            verticesParentWeight.push(...point.baseLeftControlPoint.parentWeight.indexs.concat(point.baseLeftControlPoint.parentWeight.weights));
+            verticesParentWeight.push(...point.baseRightControlPoint.parentWeight.indexs.concat(point.baseRightControlPoint.parentWeight.weights));
+        }
+        GPU.writeBuffer(this.baseVertices, new Float32Array(verticesBases), bezierModifier.vertexBufferOffset * this.blockByteLength);
+        GPU.writeBuffer(this.weightBlocks, GPU.createBitData(verticesParentWeight, ["u32", "u32", "u32", "u32", "f32", "f32", "f32", "f32"]), bezierModifier.vertexBufferOffset * this.weightBlockByteLength);
         this.updateAllocationData(bezierModifier);
     }
 
@@ -475,6 +512,7 @@ class ArmatureData {
         for (const bone of armature.allBone) {
             bone.selectedBone = result[bone.index];
         }
+        managerForDOMs.update("ボーン選択");
     }
 
     updatePropagateData() {
@@ -563,20 +601,14 @@ class ArmatureData {
     }
 
     getAllocationData(/** @type {Armature} */armature) {
-        return new Uint32Array([armature.vertexBufferOffset, armature.animationBufferOffset, armature.weightBufferOffset, armature.boneNum, 0, 0, 0, GPU.padding]);
-    }
-
-    setAnimationData(/** @type {Armature} */armature, animationData, animtaionIndex) {
-        console.log("|---ボーンアニメーション---|")
-        console.log(armature, animationData, animtaionIndex)
-        // GPU.writeBuffer(this.animations, new Float32Array(animationData), (armature.animationBufferOffset + animtaionIndex) * this.boneBlockByteLength);
+        return new Uint32Array([armature.vertexBufferOffset, 0, 0, armature.boneNum, 0, 0, 0, GPU.padding]);
     }
 
     prepare(/** @type {Armature} */armature) {
         if (!this.order.includes(armature)) {
             this.order.push(armature);
             armature.vertexBufferOffset = this.renderingBoneMatrix.size / this.matrixBlockByteLength;
-            armature.animationBufferOffset = this.runtimeAnimationData.size / this.boneBlockByteLength;
+            console.log(armature);
             armature.allocationIndex = this.order.length - 1;
             // 頂点分の確保
             this.baseVertices = GPU.appendEmptyToBuffer(this.baseVertices, armature.MAX_BONES * this.vertexBlockByteLength); // 元の頂点座標用のメモリを確保
@@ -685,7 +717,7 @@ class Objects {
                 managerForDOMs.update(this.animationCollectors);
             } else {
                 if (type == "グラフィックメッシュ") {
-                    object = new GraphicMesh("名称未設定", undefined, this.app.option.getPrimitiveData("graphicMesh", "normal"));
+                    object = new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", "normal"));
                     this.graphicMeshs.push(object);
                     this.isChangeObjectsZindex = true;
                 } else if (type == "ベジェモディファイア") {
@@ -737,7 +769,7 @@ export class Scene {
 
         // フレーム範囲
         this.frame_start = 0;
-        this.frame_end = 32;
+        this.frame_end = 30;
 
         // 現在のフレーム
         this.frame_current = 0;
@@ -842,7 +874,7 @@ export class Scene {
         const pointBuffer = GPU.createUniformBuffer(2 * 4, [...point], ["f32"]);
         const result = [];
         const promises = this.objects.allObject
-            .filter(object => option.types.includes(object.type))
+            .filter(object => option.types.includes(object.type) && !("visible" in object && !object.visible))
             .map(async (object) => {
                 const resultBuffer = GPU.createStorageBuffer(4, [0], ["u32"]);
                 let hitTestGroup;
@@ -906,7 +938,7 @@ export class Scene {
         // バグ(アニメーションindexを考慮してないのでアニメーションが2個以上あると書き込まれるweightがかぶる)
         for (const graphicMesh of this.objects.graphicMeshs) {
             graphicMesh.animationBlock.animationBlock.forEach(animation => {
-                GPU.writeBuffer(this.runtimeData.graphicMeshData.weights, new Float32Array([animation.weight]), graphicMesh.weightBufferOffset * 4);
+                GPU.writeBuffer(this.runtimeData.graphicMeshData.weights, new Float32Array([animation.weight]), (graphicMesh.weightBufferOffset + animation.index) * 4);
             });
         }
         for (const bezierModifier of this.objects.bezierModifiers) {

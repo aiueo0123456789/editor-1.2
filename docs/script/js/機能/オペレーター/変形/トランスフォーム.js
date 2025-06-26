@@ -135,6 +135,10 @@ class TransformCommand {
                     app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target, {vertex: {base: true, uv: true}});
                     target.editor.createMesh();
                 }
+            } else if (this.type == "ベジェ編集") {
+                for (const target of this.targets) {
+                    app.scene.runtimeData.bezierModifierData.updateCPUDataFromGPUBuffer(target, {base: true});
+                }
             }
             if (this.type == "頂点アニメーション") {
                 this.targets.belongObject.isChange = true;
@@ -182,6 +186,10 @@ class TransformCommand {
                     GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
                     app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target, {vertex: {base: true, uv: true}});
                     target.editor.createMesh(true);
+                }
+            } else if (this.type == "ベジェ編集") {
+                for (const target of this.targets) {
+                    app.scene.runtimeData.bezierModifierData.updateCPUDataFromGPUBuffer(target, {base: true});
                 }
             }
         }
