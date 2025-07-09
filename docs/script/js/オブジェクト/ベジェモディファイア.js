@@ -8,7 +8,32 @@ class Vertex {
     constructor(/** @type {Point} */point,data) {
         this.point = point;
         this.co = data.co;
+        this.typeIndex = data.typeIndex;
+        this.selected = false;
+        let maxIndex = -1;
+        for (let i = 0; i < 4; i ++) {
+            if (data.parentWeight.weights[i] > 0.85) {
+                maxIndex = i;
+            }
+        }
+        if (maxIndex != -1) {
+            for (let i = 0; i < 4; i ++) {
+                if (maxIndex == i) {
+                    data.parentWeight.weights[i] = 1;
+                } else {
+                    data.parentWeight.weights[i] = 0;
+                }
+            }
+        }
         this.parentWeight = data.parentWeight ? data.parentWeight : {indexs: [0,0,0,0], weights: [0,0,0,0]};
+    }
+
+    get worldIndex() {
+        return this.point.worldIndex * 3 + this.typeIndex;
+    }
+
+    get localIndex() {
+        return this.point.localIndex * 3 + this.typeIndex;
     }
 
     getSaveData() {
@@ -24,15 +49,19 @@ class Point {
         this.bezierModifier = bezierModifier;
 
         this.index = data.index ? data.index : bezierModifier.allPoint.length;
-        this.basePoint = new Vertex(this,data.point);
-        this.baseLeftControlPoint = new Vertex(this,data.leftControlPoint);
-        this.baseRightControlPoint = new Vertex(this,data.rightControlPoint);
-
-        this.selectedPoint = false;
-        this.selectedLeftControlPoint = false;
-        this.selectedRightControlPoint = false;
+        this.basePoint = new Vertex(this,Object.assign({typeIndex: 0},data.point));
+        this.baseLeftControlPoint = new Vertex(this,Object.assign({typeIndex: 1},data.leftControlPoint));
+        this.baseRightControlPoint = new Vertex(this,Object.assign({typeIndex: 2},data.rightControlPoint));
 
         bezierModifier.allPoint.push(this);
+    }
+
+    get localIndex() {
+        return this.bezierModifier.allPoint.indexOf(this);
+    }
+
+    get worldIndex() {
+        return this.bezierModifier.vertexBufferOffset + this.bezierModifier.allPoint.indexOf(this);
     }
 
     getSaveData() {
@@ -58,15 +87,16 @@ class Editor extends ObjectEditorBase {
 }
 
 export class BezierModifier extends ObjectBase {
+    static VERTEX_LEVEL = 3; // 小オブジェクトごとに何個の頂点を持つか
     constructor(name, id, data) {
         super(name, "ベジェモディファイア", id);
+        this.runtimeData = app.scene.runtimeData.bezierModifierData;
 
-        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_BEZIERMODIFIER;
+        this.MAX_POINTS = app.appConfig.MAX_POINTS_PER_BEZIERMODIFIER;
         this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_BEZIERMODIFIER;
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
-        this.allocationIndex = 0;
 
         this.renderBBoxData = {max: [1,1], min: [-1,-1]};
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
@@ -92,6 +122,7 @@ export class BezierModifier extends ObjectBase {
 
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
+        this.individualGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.objectDataBuffer]);
 
         this.children = new Children();
         this.editor = new Editor(this);
@@ -101,6 +132,24 @@ export class BezierModifier extends ObjectBase {
         this.mode = "オブジェクト";
 
         this.init(data);
+    }
+
+    get MAX_VERTICES() {
+        return this.MAX_POINTS * 3;
+    }
+
+    get allVertices() {
+        const result = [];
+        for (const point of this.allPoint) {
+            result.push(point.basePoint);
+            result.push(point.baseLeftControlPoint);
+            result.push(point.baseRightControlPoint);
+        }
+        return result;
+    }
+
+    get animationWorldOffset() {
+        return this.animationBufferOffset * BezierModifier.VERTEX_LEVEL;
     }
 
     // gc対象にしてメモリ解放
@@ -114,7 +163,8 @@ export class BezierModifier extends ObjectBase {
         for (const point of data.points) {
             new Point(this, point);
         }
-        app.scene.runtimeData.bezierModifierData.prepare(this);
+        // app.scene.runtimeData.bezierModifierData.prepare(this);
+        app.scene.runtimeData.append(app.scene.runtimeData.bezierModifierData, this);
         app.scene.runtimeData.bezierModifierData.updateBaseData(this);
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;

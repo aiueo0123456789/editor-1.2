@@ -1,8 +1,10 @@
 import { app } from "../../app.js";
-import { isFunction, isPlainObject } from "../../utility.js";
+import { isFunction, isPassByReference, isPlainObject } from "../../utility.js";
 import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "../../UI/制御.js";
 import { ResizerForDOM } from "../../UI/resizer.js";
 import { SelectTag } from "./カスタムタグ.js";
+import { removeObjectInHTMLElement } from "../../UI/UIの更新管理.js";
+import { KeyframeBlock } from "../../オブジェクト/キーフレーム.js";
 
 // パラメーターの変動を関連付けられたhtml要素に適応する関数
 function updateDOMsValue(object, groupID, DOM, others) {
@@ -92,7 +94,7 @@ const tagCreater = {
     },
     "div": (this_,t,searchTarget,child,flag) => {
         let element;
-        element = createTag(t, "div");
+        element = createTag(t, "div", child?.options);
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
@@ -158,7 +160,7 @@ const tagCreater = {
         return element;
     },
     "select": (this_,t,searchTarget,child,flag) => {
-        let element = new SelectTag(t, Array.isArray(child.sourceObject) ? child.sourceObject : this_.findSource(child.sourceObject.object, searchTarget));
+        let element = new SelectTag(t, Array.isArray(child.sourceObject) ? child.sourceObject : this_.findSource(child.sourceObject.object, searchTarget), child?.options);
 
         managerForDOMs.set({o: "", g: this_.groupID, f: flag}, element.element, null);
         this_.createWith(element.input, child.writeObject, searchTarget, flag);
@@ -232,7 +234,7 @@ const tagCreater = {
         return element;
     },
     "icon-img": (this_,t,searchTarget,child,flag) => {
-        let element = createIcon(t, this_.findSource(child.withObject.object, searchTarget)[child.withObject.parameter]);
+        let element = createIcon(t, this_.getParameter(searchTarget, child.withObject, false));
         return element;
     },
     "flexBox": (this_,t,searchTarget,child,flag) => {
@@ -292,43 +294,26 @@ const tagCreater = {
     "path": (this_,t,searchTarget,child,flag) => {
         const elementInsertIndex = t.children.length;
         let children = [];
-        let init = true;
         const myFlag = createID();
         const childrenReset = () => {
+            console.log("更新", child)
             managerForDOMs.deleteFlag(myFlag);
             // 関連づけられていない小要素を削除
             for (const childTag of children) {
-                childTag.remove();
+                removeObjectInHTMLElement(childTag);
             }
             children.length = 0;
             const keep = createTag(null, "div");
-            if (child.sourceObject.function) {
-                const o = this_.findSource(child.sourceObject.function.object, searchTarget);
+            if (child.children) {
+                const o = this_.getParameter(searchTarget, child.sourceObject);
+                console.log(o);
                 if (o) {
-                    if (child.children) {
-                        children = this_.createFromChildren(keep, child.children, o[child.sourceObject.function.function](), myFlag, true);
-                    }
-                }
-            } else {
-                const o = this_.findSource(child.sourceObject.object, searchTarget);
-                if (o) {
-                    if ("parameter" in child.sourceObject) {
-                        const o2 = isPlainObject(child.sourceObject.parameter) ? this_.findSource(child.sourceObject.parameter.object, searchTarget) : false;
-                        if (o2) {
-                            const p = o2[child.sourceObject.parameter.parameter];
-                            if (child.children) {
-                                children = this_.createFromChildren(keep, child.children, o[p], myFlag, true);
-                            }
-                        } else {
-                            const p = "";
-                            if (child.children) {
-                                children = this_.createFromChildren(keep, child.children, o[p], myFlag, true);
-                            }
-                        }
+                    if (isFunction(o)) {
+                        children = this_.createFromChildren(keep, child.children, o(), myFlag, true);
+                    } else if (o instanceof ParameterReference) {
+                        console.warn("伝播できません")
                     } else {
-                        if (child.children) {
-                            children = this_.createFromChildren(keep, child.children, o, myFlag, true);
-                        }
+                        children = this_.createFromChildren(keep, child.children, o, myFlag, true);
                     }
                 }
             }
@@ -337,23 +322,22 @@ const tagCreater = {
             }
             keep.remove();
         }
-        let updateEventTarget = null;
         if (isPlainObject(child.updateEventTarget)) {
-            updateEventTarget = this_.findSource(child.updateEventTarget.object, searchTarget);
+            this_.setUpdateEventToParameter(searchTarget, child.updateEventTarget.path, childrenReset);
         } else { // 文字列に対応
-            updateEventTarget = child.updateEventTarget;
+            managerForDOMs.set({o: child.updateEventTarget, g: this_.groupID, f: flag},null,childrenReset);
         }
-        managerForDOMs.set({o: updateEventTarget, g: this_.groupID, f: flag},null,childrenReset);
         childrenReset();
     },
     "if": (this_,t,searchTarget,child,flag) => {
+        console.log(searchTarget, child, this_.getParameter(searchTarget,child.formula.source))
         let bool = false;
         if (child.formula.conditions == "==") {
-            bool = (this_.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) == child.formula.value;
+            bool = this_.getParameter(searchTarget,child.formula.source, false) == child.formula.value;
         } else if (child.formula.conditions == ">") {
-            bool = (this_.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) > child.formula.value;
+            bool = this_.getParameter(searchTarget,child.formula.source, false) > child.formula.value;
         } else if (child.formula.conditions == "<") {
-            bool = (this_.findSource(child.formula.source.object, searchTarget)[child.formula.source.parameter]) < child.formula.value;
+            bool = this_.getParameter(searchTarget,child.formula.source, false) < child.formula.value;
         }
         if (bool) {
             if (child.true) {
@@ -365,6 +349,36 @@ const tagCreater = {
             }
         }
     },
+    "hasKeyframeCheck": (this_,t,searchTarget,child,flag) => {
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        t.append(checkbox);
+        /** @type {KeyframeBlock} */
+        const object = this_.getParameter(searchTarget, child.targetObject);
+        const update = () => {
+            if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
+                checkbox.checked = true;
+            } else {
+                checkbox.checked = false;
+            }
+        }
+        checkbox.addEventListener("click", () => {
+            if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
+            } else {
+                object.insert(app.scene.frame_current, object.targetObject[object.targetValue], 0.2);
+            }
+        })
+        // this_.setUpdateEventToParameter(searchTarget, child.targetObject, update, );
+        managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: this_.groupID}, null, update);
+    }
+}
+
+
+class ParameterReference {
+    constructor(object, parameter) {
+        this.object = object;
+        this.parameter = parameter;
+    }
 }
 
 // UIを作るクラス
@@ -374,9 +388,93 @@ export class CreatorForUI {
         this.dom = null;
         this.lists = new Map();
 
-        this.root = {};
+        this.globalInputObject = {};
 
         this.domKeeper = new Map();
+    }
+
+    setUpdateEventToParameter(searchTarget, path, event, flag) {
+        const template = flag ? {g: this.groupID, f: flag} : {g: this.groupID};
+        try {
+            if (path == "") {
+                managerForDOMs.set(Object.assign(template,{o: searchTarget}), null, event);
+            } else {
+                // pathをもとに参照
+                if (path[0] == "/") {
+                    path = path.slice(1);
+                } else {
+                    searchTarget = this.globalInputObject;
+                }
+                const pathRoot = path.split("/");
+                const root = pathRoot.slice(0, -1);
+                let lastRoot = pathRoot[pathRoot.length - 1];
+                let lastIsParameter = false;
+                if (lastRoot[0] == "%") { // ~/%parameterNameの場合オブジェクト内のidを対象とする
+                    lastRoot = lastRoot.slice(1);
+                    lastIsParameter = true;
+                }
+                let object = searchTarget;
+                for (const next of root) {
+                    if (next in object) {
+                        object = object[next];
+                    } else {
+                        return null;
+                    }
+                }
+                if (lastIsParameter) {
+                    managerForDOMs.set(Object.assign(template,{o: object, i: lastRoot}), null, event);
+                } else {
+                    const final = object[lastRoot];
+                    if (isPassByReference(final)) {
+                        managerForDOMs.set(Object.assign(template,{o: final}), null, event);
+                    } else {
+                        managerForDOMs.set(Object.assign(template,{o: object, i: lastRoot}), null, event);
+                    }
+                }
+            }
+        } catch {
+            console.trace("値の取得", path, searchTarget, "でエラーが出ました");
+        }
+    }
+
+    getParameter(searchTarget, path, useParameterReference = true) {
+        try {
+            if (path == "") {
+                return searchTarget;
+            } else {
+                // pathをもとに参照
+                if (path[0] == "/") {
+                    path = path.slice(1);
+                } else {
+                    searchTarget = this.globalInputObject;
+                }
+                const pathRoot = path.split("/");
+                const root = pathRoot.slice(0, -1);
+                const lastRoot = pathRoot[pathRoot.length - 1];
+                let object = searchTarget;
+                for (const next of root) {
+                    if (next in object) {
+                        object = object[next];
+                    } else {
+                        return null;
+                    }
+                }
+                const final = object[lastRoot];
+                if (isFunction(final)) {
+                    return final.bind(object);
+                } else if (isPassByReference(final)) {
+                    return final;
+                } else {
+                    if (useParameterReference) {
+                        return new ParameterReference(object, lastRoot);
+                    } else {
+                        return final;
+                    }
+                }
+            }
+        } catch {
+            console.trace("値の取得", path, searchTarget, "でエラーが出ました");
+        }
     }
 
     createHierarchy(t, withObject, loopTarget, structures, searchTarget, options, flag) {
@@ -398,11 +496,11 @@ export class CreatorForUI {
         }
         let result = {active: null, selects: []};
         if (options.selectSource) {
-            result.selects = this.findSource(options.selectSource.object, this.root);
+            result.selects = this.findSource(options.selectSource.object, this.globalInputObject);
         }
         let activeSource = null;
         if (options.activeSource) {
-            activeSource = {object: this.findSource(options.activeSource.object, this.root), parameter: options.activeSource.parameter};
+            activeSource = {object: this.findSource(options.activeSource.object, this.globalInputObject), parameter: options.activeSource.parameter};
         } else {
             activeSource = {object: result, parameter: "active"};
         }
@@ -472,7 +570,7 @@ export class CreatorForUI {
         const hierarchyUpdate = (o, gID, t) => {
             array.length = 0;
             const allObject = getAllObject();
-            // 削除があった場合新たいうするDOMを削除
+            // 削除があった場合対応するDOMを削除
             for (const object of lastUpdateObjects) {
                 if (!allObject.includes(object)) {
                     managerForDOMs.deleteDOM(object, this.groupID, hierarchyID);
@@ -525,7 +623,7 @@ export class CreatorForUI {
                     managerForDOMs.set({o: object, g: this.groupID, i: hierarchyID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
                 }
             }
-            lastUpdateObjects = allObject;
+            lastUpdateObjects = [...allObject];
             const looper = (children,targetDOM = scrollable) => {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {
@@ -617,7 +715,6 @@ export class CreatorForUI {
         if (isPlainObject(target)) {
             const list = this.findSource(target.object, searchObject);
             if (!list) {
-                console.trace();
                 console.warn("配列が見つかりません", target, searchObject);
             }
             if (target.customIndex) {
@@ -675,49 +772,68 @@ export class CreatorForUI {
     createListChildren(t, liStruct, withObject, searchTarget, options, flag) {
         if (!("li" in options)) options.li = true;
         let result = {active: null, selects: []};
+        let getSelectsDataFunction = null;
         if (options.selectSource) {
-            result.selects = this.findSource(options.selectSource.object, this.root);
-            console.log(options.selectSource.object, this.root)
+            if (options.selectSource.function) {
+                result.selects = options.selectSource.function;
+                getSelectsDataFunction = options.selectSource.getFunction;
+            } else {
+                result.selects = this.findSource(options.selectSource.object, this.globalInputObject);
+                console.log(options.selectSource.object, this.globalInputObject)
+            }
         }
         let activeSource = null;
+        let getActiveDataFunction = null;
         if (options.activeSource) {
-            activeSource = {object: this.findSource(options.activeSource.object, this.root), parameter: options.activeSource.parameter};
+            if (options.activeSource.function) {
+                activeSource = options.activeSource.function;
+                getActiveDataFunction = options.activeSource.getFunction;
+            } else {
+                activeSource = {object: this.findSource(options.activeSource.object, this.globalInputObject), parameter: options.activeSource.parameter};
+            }
         } else {
             activeSource = {object: result, parameter: "active"};
         }
         let list = this.findSource(withObject.object, searchTarget);
         console.log("リスト", withObject.object, searchTarget, list)
         const listID = createID();
+        let lastUpdateObjects = [];
         if (Array.isArray(list)) {
             // 内容の更新
-            const listUpdate = (o, gID, t) => {
-                const createdTags = managerForDOMs.getGroupAndID(this.groupID, listID); // すでに作っている場合
-                for (const object of createdTags.keys()) {
+            const listUpdate = (o, gID, dom) => {
+                // 消された要素を削除
+                for (const object of lastUpdateObjects) {
                     if (!list.includes(object)) {
                         managerForDOMs.deleteDOM(object, this.groupID, listID);
-                        createdTags.delete(object);
                     }
                 }
                 for (const object of list) {
-                    // let li = managerForDOMs.getDOMInObject(object, this.groupID, listID);
-                    let li = createdTags.get(object); // 存在確認
-                    if (!li) { // ない場合新規作成
-                        li = document.createElement("li");
+                    if (!lastUpdateObjects.includes(object)) { // ない場合新規作成
+                        const li = document.createElement("li");
                         t.append(li);
                         li.addEventListener("click", () => {
-                            activeSource.object[activeSource.parameter] = object;
-                            result.active = object;
-                            if (!app.input.keysDown["Shift"]) {
-                                result.selects.length = 0;
+                            if (isFunction(activeSource)) { // 関数の場合
+                                activeSource(list.indexOf(object),object);
+                            } else {
+                                activeSource.object[activeSource.parameter] = object;
+                                result.active = object;
+                                if (isFunction(result.selects)) {
+                                    result.selects(list.indexOf(object),object);
+                                } else {
+                                    if (!app.input.keysDown["Shift"]) {
+                                        result.selects.length = 0;
+                                    }
+                                    result.selects.push(object);
+                                }
+                                console.log(result,activeSource);
                             }
-                            result.selects.push(object);
-                            console.log(result,activeSource);
-                            managerForDOMs.update(list, "選択情報");
+                            managerForDOMs.update(list, listID + "選択情報");
                         });
                         this.createFromChildren(li, liStruct, object, flag); // 子要素に伝播
                         managerForDOMs.set({o: object, g: this.groupID, i: listID, f: flag}, li, null, null); // セット
                     }
                 }
+                lastUpdateObjects = [...list];
             }
 
             // 選択表示の更新
@@ -725,12 +841,22 @@ export class CreatorForUI {
                 console.log("アクティブ")
                 const createdTags = managerForDOMs.getGroupAndID(this.groupID, listID); // すでに作っている場合
                 createdTags.forEach((data, object) => {
-                    const bool_ = activeSource.object[activeSource.parameter] == object;
+                    let bool_ = false;
+                    if (getActiveDataFunction) {
+                        bool_ = getActiveDataFunction(object);
+                    } else {
+                        bool_ = activeSource.object[activeSource.parameter] == object;
+                    }
                     if (bool_) {
                         data.dom.classList.add("activeColor");
                     } else {
                         data.dom.classList.remove("activeColor");
-                        const bool__ = result.selects.includes(object);
+                        let bool__ = false;
+                        if (getSelectsDataFunction) {
+                            getSelectsDataFunction(object);
+                        } else {
+                            bool__ = result.selects.includes(object);
+                        }
                         if (bool__) {
                             data.dom.classList.add("activeColor2");
                         } else {
@@ -739,9 +865,9 @@ export class CreatorForUI {
                     }
                 })
             }
-            managerForDOMs.set({o: list, g: this.groupID, i: listID + "-^¥", f: flag}, t, listUpdate, null);
+            managerForDOMs.set({o: list, g: this.groupID, i: "_All" + listID, f: flag}, t, listUpdate, null);
             managerForDOMs.set({o: list, g: this.groupID, i: listID + "選択情報", f: flag}, t, listActive, null);
-            managerForDOMs.update(list, listID + "-^¥");
+            managerForDOMs.update(list, "_All" + listID);
         } else if (isPlainObject(list)) {
         }
         return result;
@@ -790,16 +916,15 @@ export class CreatorForUI {
         return myChildrenTag;
     }
 
-    create(/** @type {HTMLElement} */target, object, options = {heightCN: false, padding: true}) {
+    create(/** @type {HTMLElement} */target, struct, options = {heightCN: false, padding: true}) {
+        this.remove();
         this.dom = target;
-        target.replaceChildren();
-        const struct = object.struct;
-        const inputObject = object.inputObject;
-        this.root = inputObject;
+        const domStruct = struct.DOM;
+        const inputObject = struct.inputObject;
+        this.globalInputObject = inputObject;
 
         const t = createTag(target, "div");
 
-        console.log(struct);
         if (options?.heightCN) {
             t.classList.add("ui_container_1");
         } else if (options?.padding) {
@@ -809,17 +934,17 @@ export class CreatorForUI {
             t.style.width = "100%";
         }
 
-        this.createFromChildren(t,struct.DOM,inputObject);
+        this.createFromChildren(t,domStruct,inputObject);
     }
 
-    shelfeCreate(/** @type {HTMLElement} */target, object) {
+    shelfeCreate(/** @type {HTMLElement} */target, struct) {
+        this.remove();
         this.dom = target;
-        target.replaceChildren();
-        const struct = object.struct;
-        const inputObject = object.inputObject;
-        this.root = inputObject;
+        const domStruct = struct.DOM;
+        const inputObject = struct.inputObject;
+        this.globalInputObject = inputObject;
 
-        this.createFromChildren(target,struct.DOM,inputObject);
+        this.createFromChildren(target,domStruct,inputObject);
     }
 
     getDOMFromID(id) {
@@ -827,10 +952,10 @@ export class CreatorForUI {
     }
 
     remove() {
-        if (this.dom instanceof HTMLElement) {
-            this.dom.replaceChildren();
-        }
-        this.root = {};
+        // if (this.dom instanceof HTMLElement) {
+        //     this.dom.replaceChildren();
+        // }
+        this.globalInputObject = {};
         this.lists.clear();
         this.domKeeper.clear();
         managerForDOMs.deleteGroup(this.groupID);

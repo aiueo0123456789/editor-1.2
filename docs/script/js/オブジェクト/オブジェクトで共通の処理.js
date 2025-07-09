@@ -1,6 +1,5 @@
 import { GPU } from "../webGPU.js";
 import { setModifierWeightToGraphicMeshPipeline, setBezierModifierWeightToGraphicMeshPipeline, calculateArmatureWeightToVerticesPipeline } from "../GPUObject.js";
-import { calculateBBoxFromAllVertices } from "../BBox.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createID, managerForDOMs } from "../UI/制御.js";
 
@@ -15,6 +14,8 @@ export class ObjectBase {
         this.selected = false;
 
         this.mode = "オブジェクト";
+
+        this.runtimeOffsetData = {};
     }
 }
 
@@ -57,13 +58,8 @@ export function setParentModifierWeight(object) {
     }
 }
 
-export function setBaseBBox(object) {
-    calculateBBoxFromAllVertices(object.calculateAllBaseBBoxGroup, object.verticesNum);
-    GPU.copyBufferToArray(object.baseBBoxBuffer,object.baseBBox);
-}
-
 export function searchAnimation(object, animationName) {
-    for (const animation of object.animationBlock.animationBlock) {
+    for (const animation of object.animationBlock.list) {
         if (animation.name == animationName) return animation;
     }
     return null;

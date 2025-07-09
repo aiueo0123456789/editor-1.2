@@ -17,8 +17,11 @@ import { ParentPickModal } from './tools/ParentPick.js';
 import { DeleteTool } from './tools/Delete.js';
 import { InputManager } from '../../app/InputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
-import { WeightPaintCommand } from '../../機能/オペレーター/メッシュ/ウェイトペイント.js';
 import { WeightPaintModal } from './tools/WeightPaintTool.js';
+import { ToolsBarOperator } from '../補助/ToolsBarOperator.js';
+import { BoneAttachmentsModal } from './アーマチュア/アタッチメント.js';
+import { BonePropertyModal } from './アーマチュア/ボーン.js';
+import { ArmaturePropertyModal } from './アーマチュア/アーマチュア.js';
 
 // const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
@@ -33,8 +36,9 @@ const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getG
 const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/bone.wgsl"), [], "2d", "t");
 const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/relationships.wgsl"), [], "2d", "s");
 
-const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/bezier.wgsl"), [], "2d", "s");
-const bezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/vertices.wgsl"), [], "2d", "t");
+const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/bezier.wgsl"), [], "2d", "s");
+const bezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/vertices.wgsl"), [], "2d", "t");
+const bezierWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/weight.wgsl"), [], "2d", "s");
 
 const alphaBuffers = {
     "0.5": GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [0.5], ["f32"])]),
@@ -48,16 +52,16 @@ class SpaceData {
 }
 
 export class Area_Viewer {
-    constructor(/** @type {HTMLElement} */dom) {
+    constructor(area) {
         this.pixelDensity = 4;
-        this.creatorForUI = new CreatorForUI();
+        this.creatorForUI = area.creatorForUI;
 
         this.spaceData = new SpaceData();
         /** @type {ViewerSpaceData} */
         this.areasConfig = app.appConfig.areasConfig["Viewer"];
-        this.inputObject = {"h": app.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig};
 
         this.struct = {
+            inputObject: {"h": app.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option", style: "padding: 5px", class: "sharpBoder", name: "情報", children: [
@@ -65,7 +69,7 @@ export class Area_Viewer {
                             {type: "flexBox", interval: "10px", allocation: "auto auto auto auto auto 1fr", children: [
                                 // {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: "areasConfig/tozols"}},
                                 // {type: "path", sourceObject: {object: "areasConfig/modes", parameter: {object: "scene/state/activeObject", parameter: "type"}}, updateEventTarget: {object: "scene/state/activeObject"}, children: [
-                                {type: "path", sourceObject: {object: "areasConfig/modes", parameter: {object: "scene/state/activeObject", parameter: "type"}}, updateEventTarget: "アクティブオブジェクト", children: [
+                                {type: "path", sourceObject: "areasConfig/modes/{scene/state/activeObject/type}", updateEventTarget: "アクティブオブジェクト", children: [
                                     {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: ""}},
                                 ]},
         
@@ -77,46 +81,58 @@ export class Area_Viewer {
                                     {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "armature", "bezierModifier", "grid"]}},
                                 ]},
                             ]},
-    
                             {type: "padding", size: "10px"},
-    
-                            {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
-                                {type: "padding", size: "10px"},
-        
-                                {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "buttons", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                                ]},
-        
-                                {type: "separator", size: "10px"},
-        
-                                {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "select", label: "種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1,2]},
-                                ]},
-
-                                {type: "separator", size: "10px"},
-
-                                {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "input", label: "影響範囲", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
-                                ]},
-
-                                {type: "padding", size: "10px"},
+                            {type: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
+                                {type: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュウェイト編集"},
+                                true: [
+                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
+                                        {type: "padding", size: "10px"},
+                                        {type: "flexBox", interval: "5px", name: "", children: [
+                                            {type: "input", label: "値", name: "value", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                        ]},
+                                        {type: "separator", size: "10px"},
+                                        {type: "flexBox", interval: "5px", name: "", children: [
+                                            {type: "select", label: "ベジェの種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1]},
+                                        ]},
+                                        {type: "separator", size: "10px"},
+                                        {type: "flexBox", interval: "5px", name: "", children: [
+                                            {type: "input", label: "影響範囲", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                        ]},
+                                        {type: "padding", size: "10px"},
+                                    ]},
+                                ], false: [
+                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
+                                        {type: "padding", size: "10px"},
+                                        {type: "flexBox", interval: "5px", name: "", children: [
+                                            {type: "buttons", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
+                                        ]},
+                                        {type: "separator", size: "10px"},
+                                        {type: "flexBox", interval: "5px", name: "", children: [
+                                            {type: "select", label: "種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1,2]},
+                                        ]},
+                                        {type: "separator", size: "10px"},
+                                        {type: "flexBox", interval: "5px", name: "", children: [
+                                            {type: "input", label: "影響範囲", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                        ]},
+                                        {type: "padding", size: "10px"},
+                                    ]},
+                                ]}
                             ]},
                         ]}
                     ]},
-                    {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto", children: [
-                        {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
-                        ]},
-                        {type: "div", style: "width: 20px; backgroundColor: rgb(20,20,20);", class: "sharpBoder", children: [
-
-                        ]},
-                    ]}
+                    {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
+                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
+                    ]},
+                    // {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto", children: [
+                    //     {type: "div", id: "sideBar", style: "width: 20px; backgroundColor: rgb(20,20,20);", class: "sharpBoder", children: []},
+                    // ]}
                 ]}
             ]
         }
 
-        this.creatorForUI.create(dom, this, {padding: false});
+        this.creatorForUI.create(area.main, this.struct, {padding: false});
 
+        this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer"), [ArmaturePropertyModal,BonePropertyModal,BoneAttachmentsModal]);
         this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
@@ -133,21 +149,29 @@ export class Area_Viewer {
             event.preventDefault();
         });
 
-        resizeObserver.push(dom, () => {
+        resizeObserver.push(area.main, () => {
             // 要素の新しいサイズを取得
             this.canvasRect = this.canvas.getBoundingClientRect();
             this.canvas.width = this.canvasRect.width * this.pixelDensity;
             this.canvas.height = this.canvasRect.height * this.pixelDensity;
             this.renderer.resizeCVS();
         });
-
-        // this.gridMainTag.addEventListener('contextmenu', (e) => {
-        //     e.preventDefault();
-        //     updateForContextmenu("ビュー",[e.clientX,e.clientY]);
-        // });
     }
 
     async update() {
+        if (app.scene.state.currentMode == "メッシュ頂点アニメーション編集") {
+            const animatoinBlock = app.scene.state.activeObject.animationBlock;
+            for (const animation of animatoinBlock.list) {
+                changeParameter(animation, "weight", 0);
+            }
+            changeParameter(animatoinBlock.activeAnimation, "weight", 1);
+        } else if (app.scene.state.currentMode == "ベジェ頂点アニメーション編集") {
+            const animatoinBlock = app.scene.state.activeObject.animationBlock;
+            for (const animation of animatoinBlock.list) {
+                changeParameter(animation, "weight", 0);
+            }
+            changeParameter(animatoinBlock.activeAnimation, "weight", 1);
+        }
         this.renderer.rendering();
     }
 
@@ -162,10 +186,10 @@ export class Area_Viewer {
             if (state.activeObject.type == "グラフィックメッシュ") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (state.currentMode == "オブジェクト") {
-                        if (inputManager.consumeKeys(["a"])) {
-                            state.setModeForSelected("頂点アニメーション編集");
+                        if (state.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
+                            state.setModeForSelected("メッシュ頂点アニメーション編集");
                         } else if (inputManager.consumeKeys(["w"])) {
-                            state.setModeForSelected("ウェイト編集");
+                            state.setModeForSelected("メッシュウェイト編集");
                         } else {
                             state.setModeForSelected("メッシュ編集");
                         }
@@ -186,7 +210,7 @@ export class Area_Viewer {
                     }
                 }
                 if (inputManager.consumeKeys(["i"])) {
-                    const bones = app.scene.runtimeData.armatureData.getSelectBone();
+                    const bones = app.scene.state.getSelectBone();
                     bones.forEach(bone => {
                         app.options.keyframeInsert(bone, app.scene.frame_current);
                     })
@@ -194,8 +218,10 @@ export class Area_Viewer {
             } else if (state.activeObject.type == "ベジェモディファイア") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (state.currentMode == "オブジェクト") {
-                        if (inputManager.consumeKeys(["a"])) {
-                            state.setModeForSelected("ベジェアニメーション編集");
+                        if (state.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
+                            state.setModeForSelected("ベジェ頂点アニメーション編集");
+                        } else if (inputManager.consumeKeys(["w"])) {
+                            state.setModeForSelected("ベジェウェイト編集");
                         } else {
                             state.setModeForSelected("ベジェ編集");
                         }
@@ -233,17 +259,29 @@ export class Area_Viewer {
             }
         } else if (state.currentMode == "ボーン編集") {
             for (const armature of app.scene.state.selectedObject) {
-                app.scene.runtimeData.armatureData.selectedForVertices(armature, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
+                app.scene.runtimeData.armatureData.selectedForVertices(armature, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"]), circle: inputManager.keysDown["c"]});
             }
         } else if (state.currentMode == "ベジェ編集") {
             for (const bezierModifier of app.scene.state.selectedObject) {
                 app.scene.runtimeData.bezierModifierData.selectedForVertices(bezierModifier, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
             }
+        } else if (state.currentMode == "メッシュ頂点アニメーション編集") {
+            app.scene.runtimeData.graphicMeshData.selectedForVertices(app.scene.state.activeObject, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
+        } else if (state.currentMode == "ベジェ頂点アニメーション編集") {
+            app.scene.runtimeData.bezierModifierData.selectedForVertices(app.scene.state.activeObject, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
         } else if (state.currentMode == "ボーンアニメーション編集") {
             for (const armature of app.scene.state.selectedObject) {
                 await app.scene.runtimeData.armatureData.selectedForBone(armature, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
             }
-        } else if (state.currentMode == "ウェイト編集") {
+        } else if (state.currentMode == "メッシュウェイト編集") {
+            if (inputManager.consumeKeys(["Alt"])) {
+                await app.scene.runtimeData.armatureData.selectedForBone(app.scene.state.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
+                const bone = app.scene.runtimeData.armatureData.getSelectBone();
+                changeParameter(this.areasConfig, "weightEditBoneIndex", bone[0].index);
+            } else {
+                this.modalOperator.setModal(WeightPaintModal);
+            }
+        } else if (state.currentMode == "ベジェウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.scene.state.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
                 const bone = app.scene.runtimeData.armatureData.getSelectBone();
@@ -338,7 +376,7 @@ export class Renderer {
                 maskRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 for (const graphicMesh of value.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
-                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
                 // 処理の終了と送信
@@ -370,7 +408,7 @@ export class Renderer {
                     renderPass.setBindGroup(2, graphicMesh.renderGroup);
                     // renderPass.setBindGroup(3, alphaBuffers["0.5"]);
                     renderPass.setBindGroup(3, alphaBuffers["1"]);
-                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }
@@ -388,7 +426,7 @@ export class Renderer {
                             renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
                             renderPass.setPipeline(verticesRenderPipeline);
                             renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
-                        } else if (graphicMesh.mode == "ウェイト編集") {
+                        } else if (graphicMesh.mode == "メッシュウェイト編集") {
                             // メッシュ表示
                             renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
                             renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
@@ -397,6 +435,15 @@ export class Renderer {
                             renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
                             renderPass.setBindGroup(3, this.viewer.areasConfig.targetWeightIndexGroup);
                             renderPass.setPipeline(graphicMeshsWeightRenderPipeline);
+                            renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
+                        } else if (graphicMesh.mode == "メッシュ頂点アニメーション編集") {
+                            // メッシュ表示
+                            renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
+                            renderPass.setPipeline(graphicMeshsMeshRenderPipeline);
+                            renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
+                            // 頂点描画
+                            renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
+                            renderPass.setPipeline(verticesRenderPipeline);
                             renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
                         } else if (graphicMesh.mode == "オブジェクト") {
                             if (graphicMesh.selected) {
@@ -439,11 +486,18 @@ export class Renderer {
                 renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
                 renderPass.draw(2 * 50, bezierModifier.pointNum - 1, 0, 0);
             }
-            renderPass.setPipeline(bezierVerticesRenderPipeline);
             for (const bezierModifier of app.scene.objects.bezierModifiers) {
+                renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
                 if (bezierModifier.mode == "ベジェ編集") {
-                    renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
-                    renderPass.draw(6 * 3, bezierModifier.pointNum, 0, 0);
+                    renderPass.setPipeline(bezierVerticesRenderPipeline);
+                    renderPass.draw(2 * 3 * 3, bezierModifier.pointNum, 0, 0);
+                } else if (bezierModifier.mode == "ベジェウェイト編集") {
+                    renderPass.setPipeline(bezierWeightRenderPipeline);
+                    renderPass.setBindGroup(3, this.viewer.areasConfig.targetWeightIndexGroup);
+                    renderPass.draw(4, bezierModifier.verticesNum, 0, 0);
+                } else if (bezierModifier.mode == "ベジェ頂点アニメーション編集") {
+                    renderPass.setPipeline(bezierVerticesRenderPipeline);
+                    renderPass.draw(2 * 3 * 3, bezierModifier.pointNum, 0, 0);
                 }
             }
         }

@@ -1,7 +1,7 @@
 import { device,GPU } from "../webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
 import { isNotTexture } from "../GPUObject.js";
-import { BoundingBox, ObjectBase, ObjectEditorBase, setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
+import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "./オブジェクトで共通の処理.js";
 import { indexOfSplice, waitUntilFrame } from "../utility.js";
 import { vec2 } from "../ベクトル計算.js";
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../機能/メッシュの自動生成/画像からメッシュを作る.js";
@@ -15,9 +15,32 @@ class Vertex {
         this.graphicMesh = graphicMesh;
         this.base = [...base];
         this.uv = [...uv];
+        let maxIndex = -1;
+        for (let i = 0; i < 4; i ++) {
+            if (parentWeight.weights[i] > 0.85) {
+                maxIndex = i;
+            }
+        }
+        if (maxIndex != -1) {
+            for (let i = 0; i < 4; i ++) {
+                if (maxIndex == i) {
+                    parentWeight.weights[i] = 1;
+                } else {
+                    parentWeight.weights[i] = 0;
+                }
+            }
+        }
         this.parentWeight = parentWeight;
         this.updated = true;
         graphicMesh.allVertices.push(this);
+    }
+
+    get localIndex() {
+        return this.graphicMesh.allVertices.indexOf(this);
+    }
+
+    get worldIndex() {
+        return this.graphicMesh.runtimeOffsetData.vertexOffset + this.localIndex;
     }
 
     getSaveData() {
@@ -215,8 +238,10 @@ class Editor extends ObjectEditorBase {
 }
 
 export class GraphicMesh extends ObjectBase {
+    static VERTEX_LEVEL = 1; // 小オブジェクトごとに何個の頂点を持つか
     constructor(name, id, data) {
         super(name, "グラフィックメッシュ", id);
+        this.runtimeData = app.scene.runtimeData.graphicMeshData;
 
         this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
         this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
@@ -224,7 +249,6 @@ export class GraphicMesh extends ObjectBase {
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
-        this.allocationIndex = 0;
 
         this.baseTransformIsLock = false;
         this.visible = true;
@@ -271,6 +295,10 @@ export class GraphicMesh extends ObjectBase {
         this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectMeshData]);
         this.editor = new Editor(this);
         this.init(data);
+    }
+
+    get animationWorldOffset() {
+        return this.animationBufferOffset * GraphicMesh.VERTEX_LEVEL;
     }
 
     // gc対象にしてメモリ解放
@@ -331,7 +359,8 @@ export class GraphicMesh extends ObjectBase {
         for (const mesh of data.meshes) {
             new Mesh(this, undefined, mesh.indexs);
         }
-        app.scene.runtimeData.graphicMeshData.prepare(this);
+        // app.scene.runtimeData.graphicMeshData.prepare(this);
+        app.scene.runtimeData.append(app.scene.runtimeData.graphicMeshData, this);
         app.scene.runtimeData.graphicMeshData.updateBaseData(this);
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
@@ -396,6 +425,7 @@ export class GraphicMesh extends ObjectBase {
             name: this.name,
             id: this.id,
             type: this.type,
+            parentID: this.parent.id,
             baseTransformIsLock: this.baseTransformIsLock,
             zIndex: this.zIndex,
             vertices: this.allVertices.map(vertex => vertex.getSaveData()),

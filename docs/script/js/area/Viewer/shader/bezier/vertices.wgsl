@@ -21,13 +21,19 @@ struct Allocation {
     myType: u32,
 }
 
+struct WeightBlock {
+    indexs: vec4<u32>,
+    weights: vec4<f32>,
+}
+
 @group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
 @group(0) @binding(1) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<Bezier>;
 @group(1) @binding(1) var<storage, read> verticesSelected: array<u32>;
+@group(1) @binding(2) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
 @group(2) @binding(0) var<uniform> bezierModifierAllocation: Allocation; // 配分情報
 
-const size = 20.0;
+const size = 10.0;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>, // クリッピング座標系での頂点位置

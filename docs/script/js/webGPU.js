@@ -601,8 +601,22 @@ class WebGPU {
         return newBuffer;
     }
 
-    deleteIndexsToBuffer(buffer, indexs, structOffset) {
-        const dataNum = buffer.size / structOffset;
+    moveDataToBuffer(buffer, start, readNum, movedOffset) {
+        const moveData = GPU.copyBufferToNewBuffer(buffer, start * 4, readNum * 4);
+        GPU.writeBuffer(buffer, new Float32Array(readNum).fill(0), start * 4);
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyBufferToBuffer(
+            moveData,
+            0,
+            buffer,
+            movedOffset * 4,
+            moveData.size
+        );
+        device.queue.submit([commandEncoder.finish()]);
+    }
+
+    deleteIndexsToBuffer(buffer, indexs, structByteSize) {
+        const dataNum = buffer.size / structByteSize;
         indexs.sort((a,b) => a - b);
         const startAndEndIndexs = [];
         let lastIndex = 0;
@@ -615,15 +629,15 @@ class WebGPU {
         if (lastIndex < dataNum) {
             startAndEndIndexs.push([lastIndex,dataNum - 1]);
         }
-        GPU.consoleBufferData(buffer, ["f32"], "old");
-        const newBuffer = GPU.createStorageBuffer((buffer.size - indexs.length * structOffset), undefined, ["f32"]);
+        // GPU.consoleBufferData(buffer, ["f32"], "old");
+        const newBuffer = GPU.createStorageBuffer((buffer.size - indexs.length * structByteSize), undefined, ["f32"]);
         let offset = 0;
         for (const rOffset of startAndEndIndexs) {
-            console.log(rOffset[0] * structOffset, offset, (rOffset[1] - rOffset[0]) * structOffset)
-            GPU.copyBuffer(buffer, newBuffer, rOffset[0] * structOffset, offset, (rOffset[1] - rOffset[0] + 1) * structOffset);
-            offset += (rOffset[1] - rOffset[0] + 1) * structOffset;
+            console.log(rOffset[0] * structByteSize, offset, (rOffset[1] - rOffset[0]) * structByteSize)
+            GPU.copyBuffer(buffer, newBuffer, rOffset[0] * structByteSize, offset, (rOffset[1] - rOffset[0] + 1) * structByteSize);
+            offset += (rOffset[1] - rOffset[0] + 1) * structByteSize;
         }
-        GPU.consoleBufferData(newBuffer, ["f32"], "new");
+        // GPU.consoleBufferData(newBuffer, ["f32"], "new");
         return newBuffer;
     }
 
@@ -1433,14 +1447,21 @@ class WebGPU {
                 }
                 result.push(keep);
             }
-        } else {
-            for (let i = 0; i < buffer.size / structSize; i++) {
+        } else if (Array.isArray(indexs)) {
+            for (const index of indexs) {
+                offset = index * (struct.length * 4); // フィールドのサイズを加算
                 const keep = [];
                 for (const field of struct) {
                     if (field === "u32") {
                         keep.push(dataView.getUint32(offset, true));
                     } else if (field === "f32") {
                         keep.push(dataView.getFloat32(offset, true));
+                    } else if (field == "bit") {
+                        // 各バイトについて、ビット単位で処理
+                        for (let bI = 0; bI < 8; bI ++) {
+                            const bit = (dataView.getUint32(offset, true) >> bI) & 1;
+                            keep.push(bit === 1);
+                        }
                     }
                     offset += 4; // フィールドのサイズを加算
                 }

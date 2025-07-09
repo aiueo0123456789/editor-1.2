@@ -12,7 +12,7 @@ import { Area_Timeline } from "./area/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "./area/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "./area/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./app/InputManager.js";
-import { changeParameter, createArrayFromHashKeys, indexOfSplice, loadFile } from "./utility.js";
+import { createArrayFromHashKeys, indexOfSplice, loadFile } from "./utility.js";
 import { SelectTag } from "./area/補助/カスタムタグ.js";
 import { ContextmenuOperator } from "./app/ContextmenuOperator.js";
 import { HierarchySpaceData } from "./area/Hierarchy/area_HierarchySpaceData.js";
@@ -20,6 +20,7 @@ import { Area_Property } from "./area/Property/area_Property.js";
 import { GraphicMesh } from "./オブジェクト/グラフィックメッシュ.js";
 import { GPU } from "./webGPU.js";
 import { CreateObjectCommand, DeleteObjectCommand } from "./機能/オペレーター/オブジェクト/オブジェクト.js";
+import { CreatorForUI } from "./area/補助/UIの自動生成.js";
 
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/ボーン/重み設定.wgsl"));
 const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/bezier/重み設定.wgsl"));
@@ -35,8 +36,8 @@ class AppOptions {
                     bones: [{
                         index: 0,
                         childrenBone: [],
-                        baseHead: [0,0],
-                        baseTail: [0,100],
+                        baseHead: {co: [0,0]},
+                        baseTail: {co: [0,100]},
                         animations: {blocks: []},
                     }],
                     editor: {
@@ -142,10 +143,10 @@ class AppOptions {
         let parentVerticesBuffer;
         let parentAllocationBuffer;
         if (object.parent.type == "アーマチュア") {
-            parentVerticesBuffer = this.app.scene.runtimeData.armatureData.baseVertices;
+            parentVerticesBuffer = this.app.scene.runtimeData.armatureData.baseVertices.buffer;
             parentAllocationBuffer = object.parent.objectDataBuffer;
         } else {
-            parentVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices;
+            parentVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices.buffer;
             parentAllocationBuffer = object.parent.objectDataBuffer;
         }
         let objectWeightsBuffer;
@@ -153,13 +154,13 @@ class AppOptions {
         let objectAllocationBuffer;
         let runtimeObject;
         if (object.type == "グラフィックメッシュ") {
-            objectWeightsBuffer = this.app.scene.runtimeData.graphicMeshData.weightBlocks;
-            objectVerticesBuffer = this.app.scene.runtimeData.graphicMeshData.baseVertices;
+            objectWeightsBuffer = this.app.scene.runtimeData.graphicMeshData.weightBlocks.buffer;
+            objectVerticesBuffer = this.app.scene.runtimeData.graphicMeshData.baseVertices.buffer;
             objectAllocationBuffer = object.objectDataBuffer;
             runtimeObject = this.app.scene.runtimeData.graphicMeshData;
         } else {
-            objectWeightsBuffer = this.app.scene.runtimeData.bezierModifierData.weightBlocks;
-            objectVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices;
+            objectWeightsBuffer = this.app.scene.runtimeData.bezierModifierData.weightBlocks.buffer;
+            objectVerticesBuffer = this.app.scene.runtimeData.bezierModifierData.baseVertices.buffer;
             objectAllocationBuffer = object.objectDataBuffer;
             runtimeObject = this.app.scene.runtimeData.bezierModifierData;
         }
@@ -202,10 +203,10 @@ class AppConfig {
         this.MAX_ANIMATIONS_PER_GRAPHICMESH = 10; // グラフィックメッシュあたりの最大アニメーション数
 
         this.MAX_BONEMODIFIER = 32; // アーマチュアの最大数
-        this.MAX_BONES_PER_ARMATURE = 200; // アーマチュアあたりの最大頂点数
+        this.MAX_BONES_PER_ARMATURE = 500; // アーマチュアあたりの最大ボーン数
 
         this.MAX_BEZIERMODIFIER = 32; // ベジェモディファイアの最大数
-        this.MAX_VERTICES_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大頂点数
+        this.MAX_POINTS_PER_BEZIERMODIFIER = 100; // ベジェモディファイアあたりの最大頂点数
         this.MAX_ANIMATIONS_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大アニメーション数
 
         this.areasConfig = {};
@@ -400,6 +401,8 @@ class Area {
 
         this.header = document.createElement("div");
         this.header.classList.add("header");
+
+        this.creatorForUI = new CreatorForUI();
         const select = new SelectTag(this.header, createArrayFromHashKeys(useClassFromAreaType));
         /** @type {HTMLElement} */
         const deleteButton = createTag(this.header, "span", {className: "square_btn"}); // バツボタン
@@ -429,7 +432,7 @@ class Area {
         this.title.textContent = type; // タイトル
         this.type = type;
         if (type in useClassFromAreaType) {
-            this.uiModel = new useClassFromAreaType[type]["area"](this.main);
+            this.uiModel = new useClassFromAreaType[type]["area"](this);
         } else {
             this.uiModel = {type: "エラー"};
             console.warn("設定されていないエリアを表示しようとしました",type)

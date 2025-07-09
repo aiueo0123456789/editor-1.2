@@ -87,10 +87,13 @@ fn isNaN(x: f32) -> bool {
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    if (ceilU32(allocation.MAX_BONE, 32u) <= global_id.x) {
+    let fixOffset = allocation.vertexBufferOffset;
+    let fixMax = allocation.MAX_BONE;
+    let arrayStartIndex = (fixOffset) / 32u; // 書き込み対象の先頭index
+    let arrayEndIndex = (fixOffset + fixMax) / 32u;
+    if (arrayEndIndex - arrayStartIndex + 1u <= global_id.x) {
         return ;
     }
-    let arrayStartIndex = allocation.vertexBufferOffset / 32u; // 書き込み対象の先頭index
     let boneIndexStart = arrayStartIndex * 32u;
 
     let arrayIndex: u32 = arrayStartIndex + global_id.x; // selectedのarrayIndex

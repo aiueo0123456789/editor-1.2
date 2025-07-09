@@ -2,11 +2,9 @@ import { app } from "../../../app.js";
 import { mathMat3x3 } from "../../../MathMat.js";
 import { loadFile } from "../../../utility.js";
 import { GPU } from "../../../webGPU.js";
-import { Bone } from "../../../オブジェクト/アーマチュア.js";
-
-// const pipelines = {
-//     graphicMesh: {rotate: },
-// };
+import { Armature } from "../../../オブジェクト/アーマチュア.js";
+import { GraphicMesh } from "../../../オブジェクト/グラフィックメッシュ.js";
+import { BezierModifier } from "../../../オブジェクト/ベジェモディファイア.js";
 
 const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/init.wgsl"));
 
@@ -15,12 +13,13 @@ const updateForUVPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_
 const createOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./script/js/機能/オペレーター/変形/GPU/createOriginal.wgsl"));
 const setOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./script/js/機能/オペレーター/変形/GPU/setOriginal.wgsl"));
 
-const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/translate.wgsl"));
+const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/translate.wgsl"));
 const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/resize.wgsl"));
-const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/rotate.wgsl"));
+const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/rotate.wgsl"));
 
 class TransformCommand {
-    constructor(type, targets, selectIndexs) {
+    constructor(type, targets, options) {
+        console.log(type, targets, options)
         this.worldOriginalBuffer = null;
         this.valueBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
         this.centerPointBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32","f32"]);
@@ -28,14 +27,15 @@ class TransformCommand {
         this.proportionalSizeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         this.configGroup = GPU.createGroup(GPU.getGroupLayout("Cu_Cu_Cu"), [{item: this.proportionalEditTypeBuffer, type: "b"}, {item: this.proportionalSizeBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}]);
 
+        this.writeGroup = null;
+        this.undoWriteGroup = null;
+
         this.value = [0,0];
         this.proportionalEditType = 0;
         this.proportionalSize = 0;
 
         this.targets = [...targets];
         this.type = type;
-        const source = this.type == "メッシュ編集" ? app.scene.runtimeData.graphicMeshData : this.type == "ボーン編集" ? app.scene.runtimeData.armatureData : app.scene.runtimeData.bezierModifierData;
-        const groupNum = this.type == "メッシュ編集" ? 1 : this.type == "ボーン編集" ? 2 : 3;
         if (this.type == "ボーンアニメーション編集") {
             this.parentWorldMatrix = [];
             this.root = [];
@@ -54,34 +54,154 @@ class TransformCommand {
                 this.originalBones.set(bone, {"x": bone.x, "y": bone.y, "sx": bone.sx, "sy": bone.sy, "r": bone.r});
             }
         } else {
-            const selectIndexBuffer = GPU.createStorageBuffer(selectIndexs.length * 4, selectIndexs, ["u32"]);
-            if (this.type == "頂点アニメーション") {
-                this.worldOriginalBuffer = targets.getWorldVerticesPositionBuffer(); // ターゲットの頂点のワールド座標を取得
-                this.targetBuffer = targets.s_verticesAnimationBuffer;
-                this.baseBuffer = targets.belongObject.s_baseVerticesPositionBuffer; // 頂点の基準
-                this.workNumX = Math.ceil(this.targets.belongObject.verticesNum / 64);
-                this.weightBuffer = GPU.createStorageBuffer(this.targets.belongObject.verticesNum * 4, undefined, ["f32"]);
-            } else {
-                const subjectIndex = [];
-                for (const target of targets) {
-                    for (let i = target.vertexBufferOffset * groupNum; i < target.verticesNum + (target.vertexBufferOffset) * groupNum; i ++) {
-                        subjectIndex.push(i);
-                    }
+            const subjectIndex = [];
+            this.selectIndexs = [];
+            this.writeIndexs = [];
+            let source = null;
+            let vertexLevel = 0;
+            if (type == "メッシュ編集" || this.type == "メッシュ頂点アニメーション編集") {
+                source = app.scene.runtimeData.graphicMeshData;
+                vertexLevel = GraphicMesh.VERTEX_LEVEL;
+            } else if (type == "ボーン編集") {
+                source = app.scene.runtimeData.armatureData;
+                vertexLevel = Armature.VERTEX_LEVEL;
+            } else if (type == "ベジェ編集" || type == "ベジェ頂点アニメーション編集") {
+                source = app.scene.runtimeData.bezierModifierData;
+                vertexLevel = BezierModifier.VERTEX_LEVEL;
+            }
+            console.log(source,vertexLevel)
+            if (this.type == "メッシュ頂点アニメーション編集") {
+                this.targetAnimation = options.targetAnimation;
+                this.targetObject = this.targetAnimation.belongObject;
+                for (const vertex of targets) {
+                    this.selectIndexs.push(vertex.worldIndex);
                 }
-                console.log(subjectIndex,selectIndexs);
+                for (let i = this.targetObject.vertexBufferOffset * vertexLevel; i < this.targetObject.verticesNum + (this.targetObject.vertexBufferOffset) * vertexLevel; i ++) {
+                    subjectIndex.push(i);
+                }
+                for (const vertex of this.targetObject.allVertices) {
+                    this.writeIndexs.push(vertex.localIndex + this.targetAnimation.worldIndex);
+                }
+                this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
                 this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
                 this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
                 this.workNumX = Math.ceil(subjectIndex.length / 64);
-                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.baseVertices, this.subjectIndexBuffer])], this.workNumX);
-                this.targetBuffer = source.baseVertices;
-                this.baseBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.renderingVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                this.writeBuffer = source.animations.buffer;
+                this.targetBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4);
+                this.differentialBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.differentialBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                // GPU.consoleBufferData(this.differentialBuffer, ["f32","f32"], "base")
                 this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
                 this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
-                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.baseVertices, this.subjectIndexBuffer])], this.workNumX);
-                // GPU.consoleBufferData(this.originalBuffer, ["f32","f32"], "original");
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.renderingVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+            } else if (this.type == "ベジェ頂点アニメーション編集") {
+                this.targetAnimation = options.targetAnimation;
+                this.targetObject = this.targetAnimation.belongObject;
+                for (const vertex of targets) {
+                    this.selectIndexs.push(vertex.worldIndex);
+                }
+                for (let i = this.targetObject.vertexBufferOffset * vertexLevel; i < this.targetObject.verticesNum + (this.targetObject.vertexBufferOffset) * vertexLevel; i ++) {
+                    subjectIndex.push(i);
+                }
+                for (const vertex of this.targetObject.allVertices) {
+                    this.writeIndexs.push(vertex.localIndex + this.targetAnimation.worldIndex);
+                }
+                this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
+                this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
+                this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
+                this.workNumX = Math.ceil(subjectIndex.length / 64);
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.renderingVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                this.writeBuffer = source.animations;
+                this.targetBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4);
+                this.differentialBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.differentialBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                // GPU.consoleBufferData(this.differentialBuffer, ["f32","f32"], "base")
+                this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
+                this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.renderingVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+            } else if (this.type == "ベジェ編集") {
+                this.bezierModifiers = [];
+                for (const vertex of targets) {
+                    if (!this.bezierModifiers.includes(vertex.point.bezierModifier)) {
+                        this.bezierModifiers.push(vertex.point.bezierModifier);
+                    }
+                    this.selectIndexs.push(vertex.worldIndex);
+                }
+                for (const bezierModifier of this.bezierModifiers) {
+                    for (let i = bezierModifier.vertexBufferOffset * vertexLevel; i < bezierModifier.verticesNum + (bezierModifier.vertexBufferOffset) * vertexLevel; i ++) {
+                        subjectIndex.push(i);
+                        this.writeIndexs.push(i);
+                    }
+                }
+                console.log(subjectIndex,this.selectIndexs,this.writeIndexs);
+                this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
+                this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
+                this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
+                this.workNumX = Math.ceil(subjectIndex.length / 64);
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                this.writeBuffer = source.baseVertices.buffer;
+                this.targetBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4);
+                this.differentialBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
+                this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
+                this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+            } else if (this.type == "メッシュ編集") {
+                this.graphicMeshs = [];
+                for (const vertex of targets) {
+                    if (!this.graphicMeshs.includes(vertex.graphicMesh)) {
+                        this.graphicMeshs.push(vertex.graphicMesh);
+                    }
+                    this.selectIndexs.push(vertex.worldIndex);
+                }
+                for (const graphicMesh of this.graphicMeshs) {
+                    for (let i = graphicMesh.runtimeOffsetData.vertexOffset * vertexLevel; i < graphicMesh.verticesNum + (graphicMesh.runtimeOffsetData.vertexOffset) * vertexLevel; i ++) {
+                        subjectIndex.push(i);
+                        this.writeIndexs.push(i);
+                    }
+                }
+                this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
+                this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
+                this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
+                this.workNumX = Math.ceil(subjectIndex.length / 64);
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                this.writeBuffer = source.baseVertices.buffer;
+                this.targetBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4);
+                this.differentialBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
+                this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
+                this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+            } else if (this.type == "ボーン編集") {
+                this.armatures = [];
+                for (const vertex of targets) {
+                    if (!this.armatures.includes(vertex.bone.armature)) {
+                        this.armatures.push(vertex.bone.armature);
+                    }
+                    this.selectIndexs.push(vertex.worldIndex);
+                }
+                for (const armature of this.armatures) {
+                    for (let i = armature.vertexBufferOffset * vertexLevel; i < armature.verticesNum + (armature.vertexBufferOffset) * vertexLevel; i ++) {
+                        subjectIndex.push(i);
+                        this.writeIndexs.push(i);
+                    }
+                }
+                this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
+                this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
+                this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
+                this.workNumX = Math.ceil(subjectIndex.length / 64);
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
+                this.writeBuffer = source.baseVertices.buffer;
+                this.targetBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4);
+                this.differentialBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
+                this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
+                this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
+                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
             }
+            const selectIndexBuffer = GPU.createStorageBuffer(this.selectIndexs.length * 4, this.selectIndexs, ["u32"]);
+            this.undoWriteGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.writeBuffer, this.originalBuffer, this.writeIndexsBuffer]);
+            this.writeGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.writeBuffer, this.targetBuffer, this.writeIndexsBuffer]);
             this.weightAndIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"),  [{item: this.weightBuffer, type: "b"}, {item: selectIndexBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.subjectIndexBuffer, type: "b"}]);
-            this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr_Cu_Cu"),  [{item: this.targetBuffer, type: "b"}, {item: this.worldOriginalBuffer, type: "b"}, {item: this.baseBuffer, type: "b"}, {item: this.weightBuffer, type: "b"}, {item: this.subjectIndexBuffer, type: "b"}, {item: this.centerPointBuffer, type: "b"}, {item: this.valueBuffer, type: "b"}]);
+            this.transformGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu"),  [this.targetBuffer, this.worldOriginalBuffer, this.differentialBuffer, this.weightBuffer, this.centerPointBuffer, this.valueBuffer]);
         }
     }
 
@@ -117,6 +237,9 @@ class TransformCommand {
             GPU.runComputeShader(createInitDataPipeline,[this.weightAndIndexsGroup, this.configGroup], this.workNumX);
 
             GPU.runComputeShader(pipeline, [this.transformGroup], this.workNumX);
+            // GPU.consoleBufferData(this.targetBuffer, ["f32","f32"], "vertices")
+            GPU.runComputeShader(setOriginalPipeline, [this.writeGroup], this.workNumX);
+            // GPU.consoleBufferData(this.writeBuffer, ["f32","f32"], "write", this.writeIndexs);
             if (this.type == "ボーン編集") {
                 // await Promise.all(
                 //     this.targets.map(target => {
@@ -124,23 +247,20 @@ class TransformCommand {
                 //         return app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
                 //     })
                 // );
-                for (const target of this.targets) {
-                    app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
-                    app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
+                for (const armature of this.armatures) {
+                    app.scene.runtimeData.armatureData.calculateBaseBoneData(armature);
+                    app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(armature);
                 }
             } else if (this.type == "メッシュ編集") {
-                for (const target of this.targets) {
-                    GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
-                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target, {vertex: {base: true, uv: true}});
-                    target.editor.createMesh();
+                for (const graphicMesh of this.graphicMeshs) {
+                    GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv.buffer, app.scene.runtimeData.graphicMeshData.baseVertices.buffer, graphicMesh.editor.imageBBoxBuffer, graphicMesh.objectDataBuffer])],this.workNumX);
+                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(graphicMesh, {vertex: {base: true, uv: true}});
+                    graphicMesh.editor.createMesh();
                 }
             } else if (this.type == "ベジェ編集") {
-                for (const target of this.targets) {
-                    app.scene.runtimeData.bezierModifierData.updateCPUDataFromGPUBuffer(target, {base: true});
+                for (const bezierModifier of this.bezierModifiers) {
+                    app.scene.runtimeData.bezierModifierData.updateCPUDataFromGPUBuffer(bezierModifier, {vertex: {base: true}});
                 }
-            }
-            if (this.type == "頂点アニメーション") {
-                this.targets.belongObject.isChange = true;
             }
         }
     }
@@ -149,14 +269,14 @@ class TransformCommand {
     cancel() {
         GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
         if (this.type == "ボーン編集") {
-            for (const target of this.targets) {
-                app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
-                app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
+            for (const armature of this.armatures) {
+                app.scene.runtimeData.armatureData.calculateBaseBoneData(armature);
+                app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(armature);
             }
         } else if (this.type == "メッシュ編集") {
-            for (const target of this.targets) {
-                GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
-                target.editor.createMesh(true);
+            for (const graphicMesh of this.graphicMeshs) {
+                GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv.buffer, app.scene.runtimeData.graphicMeshData.baseVertices.buffer, graphicMesh.editor.imageBBoxBuffer, graphicMesh.objectDataBuffer])],this.workNumX);
+                graphicMesh.editor.createMesh(true);
             }
         }
     }
@@ -172,23 +292,21 @@ class TransformCommand {
                 bone.r = data.r;
             }
         } else {
-            GPU.runComputeShader(setOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.targetBuffer, this.originalBuffer, this.subjectIndexBuffer])], this.workNumX);
-            // GPU.consoleBufferData(this.originalBuffer, ["f32","f32"], "original");
-            // GPU.consoleBufferData(this.targetBuffer, ["f32","f32"], "original");
+            GPU.runComputeShader(setOriginalPipeline, [this.undoWriteGroup], this.workNumX);
             if (this.type == "ボーン編集") {
-                for (const target of this.targets) {
-                    app.scene.runtimeData.armatureData.calculateBaseBoneData(target);
-                    app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(target);
+                for (const armature of this.armatures) {
+                    app.scene.runtimeData.armatureData.calculateBaseBoneData(armature);
+                    app.scene.runtimeData.armatureData.updateCPUDataFromGPUBuffer(armature);
                 }
             } else if (this.type == "メッシュ編集") {
-                for (const target of this.targets) {
-                    GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv,app.scene.runtimeData.graphicMeshData.baseVertices,target.editor.imageBBoxBuffer, target.objectDataBuffer])],this.workNumX);
-                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(target, {vertex: {base: true, uv: true}});
-                    target.editor.createMesh(true);
+                for (const graphicMesh of this.graphicMeshs) {
+                    GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv.buffer, app.scene.runtimeData.graphicMeshData.baseVertices.buffer, graphicMesh.editor.imageBBoxBuffer, graphicMesh.objectDataBuffer])],this.workNumX);
+                    app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(graphicMesh, {vertex: {base: true, uv: true}});
+                    graphicMesh.editor.createMesh(true);
                 }
             } else if (this.type == "ベジェ編集") {
-                for (const target of this.targets) {
-                    app.scene.runtimeData.bezierModifierData.updateCPUDataFromGPUBuffer(target, {base: true});
+                for (const bezierModifier of this.bezierModifiers) {
+                    app.scene.runtimeData.bezierModifierData.updateCPUDataFromGPUBuffer(bezierModifier, {vertex: {base: true}});
                 }
             }
         }
@@ -196,8 +314,8 @@ class TransformCommand {
 }
 
 export class TranslateCommand extends TransformCommand {
-    constructor(type, targets, selectIndexs) {
-        super(type, targets, selectIndexs);
+    constructor(type, targets, options) {
+        super(type, targets, options);
     }
 
     update(value, orientType, proportionalEditType, proportionalSize) {
@@ -224,8 +342,8 @@ export class TranslateCommand extends TransformCommand {
 }
 
 export class ResizeCommand extends TransformCommand {
-    constructor(type, targets, selectIndexs) {
-        super(type, targets, selectIndexs);
+    constructor(type, targets, options) {
+        super(type, targets, options);
     }
 
     update(value, orientType, proportionalEditType, proportionalSize) {
@@ -252,8 +370,8 @@ export class ResizeCommand extends TransformCommand {
 }
 
 export class RotateCommand extends TransformCommand {
-    constructor(type, targets, selectIndexs) {
-        super(type, targets, selectIndexs);
+    constructor(type, targets, options) {
+        super(type, targets, options);
     }
 
     update(value, orientType, proportionalEditType, proportionalSize) {

@@ -15,7 +15,6 @@ export class ContextmenuOperator {
         const area = this.app.activeArea;
         const mode = this.app.appConfig.areasConfig[area.type].mode;
         const menuItems = this.app.appConfig.getContextmenuItems(area.type, mode);
-        // this.creator.create(this.app.dom, menuItems, this.handleMenuSelection.bind(this));
         this.dom.replaceChildren();
         const createItemTag = (object, parent, depth) => {
             /** @type {HTMLElement} */

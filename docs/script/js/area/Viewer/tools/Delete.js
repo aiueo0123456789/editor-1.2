@@ -4,7 +4,7 @@ import { BoneDelete } from "../../../機能/オペレーター/ボーン/編集.
 export class DeleteTool {
     constructor(operator) {
         this.operator = operator;
-        this.targets = app.scene.runtimeData.armatureData.getSelectBone();
+        this.targets = app.scene.state.getSelectBone();
         this.command = new BoneDelete(this.targets);
     }
 

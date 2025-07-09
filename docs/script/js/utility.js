@@ -252,3 +252,27 @@ export function waitUntilFrame(conditionFn) {
         check();
     });
 }
+
+// 値渡し参照渡しか(参照: true, 値: false)
+export function isPassByReference(value) {
+    const type = typeof value;
+
+    // プリミティブ型（値渡し）
+    const isPrimitive = (
+        value === null || // typeof null は "object" になるので例外処理
+        type === "undefined" ||
+        type === "boolean" ||
+        type === "number" ||
+        type === "string" ||
+        type === "symbol" ||
+        type === "bigint"
+    );
+
+    return !isPrimitive; // プリミティブでなければ参照渡し
+}
+
+export function objectInit(object) {
+    for (const key in object) {
+        delete object[key];
+    }
+}

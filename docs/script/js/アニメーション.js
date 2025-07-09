@@ -4,49 +4,53 @@ import { KeyframeBlockManager } from "./オブジェクト/キーフレームブ
 
 export class AnimationBlock {
     constructor(belongObject,useClass) {
-        this.animationBlock = [];
+        this.list = [];
         this.belongObject = belongObject;
         this.useClass = useClass;
 
         this.activeAnimationIndex = 0;
-        this.activeAnimation = null;
+    }
+
+    get activeAnimation() {
+        if (!this.list.length) return null;
+        return this.list[this.activeAnimationIndex];
     }
 
     destroy() {
-        for (const animation of this.animationBlock) {
+        for (const animation of this.list) {
             animation.destroy();
         }
-        this.animationBlock.length = 0;
+        this.list.length = 0;
         this.belongObject = null;
         this.useClass = null;
     }
 
     updateAnimationsIndex() {
-        for (let i = 0; i < this.animationBlock.length; i ++) {
-            this.animationBlock[i].index = i;
+        for (let i = 0; i < this.list.length; i ++) {
+            this.list[i].index = i;
         }
     }
 
     appendAnimation(name = "名称未設定") {
         const animation = new this.useClass(name, this.belongObject);
-        this.animationBlock.push(animation);
-        managerForDOMs.update(this.animationBlock);
-        managerForDOMs.update(this.animationBlock.animationBlock);
+        this.list.push(animation);
+        managerForDOMs.update(this.list);
+        managerForDOMs.update(this.list.animationBlock);
         return animation;
     }
 
     deleteAnimation(animation) {
-        let index = this.animationBlock.indexOf(animation);
+        let index = this.list.indexOf(animation);
         if (index != -1) {
             animation.destroy();
-            this.animationBlock.splice(index,1);
+            this.list.splice(index,1);
         }
-        managerForDOMs.update(this.animationBlock);
-        managerForDOMs.update(this.animationBlock.animationBlock);
+        managerForDOMs.update(this.list);
+        managerForDOMs.update(this.list.animationBlock);
     }
 
     searchAnimation(animationName) {
-        for (const animation of this.animationBlock) {
+        for (const animation of this.list) {
             if (animation.name == animationName) return animation;
         }
         return null;
@@ -57,14 +61,14 @@ export class AnimationBlock {
             const animationData = keyData.transformData;
             const animation = new this.useClass(keyData.name, this.belongObject);
             animation.setAnimationData(animationData);
-            this.animationBlock.push(animation);
+            this.list.push(animation);
         }
     }
 
     async getSaveData() {
         const animationsSaveData = [];
         await Promise.all(
-            this.animationBlock.map(async (animation) => {
+            this.list.map(async (animation) => {
                 animationsSaveData.push({name : animation.name,transformData: await animation.getSaveData()});
             })
         );
@@ -76,13 +80,28 @@ class AnimationBase {
     constructor(name, belongObject) {
         this.id = createID();
         this.name = name;
-        this.index = belongObject.animationBlock.animationBlock.length;
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
 
         this.weight = 0;
 
         this.belongObject = belongObject;
         this.belongAnimationCollector = null;
+    }
+
+    get index() {
+        return this.belongObject.animationBlock.list.indexOf(this);
+    }
+
+    get worldIndex() {
+        return this.belongObject.animationWorldOffset + this.belongObject.MAX_VERTICES * this.index;
+    }
+
+    get worldWeightIndex() {
+        return this.belongObject.runtimeOffsetData.animationWeightOffset + this.index;
+    }
+
+    hasKeyFromFrame() {
+
     }
 
     // gc対象にしてメモリ解放

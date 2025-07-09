@@ -17,11 +17,11 @@ export class BoneExtrudeMoveCommand extends Base {
         /** @type {Bone[]} */
         this.createBones = [];
         targets.forEach(parentBone => {
-            if (parentBone.selectedHead) {
-                this.createBones.push(new Bone(parentBone.armature, parentBone, parentBone.baseHead,[0,0]));
+            if (parentBone.baseHead.selected) {
+                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseHead.co}, baseTail: {co: [0,0]}}));
             }
-            if (parentBone.selectedTail) {
-                this.createBones.push(new Bone(parentBone.armature, parentBone, parentBone.baseTail,[0,0]));
+            if (parentBone.baseTail.selected) {
+                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseTail.co}, baseTail: {co: [0,0]}}));
             }
         });
         this.value = [0,0];
@@ -31,7 +31,7 @@ export class BoneExtrudeMoveCommand extends Base {
     update(value) {
         this.value = [...value];
         this.createBones.forEach(bone => {
-            vec2.add(bone.baseTail,bone.baseHead,this.value);
+            vec2.add(bone.baseTail.co,bone.baseHead.co,this.value);
         });
         for (const armature of this.armatures) {
             app.scene.runtimeData.armatureData.updateBaseData(armature);

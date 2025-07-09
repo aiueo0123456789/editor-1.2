@@ -6,11 +6,7 @@ import { CreatorForUI } from "./UIの自動生成.js";
 
 export class ModalOperator {
     constructor(dom, modals) {
-        if (dom) {
-            this.dom = createTag(dom, "div", {style: "width: 100%; height: 100%; position: absolute; pointerEvents: none;"});
-        } else {
-            this.dom = null;
-        }
+        this.dom = createTag(dom, "div", {style: "width: 100%; height: 100%; position: absolute; pointerEvents: none;"});
         this.modals = modals;
         this.nowModal = null;
         this.creatorForUI = new CreatorForUI();

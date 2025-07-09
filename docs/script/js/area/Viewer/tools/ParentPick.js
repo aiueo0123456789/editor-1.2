@@ -9,13 +9,11 @@ export class ParentPickModal {
         this.command = null;
         this.modal = {
             inputObject: {"values": this.values},
-            struct: {
-                DOM: [
-                    {type: "div", class: "shelfe", children: [
-                        {type: "title", text: "親要素の変更", class: "shelfeTitle"},
-                    ]}
-                ]
-            }
+            DOM: [
+                {type: "div", class: "shelfe", children: [
+                    {type: "title", text: "親要素の変更", class: "shelfeTitle"},
+                ]}
+            ]
         };
         this.activateKey = "p";
     }

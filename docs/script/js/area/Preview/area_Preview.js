@@ -19,6 +19,7 @@ export class Area_Preview {
         this.pixelDensity = 3;
         this.creatorForUI = new CreatorForUI();
         this.struct = {
+            inputObject: {},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option", name: "情報", children: [
@@ -29,7 +30,7 @@ export class Area_Preview {
                 ]}
             ]
         }
-        this.creatorForUI.create(dom, this, {padding: false});
+        this.creatorForUI.create(dom, this.struct, {padding: false});
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
         // this.pixelDensity = this.canvas.height / this.canvasRect.height;
@@ -164,7 +165,7 @@ export class Renderer {
                 for (const graphicMesh of value.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
                     // maskRenderPass.setVertexBuffer(0, graphicMesh.v_meshIndexBuffer);
-                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
                 // 処理の終了と送信
@@ -195,7 +196,7 @@ export class Renderer {
                 if (graphicMesh.isInit) {
                     renderPass.setBindGroup(2, graphicMesh.renderGroup);
                     // renderPass.setVertexBuffer(0, graphicMesh.v_meshIndexBuffer);
-                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.meshBufferOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }

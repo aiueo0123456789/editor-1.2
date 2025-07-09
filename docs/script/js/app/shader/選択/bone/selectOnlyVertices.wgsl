@@ -60,10 +60,6 @@ fn ceilU32(a: u32, b: u32) -> u32 {
     return (a + b - 1u) / b;
 }
 
-fn distance(vertex: vec2<f32>) -> f32 {
-    return distanceSquared2D(point.position, vertex);
-}
-
 fn isNaN(x: f32) -> bool {
     return x != x;
 }
@@ -98,9 +94,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>, @builtin(local_invo
                 if (optionData.add == 0) { // 追加がoffなら
                     clearBit(arrayIndex, bitIndex);
                 }
-                if (isNaN(vertices[vertexIndex].x) || isNaN(vertices[vertexIndex].y)) {
-                } else {
-                    let dist = distance(vertices[vertexIndex]);
+                if (allocation.vertexBufferOffset * groupNum <= vertexIndex && vertexIndex < (allocation.vertexBufferOffset + allocation.MAX_NUM) * groupNum) {
+                    let dist = distanceSquared2D(vertices[vertexIndex], point.position);
                     if (dist < localMinDist) {
                         localMinDist = dist;
                         localMinIndex = vertexIndex;
@@ -111,19 +106,46 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>, @builtin(local_invo
         }
         // 範囲外スレッドの値を安全に無効化
         let i32Dist = f32_to_i32(localMinDist);
-        if (i32Dist < atomicLoad(&workgroupAtomicBuffer.dist)) {
-            atomicStore(&workgroupAtomicBuffer.dist, i32Dist);
-            atomicStore(&workgroupAtomicBuffer.index, localMinIndex);
+        // if (i32Dist < atomicLoad(&workgroupAtomicBuffer.dist)) {
+        //     atomicStore(&workgroupAtomicBuffer.dist, i32Dist);
+        //     atomicStore(&workgroupAtomicBuffer.index, localMinIndex);
+        // }
+        loop {
+            let current = atomicLoad(&workgroupAtomicBuffer.dist);
+            if (i32Dist < current) {
+                let exchanged = atomicCompareExchangeWeak(&workgroupAtomicBuffer.dist, current, i32Dist);
+                if (exchanged.exchanged) {
+                    // dist の更新に成功したスレッドだけが index も更新
+                    atomicStore(&workgroupAtomicBuffer.index, localMinIndex);
+                    break;
+                }
+            } else {
+                break;
+            }
         }
     }
     workgroupBarrier();
-     // ストレージバッファへの書き込みを安全に実行
+    // ストレージバッファへの書き込みを安全に実行
     if (local_id.x == 0u) {
         let workgroupFinalDist = atomicLoad(&workgroupAtomicBuffer.dist);
         let workgroupFinalIndex = atomicLoad(&workgroupAtomicBuffer.index);
-        if (workgroupFinalDist < atomicLoad(&atomicBuffer.dist)) {
-            atomicStore(&atomicBuffer.dist, workgroupFinalDist);
-            atomicStore(&atomicBuffer.index, workgroupFinalIndex);
+        // if (workgroupFinalDist < atomicLoad(&atomicBuffer.dist)) {
+        //     atomicStore(&atomicBuffer.dist, workgroupFinalDist);
+        //     atomicStore(&atomicBuffer.index, workgroupFinalIndex);
+        // }
+        loop {
+            let current = atomicLoad(&atomicBuffer.dist);
+            if (workgroupFinalDist < current) {
+                let exchanged = atomicCompareExchangeWeak(&atomicBuffer.dist, current, workgroupFinalDist);
+                if (exchanged.exchanged) {
+                    // distの更新に成功した場合のみindexを更新
+                    atomicStore(&atomicBuffer.index, workgroupFinalIndex);
+                    break;
+                }
+                // 失敗したらループして再試行
+            } else {
+                break;
+            }
         }
     }
     workgroupBarrier();

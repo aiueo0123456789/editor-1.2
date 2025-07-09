@@ -15,17 +15,15 @@ export class KeyTranslate {
         ];
         this.modal = {
             inputObject: {"value": this.values},
-            struct: {
-                DOM: [
-                    {type: "div", class: "shelfe", children: [
-                        {type: "title", text: "TranslateModal", class: "shelfeTitle"},
-                        {type: "input", label: "x", withObject: {object: "value", parameter: "0"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
-                        {type: "input", label: "y", withObject: {object: "value", parameter: "1"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
-                        {type: "input", label: "スムーズ", withObject: {object: "value", parameter: "2"}, options: {type: "number",min: 0, max: 2}},
-                        {type: "input", label: "半径", withObject: {object: "value", parameter: "3"}, options: {type: "number",min: 0, max: 10000}},
-                    ]}
-                ]
-            }
+            DOM: [
+                {type: "div", class: "shelfe", children: [
+                    {type: "title", text: "TranslateModal", class: "shelfeTitle"},
+                    {type: "input", label: "x", withObject: {object: "value", parameter: "0"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
+                    {type: "input", label: "y", withObject: {object: "value", parameter: "1"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
+                    {type: "input", label: "スムーズ", withObject: {object: "value", parameter: "2"}, options: {type: "number",min: 0, max: 2}},
+                    {type: "input", label: "半径", withObject: {object: "value", parameter: "3"}, options: {type: "number",min: 0, max: 10000}},
+                ]}
+            ]
         };
         this.activateKey = "g";
 

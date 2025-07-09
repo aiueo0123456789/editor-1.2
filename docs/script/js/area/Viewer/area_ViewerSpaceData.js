@@ -18,6 +18,7 @@ export class ViewerSpaceData {
         this.proportionalSize = 100;
 
         this.weightEditBoneIndex = 0;
+        this.weightBezierType = 0;
         this.weightEditBoneIndexBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
         this.targetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.weightEditBoneIndexBuffer]);
         this.cTargetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.weightEditBoneIndexBuffer]);

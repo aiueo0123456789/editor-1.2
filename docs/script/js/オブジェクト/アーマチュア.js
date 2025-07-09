@@ -1,66 +1,86 @@
 import { GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
-import { createID } from "../UI/制御.js";
 import { ObjectBase, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { createArrayN, indexOfSplice } from "../utility.js";
+import { indexOfSplice } from "../utility.js";
 import { Attachments } from "./アタッチメント/attachments.js";
 import { app } from "../app.js";
 import { KeyframeBlockManager } from "./キーフレームブロック管理.js";
+import { managerForDOMs } from "../UI/制御.js";
 
-class Color {
-    constructor(color = [0,0,0,1]) {
-        this.color = color;
-        this.colorBuffer = GPU.createUniformBuffer(16, undefined, ["f32"]);
-        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
-        this.group = GPU.createGroup(GPU.getGroupLayout("Fu"), [this.colorBuffer]);
+class Vertex {
+    constructor(/** @type {Bone} */bone,data) {
+        this.bone = bone;
+        this.co = data.co;
+        this.typeIndex = data.typeIndex;
+        this.selected = false;
     }
 
-    setColor(r,g,b,a = 1) {
-        this.color = [r,g,b,a];
-        GPU.writeBuffer(this.colorBuffer, new Float32Array(this.color));
+    setCoordinate(newCoordinate) {
+        this.co[0] = newCoordinate[0];
+        this.co[1] = newCoordinate[1];
+        managerForDOMs.update(this.co)
     }
 
-    getRGB() {
-        return this.color.slice(0,3);
+    get worldIndex() {
+        return this.bone.worldIndex * 2 + this.typeIndex;
+    }
+
+    get localIndex() {
+        return this.bone.localIndex * 2 + this.typeIndex;
+    }
+
+    getSaveData() {
+        return {
+            co: this.co,
+        }
     }
 }
 
 export class Bone {
-    constructor(armature, parent = null, baseHead, baseTail, animations = {blocks: []}) {
+    // constructor(armature, index = armature.allBone.length, parent = null, baseHead, baseTail, animations = {blocks: []}) {
+    constructor(armature, data) {
         this.type = "ボーン";
         this.name = "名称未設定";
-        this.id = createID();
+        if (!data.index) data.index = armature.allBone.length;
         /** @type {Armature} */
         this.armature = armature;
-        // armature.allBone.push(this);
-        this.parent = parent;
-        if (parent) {
-            parent.childrenBone.push(this)
+        this.parent = data.parent;
+        if (this.parent) {
+            this.parent.childrenBone.push(this)
         } else {
             armature.root.push(this);
         }
-        this.index = -1;
-        armature.appendBone(this);
+        this.index = data.index;
+        armature.setBone(this);
         /** @type {Bone[]} */
         this.childrenBone = [];
         this.color = [0,0,0,1];
         // this.color = [Math.random(),Math.random(),Math.random(),1];
 
-        this.baseHead = [...baseHead];
-        this.baseTail = [...baseTail];
+        // this.baseHead = [...baseHead];
+        // this.baseTail = [...baseTail];
+        this.baseHead = new Vertex(this, Object.assign({typeIndex: 0}, data.baseHead));
+        this.baseTail = new Vertex(this, Object.assign({typeIndex: 1}, data.baseTail));
 
         this.selectedBone = false;
-        this.selectedHead = false;
-        this.selectedTail = false;
 
         this.x = 0;
         this.y = 0;
         this.sx = 0;
         this.sy = 0;
         this.r = 0;
-        this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"], animations);
+        this.attachments = new Attachments();
+        this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"], data.animations);
 
         this.matrix = new Float32Array(4 * 3);
+    }
+
+    get localIndex() {
+        return this.armature.allBone.indexOf(this);
+    }
+
+    get worldIndex() {
+        return this.armature.vertexBufferOffset + this.armature.allBone.indexOf(this);
     }
 
     async getWorldMatrix() {
@@ -85,8 +105,8 @@ export class Bone {
         return {
             index: this.index,
             parentIndex: this.parent ? this.parent.index : -1,
-            baseHead: this.baseHead,
-            baseTail: this.baseTail,
+            baseHead: this.baseHead.getSaveData(),
+            baseTail: this.baseTail.getSaveData(),
             animations: this.keyframeBlockManager.getSaveData(),
             childrenBone: this.childrenBone.map(bone => bone.getSaveData()),
         };
@@ -94,14 +114,15 @@ export class Bone {
 }
 
 export class Armature extends ObjectBase {
+    static VERTEX_LEVEL = 2; // 小オブジェクトごとに何個の頂点を持つか
     constructor(name, id, data) {
         super(name, "アーマチュア", id);
+        this.runtimeData = app.scene.runtimeData.armatureData;
 
         this.MAX_BONES = app.appConfig.MAX_BONES_PER_ARMATURE;
         this.vertexBufferOffset = 0;
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
-        this.allocationIndex = 0;
 
         this.BBox = {min: [0,0], max: [0,0]};
         this.BBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
@@ -130,6 +151,29 @@ export class Armature extends ObjectBase {
         this.attachments = new Attachments(this);
 
         this.init(data);
+
+        // managerForDOMs.set({o: this, i: "MAX_BONES"}, null, () => {app.scene.runtimeData.updateAllocation()});
+    }
+
+    get MAX_VERTICES() {
+        return this.MAX_BONES * 2;
+    }
+
+    get VERTEX_OFFSET() {
+        return this.vertexBufferOffset * 2;
+    }
+
+    get animationWorldOffset() {
+        return this.animationBufferOffset * Armature.VERTEX_LEVEL;
+    }
+
+    getBoneIndexFromBoneID(id) {
+        for (const bone of this.allBone) {
+            if (id = bone.id) {
+                return bone;
+            }
+        }
+        return null;
     }
 
     getSelectBones() {
@@ -153,11 +197,15 @@ export class Armature extends ObjectBase {
         return index;
     }
 
-    insertBone(bone, insertIndex) {
-        this.allBone.splice(insertIndex, 0, bone);
-        this.fixBoneIndex();
+    // indexを指定してbone追加する
+    setBone(bone) {
+        if (bone.index > this.allBone.length) {
+            this.allBone.length = bone.index;
+        }
+        this.allBone[bone.index] = bone;
     }
 
+    // boneを追加してindexを再計算する
     appendBone(bone) {
         this.allBone.push(bone);
         this.fixBoneIndex();
@@ -173,12 +221,12 @@ export class Armature extends ObjectBase {
         this.boneNum = data.boneNum;
         this.propagateBuffers = [];
 
-        app.scene.runtimeData.armatureData.prepare(this);
+        // app.scene.runtimeData.armatureData.prepare(this);
+        app.scene.runtimeData.append(app.scene.runtimeData.armatureData, this);
 
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
-                // const childBone = new Bone(this, child.index, parent, child.baseHead, child.baseTail, child.animations);
-                const childBone = new Bone(this, parent, child.baseHead, child.baseTail, child.animations);
+                const childBone = new Bone(this, Object.assign(child, {parent: parent}));
                 roopChildren(child.childrenBone, childBone, depth + 1);
             }
         }

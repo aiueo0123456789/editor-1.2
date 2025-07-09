@@ -3,12 +3,11 @@ import { appendAnimationToObject, deleteAnimationToObject } from "../../オブ�
 import { CreatorForUI } from "../補助/UIの自動生成.js";
 
 export class Area_Hierarchy {
-    constructor(/** @type {HTMLElement} */dom) {
-        this.dom = dom;
-
-        this.inputObject = {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]};
+    constructor(area) {
+        this.dom = area.main;
 
         this.struct = {
+            inputObject: {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
             DOM: [
                 {type: "option", name: "情報", children: [
                     {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
@@ -51,7 +50,7 @@ export class Area_Hierarchy {
                     activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: {object: "h/root"}, loopTarget: "children/objects", structures: [
                     {type: "gridBox", axis: "c", allocation: "auto auto 50% 1fr 20%", children: [
                         {type: "input", name: "visibleCheck", withObject: {object: "", parameter: "visible"}, options: {type: "checkbox", look: "eye-icon"}},
-                        {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                        {type: "icon-img", name: "icon", withObject: "/type"},
                         {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                         {type: "padding", size: "10px"},
                         {type: "input", withObject: {object: "", parameter: "zIndex"}, options: {type: "number", min: 0, max: 100, step: 1}, custom: {visual: "1"}},
@@ -90,7 +89,7 @@ export class Area_Hierarchy {
                 //             for (const animation of animations) {
                 //                 deleteAnimationToObject(app.scene.state.activeObject, animation);
                 //             }
-                //         }, withObject: {object: "animationBlock/animationBlock"}, options: {type: "min", selectSource: {object: "areaConfig/selectAnimations"}, activeSource: {object: "areaConfig", parameter: "activeAnimation"}}, liStruct:[
+                //         }, withObject: {object: "animationBlock/list"}, options: {type: "min", selectSource: {object: "areaConfig/selectAnimations"}, activeSource: {object: "areaConfig", parameter: "activeAnimation"}}, liStruct:[
                 //             // {type: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
                 //             {type: "gridBox", axis: "c", allocation: "50% 1fr", children: [
                 //                 // {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
@@ -106,8 +105,8 @@ export class Area_Hierarchy {
             }
         };
 
-        this.creator = new CreatorForUI();
-        this.creator.create(dom, this);
+        this.creatorForUI = area.creatorForUI;
+        this.creatorForUI.create(area.main, this.struct);
 
         this.update();
     }

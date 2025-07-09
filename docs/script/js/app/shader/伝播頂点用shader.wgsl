@@ -113,7 +113,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         return ;
     }
 
-    let weightBlockIndex = allocation.vertexBufferOffset + vertexIndex;
     let fixVertexIndex = allocation.vertexBufferOffset * 3 + vertexIndex;
     let targetVertices = select(vec2<f32>(0.0), renderingBezier[fixVertexIndex], allocation.myType == 2u);
     // var newPosition = targetVertices;
@@ -141,10 +140,12 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         let rotatePosition = rotate2D(targetVertices + (position2 - position1) - position2, calculateRotation(normal1, normal2));
         newPosition = rotatePosition + position2;
     } else if (allocation.parentType == 3) { // 親がアーマチュア
-        let weightBlock = bezierWeightBlocks[weightBlockIndex];
+        let weightBlock = bezierWeightBlocks[fixVertexIndex];
         let position = vec3<f32>(targetVertices,1.0);
         let indexs = weightBlock.indexs;
         let weights = weightBlock.weights;
+        // let indexs = vec4<u32>(6u,0u,0u,0u);
+        // let weights = vec4<f32>(1.0,0.0,0.0,0.0);
         // 各ボーンのワールド行列を用いてスキニング
         for (var i = 0u; i < 4u; i = i + 1u) {
             let weight = weights[i];

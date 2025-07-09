@@ -3,12 +3,11 @@ import { appendAnimationToObject, deleteAnimationToObject } from "../../オブ�
 import { CreatorForUI } from "../補助/UIの自動生成.js";
 
 export class Area_Property {
-    constructor(/** @type {HTMLElement} */dom) {
-        this.dom = dom;
-
-        this.inputObject = {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"], "app": app};
+    constructor(area) {
+        this.dom = area.main;
 
         this.struct = {
+            inputObject: {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"], "app": app},
             DOM: [
                 {type: "section", name: "アニメーション", children: [
                     {type: "input", label: "開始", withObject: {object: "scene", parameter: "frame_start"}, options: {type: "number", min: 0, max: 1000, step: 1}},
@@ -32,8 +31,8 @@ export class Area_Property {
             ],
         };
 
-        this.creator = new CreatorForUI();
-        this.creator.create(dom, this);
+        this.creatorForUI = area.creatorForUI;
+        this.creatorForUI.create(area.main, this.struct);
 
         this.update();
     }

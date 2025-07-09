@@ -2,8 +2,7 @@ import { device,GPU } from "../webGPU.js";
 import { Children } from "../子要素.js";
 import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
 import { vec2 } from "../ベクトル計算.js";
-import { BBox } from "../BBox.js";
-import { ObjectBase, ObjectEditorBase, setBaseBBox, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
+import { ObjectBase, ObjectEditorBase, setParentModifierWeight, sharedDestroy } from "./オブジェクトで共通の処理.js";
 
 class Editor extends ObjectEditorBase {
     constructor(modifier) {
@@ -115,7 +114,6 @@ export class Modifier extends ObjectBase {
         this.isChange = true;
 
         this.setBindGroup();
-        setBaseBBox(this);
     }
 
     setChildrenBBox() {

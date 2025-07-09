@@ -22,7 +22,7 @@
 }
 
 .ui_container_0 {
-    background-color: var(--color3);
+    /* background-color: var(--color3); */
     gap: 5px;
     padding: 5px;
     width: 100%;
@@ -38,7 +38,7 @@
 }
 
 .ui_container_1 {
-    background-color: var(--color3);
+    /* background-color: var(--color3); */
     gap: 5px;
     padding: 5px;
     height: fit-content;
@@ -202,4 +202,31 @@ canvas {
 .shelfe .shelfeTitle {
     background-color: #686868;
     padding: 3px;
+}
+
+.sideBar {
+    height: 100%;
+    padding: 4px;
+    padding-left: 0px;
+    display: flex;
+    flex-flow: column;
+    gap: 4px;
+    background-color: var(--color3);
+    border-radius: 0px;
+}
+.sideBar-toolTitle {
+    padding: 5px 0px;
+    border: solid rgb(86, 86, 86) 1px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+.sideBar-shelfe {
+    /* position: absolute; */
+    margin: 0 0 0 auto;
+    display: flex;
+    flex-flow: column;
+    width: fit-content;
+    pointer-events: all;
+    padding: 5px;
+    gap: 3px;
 }

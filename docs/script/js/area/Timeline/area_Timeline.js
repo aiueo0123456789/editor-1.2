@@ -160,8 +160,8 @@ function update(object, groupID, others, DOMs) {
 }
 
 export class Area_Timeline {
-    constructor(/** @type {HTMLElement} */dom) {
-        this.dom = dom;
+    constructor(area) {
+        this.dom = area.main;
         this.spaceData = app.appConfig.areasConfig["Timeline"];
 
         this.camera = [0,0];
@@ -170,14 +170,14 @@ export class Area_Timeline {
 
         this.selectedOnly = false;
 
-        this.inputObject = {"areasConifg": app.appConfig.areasConfig, "h": app.hierarchy, "scene": app.scene, "animationPlayer": app.animationPlayer};
-
+        
         this.spaceData.mode = "select";
         this.spaceData.mode = "move";
-
+        
         this.frameBarDrag = false;
-
+        
         this.struct = {
+            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.hierarchy, "scene": app.scene, "animationPlayer": app.animationPlayer},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option",style: "height: 25px;", name: "情報", children: [
@@ -197,7 +197,7 @@ export class Area_Timeline {
                     {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "c", allocation: "20% 1fr", name: "", children: [
                         {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "r", allocation: "auto 1fr", name: "", children: [
                             {type: "input", options: {type: "text"}},
-                            {type: "path", sourceObject: {function: {object: "scene/runtimeData/armatureData", function: "getSelectBone"}}, updateEventTarget: "ボーン選択", children: [
+                            {type: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBone", updateEventTarget: "ボーン選択", children: [
                                 {type: "hierarchy", name: "hierarchy",
                                 options: {
                                     arrange: false,
@@ -216,22 +216,22 @@ export class Area_Timeline {
                                     activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                                 },
                                 withObject: {object: ""},
-                                loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/animationBlock","keyframeBlockManager"]}},
+                                loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/list","keyframeBlockManager"]}},
                                 structures: [
-                                    {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "キーフレームブロック"},
+                                    {type: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
                                     true: [
                                         {type: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
-                                            {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                                            {type: "icon-img", name: "icon", withObject: "/type"},
                                             {type: "input", withObject: {object: "", parameter: "visible"}, options: {type: "checkbox", look: "eye-icon"}},
                                             {type: "padding", size: "10px"},
                                             {type: "dbInput", withObject: {object: "", parameter: "targetValue"}, options: {type: "text"}},
                                         ]}
                                     ],
                                     false: [
-                                        {type: "if", formula: {source: {object: "", parameter: "type"}, conditions: "==", value: "ボーン"},
+                                        {type: "if", formula: {source: "/type", conditions: "==", value: "ボーン"},
                                         true: [
                                             {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                                                {type: "icon-img", name: "icon", withObject: "/type"},
                                                 {type: "padding", size: "10px"},
                                                 {type: "dbInput", withObject: {object: "", parameter: "index"}, options: {type: "text"}},
                                                 // {type: "dbInput", withObject: {object: "", parameter: "id"}, options: {type: "text"}},
@@ -239,7 +239,7 @@ export class Area_Timeline {
                                         ],
                                         false: [
                                             {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                {type: "icon-img", name: "icon", withObject: {object: "", parameter: "type"}},
+                                                {type: "icon-img", name: "icon", withObject: "/type"},
                                                 {type: "padding", size: "10px"},
                                                 {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
                                             ]}
@@ -259,13 +259,13 @@ export class Area_Timeline {
             }
         };
 
-        this.creator = new CreatorForUI();
-        this.creator.create(dom, this, {padding: false});
+        this.creatorForUI = area.creatorForUI;
+        this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creator.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize});
 
         /** @type {HTMLElement} */
-        this.canvas = this.creator.getDOMFromID("timelineCanvasForGrid");
+        this.canvas = this.creatorForUI.getDOMFromID("timelineCanvasForGrid");
         this.canvasRect = this.canvas.getBoundingClientRect();
         this.context = this.canvas.getContext("2d");//2次元描画
 
