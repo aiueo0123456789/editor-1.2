@@ -183,14 +183,14 @@ export class Area_Timeline {
                     {type: "option",style: "height: 25px;", name: "情報", children: [
                         {type: "gridBox", style: "height: fit-content;", axis: "c", allocation: "auto 1fr auto", children: [
                             {type: "gridBox", axis: "c", allocation: "auto auto", children: [
-                                {type: "input", name: "isPlaying", withObject: {object: "animationPlayer", parameter: "isPlaying"}, options: {type: "checkbox", look: "isPlaying"}},
+                                {type: "input", name: "isPlaying", withObject: "animationPlayer/isPlaying", options: {type: "checkbox", look: "isPlaying"}},
                                 {type: "button", name: "skip", options: {type: "checkbox", look: "skip"}},
                             ]},
                             {type: "padding", size: "10px"},
                             {type: "gridBox", axis: "c", allocation: "auto auto auto", children: [
-                                {type: "input", label: "現在", name: "frame_current", withObject: {object: "scene", parameter: "frame_current"}, options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "開始", name: "frame_start", withObject: {object: "scene", parameter: "frame_start"}, options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "終了", name: "frame_end", withObject: {object: "scene", parameter: "frame_end"}, options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                                {type: "input", label: "現在", name: "frame_current", withObject: "scene/frame_current", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                                {type: "input", label: "開始", name: "frame_start", withObject: "scene/frame_start", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                                {type: "input", label: "終了", name: "frame_end", withObject: "scene/frame_end", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
                             ]},
                         ]}
                     ]},
@@ -215,16 +215,16 @@ export class Area_Timeline {
                                     },
                                     activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                                 },
-                                withObject: {object: ""},
+                                withObject: "/",
                                 loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/list","keyframeBlockManager"]}},
                                 structures: [
                                     {type: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
                                     true: [
                                         {type: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
                                             {type: "icon-img", name: "icon", withObject: "/type"},
-                                            {type: "input", withObject: {object: "", parameter: "visible"}, options: {type: "checkbox", look: "eye-icon"}},
+                                            {type: "input", withObject: "/visible", options: {type: "checkbox", look: "eye-icon"}},
                                             {type: "padding", size: "10px"},
-                                            {type: "dbInput", withObject: {object: "", parameter: "targetValue"}, options: {type: "text"}},
+                                            {type: "dbInput", withObject: "/targetValue", options: {type: "text"}},
                                         ]}
                                     ],
                                     false: [
@@ -233,7 +233,7 @@ export class Area_Timeline {
                                             {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
                                                 {type: "icon-img", name: "icon", withObject: "/type"},
                                                 {type: "padding", size: "10px"},
-                                                {type: "dbInput", withObject: {object: "", parameter: "index"}, options: {type: "text"}},
+                                                {type: "dbInput", withObject: "/index", options: {type: "text"}},
                                                 // {type: "dbInput", withObject: {object: "", parameter: "id"}, options: {type: "text"}},
                                             ]}
                                         ],
@@ -241,7 +241,7 @@ export class Area_Timeline {
                                             {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
                                                 {type: "icon-img", name: "icon", withObject: "/type"},
                                                 {type: "padding", size: "10px"},
-                                                {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                                                {type: "dbInput", withObject: "/name", options: {type: "text"}},
                                             ]}
                                         ]}
                                     ]}

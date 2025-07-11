@@ -8,31 +8,36 @@ import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle 
 import { app } from "../app.js";
 
 class Vertex {
-    constructor(/** @type {GraphicMesh} */ graphicMesh, index = graphicMesh.allVertices.length, base, uv, parentWeight = {indexs: [0,0,0,0], weights: [0,0,0,0]}) {
+    constructor(/** @type {GraphicMesh} */ graphicMesh, data) {
+        if (!data.index) {
+            data.index = graphicMesh.allVertices.length;
+        }
+        if (!data.parentWeight) {
+            data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]}
+        }
         this.type = "頂点";
-        this.index = index;
+        this.index = data.index;
         this.selected = false;
         this.graphicMesh = graphicMesh;
-        this.base = [...base];
-        this.uv = [...uv];
+        this.base = [...data.base];
+        this.uv = [...data.uv];
         let maxIndex = -1;
         for (let i = 0; i < 4; i ++) {
-            if (parentWeight.weights[i] > 0.85) {
+            if (data.parentWeight.weights[i] > 0.85) {
                 maxIndex = i;
             }
         }
         if (maxIndex != -1) {
             for (let i = 0; i < 4; i ++) {
                 if (maxIndex == i) {
-                    parentWeight.weights[i] = 1;
+                    data.parentWeight.weights[i] = 1;
                 } else {
-                    parentWeight.weights[i] = 0;
+                    data.parentWeight.weights[i] = 0;
                 }
             }
         }
-        this.parentWeight = parentWeight;
+        this.parentWeight = data.parentWeight;
         this.updated = true;
-        graphicMesh.allVertices.push(this);
     }
 
     get localIndex() {
@@ -127,9 +132,9 @@ class Editor extends ObjectEditorBase {
         // this.setVerticesData(result.vertices, result.uv);
         this.graphicMesh.allVertices.length = 0;
         for (let i = 0; i < result.vertices.length; i ++) {
-            new Vertex(this.graphicMesh,undefined,result.vertices[i],result.uv[i]);
+            this.graphicMesh.allVertices.push(new Vertex(this.graphicMesh, {base: result.vertices[i], uv: result.uv[i]}));
         }
-        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh, undefined, undefined);
+        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
         this.setBaseSilhouetteEdges(result.edges)
         this.createMesh(true);
         app.options.assignWeights(this.graphicMesh);
@@ -173,16 +178,22 @@ class Editor extends ObjectEditorBase {
         }
     }
 
-    appendBaseEdge(edge) {
+    hasEdge(edge) {
         for (const edge_ of this.baseEdges) {
             if (
                 edge[0] == edge_[0] && edge[1] == edge_[1] ||
                 edge[0] == edge_[1] && edge[1] == edge_[0]
             ) {
-                return false;
+                return true;
             }
         }
+        return false;
+    }
+
+    appendBaseEdge(edge) {
+        if (this.hasEdge(edge)) return ;
         this.baseEdges.push(edge);
+        this.createMesh(true);
     }
 
     deleteBaseEdge(edge) {
@@ -195,6 +206,7 @@ class Editor extends ObjectEditorBase {
                 this.baseEdges.splice(i, 1);
             }
         }
+        this.createMesh(true);
     }
 
     // 頂点たちからUV
@@ -234,6 +246,22 @@ class Editor extends ObjectEditorBase {
 
         this.graphicMesh.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
         this.graphicMesh.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.objectDataBuffer, this.graphicMesh.textureView]);
+    }
+
+    createVertex(coordinate) {
+        return new Vertex(this.graphicMesh, {base: coordinate, uv: this.calculatWorldPositionToUV(coordinate)});
+    }
+
+    appendVertex(vertex) {
+        this.graphicMesh.allVertices.push(vertex);
+        this.createMesh(true);
+        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
+    }
+
+    deleteVertex(vertex) {
+        indexOfSplice(this.graphicMesh.allVertices, vertex)
+        this.createMesh(true);
+        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
     }
 }
 
@@ -334,22 +362,9 @@ export class GraphicMesh extends ObjectBase {
         this.verticesNum = data.vertices.length;
         this.meshesNum = data.meshes.length;
 
-        // let weightGroupData = [];
-        // if (data.modifierEffectData) {
-        //     if (data.modifierEffectData.type == "u32*4,f32*4") {
-        //         weightGroupData = data.modifierEffectData.data;
-        //     } else if (data.modifierEffectData.type == "u32,f32") {
-        //         for (let i = 0; i < data.modifierEffectData.data.length; i += 2) {
-        //             weightGroupData.push(
-        //                 data.modifierEffectData.data[i],0,0,0,
-        //                 data.modifierEffectData.data[i + 1],0,0,0
-        //             );
-        //         }
-        //     }
-        // }
         console.log(data)
         for (const vertex of data.vertices) {
-            new Vertex(this, undefined, vertex.base, vertex.uv, vertex.parentWeight);
+            this.allVertices.push(new Vertex(this, vertex));
             for (const weight of vertex.parentWeight.weights) {
                 if (weight != 0) {
                     this.autoWeight = false;

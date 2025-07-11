@@ -20,7 +20,7 @@ export class BoneAttachmentsModal {
                                 for (const animation of animations) {
                                     // deleteAnimationToObject(app.scene.state.activeObject, animation);
                                 }
-                            }, withObject: {object: "0/attachments/list"}, options: {}, liStruct:[
+                            }, withObject: "0/attachments/list", options: {}, liStruct:[
                                 {type: "if", formula: {source: "/type", conditions: "==", value: "物理アタッチメント"},
                                     true: [
                                         {type: "section", name: "物理アタッチメント", children: [

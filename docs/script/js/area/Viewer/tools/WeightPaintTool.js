@@ -7,7 +7,8 @@ import { ModalOperator } from "../../補助/ModalOperator.js";
 export class WeightPaintModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
-        this.command = new WeightPaintCommand(app.scene.state.activeObject, app.appConfig.areasConfig["Viewer"].weightEditBoneIndex, 1, 1, 100);
+        console.log(app.appConfig.areasConfig["Viewer"].weightPaintMetaData)
+        this.command = new WeightPaintCommand(app.scene.state.activeObject, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.boneIndex, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue, 1, 100, 1);
         this.values = [
             0,0, // スライド量
         ];
@@ -15,9 +16,9 @@ export class WeightPaintModal {
             inputObject: {"value": this.values},
             DOM: [
                 {type: "div", class: "shelfe", children: [
-                    {type: "title", text: "TranslateModal", class: "shelfeTitle"},
-                    {type: "input", label: "x", withObject: {object: "value", parameter: "0"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
-                    {type: "input", label: "y", withObject: {object: "value", parameter: "1"}, options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
+                    {type: "title", text: "PainteModal", class: "shelfeTitle"},
+                    {type: "input", label: "x", withObject: "value/0", options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
+                    {type: "input", label: "y", withObject: "value/1", options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
                 ]}
             ]
         };

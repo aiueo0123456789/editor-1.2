@@ -22,6 +22,8 @@ import { ToolsBarOperator } from '../補助/ToolsBarOperator.js';
 import { BoneAttachmentsModal } from './アーマチュア/アタッチメント.js';
 import { BonePropertyModal } from './アーマチュア/ボーン.js';
 import { ArmaturePropertyModal } from './アーマチュア/アーマチュア.js';
+import { EdgeJoinTool } from './tools/EdgeJoin.js';
+import { AppendVertex } from './tools/appendVertex.js';
 
 // const renderGridPipeline = GPU.createRenderPipeline([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/wgsl/レンダー/グリッド/v_グリッド.wgsl').then(x => x.text()),await fetch('./script/wgsl/レンダー/グリッド/f_グリッド.wgsl').then(x => x.text()), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
@@ -67,8 +69,6 @@ export class Area_Viewer {
                     {type: "option", style: "padding: 5px", class: "sharpBoder", name: "情報", children: [
                         {type: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
                             {type: "flexBox", interval: "10px", allocation: "auto auto auto auto auto 1fr", children: [
-                                // {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: "areasConfig/tozols"}},
-                                // {type: "path", sourceObject: {object: "areasConfig/modes", parameter: {object: "scene/state/activeObject", parameter: "type"}}, updateEventTarget: {object: "scene/state/activeObject"}, children: [
                                 {type: "path", sourceObject: "areasConfig/modes/{scene/state/activeObject/type}", updateEventTarget: "アクティブオブジェクト", children: [
                                     {type: "select", name: "visibleCheck", label: "tool", writeObject: {object: "areasConfig", parameter: "useTool"}, sourceObject: {object: ""}},
                                 ]},
@@ -78,7 +78,7 @@ export class Area_Viewer {
                                 ]},
         
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects", customIndex: ["graphicMesh", "armature", "bezierModifier", "grid"]}},
+                                    {type: "checks", name: "aa", icon: "test", label: "test", options: {textContent: "test"}, withObject: {object: "o/visibleObjects"}, customIndex: ["graphicMesh", "armature", "bezierModifier", "grid"]},
                                 ]},
                             ]},
                             {type: "padding", size: "10px"},
@@ -88,15 +88,15 @@ export class Area_Viewer {
                                     {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
                                         {type: "padding", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "input", label: "値", name: "value", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                            {type: "input", label: "値", name: "value", withObject: "areasConfig/weightPaintMetaData/weightValue", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
                                         ]},
                                         {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "select", label: "ベジェの種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1]},
+                                            {type: "select", label: "ベジェの種類", name: "weightBezierType", label: "areasConfig/weightPaintMetaData", writeObject: {object: "areasConfig", parameter: "weightBezierType"}, sourceObject: [0,1]},
                                         ]},
                                         {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "input", label: "影響範囲", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                            {type: "input", label: "影響範囲", name: "proportionalSize", withObject: "areasConfig/weightPaintMetaData/proportionalSize", options: {type: "number", min: 0}, custom: {visual: "1"}},
                                         ]},
                                         {type: "padding", size: "10px"},
                                     ]},
@@ -108,11 +108,11 @@ export class Area_Viewer {
                                         ]},
                                         {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "select", label: "種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: {object: "areasConfig", parameter: "proportionalEditType"}, sourceObject: [0,1,2]},
+                                            {type: "select", label: "種類", name: "proportionalEditType", label: "proportionalEditType", writeObject: "areasConfig/proportionalEditType", sourceObject: [0,1,2]},
                                         ]},
                                         {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "input", label: "影響範囲", name: "proportionalSize", withObject: {object: "areasConfig", parameter: "proportionalSize"}, options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                            {type: "input", label: "影響範囲", name: "proportionalSize", withObject: "areasConfig/proportionalSize", options: {type: "number", min: 0}, custom: {visual: "1"}},
                                         ]},
                                         {type: "padding", size: "10px"},
                                     ]},
@@ -133,7 +133,7 @@ export class Area_Viewer {
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
         this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer"), [ArmaturePropertyModal,BonePropertyModal,BoneAttachmentsModal]);
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
@@ -179,7 +179,9 @@ export class Area_Viewer {
     }
 
     async keyInput(/** @type {InputManager} */ inputManager) {
-        let consumed = await this.modalOperator.keyInput(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        this.inputs.keysDown = inputManager.keysDown;
+        this.inputs.keysPush = inputManager.keysPush;
+        let consumed = await this.modalOperator.keyInput(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
         const state = app.scene.state;
         if (state.activeObject) {
@@ -277,17 +279,17 @@ export class Area_Viewer {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.scene.state.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
                 const bone = app.scene.runtimeData.armatureData.getSelectBone();
-                changeParameter(this.areasConfig, "weightEditBoneIndex", bone[0].index);
+                changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
             } else {
-                this.modalOperator.setModal(WeightPaintModal);
+                this.modalOperator.setModal(WeightPaintModal, this.inputs);
             }
         } else if (state.currentMode == "ベジェウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.scene.state.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
                 const bone = app.scene.runtimeData.armatureData.getSelectBone();
-                changeParameter(this.areasConfig, "weightEditBoneIndex", bone[0].index);
+                changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
             } else {
-                this.modalOperator.setModal(WeightPaintModal);
+                this.modalOperator.setModal(WeightPaintModal, this.inputs);
             }
         }
     }

@@ -93,7 +93,7 @@ class AnimationBase {
     }
 
     get worldIndex() {
-        return this.belongObject.animationWorldOffset + this.belongObject.MAX_VERTICES * this.index;
+        return this.belongObject.runtimeOffsetData.animationOffset + this.belongObject.MAX_VERTICES * this.index;
     }
 
     get worldWeightIndex() {

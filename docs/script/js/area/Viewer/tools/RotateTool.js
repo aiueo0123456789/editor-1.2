@@ -19,7 +19,8 @@ export class RotateModal {
         this.type = "";
     }
 
-    async init(type) {
+    async init() {
+        const type = app.scene.state.currentMode;
         try {
             this.type = type;
             if (type == "メッシュ編集") {

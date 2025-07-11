@@ -1272,6 +1272,7 @@ class State {
     }
 
     setModeForSelected(mode) {
+        console.log("モードの切り替え",mode)
         if (this.selectedObject.length == 0) return ;
         changeParameter(this, "currentMode", mode);
         this.currentMode = mode;

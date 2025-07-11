@@ -6,18 +6,6 @@ import { SelectTag } from "./カスタムタグ.js";
 import { removeObjectInHTMLElement } from "../../UI/UIの更新管理.js";
 import { KeyframeBlock } from "../../オブジェクト/キーフレーム.js";
 
-// パラメーターの変動を関連付けられたhtml要素に適応する関数
-function updateDOMsValue(object, groupID, DOM, others) {
-    if (DOM.type == "checkbox") {
-        DOM.checked = object[others.parameter];
-    } else {
-        DOM.value = object[others.parameter];
-    }
-    if (DOM.type == "range") {
-        updateRangeStyle(DOM);
-    }
-}
-
 export function createSelect(t, list = []) {
     console.log("セレクトの生成", t, list);
     const container = createTag(t, "div");
@@ -151,12 +139,13 @@ const tagCreater = {
         createRadios(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
     },
     "checks": (this_,t,searchTarget,child,flag) => {
+        return ;
         const a = (child.withObject.customIndex).map((parameterName, index) => {
             return {icon: "グループ", label: parameterName};
         });
         const result = createChecks(t, a);
         let element = result.html;
-        this_.createListWith(result.checkList, child.withObject, searchTarget, flag);
+        this_.createListWith(result.checkList, child.withObject, searchTarget, child.customIndex, flag);
         return element;
     },
     "select": (this_,t,searchTarget,child,flag) => {
@@ -510,7 +499,7 @@ export class CreatorForUI {
         let rangeEndIndex = 0;
         const scrollable = createTag(scrollableContainer, "div", {class: "scrollable"});
         const array = [];
-        const rootObject = this.findSource(withObject.object, searchTarget);
+        const rootObject = this.getParameter(searchTarget, withObject);
         const getAllObject = () => {
             const getLoopChildren = (children, resultObject = []) => {
                 let filterBool_ = false;
@@ -711,19 +700,19 @@ export class CreatorForUI {
         }
     }
 
-    createListWith(/** @type {HTMLElement} */htmlList, target, searchObject, flag) {
-        if (isPlainObject(target)) {
-            const list = this.findSource(target.object, searchObject);
+    createListWith(/** @type {HTMLElement} */htmlList, withObject, searchObject, customIndex = null, flag) {
+        if (isPlainObject(withObject)) {
+            const list = this.getParameter(searchObject, withObject);
             if (!list) {
-                console.warn("配列が見つかりません", target, searchObject);
+                console.warn("配列が見つかりません", withObject, searchObject);
             }
-            if (target.customIndex) {
+            if (customIndex) {
                 htmlList.forEach((tag,index) => {
-                    this.createWith(tag, {object: "", parameter: target.customIndex[index], flag}, list, flag);
+                    this.createWith(tag, `/${customIndex[index]}`, list, flag);
                 })
             } else {
                 htmlList.forEach((tag,index) => {
-                    this.createWith(tag, {object: "", parameter: index, flag}, list, flag);
+                    this.createWith(tag, `/${index}`, list, flag);
                 })
             }
         }
@@ -732,40 +721,57 @@ export class CreatorForUI {
     // オブジェクトのパラメータと値を関連付ける
     createWith(/** @type {HTMLElement} */t, withObject, searchTarget, flag) {
         if (isPlainObject(withObject)) {
-            if ("object" in withObject && "parameter" in withObject) {
-                let object = this.findSource(withObject.object, searchTarget);
-                if (!object) { // 取得できなかったら切り上げ
-                    console.warn("UIとパラメータの連携ができませんでした", withObject, searchTarget);
-                    if (t.type == "number" || t.type == "range") { // 数字型
-                        t.value = 0.5;
-                    } else {
-                        t.value = "エラー";
-                    }
-                    return ;
-                }
-                // 値をセット
-                if (t.type == "checkbox") {
-                    t.checked = object[withObject.parameter];
+            console.warn("構文が古いです", withObject);
+            console.trace();
+        } else {
+            let source = this.getParameter(searchTarget, withObject, true);
+            console.log(source, t, withObject, searchTarget)
+            if (!source) { // 取得できなかったら切り上げ
+                console.warn("UIとパラメータの連携ができませんでした", withObject, searchTarget);
+                if (t.type == "number" || t.type == "range") { // 数字型
+                    t.value = 0.5;
                 } else {
-                    t.value = object[withObject.parameter];
+                    t.value = "エラー";
                 }
-                // 値を関連づけ
-                managerForDOMs.set({o: object, g: this.groupID, i: withObject.parameter, f: flag}, t, updateDOMsValue, {parameter: withObject.parameter});
-                // イベントを作成
-                // t.addEventListener("change", () => {
-                t.addEventListener("input", () => {
-                    if (t.type == "number" || t.type == "range") { // 数字型
-                        object[withObject.parameter] = Number(t.value);
-                    } else if (t.type == "checkbox") {
-                        object[withObject.parameter] = t.checked;
-                    } else if (t.tagName === "SELECT") {
-                        object[withObject.parameter] = t.value;
-                    } else {
-                        object[withObject.parameter] = t.value;
-                    }
-                    managerForDOMs.update(object,withObject.parameter);
-                });
+                return ;
             }
+            // 値をセット
+            if (t.type == "checkbox") {
+                t.checked = source.object[source.parameter];
+            } else {
+                t.value = source.object[source.parameter];
+            }
+            // 値を関連づけ
+            let updateDOMsValue = null;
+            if (t.type == "checkbox") {
+                updateDOMsValue = () => {
+                    t.checked = source.object[source.parameter];
+                };
+            } else if (t.type == "range") {
+                updateDOMsValue = () => {
+                    t.value = source.object[source.parameter];
+                    updateRangeStyle(t);
+                };
+            } else {
+                updateDOMsValue = () => {
+                    t.value = source.object[source.parameter];
+                };
+            }
+            this.setUpdateEventToParameter(searchTarget, withObject, updateDOMsValue, flag);
+            // イベントを作成
+            // t.addEventListener("change", () => {
+            t.addEventListener("input", () => {
+                if (t.type == "number" || t.type == "range") { // 数字型
+                    source.object[source.parameter] = Number(t.value);
+                } else if (t.type == "checkbox") {
+                    source.object[source.parameter] = t.checked;
+                } else if (t.tagName === "SELECT") {
+                    source.object[source.parameter] = t.value;
+                } else {
+                    source.object[source.parameter] = t.value;
+                }
+                managerForDOMs.update(source.object,source.parameter);
+            });
         }
     }
 
@@ -794,7 +800,7 @@ export class CreatorForUI {
         } else {
             activeSource = {object: result, parameter: "active"};
         }
-        let list = this.findSource(withObject.object, searchTarget);
+        let list = this.getParameter(searchTarget, withObject);
         console.log("リスト", withObject.object, searchTarget, list)
         const listID = createID();
         let lastUpdateObjects = [];

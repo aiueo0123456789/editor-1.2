@@ -10,8 +10,8 @@ export class BonePropertyModal {
                 {type: "div", class: "sideBar-shelfe", children: [
                     {type: "section", name: "ボーンアタッチメント", children: [
                         {type: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBone", updateEventTarget: "ボーン選択", children: [
-                            {type: "dbInput", withObject: {object: "0", parameter: "index"}, options: {type: "text"}},
-                            {type: "dbInput", withObject: {object: "0/parent", parameter: "index"}, options: {type: "text"}},
+                            {type: "dbInput", withObject: "0/index", options: {type: "text"}},
+                            {type: "dbInput", withObject: "0/parent/index", options: {type: "text"}},
                         ]},
                     ]}
                 ]}

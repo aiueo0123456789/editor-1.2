@@ -20,9 +20,9 @@ export class ModalOperator {
         }
     }
 
-    async setModal(model) {
+    async setModal(model, /** @type {InputManager} */inputManager) {
         this.nowModal = new model(this);
-        const consumed = await this.nowModal?.init(app.scene.state.currentMode);
+        const consumed = await this.nowModal?.init(inputManager);
         if (consumed) {
             if (consumed.complete) {
                 this.reset();
@@ -39,7 +39,7 @@ export class ModalOperator {
 
     async keyInput(/** @type {InputManager} */inputManager) {
         if (this.nowModal) {
-            if (inputManager.consumeKeys([this.nowModal.activateKey])) {
+            if (app.input.consumeKeys([this.nowModal.activateKey])) {
                 // this.nowModal.command.execute();
                 app.operator.appendCommand(this.nowModal.command);
                 app.operator.execute();
@@ -51,8 +51,8 @@ export class ModalOperator {
             }
         } else {
             for (const key in this.modals) {
-                if (inputManager.consumeKeys([key])) {
-                    this.setModal(this.modals[key]);
+                if (app.input.consumeKeys([key])) {
+                    this.setModal(this.modals[key], inputManager);
                 }
             }
         }

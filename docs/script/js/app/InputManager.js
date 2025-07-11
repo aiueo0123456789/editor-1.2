@@ -122,11 +122,19 @@ export class InputManager {
         for (const key of keys) { // 全てのキーが押されているか
             if (!this.keysPush[key]) b = false;
         }
-        if (b) { // 押されていた場合全てをリセット
+        let sub = 0;
+        // for (const key in this.keysPush) {
+        //     for (const key_ of keys) { // 全てのキーが押されているか
+        //         if (key != key_ && this.keysPush[key]) sub ++;
+        //     }
+        // }
+        if (sub == 0 && b) { // 押されていた場合全てをリセット
             for (const key of keys) {
                 this.keysPush[key] = false;
             }
+            return true;
+        } else {
+            return false;
         }
-        return b;
     }
 }

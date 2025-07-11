@@ -76,7 +76,7 @@ class TransformCommand {
                 for (const vertex of targets) {
                     this.selectIndexs.push(vertex.worldIndex);
                 }
-                for (let i = this.targetObject.vertexBufferOffset * vertexLevel; i < this.targetObject.verticesNum + (this.targetObject.vertexBufferOffset) * vertexLevel; i ++) {
+                for (let i = this.targetObject.runtimeOffsetData.vertexOffset * vertexLevel; i < this.targetObject.verticesNum + this.targetObject.runtimeOffsetData.vertexOffset * vertexLevel; i ++) {
                     subjectIndex.push(i);
                 }
                 for (const vertex of this.targetObject.allVertices) {

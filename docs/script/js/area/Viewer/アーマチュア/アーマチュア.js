@@ -10,7 +10,7 @@ export class ArmaturePropertyModal {
                 {type: "div", class: "sideBar-shelfe", children: [
                     {type: "section", name: "アーマチュア", children: [
                         {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
-                            {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
                         ]}
                     ]}
                 ]}

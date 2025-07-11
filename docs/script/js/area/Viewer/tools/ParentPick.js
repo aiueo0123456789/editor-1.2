@@ -18,7 +18,7 @@ export class ParentPickModal {
         this.activateKey = "p";
     }
 
-    async init(type) {
+    async init() {
     }
 
     mousemove(/** @type {InputManager} */inputManager) {

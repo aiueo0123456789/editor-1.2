@@ -17,17 +17,25 @@ export class ViewerSpaceData {
         this.proportionalEditType = 0;
         this.proportionalSize = 100;
 
-        this.weightEditBoneIndex = 0;
+        this.weightPaintMetaData = {
+            boneIndex: 0,
+            bezierType: 0,
+            weightValue: 1,
+        }
+
         this.weightBezierType = 0;
         this.weightEditBoneIndexBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
         this.targetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.weightEditBoneIndexBuffer]);
         this.cTargetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.weightEditBoneIndexBuffer]);
 
         const weightIndexUpdate = () => {
-            GPU.writeBuffer(this.weightEditBoneIndexBuffer, new Uint32Array([this.weightEditBoneIndex]));
+            GPU.writeBuffer(this.weightEditBoneIndexBuffer, new Uint32Array([this.weightPaintMetaData.boneIndex]));
+        }
+        const weightValueUpdate = () => {
         }
 
-        managerForDOMs.set({o: this, i: "weightEditBoneIndex"}, null, weightIndexUpdate);
+        managerForDOMs.set({o: this.weightPaintMetaData, i: "weightValue"}, null, weightValueUpdate);
+        managerForDOMs.set({o: this.weightPaintMetaData, i: "boneIndex"}, null, weightIndexUpdate);
     }
 
     createModeSelectList() {

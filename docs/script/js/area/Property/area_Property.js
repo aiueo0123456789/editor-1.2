@@ -10,9 +10,9 @@ export class Area_Property {
             inputObject: {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"], "app": app},
             DOM: [
                 {type: "section", name: "アニメーション", children: [
-                    {type: "input", label: "開始", withObject: {object: "scene", parameter: "frame_start"}, options: {type: "number", min: 0, max: 1000, step: 1}},
-                    {type: "input", label: "終了", withObject: {object: "scene", parameter: "frame_end"}, options: {type: "number", min: 0, max: 1000, step: 1}},
-                    {type: "input", label: "再生速度", withObject: {object: "app/animationPlayer", parameter: "speed"}, options: {type: "number", min: 0, max: 1000, step: 0.1}},
+                    {type: "input", label: "開始", withObject: "scene/frame_start", options: {type: "number", min: 0, max: 1000, step: 1}},
+                    {type: "input", label: "終了", withObject: "scene/frame_end", options: {type: "number", min: 0, max: 1000, step: 1}},
+                    {type: "input", label: "再生速度", withObject: "app/animationPlayer/speed", options: {type: "number", min: 0, max: 1000, step: 0.1}},
                 ]},
                 {type: "section", name: "マスク", children: [
                     {type: "list", appendEvent: () => {
@@ -21,9 +21,9 @@ export class Area_Property {
                         for (const mask of masks) {
                             app.scene.deleteMaskTexture(mask);
                         }
-                    }, withObject: {object: "scene/maskTextures"}, options: {type: "min"}, liStruct:[
+                    }, withObject: "scene/maskTextures", options: {type: "min"}, liStruct:[
                         {type: "gridBox", axis: "c", allocation: "50% 1fr", children: [
-                            {type: "dbInput", withObject: {object: "", parameter: "name"}, options: {type: "text"}},
+                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
                             {type: "padding", size: "10px"},
                         ]},
                     ]}
