@@ -5,6 +5,7 @@ import { KeyframeBlock } from "../../core/objects/keyframe.js";
 import { removeObjectInHTMLElement } from "./eventUpdator.js";
 import { ResizerForDOM } from "./resizer.js";
 import { app } from "../../app/app.js";
+import { MenuTag } from "./customTags/menuTag.js";
 
 export function createSelect(t, list = []) {
     console.log("セレクトの生成", t, list);
@@ -203,7 +204,9 @@ const tagCreater = {
         }
         return element;
     },
-    "menu": () => {
+    "menu": (this_,t,searchTarget,child,flag) => {
+        let element = new MenuTag(t, child.title, child.struct, child?.options);
+        return element;
     },
     "dbInput": (this_,t,searchTarget,child,flag) => { // ダブルクッリク入力
         let element = createDoubleClickInput();

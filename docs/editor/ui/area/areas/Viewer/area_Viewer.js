@@ -85,6 +85,10 @@ export class Area_Viewer {
                                 ], errorChildren: [
                                     {type: "select", label: "tool", sourceObject: ["オブジェクト"], options: {initValue: "オブジェクト"}},
                                 ]},
+                                {type: "menu", title: "aaaa", struct: [
+                                    "aa",
+                                    "bb",
+                                ]},
                                 {type: "flexBox", interval: "5px", name: "", children: [
                                     {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
                                 ]},

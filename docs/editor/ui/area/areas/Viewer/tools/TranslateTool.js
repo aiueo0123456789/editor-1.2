@@ -13,6 +13,7 @@ export class TranslateModal {
             app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
             app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
         ];
+        this.sumMovement = [0,0];
         this.modal = {
             inputObject: {"value": this.values},
             DOM: [
@@ -26,6 +27,7 @@ export class TranslateModal {
             ]
         };
         this.activateKey = "g";
+        this.type = "";
 
         const update = () => {
             if (!this.command) return ;
@@ -38,25 +40,25 @@ export class TranslateModal {
     }
 
     async init() {
-        const type = app.scene.state.currentMode;
+        this.type = app.scene.state.currentMode;
         try {
-            if (type == "メッシュ編集") {
-                this.command = new TranslateCommand(type,app.scene.state.getSelectVertices());
+            if (this.type == "メッシュ編集") {
+                this.command = new TranslateCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (type == "メッシュ頂点アニメーション編集") {
-                this.command = new TranslateCommand(type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+            } else if (this.type == "メッシュ頂点アニメーション編集") {
+                this.command = new TranslateCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (type == "ボーン編集") {
-                this.command = new TranslateCommand(type,app.scene.state.getSelectVertices());
+            } else if (this.type == "ボーン編集") {
+                this.command = new TranslateCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
-            } else if (type == "ベジェ編集") {
-                this.command = new TranslateCommand(type,app.scene.state.getSelectVertices());
+            } else if (this.type == "ベジェ編集") {
+                this.command = new TranslateCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (type == "ベジェ頂点アニメーション編集") {
-                this.command = new TranslateCommand(type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+            } else if (this.type == "ベジェ頂点アニメーション編集") {
+                this.command = new TranslateCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (type == "ボーンアニメーション編集") {
-                this.command = new TranslateCommand(type,app.scene.state.getSelectBone());
+            } else if (this.type == "ボーンアニメーション編集") {
+                this.command = new TranslateCommand(this.type,app.scene.state.getSelectBone());
                 this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
             }
             this.command.setCenterPoint(this.center);
@@ -68,8 +70,18 @@ export class TranslateModal {
     }
 
     mousemove(/** @type {InputManager} */inputManager) {
-        this.values[0] += inputManager.movement[0];
-        this.values[1] += inputManager.movement[1];
+        this.sumMovement[0] += inputManager.movement[0];
+        this.sumMovement[1] += inputManager.movement[1];
+        if (app.input.keysDown["y"]) {
+            this.values[0] = 0;
+            this.values[1] = this.sumMovement[1];
+        } else if (app.input.keysDown["x"]) {
+            this.values[0] = this.sumMovement[0];
+            this.values[1] = 0;
+        } else {
+            this.values[0] = this.sumMovement[0];
+            this.values[1] = this.sumMovement[1];
+        }
         managerForDOMs.update(this.values);
         return true;
     }

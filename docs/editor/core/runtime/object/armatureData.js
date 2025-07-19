@@ -1,7 +1,9 @@
 import { Application } from "../../../app/app.js";
+import { mathMat3x3 } from "../../../utils/mathMat.js";
+import { managerForDOMs } from "../../../utils/ui/util.js";
 import { arrayToSet, createArrayN, loadFile } from "../../../utils/utility.js";
 import { GPU } from "../../../utils/webGPU.js";
-import { Armature } from "../../objects/armature.js";
+import { Armature, Bone } from "../../objects/armature.js";
 import { BufferManager } from "../bufferManager.js";
 import { RuntimeDataBase } from "../runtimeDataBase.js";
 
@@ -72,6 +74,7 @@ export class ArmatureData extends RuntimeDataBase {
 
     async getBoneWorldMatrix(/** @type {Bone} */bone) {
         bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await GPU.getF32BufferPartsData(this.renderingBoneMatrix.buffer, bone.armature.runtimeOffsetData.boneOffset + bone.index, this.matrixBlockByteLength / 4));
+        // bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await this.renderingBoneMatrix.getObjectData(bone));
     }
 
     getSelectBone() {

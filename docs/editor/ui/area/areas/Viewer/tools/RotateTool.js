@@ -21,25 +21,25 @@ export class RotateModal {
     }
 
     async init() {
-        const type = app.scene.state.currentMode;
+        this.type = app.scene.state.currentMode;
         try {
-            if (type == "メッシュ編集") {
-                this.command = new RotateCommand(type,app.scene.state.getSelectVertices());
+            if (this.type == "メッシュ編集") {
+                this.command = new RotateCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (type == "メッシュ頂点アニメーション編集") {
-                this.command = new RotateCommand(type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+            } else if (this.type == "メッシュ頂点アニメーション編集") {
+                this.command = new RotateCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (type == "ボーン編集") {
-                this.command = new RotateCommand(type,app.scene.state.getSelectVertices());
+            } else if (this.type == "ボーン編集") {
+                this.command = new RotateCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
-            } else if (type == "ベジェ編集") {
-                this.command = new RotateCommand(type,app.scene.state.getSelectVertices());
+            } else if (this.type == "ベジェ編集") {
+                this.command = new RotateCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (type == "ベジェ頂点アニメーション編集") {
-                this.command = new RotateCommand(type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+            } else if (this.type == "ベジェ頂点アニメーション編集") {
+                this.command = new RotateCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (type == "ボーンアニメーション編集") {
-                this.command = new RotateCommand(type,app.scene.state.getSelectBone());
+            } else if (this.type == "ボーンアニメーション編集") {
+                this.command = new RotateCommand(this.type,app.scene.state.getSelectBone());
                 this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
             }
             this.command.setCenterPoint(this.center);
@@ -53,6 +53,7 @@ export class RotateModal {
     async mousemove(/** @type {InputManager} */inputManager) {
         // console.log(inputManager)
         if (this.type == "ボーンアニメーション編集") {
+            console.log(this.type)
             this.values[0] -= vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         } else {
             this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);

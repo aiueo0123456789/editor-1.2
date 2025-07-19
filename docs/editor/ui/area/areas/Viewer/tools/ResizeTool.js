@@ -28,6 +28,7 @@ export class ResizeModal {
             ]
         };
         this.activateKey = "g";
+        this.type = "";
 
         const update = () => {
             this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
@@ -40,25 +41,25 @@ export class ResizeModal {
 
     async init(/** @type {InputManager} */inputManager) {
         this.startPosition = [...inputManager.position];
-        const type = app.scene.state.currentMode;
+        this.type = app.scene.state.currentMode;
         try {
-            if (type == "メッシュ編集") {
-                this.command = new ResizeCommand(type,app.scene.state.getSelectVertices());
+            if (this.type == "メッシュ編集") {
+                this.command = new ResizeCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (type == "メッシュ頂点アニメーション編集") {
-                this.command = new ResizeCommand(type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+            } else if (this.type == "メッシュ頂点アニメーション編集") {
+                this.command = new ResizeCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (type == "ボーン編集") {
-                this.command = new ResizeCommand(type,app.scene.state.getSelectVertices());
+            } else if (this.type == "ボーン編集") {
+                this.command = new ResizeCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
-            } else if (type == "ベジェ編集") {
-                this.command = new ResizeCommand(type,app.scene.state.getSelectVertices());
+            } else if (this.type == "ベジェ編集") {
+                this.command = new ResizeCommand(this.type,app.scene.state.getSelectVertices());
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (type == "ベジェ頂点アニメーション編集") {
-                this.command = new ResizeCommand(type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+            } else if (this.type == "ベジェ頂点アニメーション編集") {
+                this.command = new ResizeCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (type == "ボーンアニメーション編集") {
-                this.command = new ResizeCommand(type,app.scene.state.getSelectBone());
+            } else if (this.type == "ボーンアニメーション編集") {
+                this.command = new ResizeCommand(this.type,app.scene.state.getSelectBone());
                 this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
             }
             this.command.setCenterPoint(this.center);

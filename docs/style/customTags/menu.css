@@ -1,0 +1,44 @@
+.custom-menu {
+    height: 20px;
+    align-items: center;     /* 縦方向中央 */
+    width: fit-content;
+    display: grid;
+    grid-template-columns: auto auto;
+    overflow: hidden;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+/* .custom-menu > *{
+    overflow-x: hidden;
+} */
+
+#custom-menu-items {
+    border-top-left-radius: 0px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: fit-content;
+    height: fit-content;
+    background-color: #151515;
+    z-index: 1000;
+    gap: 5px;
+    padding: 5px;
+}
+
+#custom-menu-items > * {
+    border-radius: 0px;
+    /* width: fit-content; */
+    width: 100%;
+    height: 15px;
+}
+
+#custom-menu-items > *:hover {
+    background-color: rgb(85, 85, 85);
+}
+#custom-menu-items > *.active {
+    background-color: var(--colorActive);
+}
+
+#custom-menu-items > * > * {
+    width: 100%;
+}

@@ -10,7 +10,7 @@ import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 class Vertex {
     constructor(/** @type {Bone} */bone,data) {
         this.bone = bone;
-        this.co = data.co;
+        this.co = [...data.co];
         this.typeIndex = data.typeIndex;
         this.selected = false;
     }
@@ -18,7 +18,7 @@ class Vertex {
     setCoordinate(newCoordinate) {
         this.co[0] = newCoordinate[0];
         this.co[1] = newCoordinate[1];
-        managerForDOMs.update(this.co)
+        managerForDOMs.update(this.co);
     }
 
     get worldIndex() {

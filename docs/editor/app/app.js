@@ -12,7 +12,7 @@ import { ViewerSpaceData } from "../ui/area/areas/Viewer/area_ViewerSpaceData.js
 import { TimelineSpaceData } from "../ui/area/areas/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./inputManager/inputManager.js";
 import { indexOfSplice, loadFile } from "../utils/utility.js";
-import { ContextmenuOperator } from "./contextmenuOperator/contextmenuOperator.js";
+import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
 import { HierarchySpaceData } from "../ui/area/areas/Hierarchy/area_HierarchySpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
 import { GraphicMesh } from "../core/objects/graphicMesh.js";

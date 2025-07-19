@@ -1,7 +1,7 @@
-import { Application } from "../app.js";
-import { CreatorForUI } from "../../utils/ui/creatorForUI.js";
-import { createTag } from "../../utils/ui/util.js";
-import { looper } from "../../utils/utility.js";
+import { Application } from "../app/app.js";
+import { CreatorForUI } from "../utils/ui/creatorForUI.js";
+import { createTag } from "../utils/ui/util.js";
+import { looper } from "../utils/utility.js";
 
 export class ContextmenuOperator {
     constructor(/** @type {Application} */app) {
