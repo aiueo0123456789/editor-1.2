@@ -1,5 +1,4 @@
-
-import { device,GPU } from './webGPU.js';
+import { device, GPU } from "../../utils/webGPU.js";
 
 export class Camera {
     constructor() {

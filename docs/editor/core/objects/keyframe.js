@@ -1,7 +1,7 @@
-import { app } from "../app.js";
-import { managerForDOMs } from "../UI/制御.js";
-import { changeParameter } from "../../../editor/utils/utility.js";
-import { vec2 } from "../ベクトル計算.js";
+import { vec2 } from "../../utils/mathVec.js";
+import { changeParameter } from "../../utils/utility.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { app } from "../../app/app.js";
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す

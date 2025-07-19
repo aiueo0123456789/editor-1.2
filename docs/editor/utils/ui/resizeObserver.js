@@ -1,4 +1,4 @@
-import { vec2 } from "../../ベクトル計算.js";
+import { vec2 } from "../mathVec.js";
 
 class HTMLElementResizeObserver {
     constructor() {

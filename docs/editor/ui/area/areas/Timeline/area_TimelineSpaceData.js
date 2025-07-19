@@ -1,5 +1,5 @@
-import { app } from "../../app.js";
-import { vec2 } from "../../ベクトル計算.js";
+import { app } from "../../../../app/app.js";
+import { vec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {
     constructor() {

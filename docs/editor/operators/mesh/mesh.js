@@ -1,4 +1,4 @@
-import { GraphicMesh } from "../../../オブジェクト/グラフィックメッシュ.js";
+import { GraphicMesh } from "../../core/objects/graphicMesh.js";
 
 export class EdgeJoinCommand {
     constructor(/** @type {GraphicMesh} */target, edge) {

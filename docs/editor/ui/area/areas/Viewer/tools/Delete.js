@@ -1,6 +1,6 @@
-import { app } from "../../../app.js";
-import { BoneDelete } from "../../../機能/オペレーター/ボーン/編集.js";
-import { DeleteVerticesCommand } from "../../../機能/オペレーター/メッシュ/メッシュ.js";
+import { app } from "../../../../../app/app.js";
+import { DeleteVerticesCommand } from "../../../../../operators/mesh/mesh.js";
+import { BoneDelete } from "../../../../../operators/bone/bone.js";
 
 export class DeleteTool {
     constructor(operator) {

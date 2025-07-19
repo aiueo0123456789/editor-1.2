@@ -1,6 +1,6 @@
-import { GPU } from "../../../utils/webGPU.js";
-import { createID, managerForDOMs } from "./UI/制御.js";
-import { KeyframeBlockManager } from "./オブジェクト/キーフレームブロック管理.js";
+import { createID, managerForDOMs } from "../../utils/ui/util.js";
+import { GPU } from "../../utils/webGPU.js";
+import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 
 export class AnimationBlock {
     constructor(belongObject,useClass) {

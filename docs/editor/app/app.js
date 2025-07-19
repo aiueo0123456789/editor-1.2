@@ -7,7 +7,6 @@ import { Operator } from "../operators/operator.js";
 import { Area_Viewer } from "../ui/area/areas/Viewer/area_Viewer.js";
 import { Area_Hierarchy } from "../ui/area/areas/Hierarchy/area_Hierarchy.js";
 import { Area_Inspector } from "../ui/area/areas/Inspector/area_Inspector.js";
-import { Area_Preview } from "../ui/area/areas/Preview/area_Preview.js";
 import { Area_Timeline } from "../ui/area/areas/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "../ui/area/areas/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "../ui/area/areas/Timeline/area_TimelineSpaceData.js";
@@ -21,8 +20,8 @@ import { GPU } from "../utils/webGPU.js";
 import { CreateObjectCommand, DeleteObjectCommand } from "../operators/object/object.js";
 import { Area } from "../ui/area/Area.js";
 
-const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/ボーン/重み設定.wgsl"));
-const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./script/js/app/shader/bezier/重み設定.wgsl"));
+const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
+const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bezier.wgsl"));
 
 class AppOptions {
     constructor(/** @type {Application} */app) {
@@ -383,11 +382,10 @@ export class Application { // 全てをまとめる
     }
 }
 
-const useClassFromAreaType = {
+export const useClassFromAreaType = {
     "Viewer": {area: Area_Viewer, areaConfig: ViewerSpaceData},
     "Hierarchy": {area: Area_Hierarchy, areaConfig: HierarchySpaceData},
     "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
-    "Preview": {area: Area_Preview, areaConfig: ViewerSpaceData},
     "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
     "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
 };

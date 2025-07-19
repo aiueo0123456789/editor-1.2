@@ -1,5 +1,5 @@
-import { app } from "../../../app.js";
-import { AppendVertexCommand } from "../../../機能/オペレーター/メッシュ/メッシュ.js";
+import { app } from "../../../../../app/app.js";
+import { AppendVertexCommand } from "../../../../../operators/mesh/mesh.js";
 
 export class AppendVertex {
     constructor(/** @type {ModalOperator} */operator) {

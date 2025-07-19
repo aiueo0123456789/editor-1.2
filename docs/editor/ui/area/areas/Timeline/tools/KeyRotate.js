@@ -1,9 +1,9 @@
-import { app } from "../../../app.js";
-import { InputManager } from "../../../app/InputManager.js";
-import { GPU } from "../../../webGPU.js";
-import { vec2 } from "../../../ベクトル計算.js";
-import { RotateCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
-import { ModalOperator } from "../../補助/ModalOperator.js";
+import { app } from "../../../../../app/app.js";
+import { InputManager } from "../../../../../app/inputManager/inputManager.js";
+import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
+import { managerForDOMs } from "../../../../../utils/ui/util.js";
+import { GPU } from "../../../../../utils/webGPU.js";
+import { KeyTranslateCommand } from "../../../../../operators/keyTransform/keyTransform.js";
 
 class Modal {
     constructor() {

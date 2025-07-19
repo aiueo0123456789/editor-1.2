@@ -1,4 +1,4 @@
-import { ModalOperator } from "../../補助/ModalOperator.js";
+import { ModalOperator } from "../../../../../utils/ui/modalOperator";
 
 export class VerticesAppendModal {
     constructor(/** @type {ModalOperator} */operator) {

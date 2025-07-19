@@ -1,5 +1,5 @@
-import { app } from "../../../app.js";
-import { EdgeJoinCommand } from "../../../機能/オペレーター/メッシュ/メッシュ.js";
+import { app } from "../../../../../app/app.js";
+import { EdgeJoinCommand } from "../../../../../operators/mesh/mesh.js";
 
 export class EdgeJoinTool {
     constructor(/** @type {ModalOperator} */operator) {

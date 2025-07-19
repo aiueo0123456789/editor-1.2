@@ -1,5 +1,5 @@
-import { managerForDOMs } from "../../UI/制御.js";
-import { GPU } from "../../webGPU.js";
+import { managerForDOMs } from "../../../../utils/ui/util.js";
+import { GPU } from "../../../../utils/webGPU.js";
 
 export class ViewerSpaceData {
     constructor() {

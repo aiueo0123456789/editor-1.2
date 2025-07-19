@@ -1,8 +1,8 @@
-import { device,GPU } from "../../../editor/utils/webGPU.js";
-import { Children } from "../子要素.js";
-import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
-import { ObjectBase, ObjectEditorBase, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { app } from "../app.js";
+import { GPU } from "../../utils/webGPU.js";
+import { Children } from "../../utils/objects/children.js";
+import { AnimationBlock, VerticesAnimation } from "./animation.js";
+import { ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
+import { app } from "../../app/app.js";
 
 class Vertex {
     constructor(/** @type {Point} */point,data) {

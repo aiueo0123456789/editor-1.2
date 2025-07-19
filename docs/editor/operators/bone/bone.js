@@ -1,7 +1,7 @@
-import { app } from "../../../app.js";
-import { indexOfSplice, removeDuplicates } from "../../../utility.js";
-import { Bone } from "../../../オブジェクト/アーマチュア.js";
-import { vec2 } from "../../../ベクトル計算.js";
+import { app } from "../../app/app.js";
+import { Bone } from "../../core/objects/armature.js";
+import { vec2 } from "../../utils/mathVec.js";
+import { indexOfSplice, removeDuplicates } from "../../utils/utility.js";
 
 class Base {
     constructor(targets) {

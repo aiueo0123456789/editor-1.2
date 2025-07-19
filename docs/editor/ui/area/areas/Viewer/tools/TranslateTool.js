@@ -1,8 +1,8 @@
-import { app } from "../../../app.js";
-import { InputManager } from "../../../app/InputManager.js";
-import { managerForDOMs } from "../../../UI/制御.js";
-import { TranslateCommand } from "../../../機能/オペレーター/変形/トランスフォーム.js";
-import { ModalOperator } from "../../補助/ModalOperator.js";
+import { app } from "../../../../../app/app.js";
+import { InputManager } from "../../../../../app/inputManager/inputManager.js";
+import { managerForDOMs } from "../../../../../utils/ui/util.js";
+import { TranslateCommand } from "../../../../../operators/transform/transform.js";
+import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
 
 export class TranslateModal {
     constructor(/** @type {ModalOperator} */operator) {

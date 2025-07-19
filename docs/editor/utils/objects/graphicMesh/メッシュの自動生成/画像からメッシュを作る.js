@@ -1,6 +1,6 @@
-import { modClamp } from "../../../../editor/utils/utility.js";
-import { device, GPU } from "../../../../editor/utils/webGPU.js";
-import { vec2 } from "../../ベクトル計算.js";
+import { vec2 } from "../../../mathVec.js";
+import { modClamp } from "../../../utility.js";
+import { device, GPU } from "../../../webGPU.js";
 import { cdt } from "./cdt.js";
 
 export const MarchingSquaresPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Ct")], GPU.createShaderModule(`
@@ -35,7 +35,7 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
     outputData[id.x + id.y * u32(dimensions.x + 1)] = binary4ToU32Direct(b0,b1,b2,b3);
 }`));
-const worker = new Worker('script/js/機能/メッシュの自動生成/画像からメッシュを作るサブスレッド.js');
+const worker = new Worker('./editor/utils/objects/graphicMesh/メッシュの自動生成/画像からメッシュを作るサブスレッド.js');
 
 export function cutSilhouetteOutTriangle(vertices, meshes, edges) {
     // 点がポリゴン内にあるかを判定する関数

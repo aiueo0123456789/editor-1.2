@@ -1,10 +1,10 @@
-import { app } from "../../app.js";
-import { isFunction, isPassByReference, isPlainObject } from "../../utility.js";
-import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "../../UI/制御.js";
-import { ResizerForDOM } from "../../UI/resizer.js";
-import { ChecksTag, SelectTag } from "./カスタムタグ.js";
-import { removeObjectInHTMLElement } from "../../UI/UIの更新管理.js";
-import { KeyframeBlock } from "../../オブジェクト/キーフレーム.js";
+import { ChecksTag, SelectTag } from "./customTags.js";
+import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
+import { isFunction, isPassByReference, isPlainObject } from "../utility.js";
+import { KeyframeBlock } from "../../core/objects/keyframe.js";
+import { removeObjectInHTMLElement } from "./eventUpdator.js";
+import { ResizerForDOM } from "./resizer.js";
+import { app } from "../../app/app.js";
 
 export function createSelect(t, list = []) {
     console.log("セレクトの生成", t, list);

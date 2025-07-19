@@ -1,7 +1,6 @@
-import { app } from "../../app.js";
-import { changeParameter } from "../../utility.js";
-import { appendAnimationToObject, deleteAnimationToObject } from "../../オブジェクト/オブジェクトで共通の処理.js";
-import { CreatorForUI } from "../補助/UIの自動生成.js";
+import { app } from "../../../../app/app.js";
+import { appendAnimationToObject, deleteAnimationToObject } from "../../../../utils/objects/util.js";
+import { changeParameter } from "../../../../utils/utility.js";
 
 export class Area_Inspector {
     constructor(area) {

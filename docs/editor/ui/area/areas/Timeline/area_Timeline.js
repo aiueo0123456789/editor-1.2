@@ -1,11 +1,9 @@
-import { app } from "../../app.js";
-import { createID, managerForDOMs } from "../../UI/制御.js";
-import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../utility.js";
-import { AnimationCollector } from "../../オブジェクト/アニメーションコレクター.js";
-import { vec2 } from "../../ベクトル計算.js";
-import { resizeObserver } from "../補助/canvasResizeObserver.js";
-import { ModalOperator } from "../補助/ModalOperator.js";
-import { CreatorForUI } from "../補助/UIの自動生成.js";
+import { app } from "../../../../app/app.js";
+import { vec2 } from "../../../../utils/mathVec.js";
+import { ModalOperator } from "../../../../utils/ui/modalOperator.js";
+import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
+import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
+import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
 import { KeyResize } from "./tools/KeyResize.js";
 import { KeyRotate } from "./tools/KeyRotate.js";
 import { KeyTranslate } from "./tools/KeyTranslate.js";

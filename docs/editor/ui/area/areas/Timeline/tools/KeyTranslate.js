@@ -1,8 +1,8 @@
-import { app } from "../../../app.js";
-import { InputManager } from "../../../app/InputManager.js";
-import { managerForDOMs } from "../../../UI/制御.js";
-import { KeyTranslateCommand } from "../../../機能/オペレーター/キートランスフォーム/キートランスフォーム.js";
-import { ModalOperator } from "../../補助/ModalOperator.js";
+import { app } from "../../../../../app/app.js";
+import { InputManager } from "../../../../../app/inputManager/inputManager.js";
+import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
+import { managerForDOMs } from "../../../../../utils/ui/util.js";
+import { KeyTranslateCommand } from "../../../../../operators/keyTransform/keyTransform.js";
 
 export class KeyTranslate {
     constructor(/** @type {ModalOperator} */operator) {

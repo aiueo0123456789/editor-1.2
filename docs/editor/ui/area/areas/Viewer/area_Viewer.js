@@ -1,19 +1,16 @@
-import { ConvertCoordinate } from '../../座標の変換.js';
-import { resizeObserver } from '../補助/canvasResizeObserver.js';
-import { ModalOperator } from '../補助/ModalOperator.js';
+import { ConvertCoordinate } from '../../../../utils/convertCoordinate.js';
+import { resizeObserver } from '../../../../utils/ui/resizeObserver.js';
+import { ModalOperator } from '../../../../utils/ui/modalOperator.js';
 import { TranslateModal } from './tools/TranslateTool.js';
 import { RotateModal } from './tools/RotateTool.js';
 import { ResizeModal } from './tools/ResizeTool.js';
 import { ExtrudeMove } from './tools/ExtrudeMove.js';
 import { ParentPickModal } from './tools/ParentPick.js';
 import { DeleteTool } from './tools/Delete.js';
-import { InputManager } from '../../app/InputManager.js';
-import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 import { WeightPaintModal } from './tools/WeightPaintTool.js';
-import { ToolsBarOperator } from '../補助/ToolsBarOperator.js';
-import { BoneAttachmentsModal } from './アーマチュア/アタッチメント.js';
-import { BonePropertyModal } from './アーマチュア/ボーン.js';
-import { ArmaturePropertyModal } from './アーマチュア/アーマチュア.js';
+import { ToolsBarOperator } from '../../../../utils/ui/toolsBarOperator.js';
+import { BonePropertyModal } from './toolBar/bone.js';
+import { ArmaturePropertyModal } from './toolBar/armature.js';
 import { EdgeJoinTool } from './tools/EdgeJoin.js';
 import { AppendVertex } from './tools/appendVertex.js';
 import { app } from '../../../../app/app.js';
@@ -22,24 +19,27 @@ import { sampler } from '../../../../utils/GPUObject.js';
 import { boolTo0or1, calculateLocalMousePosition, changeParameter, loadFile } from '../../../../utils/utility.js';
 import { vec2 } from '../../../../utils/mathVec.js';
 import { Camera } from '../../../../core/objects/camera.js';
+import { BoneAttachmentsModal } from './toolBar/Attachments.js';
+import { InputManager } from '../../../../app/inputManager/inputManager.js';
+import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 
-const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./script/js/area/Viewer/shader/grid.wgsl').then(x => x.text()), [], "2d", "s");
-const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./script/js/area/Viewer/shader/shader.wgsl"), [["u"]], "2d", "t");
-const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./script/js/area/Viewer/shader/maskShader.wgsl"), [["u"]], "mask", "t");
+const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
+const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t");
+const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./editor/shader/render/mask.wgsl"), [["u"]], "mask", "t");
 
-const verticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/verticesShader.wgsl"), [], "2d", "s");
-const graphicMeshsMeshRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu_Vsr_Vsr")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/meshShader.wgsl"), [], "2d", "s");
-const graphicMeshsEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu_Vsr_Vsr")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/edgeShader.wgsl"), [], "2d", "s");
-const graphicMeshsSilhouetteEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu_Vsr_Vsr")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/silhouetteEdgesShader.wgsl"), [], "2d", "s");
-const graphicMeshsWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/graphicMesh/weightShader.wgsl"), [], "2d", "s");
+const verticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/graphicMesh/verticesShader.wgsl"), [], "2d", "s");
+const graphicMeshsMeshRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu_Vsr_Vsr")], await loadFile("./editor/shader/render/graphicMesh/meshShader.wgsl"), [], "2d", "s");
+const graphicMeshsEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu_Vsr_Vsr")], await loadFile("./editor/shader/render/graphicMesh/edgeShader.wgsl"), [], "2d", "s");
+const graphicMeshsSilhouetteEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu_Vsr_Vsr")], await loadFile("./editor/shader/render/graphicMesh/silhouetteEdgesShader.wgsl"), [], "2d", "s");
+const graphicMeshsWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/graphicMesh/weightShader.wgsl"), [], "2d", "s");
 
-const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/vertices.wgsl"), [], "2d", "t");
-const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/bone.wgsl"), [], "2d", "t");
-const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bone/relationships.wgsl"), [], "2d", "s");
+const boneVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bone/vertices.wgsl"), [], "2d", "t");
+const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bone/bone.wgsl"), [], "2d", "t");
+const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bone/relationships.wgsl"), [], "2d", "s");
 
-const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/bezier.wgsl"), [], "2d", "s");
-const bezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/vertices.wgsl"), [], "2d", "t");
-const bezierWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu"),GPU.getGroupLayout("Vu")], await loadFile("./script/js/area/Viewer/shader/bezier/weight.wgsl"), [], "2d", "s");
+const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bezier/bezier.wgsl"), [], "2d", "s");
+const bezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bezier/vertices.wgsl"), [], "2d", "t");
+const bezierWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bezier/weight.wgsl"), [], "2d", "s");
 
 const alphaBuffers = {
     "0.5": GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [0.5], ["f32"])]),

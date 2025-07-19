@@ -1,11 +1,11 @@
-import { device,GPU } from "../../../editor/utils/webGPU.js";
-import { AnimationBlock, VerticesAnimation } from "../アニメーション.js";
-import { isNotTexture } from "../GPUObject.js";
-import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { indexOfSplice, waitUntilFrame } from "../../../editor/utils/utility.js";
-import { vec2 } from "../ベクトル計算.js";
-import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../機能/メッシュの自動生成/画像からメッシュを作る.js";
-import { app } from "../app.js";
+import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/メッシュの自動生成/画像からメッシュを作る.js";
+import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
+import { indexOfSplice, waitUntilFrame } from "../../utils/utility.js";
+import { vec2 } from "../../utils/mathVec.js";
+import { app } from "../../app/app.js";
+import { GPU } from "../../utils/webGPU.js";
+import { AnimationBlock, VerticesAnimation } from "./animation.js";
+import { isNotTexture } from "../../utils/GPUObject.js";
 
 class Vertex {
     constructor(/** @type {GraphicMesh} */ graphicMesh, data) {

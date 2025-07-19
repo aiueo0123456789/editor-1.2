@@ -1,3 +1,8 @@
+import { app, useClassFromAreaType } from "../../app/app.js";
+import { CreatorForUI } from "../../utils/ui/creatorForUI.js";
+import { SelectTag } from "../../utils/ui/customTags.js";
+import { createIcon, createTag } from "../../utils/ui/util.js";
+import { createArrayFromHashKeys } from "../../utils/utility.js";
 
 // UIのエリア管理
 export class Area {

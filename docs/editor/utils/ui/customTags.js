@@ -1,5 +1,5 @@
-import { createIcon, createTag, setClass } from "../../UI/制御.js";
-import { isFunction } from "../../utility.js";
+import { isFunction } from "../utility.js";
+import { createIcon, createTag, setClass } from "./util.js";
 
 export class SelectTag {
     constructor(t, list = [], options = {}) {

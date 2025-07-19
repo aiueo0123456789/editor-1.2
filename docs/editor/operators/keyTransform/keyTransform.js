@@ -1,5 +1,5 @@
-import { managerForDOMs } from "../../../UI/制御.js";
-import { vec2 } from "../../../ベクトル計算.js";
+import { vec2 } from "../../utils/mathVec.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 
 class KeyTransformCommand {
     constructor(targets) {

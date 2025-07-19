@@ -1,11 +1,11 @@
-import { GPU } from "../../../editor/utils/webGPU.js";
-import { Children } from "../子要素.js";
-import { ObjectBase, sharedDestroy } from "./オブジェクトで共通の処理.js";
-import { indexOfSplice } from "../../../editor/utils/utility.js";
-import { Attachments } from "./アタッチメント/attachments.js";
-import { app } from "../app.js";
-import { KeyframeBlockManager } from "./キーフレームブロック管理.js";
-import { managerForDOMs } from "../UI/制御.js";
+import { Attachments } from "./attachments/attachments.js";
+import { GPU } from "../../utils/webGPU.js";
+import { Children } from "../../utils/objects/children.js";
+import { ObjectBase, sharedDestroy } from "../../utils/objects/util.js";
+import { indexOfSplice } from "../../utils/utility.js";
+import { app } from "../../app/app.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 
 class Vertex {
     constructor(/** @type {Bone} */bone,data) {

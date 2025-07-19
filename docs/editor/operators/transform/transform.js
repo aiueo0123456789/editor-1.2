@@ -1,21 +1,21 @@
-import { app } from "../../../app.js";
-import { mathMat3x3 } from "../../../MathMat.js";
-import { loadFile } from "../../../utility.js";
-import { GPU } from "../../../webGPU.js";
-import { Armature } from "../../../オブジェクト/アーマチュア.js";
-import { GraphicMesh } from "../../../オブジェクト/グラフィックメッシュ.js";
-import { BezierModifier } from "../../../オブジェクト/ベジェモディファイア.js";
+import { app } from "../../app/app.js";
+import { Armature } from "../../core/objects/armature.js";
+import { BezierModifier } from "../../core/objects/bezierModifier.js";
+import { GraphicMesh } from "../../core/objects/graphicMesh.js";
+import { mathMat3x3 } from "../../utils/mathMat.js";
+import { loadFile } from "../../utils/utility.js";
+import { GPU } from "../../utils/webGPU.js";
 
-const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/init.wgsl"));
+const createInitDataPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Cu_Cu_Cu")], await loadFile("./editor/shader/compute/command/transform/init.wgsl"));
 
-const updateForUVPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/updateForUV.wgsl"));
+const updateForUVPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu")], await loadFile("./editor/shader/compute/command/transform/updateForUV.wgsl"));
 
-const createOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./script/js/機能/オペレーター/変形/GPU/createOriginal.wgsl"));
-const setOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./script/js/機能/オペレーター/変形/GPU/setOriginal.wgsl"));
+const createOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./editor/shader/compute/command/transform/createOriginal.wgsl"));
+const setOriginalPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr")], await loadFile("./editor/shader/compute/command/transform/setOriginal.wgsl"));
 
-const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/translate.wgsl"));
-const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/resize.wgsl"));
-const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./script/js/機能/オペレーター/変形/GPU/vertices/rotate.wgsl"));
+const verticesTranslatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./editor/shader/compute/command/transform/vertices/translate.wgsl"));
+const verticesResizePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./editor/shader/compute/command/transform/vertices/resize.wgsl"));
+const verticesRotatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Cu_Cu")], await loadFile("./editor/shader/compute/command/transform/vertices/rotate.wgsl"));
 
 class TransformCommand {
     constructor(type, targets, options) {

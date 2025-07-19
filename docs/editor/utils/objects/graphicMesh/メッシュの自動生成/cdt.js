@@ -1,5 +1,5 @@
-import { createArrayN } from "../../../../editor/utils/utility.js";
-import { vec2 } from "../../ベクトル計算.js";
+import { vec2 } from "../../../mathVec.js";
+import { createArrayN } from "../../../utility.js";
 
 /* https://takashiijiri.com/study/miscs/DelaunayTriangulation.htm の制約つきドロネー分割---(逐次加点法)をもとに書いたコードです */
 

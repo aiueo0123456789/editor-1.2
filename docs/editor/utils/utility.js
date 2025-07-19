@@ -125,9 +125,16 @@ export function allFalse(array) {
     return true;
 }
 
-// textの読み込み
+// textを読み込む
 export async function loadFile(path) {
-    return await fetch(path).then(x => x.text());
+    try {
+        const res = await fetch(path);
+        if (res.status == 404) console.trace("ファイルが見つかりません", e);
+        return await res.text();
+    } catch (e) {
+        console.trace("エラー", e);
+        return "";
+    }
 }
 
 // jsonの読み込み

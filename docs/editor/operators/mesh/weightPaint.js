@@ -1,8 +1,8 @@
-import { app } from "../../../app.js";
-import { loadFile } from "../../../utility.js";
-import { GPU } from "../../../webGPU.js";
+import { app } from "../../app/app.js";
+import { loadFile } from "../../utils/utility.js";
+import { GPU } from "../../utils/webGPU.js";
 
-const weightPaintPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csrw_Csr_Cu_Cu_Cu_Csr")], await loadFile("./script/js/機能/オペレーター/メッシュ/GPU/paint.wgsl"));
+const weightPaintPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csrw_Csr_Cu_Cu_Cu_Csr")], await loadFile("./editor/shader/compute/command/mesh/paint.wgsl"));
 
 export class WeightPaintCommand {
     constructor(target, paintTargetIndex, weight, decayType, decaySize, bezierType = 0) {
