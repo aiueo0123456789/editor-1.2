@@ -1,7 +1,7 @@
 import { app } from "../../../../../app/app.js";
 import { InputManager } from "../../../../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { BoneExtrudeMoveCommand } from "../../../../../operators/bone/bone.js";
+import { BoneExtrudeMoveCommand } from "../../../../../commands/bone/bone.js";
 
 export class ExtrudeMove {
     constructor(operator) {

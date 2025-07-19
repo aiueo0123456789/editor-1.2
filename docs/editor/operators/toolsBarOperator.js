@@ -1,5 +1,5 @@
-import { createID, createTag, managerForDOMs, setClass } from "./util.js";
-import { CreatorForUI } from "./creatorForUI.js";
+import { createID, createTag, managerForDOMs, setClass } from "../utils/ui/util.js";
+import { CreatorForUI } from "../utils/ui/creatorForUI.js";
 
 export class ToolsBarOperator {
     constructor(/** @type {HTMLElement} */dom, modals) {

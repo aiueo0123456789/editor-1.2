@@ -1,8 +1,8 @@
 import { app } from "../../../../../app/app.js";
 import { InputManager } from "../../../../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { TranslateCommand } from "../../../../../operators/transform/transform.js";
-import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
+import { TranslateCommand } from "../../../../../commands/transform/transform.js";
+import { ModalOperator } from "../../../../../operators/modalOperator.js";
 
 export class TranslateModal {
     constructor(/** @type {ModalOperator} */operator) {

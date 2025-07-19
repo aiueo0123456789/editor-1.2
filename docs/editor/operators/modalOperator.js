@@ -1,8 +1,8 @@
-import { app } from "../../app/app.js";
-import { InputManager } from "../../app/inputManager/inputManager.js";
-import { isFunction } from "../utility.js";
-import { CreatorForUI } from "./creatorForUI.js";
-import { createTag } from "./util.js";
+import { app } from "../app/app.js";
+import { InputManager } from "../app/inputManager/inputManager.js";
+import { CreatorForUI } from "../utils/ui/creatorForUI.js";
+import { createTag } from "../utils/ui/util.js";
+import { isFunction } from "../utils/utility.js";
 
 export class ModalOperator {
     constructor(dom, modals) {

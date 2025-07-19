@@ -1,6 +1,6 @@
 import { app } from "../../../../../app/app.js";
-import { DeleteVerticesCommand } from "../../../../../operators/mesh/mesh.js";
-import { BoneDelete } from "../../../../../operators/bone/bone.js";
+import { DeleteVerticesCommand } from "../../../../../commands/mesh/mesh.js";
+import { BoneDelete } from "../../../../../commands/bone/bone.js";
 
 export class DeleteTool {
     constructor(operator) {

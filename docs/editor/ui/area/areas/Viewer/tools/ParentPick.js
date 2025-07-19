@@ -1,7 +1,7 @@
 import { app } from "../../../../../app/app.js";
 import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { ChangeParentCommand } from "../../../../../operators/object/object.js";
-import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
+import { ChangeParentCommand } from "../../../../../commands/object/object.js";
+import { ModalOperator } from "../../../../../operators/modalOperator.js";
 
 export class ParentPickModal {
     constructor(/** @type {ModalOperator} */operator) {

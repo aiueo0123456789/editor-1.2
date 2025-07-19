@@ -3,7 +3,7 @@ import { Scene } from "./scene/scene.js";
 import { AutoGrid } from "../utils/ui/grid.js";
 import { createID, managerForDOMs } from "../utils/ui/util.js";
 import { Hierarchy } from "./hierarchy/hierarchy.js";
-import { Operator } from "../operators/operator.js";
+import { Operator } from "../operators/commandOperator.js";
 import { Area_Viewer } from "../ui/area/areas/Viewer/area_Viewer.js";
 import { Area_Hierarchy } from "../ui/area/areas/Hierarchy/area_Hierarchy.js";
 import { Area_Inspector } from "../ui/area/areas/Inspector/area_Inspector.js";
@@ -17,7 +17,7 @@ import { HierarchySpaceData } from "../ui/area/areas/Hierarchy/area_HierarchySpa
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
 import { GraphicMesh } from "../core/objects/graphicMesh.js";
 import { GPU } from "../utils/webGPU.js";
-import { CreateObjectCommand, DeleteObjectCommand } from "../operators/object/object.js";
+import { CreateObjectCommand, DeleteObjectCommand } from "../commands/object/object.js";
 import { Area } from "../ui/area/Area.js";
 
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));

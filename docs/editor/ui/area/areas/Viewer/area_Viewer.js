@@ -1,6 +1,5 @@
 import { ConvertCoordinate } from '../../../../utils/convertCoordinate.js';
 import { resizeObserver } from '../../../../utils/ui/resizeObserver.js';
-import { ModalOperator } from '../../../../utils/ui/modalOperator.js';
 import { TranslateModal } from './tools/TranslateTool.js';
 import { RotateModal } from './tools/RotateTool.js';
 import { ResizeModal } from './tools/ResizeTool.js';
@@ -8,7 +7,7 @@ import { ExtrudeMove } from './tools/ExtrudeMove.js';
 import { ParentPickModal } from './tools/ParentPick.js';
 import { DeleteTool } from './tools/Delete.js';
 import { WeightPaintModal } from './tools/WeightPaintTool.js';
-import { ToolsBarOperator } from '../../../../utils/ui/toolsBarOperator.js';
+import { ToolsBarOperator } from '../../../../operators/toolsBarOperator.js';
 import { BonePropertyModal } from './toolBar/bone.js';
 import { ArmaturePropertyModal } from './toolBar/armature.js';
 import { EdgeJoinTool } from './tools/EdgeJoin.js';
@@ -22,6 +21,7 @@ import { Camera } from '../../../../core/objects/camera.js';
 import { BoneAttachmentsModal } from './toolBar/Attachments.js';
 import { InputManager } from '../../../../app/inputManager/inputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
+import { ModalOperator } from '../../../../operators/modalOperator.js';
 
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t");

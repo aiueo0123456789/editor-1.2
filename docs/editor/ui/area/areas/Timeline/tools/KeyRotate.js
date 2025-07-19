@@ -1,9 +1,9 @@
 import { app } from "../../../../../app/app.js";
 import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
 import { managerForDOMs } from "../../../../../utils/ui/util.js";
 import { GPU } from "../../../../../utils/webGPU.js";
-import { KeyTranslateCommand } from "../../../../../operators/keyTransform/keyTransform.js";
+import { KeyTranslateCommand } from "../../../../../commands/keyTransform/keyTransform.js";
+import { ModalOperator } from "../../../../../operators/modalOperator.js";
 
 class Modal {
     constructor() {

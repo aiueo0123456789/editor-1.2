@@ -1,6 +1,6 @@
 import { app } from "../../../../app/app.js";
+import { ModalOperator } from "../../../../operators/modalOperator.js";
 import { vec2 } from "../../../../utils/mathVec.js";
-import { ModalOperator } from "../../../../utils/ui/modalOperator.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";

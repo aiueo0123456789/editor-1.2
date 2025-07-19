@@ -1,9 +1,9 @@
 import { app } from "../../../../../app/app.js";
 import { InputManager } from "../../../../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { ResizeCommand } from "../../../../../operators/transform/transform.js";
-import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
+import { ResizeCommand } from "../../../../../commands/transform/transform.js";
 import { vec2 } from "../../../../../utils/mathVec.js";
+import { ModalOperator } from "../../../../../operators/modalOperator.js";
 
 export class ResizeModal {
     constructor(/** @type {ModalOperator} */operator) {

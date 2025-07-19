@@ -1,8 +1,9 @@
 import { app } from "../../../../../app/app.js";
 import { InputManager } from "../../../../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { WeightPaintCommand } from "../../../../../operators/mesh/weightPaint.js";
-import { ModalOperator } from "../../../../../utils/ui/modalOperator.js";
+import { WeightPaintCommand } from "../../../../../commands/mesh/weightPaint.js";
+import { ModalOperator } from "../../../../../operators/modalOperator.js";
+ModalOperator
 
 export class WeightPaintModal {
     constructor(/** @type {ModalOperator} */operator) {
