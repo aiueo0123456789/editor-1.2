@@ -24,7 +24,6 @@ export class RuntimeDataBase {
         }
         this.setGroup();
         this.setOffset(object);
-        console.log(this.order)
     }
 
     delete(object) {

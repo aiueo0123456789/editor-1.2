@@ -54,7 +54,7 @@ export class RotateModal {
         // console.log(inputManager)
         if (this.type == "ボーンアニメーション編集") {
             console.log(this.type)
-            this.values[0] -= vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
+            this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         } else {
             this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         }

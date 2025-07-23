@@ -70,7 +70,7 @@ export class Bone {
         this.sx = 0;
         this.sy = 0;
         this.r = 0;
-        this.attachments = new Attachments();
+        this.attachments = new Attachments(this);
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"], data.animations);
 
         this.matrix = new Float32Array(4 * 3);
@@ -154,8 +154,6 @@ export class Armature extends ObjectBase {
         this.parent = "";
 
         this.mode = "オブジェクト";
-
-        this.attachments = new Attachments(this);
 
         this.init(data);
     }

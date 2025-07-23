@@ -13,6 +13,7 @@ export class BufferManager {
         this.formulaParts = calculateFormula.split(" ");
         this.formulaParts = this.formulaParts.map(value => isNumber(value) ? Number(value) : value);
         this.sourceOffsetType = "";
+        console.log(GPU.getStructByteSize(struct))
     }
 
     async getObjectData(object) {

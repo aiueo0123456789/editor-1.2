@@ -16,6 +16,17 @@ export class TimelineSpaceData {
     setVisibleObject(object, visible) {
     }
 
+    getSelectKey() {
+        const keys = this.getAllKeyframe();
+        const result = [];
+        for (const key of keys) {
+            if (key.pointSelected) {
+                result.push(key);
+            }
+        }
+        return result;
+    }
+
     createModeSelectList() {
         const result = [];
         result.push("オブジェクト");

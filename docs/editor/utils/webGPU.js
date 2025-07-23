@@ -117,7 +117,18 @@ class WebGPU {
 
     // シェーダモデルの作成
     createShaderModule(code, label = code) {
-        return device.createShaderModule({ label: label, code: code });
+        const shaderModule = device.createShaderModule({
+            label: label,
+            code: code,
+        });
+
+        async function consoleLog() {
+            const shaderInfo = await shaderModule.getCompilationInfo();
+            // console.log(shaderInfo, code);
+        }
+
+        consoleLog();
+        return shaderModule;
     }
 
     // ビットデータから実数

@@ -1,9 +1,10 @@
 import { pushArray } from "../../../../editor/utils/utility.js";
-import { PhysicsAttachment, PhysicsAttachmentBoneData } from "./物理.js";
+import { PhysicsAttachmentData } from "./physics/data.js";
 
 export class Attachments {
-    constructor(target) {
-        this.target = target;
+    constructor(bone) {
+        this.bone = bone;
+        /** @type {PhysicsAttachmentData[]} */
         this.list = [];
         this.append("物理");
     }
@@ -11,7 +12,7 @@ export class Attachments {
     append(type) {
         let attachment;
         if (type == "物理") {
-            attachment = new PhysicsAttachment();
+            attachment = new PhysicsAttachmentData(this.bone);
         }
         pushArray(this.list,attachment);
         return attachment;

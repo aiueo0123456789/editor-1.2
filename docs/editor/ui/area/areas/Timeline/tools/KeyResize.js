@@ -61,5 +61,6 @@ export class KeyResize {
 
     mousedown(/** @type {InputManager} */inputManager) {
         this.operator.execute();
+        return {complete: true};
     }
 }

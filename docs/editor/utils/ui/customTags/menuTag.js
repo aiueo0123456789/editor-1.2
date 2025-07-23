@@ -1,4 +1,4 @@
-import { isFunction } from "../../utility.js";
+import { isFunction, looper } from "../../utility.js";
 import { createTag, setClass } from "../util.js";
 
 export class MenuTag {
@@ -7,7 +7,7 @@ export class MenuTag {
         // console.log("セレクトの生成", t, list);
         this.element = createTag(t, "div");
         this.title = createTag(this.element, "p", {textContent: title});
-        setClass(this.title, "ellipsis");
+        setClass(this.title, "nowrap");
         // const listContainer = createTag(container,"ul");
         this.element.classList.add("custom-menu");
         this.element.addEventListener("click", (e) => {
@@ -22,10 +22,20 @@ export class MenuTag {
             listContainer.style.top = `${rect.top + 15}px`;
             listContainer.replaceChildren();
             listContainer.classList.remove("hidden");
-            for (const item of struct) {
-                const option = createTag(listContainer, "li");
-                const inner = createTag(option, "p", {textContent: item});
+            const createItemTag = (object, parent, depth) => {
+                /** @type {HTMLElement} */
+                const li = createTag(parent,"li",{textContent: object.label});
+                li.className = "custom-menu-item";
+                const children = createTag(li, "ul");
+                li.addEventListener("click", (event) => {
+                    object.eventFn();
+                    event.stopPropagation();
+                })
+                children.className = "custom-menu-item-submenu";
+                return children;
             }
+            looper(struct, "children", createItemTag, listContainer);
+
             document.addEventListener("click", removeFn); // セレクト以外がクリックされたら(ドキュメント)非表示
             e.stopPropagation();
         })

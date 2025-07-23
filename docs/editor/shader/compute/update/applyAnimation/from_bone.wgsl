@@ -23,13 +23,12 @@ struct Bone {
 
 // 2次元の回転、スケール、平行移動を表現する行列を作成する関数
 fn createTransformMatrix(scale: vec2<f32>, angle: f32, translation: vec2<f32>) -> mat3x3<f32> {
-    let cosTheta = cos(angle);
-    let sinTheta = sin(angle);
-
+    let rx = angle;
+    let ry = angle + 1.5708;
     // スケールと回転を組み合わせた行列
     var matrix: mat3x3<f32>;
-    matrix[0] = vec3<f32>(scale.x * cosTheta, -scale.y * sinTheta, 0.0);
-    matrix[1] = vec3<f32>(scale.x * sinTheta, scale.y * cosTheta, 0.0);
+    matrix[0] = vec3<f32>(scale.x * cos(rx), scale.x * sin(rx), 0.0);
+    matrix[1] = vec3<f32>(scale.y * cos(ry), scale.y * sin(ry), 0.0);
     matrix[2] = vec3<f32>(translation.x, translation.y, 1.0);
 
     return matrix;

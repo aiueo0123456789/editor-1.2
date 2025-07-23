@@ -272,6 +272,12 @@ export class DOMsManager {
                         this.submitFn(object, groupID, g);
                     });
                 }
+                const i_ = o.get("&all");
+                if (i_) {
+                    i_.forEach((g, groupID) => {
+                        this.submitFn(object, groupID, g);
+                    });
+                }
             }
         }
     }

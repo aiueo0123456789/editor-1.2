@@ -53,9 +53,9 @@ function cubic_bezier(t, p0, p1, p2, p3) {
 }
 
 class Keyframe {
-    constructor(belongBlock, frame, value) {
+    constructor(keyframeBlock, frame, value) {
         this.type = "キーフレーム"
-        this.belongBlock = belongBlock;
+        this.keyframeBlock = keyframeBlock;
         this.selected = false;
         this.pointSelected = false;
         this.leftHandleSelected = false;
@@ -135,7 +135,7 @@ export class KeyframeBlock {
         managerForDOMs.update("タイムライン-canvas")
     }
 
-    delete(key) {
+    deleteKeyframe(key) {
         this.keys.splice(this.keys.indexOf(key),1);
         managerForDOMs.update(this);
     }

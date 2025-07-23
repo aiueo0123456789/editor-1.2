@@ -20,10 +20,21 @@ export class BoneAttachmentsModal {
                                 for (const animation of animations) {
                                     // deleteAnimationToObject(app.scene.state.activeObject, animation);
                                 }
-                            }, withObject: "0/attachments/list", options: {}, liStruct:[
+                            }, withObject: "/0/attachments/list", options: {}, liStruct:[
                                 {type: "if", formula: {source: "/type", conditions: "==", value: "物理アタッチメント"},
                                     true: [
                                         {type: "section", name: "物理アタッチメント", children: [
+                                            {type: "input", label: "x", withObject: "/x", options: {type: "number", min: 0, max: 1, step: 0.01}},
+                                            {type: "input", label: "y", withObject: "/y", options: {type: "number", min: 0, max: 1, step: 0.01}},
+                                            {type: "input", label: "rotate", withObject: "/rotate", options: {type: "number", min: 0, max: 1, step: 0.01}},
+                                            {type: "input", label: "scaleX", withObject: "/scaleX", options: {type: "number", min: 0, max: 1, step: 0.01}},
+                                            {type: "input", label: "inertia", withObject: "/inertia", options: {type: "number", min: 0, max: 10, step: 0.01}},
+                                            {type: "input", label: "strength", withObject: "/strength", options: {type: "number", min: 0, max: 100, step: 0.01}},
+                                            {type: "input", label: "damping", withObject: "/damping", options: {type: "number", min: 0, max: 1, step: 0.01}},
+                                            {type: "input", label: "mass", withObject: "/mass", options: {type: "number", min: 0, max: 1000, step: 0.01}},
+                                            {type: "input", label: "wind", withObject: "/wind", options: {type: "number", min: -100, max: 100, step: 0.01}},
+                                            {type: "input", label: "gravity", withObject: "/gravity", options: {type: "number", min: -100, max: 100, step: 0.01}},
+                                            {type: "input", label: "mix", withObject: "/mix", options: {type: "number", min: 0, max: 1, step: 0.01}},
                                         ]}
                                     ],
                                     false: [

@@ -42,7 +42,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     // 頂点データを取得
     let matrix = boneMatrix[arrayIndex];
     var output: BoneVertices;
-    output.h = (matrix * vec3<f32>(0.0, 0.0, 1.0)).xy;
-    output.t = (matrix * vec3<f32>(0.0, boneData[arrayIndex].length, 1.0)).xy;
+    output.h = matrix[2].xy;
+    output.t = matrix[2].xy + vec2<f32>(matrix[0][0], matrix[0][1]) * boneData[arrayIndex].length;
+    // output.t = (matrix * vec3<f32>(0.0, boneData[arrayIndex].length, 1.0)).xy;
     vertices[arrayIndex] = output;
 }

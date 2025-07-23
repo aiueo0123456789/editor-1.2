@@ -8,6 +8,36 @@
     padding-left: 3px;
     padding-right: 3px;
 }
+.custom-menu-item {
+    width: fit-content;
+    background-color: #181818;
+    position: relative; /* 子要素の位置基準にする */
+    overflow: visible; /* サブメニューが親の範囲外に表示されるようにする */
+    padding: 2px;
+}
+.custom-menu-item button {
+    border-width: 0px;
+    width: 100%;
+}
+/* サブメニューのスタイル */
+.custom-menu-item-submenu {
+    display: none;
+    position: absolute; /* 親から独立した位置に配置 */
+    left: 100%; /* 親の右横に配置 */
+    top: 0; /* 親の上端に揃える */
+    white-space: nowrap; /* 長いテキストでもサブメニューの幅が変わらないようにする */
+    z-index: 1000; /* サブメニューが他の要素より前に表示されるようにする */
+    background-color: #282828;
+}
+
+.custom-menu-item:hover > .custom-menu-item-submenu {
+    display: block;
+}
+
+.custom-menu-item:hover {
+    background-color: rgb(85, 85, 85);
+}
+
 /* .custom-menu > *{
     overflow-x: hidden;
 } */
@@ -30,13 +60,6 @@
     /* width: fit-content; */
     width: 100%;
     height: 15px;
-}
-
-#custom-menu-items > *:hover {
-    background-color: rgb(85, 85, 85);
-}
-#custom-menu-items > *.active {
-    background-color: var(--colorActive);
 }
 
 #custom-menu-items > * > * {

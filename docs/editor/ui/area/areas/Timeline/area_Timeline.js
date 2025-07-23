@@ -1,9 +1,11 @@
 import { app } from "../../../../app/app.js";
+import { InputManager } from "../../../../app/inputManager/inputManager.js";
 import { ModalOperator } from "../../../../operators/modalOperator.js";
 import { vec2 } from "../../../../utils/mathVec.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
+import { KeyDelete } from "./tools/KeyDelete.js";
 import { KeyResize } from "./tools/KeyResize.js";
 import { KeyRotate } from "./tools/KeyRotate.js";
 import { KeyTranslate } from "./tools/KeyTranslate.js";
@@ -271,7 +273,7 @@ export class Area_Timeline {
         this.creatorForUI = area.creatorForUI;
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize, "x": KeyDelete});
 
         /** @type {HTMLElement} */
         this.canvas = this.creatorForUI.getDOMFromID("timelineCanvasForGrid");
@@ -335,9 +337,14 @@ export class Area_Timeline {
         return this.clipToCanvas(this.worldToClip(p));
     }
 
-    async keyInput(inputManager) {
+    async keyInput(/** @type {InputManager} */inputManager) {
         let consumed = await this.modalOperator.keyInput(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
+        if (inputManager.consumeKeys(["a"])) {
+            for (const key of this.spaceData.getAllKeyframe()) {
+                key.pointSelected = true;
+            }
+        }
     }
 
     async mousedown(inputManager) {

@@ -1,5 +1,4 @@
 :root {
-    --color3: #272727; /* 任意の色 */
     --colorShelfeBackGroundColor: rgba(0, 0, 0, 0.386);
     --colorAreaBG: rgb(80, 80, 80);
     --colorSection: rgb(115, 115, 115);
@@ -14,7 +13,6 @@
 }
 
 .ui_options {
-    background-color: var(--color3);
     border: 0px;
     width: 100%;
     height: fit-content;
@@ -22,7 +20,6 @@
 }
 
 .ui_container_0 {
-    /* background-color: var(--color3); */
     gap: 5px;
     padding: 5px;
     width: 100%;
@@ -38,7 +35,6 @@
 }
 
 .ui_container_1 {
-    /* background-color: var(--color3); */
     gap: 5px;
     padding: 5px;
     height: fit-content;
@@ -202,8 +198,12 @@ canvas {
     gap: 3px;
 }
 
+.nowrap {
+    white-space: nowrap;
+}
+
 .ellipsis {
-    white-space: nowrap;         /* 改行させない */
-    overflow: hidden;            /* はみ出した部分を非表示 */
-    text-overflow: ellipsis;     /* 省略記号（...）を表示 */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

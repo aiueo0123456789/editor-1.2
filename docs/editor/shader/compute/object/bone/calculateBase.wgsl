@@ -34,25 +34,48 @@ fn getAngle(p1: vec2<f32>, p2: vec2<f32>) -> f32 {
 
 // 2次元の回転、スケール、平行移動を表現する行列を作成する関数
 fn createTransformMatrix(scale: vec2<f32>, angle: f32, translation: vec2<f32>) -> mat3x3<f32> {
-    let cosTheta = cos(angle);
-    let sinTheta = sin(angle);
-
+    let rx = angle;
+    let ry = angle + 1.5708;
     // スケールと回転を組み合わせた行列
     var matrix: mat3x3<f32>;
-    matrix[0] = vec3<f32>(scale.x * cosTheta, -scale.y * sinTheta, 0.0);
-    matrix[1] = vec3<f32>(scale.x * sinTheta, scale.y * cosTheta, 0.0);
+    matrix[0] = vec3<f32>(scale.x * cos(rx), scale.x * sin(rx), 0.0);
+    matrix[1] = vec3<f32>(scale.y * cos(ry), scale.y * sin(ry), 0.0);
     matrix[2] = vec3<f32>(translation.x, translation.y, 1.0);
 
     return matrix;
 }
 
-fn inverseRotatePoint(point: vec2<f32>, angle: f32) -> vec2<f32> {
-    let cosTheta = cos(angle);
-    let sinTheta = sin(angle);
-    return vec2<f32>(
-        point.x * cosTheta - point.y * sinTheta,
-        point.x * sinTheta + point.y * cosTheta
-    );
+fn inverseMat3x3(matrix: mat3x3<f32>) -> mat3x3<f32> {
+    var inv: mat3x3<f32>;
+    let a = matrix[0][0];
+    let b = matrix[0][1];
+    let c = matrix[0][2];
+    let d = matrix[1][0];
+    let e = matrix[1][1];
+    let f = matrix[1][2];
+    let g = matrix[2][0];
+    let h = matrix[2][1];
+    let i = matrix[2][2];
+    let det = a * (e * i - f * h) -
+              b * (d * i - f * g) +
+              c * (d * h - e * g);
+    if (det == 0.0) {
+        // 行列が逆行列を持たない場合
+        return mat3x3<f32>(0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0,
+                           0.0, 0.0, 0.0);
+    }
+    let invDet = 1.0 / det;
+    inv[0][0] = (e * i - f * h) * invDet;
+    inv[0][1] = (c * h - b * i) * invDet;
+    inv[0][2] = (b * f - c * e) * invDet;
+    inv[1][0] = (f * g - d * i) * invDet;
+    inv[1][1] = (a * i - c * g) * invDet;
+    inv[1][2] = (c * d - a * f) * invDet;
+    inv[2][0] = (d * h - e * g) * invDet;
+    inv[2][1] = (b * g - a * h) * invDet;
+    inv[2][2] = (a * e - b * d) * invDet;
+    return inv;
 }
 
 @compute @workgroup_size(64)
@@ -67,13 +90,12 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let parentIndex = parentIndexs[localBoneIndex] + startIndex;
     let boneIndex = localBoneIndex + startIndex;
     let vertex = baseVertices[boneIndex];
-    let boneData = Bone(vertex.h, vec2<f32>(1.0), -(getAngle(vertex.h, vertex.t) - 1.5708), length(vertex.h - vertex.t));
-    baseMatrix[boneIndex] = createTransformMatrix(boneData.scale, boneData.angle, boneData.position); // ベース行列
+    baseMatrix[boneIndex] = createTransformMatrix(vec2<f32>(1.0), getAngle(vertex.h, vertex.t), vertex.h); // ベース行列
     if (boneIndex == parentIndex) { // 親がない場合
-        baseBone[boneIndex] = boneData;
+        baseBone[boneIndex] = Bone(vertex.h, vec2<f32>(1.0, 1.0), getAngle(vertex.h, vertex.t), length(vertex.h - vertex.t));
     } else { // 親がある場合
-        let parentVertex = baseVertices[parentIndex]; // 親ボーンのデータ
-        let parentAngle = -(getAngle(parentVertex.h, parentVertex.t) - 1.5708); // 親ボーンの角度
-        baseBone[boneIndex] = Bone(inverseRotatePoint(vertex.h - parentVertex.h, parentAngle), vec2<f32>(1.0), boneData.angle - parentAngle, boneData.length); // 親ボーンからのローカルデータ
+        let parentMatrixInv = inverseMat3x3(baseMatrix[parentIndex]);
+        let localMatrix = parentMatrixInv * baseMatrix[boneIndex];
+        baseBone[boneIndex] = Bone(localMatrix[2].xy, vec2<f32>(1.0), atan2(localMatrix[0][1], localMatrix[0][0]), length(vertex.h - vertex.t)); // 親ボーンからのローカルデータ
     }
 }

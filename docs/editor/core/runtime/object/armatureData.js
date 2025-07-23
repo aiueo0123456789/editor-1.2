@@ -51,6 +51,33 @@ export class ArmatureData extends RuntimeDataBase {
         this.colors = new BufferManager(this, "colors", ["f32","f32","f32","f32"], "MAX_BONES");
         // this.allocation = GPU.createBuffer(0, ["s"]);
         this.allocations = new BufferManager(this, "allocations", ["u32","u32","u32","u32","u32","u32","u32","u32"], "1");
+        this.physicsData = new BufferManager(this, "physicsData", [
+            "f32", "f32", // x, y
+            "f32", // rotate
+            "f32", // scaleX
+            "f32", // shearX
+
+            "f32", // 慣性
+            "f32", // 復元率
+            "f32", // 減衰率
+            "f32", // 質量の逆数
+            "f32", // 風
+            "f32", // 重力
+            "f32", // どれだけ適応するか
+            "f32", // 最大速度
+
+            "u32", // リセット済みか
+
+            "f32", "f32",
+            "f32", "f32",
+            "f32", "f32",
+            "f32", "f32",
+            "f32", "f32",
+            "f32",
+            "f32",
+            "f32",
+            "f32",
+        ], "MAX_BONES");
         this.animationApplyGroup = null;
         this.animationApplyParentGroup = null;
         this.calculateVerticesPositionGroup = null;
@@ -58,7 +85,7 @@ export class ArmatureData extends RuntimeDataBase {
 
         this.boneBlockByteLength = 6 * 4; // データ一塊のバイト数: f32 * 6
         this.matrixBlockByteLength = 4 * 3 * 4; // データ一塊のバイト数: mat3x3<f32> (paddingでmat4x3<f32>になる)
-        this.vertexBlockByteLength = 2 * 2 * 4; // 頂点データ一塊のバイト数: vec2<f32> * 2
+        this.vertexBlockByteLength = 2 * 2 * 4; // 頂点データ一塊のバイト数: f32x2 * 2
 
         this.colorBlockByteLength = 4 * 4;
 
@@ -160,33 +187,49 @@ export class ArmatureData extends RuntimeDataBase {
     }
 
     updatePropagateData() {
-        const propagateCPU = [];
+        const boneIndexsMap = [];
+        const propagateMap = [];
         const relationshipsKeep = createArrayN(this.allBoneNum);
         for (const /** @type {Armature} */armature of this.order) {
             const roop = (bones, depth = 0) => {
                 for (const /** @type {Bone} */ bone of bones) {
+                    if (boneIndexsMap.length <= depth) {
+                        boneIndexsMap.push([]);
+                    }
+                    if (propagateMap.length <= depth) {
+                        propagateMap.push([]);
+                    }
+                    boneIndexsMap[depth].push(bone.index + armature.runtimeOffsetData.boneOffset);
                     const parent = bone.parent;
                     if (parent) { // 親がいる場合
-                        if (propagateCPU.length <= depth) {
-                            propagateCPU.push([]);
-                        }
-                        propagateCPU[depth].push(bone.index + armature.runtimeOffsetData.boneOffset, parent.index + armature.runtimeOffsetData.boneOffset);
+                        propagateMap[depth].push(bone.index + armature.runtimeOffsetData.boneOffset, parent.index + armature.runtimeOffsetData.boneOffset);
                         relationshipsKeep[bone.index + armature.runtimeOffsetData.boneOffset] = parent.index + armature.runtimeOffsetData.boneOffset;
-                        roop(bone.childrenBone, depth + 1);
                     } else { // ルートボーンの場合
                         relationshipsKeep[bone.index + armature.runtimeOffsetData.boneOffset] = bone.index + armature.runtimeOffsetData.boneOffset;
-                        roop(bone.childrenBone, 0);
                     }
+                    roop(bone.childrenBone, depth + 1);
                 }
             }
             roop(armature.root);
         }
         this.propagate.length = 0;
-        for (const data of propagateCPU) {
-            const buffer = GPU.createStorageBuffer(data.length * 4, data, ["u32","u32"]);
-            const group = GPU.createGroup(GPU.getGroupLayout("Csr"), [buffer]);
-            this.propagate.push({boneNum: data.length / 2, buffer: buffer, group: group, array: data});
-        }
+        boneIndexsMap.forEach((boneIndexsData, index) => {
+            const data = {
+                boneNum: boneIndexsData.length,
+            };
+            const propagateData = propagateMap[index];
+            if (propagateData.length) {
+                const propagateBuffer = GPU.createStorageBuffer(propagateData.length * 4, propagateData, ["u32","u32"]);
+                data.propagateBuffer = propagateBuffer;
+                data.propagateData = propagateData;
+                data.propagateGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [propagateBuffer]);
+            }
+            const boneIndexsBuffer = GPU.createStorageBuffer(boneIndexsData.length * 4, boneIndexsData, ["u32"]);
+            data.boneIndexsBuffer = boneIndexsBuffer;
+            data.boneIndexsData = boneIndexsData;
+            data.boneIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [boneIndexsBuffer]);
+            this.propagate.push(data);
+        });
         GPU.writeBuffer(this.relationships.buffer, new Uint32Array(relationshipsKeep));
     }
 
@@ -200,11 +243,12 @@ export class ArmatureData extends RuntimeDataBase {
 
     // ベースデータの更新
     updateBaseData(/** @type {Armature} */armature) {
-        console.log("|---ボーンベース---|", armature)
+        console.log("|---ボーンベース---|", armature);
         armature.boneNum = armature.allBone.length;
         armature.verticesNum = armature.boneNum * 2;
         const boneVerticesData = Array(armature.boneNum * this.vertexBlockByteLength / 4).fill(0);
         const colorsData = Array(armature.boneNum * this.colorBlockByteLength / 4).fill(0);
+        const physicsAttachmentData = Array(armature.boneNum * this.physicsData.struct.length).fill(0);
 
         const parentsData = Array(armature.boneNum).fill(0);
         for (const bone of armature.allBone) {
@@ -215,11 +259,14 @@ export class ArmatureData extends RuntimeDataBase {
             }
             arrayToSet(boneVerticesData, bone.baseHead.co.concat(bone.baseTail.co), bone.index, 4);
             arrayToSet(colorsData, bone.color, bone.index, 4);
+            const physicsData = bone.attachments.list[0];
+            arrayToSet(physicsAttachmentData, [physicsData.x, physicsData.y, physicsData.rotate, physicsData.scaleX, physicsData.shearX, physicsData.inertia, physicsData.strength, physicsData.damping, 1 / physicsData.mass, physicsData.wind, physicsData.gravity, physicsData.mix, physicsData.limit], bone.index, this.physicsData.struct.length);
         }
         armature.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
 
         GPU.writeBuffer(this.baseVertices.buffer, new Float32Array(boneVerticesData), armature.runtimeOffsetData.boneOffset * this.vertexBlockByteLength);
         GPU.writeBuffer(this.colors.buffer, new Float32Array(colorsData), armature.runtimeOffsetData.boneOffset * this.colorBlockByteLength);
+        GPU.writeBuffer(this.physicsData.buffer, GPU.createBitData(physicsAttachmentData, this.physicsData.struct), armature.runtimeOffsetData.boneOffset * this.physicsData.struct.length * 4);
 
         for (let i = armature.runtimeOffsetData.boneOffset; i < armature.runtimeOffsetData.boneOffset + armature.MAX_BONES; i ++) {
             this.allBone[i] = null;
@@ -232,9 +279,10 @@ export class ArmatureData extends RuntimeDataBase {
         this.calculateBaseBoneData(armature);
         this.updatePropagateData();
     }
-
+    
     calculateBaseBoneData(armature) {
         GPU.runComputeShader(calculateBoneBaseDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr_Cu"), [this.baseBone.buffer, this.baseBoneMatrix.buffer, this.baseVertices.buffer, armature.parentsBuffer, armature.objectDataBuffer])], Math.ceil(armature.boneNum / 64));
+        GPU.consoleBufferData(this.baseBone.buffer, this.baseBone.struct, "ベース");
     }
 
     updateAllocationData(/** @type {Armature} */armature) {
@@ -261,7 +309,7 @@ export class ArmatureData extends RuntimeDataBase {
 
     setGroup() {
         this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingBoneMatrix.buffer, this.baseBone.buffer, this.runtimeAnimationData.buffer, this.allocations.buffer]); // アニメーション用
-        this.propagateGroup = GPU.createGroup(GPU.getGroupLayout("Csrw"), [this.renderingBoneMatrix.buffer]); // 伝播用
+        this.propagateGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csrw"), [this.renderingBoneMatrix.buffer, this.baseBone.buffer, this.physicsData.buffer]); // 伝播用
         this.applyParentGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr_Csr"), [this.renderingBoneMatrix.buffer, this.baseBoneMatrix.buffer, this.allocations.buffer]); // 子の変形用データ
         this.calculateVerticesPositionGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingVertices.buffer, this.renderingBoneMatrix.buffer, this.baseBone.buffer, this.allocations.buffer]);
         this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"), [this.renderingVertices.buffer, this.colors.buffer, this.relationships.buffer, this.selectedVertices.buffer, this.selectedBones.buffer]); // 表示用

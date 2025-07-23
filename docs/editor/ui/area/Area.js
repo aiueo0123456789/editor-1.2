@@ -14,14 +14,13 @@ export class Area {
         this.header.classList.add("header");
 
         this.creatorForUI = new CreatorForUI();
-        const select = new SelectTag(this.header, createArrayFromHashKeys(useClassFromAreaType));
         /** @type {HTMLElement} */
         const deleteButton = createTag(this.header, "span", {className: "square_btn"}); // バツボタン
         deleteButton.addEventListener("click", () => {
             app.deleteArea(this);
         })
         createIcon(this.header, "グラフィックメッシュ"); // アイコン
-        this.title = createTag(this.header, "div", {textContent: type}); // タイトル
+        this.select = new SelectTag(this.header, createArrayFromHashKeys(useClassFromAreaType), {initValue: type});
 
         this.main = document.createElement("div");
         this.main.classList.add("main");
@@ -29,8 +28,8 @@ export class Area {
 
         this.setType(type);
 
-        select.input.addEventListener("input", () => {
-            this.setType(select.input.value);
+        this.select.input.addEventListener("input", () => {
+            this.setType(this.select.input.value);
         })
 
         this.main.addEventListener("mouseover", () => {
@@ -40,7 +39,7 @@ export class Area {
 
     setType(type) {
         this.creatorForUI.remove();
-        this.title.textContent = type; // タイトル
+        this.select.input.value = type; // タイトル
         this.type = type;
         if (type in useClassFromAreaType) {
             this.uiModel = new useClassFromAreaType[type]["area"](this);

@@ -10,7 +10,7 @@ export class SelectTag {
         // const listContainer = createTag(container,"ul");
         this.element.classList.add("custom-select");
         const value = createTag(this.element, "p", {textContent: "選択されていません"});
-        setClass(value, "ellipsis")
+        setClass(value, "nowrap")
         if (options.initValue) {
             value.textContent = options.initValue;
             this.input.value = options.initValue;

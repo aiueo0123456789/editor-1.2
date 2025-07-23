@@ -85,9 +85,26 @@ export class Area_Viewer {
                                 ], errorChildren: [
                                     {type: "select", label: "tool", sourceObject: ["オブジェクト"], options: {initValue: "オブジェクト"}},
                                 ]},
-                                {type: "menu", title: "aaaa", struct: [
-                                    "aa",
-                                    "bb",
+                                {type: "menu", title: "ビュー", struct: [
+                                    {label: "カメラ", children: [
+                                        {label: "すべてを表示", children: []},
+                                    ]},
+                                ]},
+                                {type: "menu", title: "選択", struct: [
+                                    {label: "すべて選択", children: []},
+                                    {label: "選択解除", children: []},
+                                    {label: "反転", children: []},
+                                    {label: "ランダム選択", children: []},
+                                ]},
+                                {type: "menu", title: "追加", struct: [
+                                    {label: "メッシュ", children: [
+                                        {label: "板"},
+                                        {label: "サークル"},
+                                    ]},
+                                    {label: "ベジェ", children: [
+                                        {label: "板"},
+                                        {label: "サークル"},
+                                    ]},
                                 ]},
                                 {type: "flexBox", interval: "5px", name: "", children: [
                                     {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
