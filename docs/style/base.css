@@ -82,7 +82,7 @@ input:hover {
 }
 
 input[type="text"] {
-    min-width: fit-content;
+    min-width: 50px;
     width: 100%;
     overflow: hidden;
     text-align: right;
@@ -120,8 +120,9 @@ input[type="color"] {
 }
 
 input[type="number"] {
-    min-width: fit-content;
+    min-width: 50px;
     width: 100%;
+    overflow: hidden;
     text-align: right;
 }
 

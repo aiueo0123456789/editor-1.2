@@ -28,13 +28,14 @@ export class BoneAttachmentsModal {
                                             {type: "input", label: "y", withObject: "/y", options: {type: "number", min: 0, max: 1, step: 0.01}},
                                             {type: "input", label: "rotate", withObject: "/rotate", options: {type: "number", min: 0, max: 1, step: 0.01}},
                                             {type: "input", label: "scaleX", withObject: "/scaleX", options: {type: "number", min: 0, max: 1, step: 0.01}},
-                                            {type: "input", label: "inertia", withObject: "/inertia", options: {type: "number", min: 0, max: 10, step: 0.01}},
+                                            {type: "input", label: "inertia", withObject: "/inertia", options: {type: "number", min: 0, max: 3, step: 0.01}},
                                             {type: "input", label: "strength", withObject: "/strength", options: {type: "number", min: 0, max: 100, step: 0.01}},
                                             {type: "input", label: "damping", withObject: "/damping", options: {type: "number", min: 0, max: 1, step: 0.01}},
                                             {type: "input", label: "mass", withObject: "/mass", options: {type: "number", min: 0, max: 1000, step: 0.01}},
                                             {type: "input", label: "wind", withObject: "/wind", options: {type: "number", min: -100, max: 100, step: 0.01}},
                                             {type: "input", label: "gravity", withObject: "/gravity", options: {type: "number", min: -100, max: 100, step: 0.01}},
                                             {type: "input", label: "mix", withObject: "/mix", options: {type: "number", min: 0, max: 1, step: 0.01}},
+                                            {type: "input", label: "limit", withObject: "/limit", options: {type: "number", min: 0, max: 500, step: 0.01}},
                                         ]}
                                     ],
                                     false: [

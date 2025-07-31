@@ -1,22 +1,19 @@
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/メッシュの自動生成/画像からメッシュを作る.js";
 import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
-import { indexOfSplice, waitUntilFrame } from "../../utils/utility.js";
+import { arrayToArrayCopy, arrayToPush, indexOfSplice, waitUntilFrame } from "../../utils/utility.js";
 import { vec2 } from "../../utils/mathVec.js";
 import { app } from "../../app/app.js";
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { isNotTexture } from "../../utils/GPUObject.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 
 class Vertex {
     constructor(/** @type {GraphicMesh} */ graphicMesh, data) {
-        if (!data.index) {
-            data.index = graphicMesh.allVertices.length;
-        }
         if (!data.parentWeight) {
-            data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]}
+            data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
         }
         this.type = "頂点";
-        this.index = data.index;
         this.selected = false;
         this.graphicMesh = graphicMesh;
         this.base = [...data.base];
@@ -50,7 +47,7 @@ class Vertex {
 
     getSaveData() {
         return {
-            index: this.index,
+            index: this.localIndex,
             base: this.base,
             uv: this.uv,
             parentWeight: this.parentWeight,
@@ -92,6 +89,24 @@ class Editor extends ObjectEditorBase {
         this.layerParent = "";
 
         this.lastCreateMeshTime = Date.now();
+
+        this.updateEdgeGPU = () => {
+            console.log("GPUデータアップデート")
+            if (this.baseSilhouetteEdges.length == 0) {
+                this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
+            } else {
+                this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(this.baseSilhouetteEdges.length * 2 * 4, new Uint32Array(this.baseSilhouetteEdges.flat()), ["u32", "u32"]);
+            }
+            if (this.baseEdges.length == 0) {
+                this.baseEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
+            } else {
+                this.baseEdgesBuffer = GPU.createStorageBuffer(this.baseEdges.length * 2 * 4, new Uint32Array(this.baseEdges.flat()), ["u32", "u32"]);
+            }
+            this.graphicMesh.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.graphicMesh.objectMeshData, this.baseSilhouetteEdgesBuffer,  this.baseEdgesBuffer]);
+        }
+
+        managerForDOMs.set({o: this.baseEdges, i: "&all"}, null, this.updateEdgeGPU);
+        managerForDOMs.set({o: this.baseSilhouetteEdges, i: "&all"}, null, this.updateEdgeGPU);
     }
 
     get baseEdgesNum() {
@@ -120,26 +135,15 @@ class Editor extends ObjectEditorBase {
         };
     }
 
-    updateEdgeGPU() {
-        this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(this.baseSilhouetteEdges.length * 2 * 4, new Uint32Array(this.baseSilhouetteEdges.flat()), ["u32", "u32"]);
-        if (this.baseEdges.length == 0) {
-            this.baseEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
-        } else {
-            this.baseEdgesBuffer = GPU.createStorageBuffer(this.baseEdges.length * 2 * 4, new Uint32Array(this.baseEdges.flat()), ["u32", "u32"]);
-        }
-        this.graphicMesh.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.graphicMesh.objectMeshData, this.baseSilhouetteEdgesBuffer,  this.baseEdgesBuffer]);
-    }
-
     setSaveData(data) {
-        this.baseEdges = [...data.baseEdges];
-        // this.baseEdges = [];
-        this.baseSilhouetteEdges = [...data.baseSilhouetteEdges];
+        arrayToArrayCopy(this.baseEdges, data.baseEdges);
+        arrayToArrayCopy(this.baseSilhouetteEdges, data.baseSilhouetteEdges);
         this.updateEdgeGPU();
         this.setImageBBox(data.imageBBox);
     }
 
     setBaseSilhouetteEdges(edges) {
-        this.baseSilhouetteEdges = [...edges];
+        arrayToArrayCopy(this.baseSilhouetteEdges, edges);
         this.updateEdgeGPU();
     }
 
@@ -193,7 +197,8 @@ class Editor extends ObjectEditorBase {
                 }
             }
         }
-        this.updateEdgeGPU();
+        managerForDOMs.update(this.baseSilhouetteEdges);
+        // managerForDOMs.update(this.baseEdges);
     }
 
     hasEdge(edge) {
@@ -210,7 +215,7 @@ class Editor extends ObjectEditorBase {
 
     appendBaseEdge(edge) {
         if (this.hasEdge(edge)) return ;
-        this.baseEdges.push(edge);
+        arrayToPush(this.baseEdges, edge);
         this.createMesh(true);
     }
 
@@ -225,6 +230,7 @@ class Editor extends ObjectEditorBase {
             }
         }
         this.createMesh(true);
+        managerForDOMs.update(this.baseEdges);
     }
 
     // 頂点たちからUV
@@ -262,8 +268,8 @@ class Editor extends ObjectEditorBase {
 
         this.imageBBox.setWidthAndHeight(texture.width, texture.height);
 
-        this.graphicMesh.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
-        this.graphicMesh.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.objectDataBuffer, this.graphicMesh.textureView]);
+        this.graphicMesh.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.graphicMesh.objectDataBuffer, this.graphicMesh.zIndexBuffer, this.graphicMesh.textureView, this.graphicMesh.maskTargetTexture.textureView, this.graphicMesh.maskTypeBuffer]);
+        this.graphicMesh.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.graphicMesh.objectDataBuffer, this.graphicMesh.textureView]);
     }
 
     createVertex(coordinate) {
@@ -299,6 +305,7 @@ export class GraphicMesh extends ObjectBase {
         this.baseTransformIsLock = false;
         this.visible = true;
         this.zIndex = 0;
+        this.zIndexBuffer = GPU.createUniformBuffer(4, [this.zIndex], ["f32"]);
         this.delete = false;
 
         this.autoWeight = true;
@@ -341,6 +348,10 @@ export class GraphicMesh extends ObjectBase {
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
         this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.objectMeshData, this.editor.baseSilhouetteEdgesBuffer, this.editor.baseEdgesBuffer]);
         this.init(data);
+
+        managerForDOMs.set({o: this, i: "zIndex"}, null, () => {
+            GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
+        })
     }
 
     get animationWorldOffset() {
@@ -377,6 +388,7 @@ export class GraphicMesh extends ObjectBase {
 
     init(data) {
         this.zIndex = data.zIndex;
+        GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
         this.verticesNum = data.vertices.length;
         this.meshesNum = data.meshes.length;
 
@@ -448,7 +460,7 @@ export class GraphicMesh extends ObjectBase {
 
     setGroup() {
         if (!this.isInit) return ;
-        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
+        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.zIndexBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
         this.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.objectDataBuffer, this.textureView]);
     }
 

@@ -201,7 +201,7 @@ export class Hierarchy {
     }
 
     sortHierarchy(newParentObject, object) { // ヒエラルキーの並び替え
-        this.deleteHierarchy(object);
+        this.removeHierarchy(object);
         if (newParentObject == "") {
             this.root.push(object);
             object.parent = "";
@@ -221,7 +221,7 @@ export class Hierarchy {
         managerForDOMs.update(this.root)
     }
 
-    deleteHierarchy(object) { // ヒエラルキーから削除
+    removeHierarchy(object) { // ヒエラルキーから削除
         if (object.parent) {
             object.parent.children.deleteChild(object);
         } else {
@@ -229,11 +229,11 @@ export class Hierarchy {
         }
         if (object.children) {
             // 削除対象の子要素を削除対象の親要素の子要素にする
-            for (const child of object.children.objects) {
-                this.addHierarchy(object.parent, child);
+            while (object.children.length > 0) {
+                this.addHierarchy(object.parent, object.children.pop());
             }
-            object.children.objects.length = 0;
         }
+        console.log(this)
         managerForDOMs.update(this.root)
     }
 }

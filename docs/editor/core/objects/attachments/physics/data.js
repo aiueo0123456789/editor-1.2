@@ -3,27 +3,45 @@ import { managerForDOMs } from "../../../../utils/ui/util.js";
 import { Bone } from "../../armature.js";
 
 export class PhysicsAttachmentData {
-    constructor(/** @type {Bone} */bone) {
+    constructor(data) {
         this.type = "物理アタッチメント";
-        this.bone = bone;
-        this.x = 0;
-        this.y = 0;
-        this.rotate = 0;
-        this.shearX = 0;
-        this.scaleX = 0;
-        this.inertia = 0.5;
-        this.strength = 50;
-        this.damping = 0.95;
-        this.mass = 100;
+        this.bone = data.bone;
+        this.x = data.x;
+        this.y = data.y;
+        this.rotate = data.rotate;
+        this.shearX = data.shearX;
+        this.scaleX = data.scaleX;
+        this.inertia = data.inertia;
+        this.strength = data.strength;
+        this.damping = data.damping;
+        this.mass = data.mass;
         // this.massInverse = 0.01;
-        this.wind = 0;
-        this.gravity = 0;
-        this.mix = 1;
-        this.limit = 100;
-        this.step = 0.016;
+        this.wind = data.wind;
+        this.gravity = data.gravity;
+        this.mix = data.mix;
+        this.limit = data.limit;
 
         managerForDOMs.set({o: this, i: "&all"}, null, () => {
-            app.scene.runtimeData.armatureData.updateBaseData(bone.armature);
+            app.scene.runtimeData.armatureData.updateBaseData(this.bone.armature);
         });
+    }
+
+    getSaveData() {
+        return {
+            type: this.type,
+            x: this.x,
+            y: this.y,
+            rotate: this.rotate,
+            shearX: this.shearX,
+            scaleX: this.scaleX,
+            inertia: this.inertia,
+            strength: this.strength,
+            damping: this.damping,
+            mass: this.mass,
+            wind: this.wind,
+            gravity: this.gravity,
+            mix: this.mix,
+            limit: this.limit,
+        };
     }
 }

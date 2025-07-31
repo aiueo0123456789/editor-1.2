@@ -264,9 +264,9 @@ export class ArmatureData extends RuntimeDataBase {
         }
         armature.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
 
-        GPU.writeBuffer(this.baseVertices.buffer, new Float32Array(boneVerticesData), armature.runtimeOffsetData.boneOffset * this.vertexBlockByteLength);
-        GPU.writeBuffer(this.colors.buffer, new Float32Array(colorsData), armature.runtimeOffsetData.boneOffset * this.colorBlockByteLength);
-        GPU.writeBuffer(this.physicsData.buffer, GPU.createBitData(physicsAttachmentData, this.physicsData.struct), armature.runtimeOffsetData.boneOffset * this.physicsData.struct.length * 4);
+        GPU.writeBuffer(this.baseVertices.buffer, new Float32Array(boneVerticesData), armature.runtimeOffsetData.boneOffset * this.baseVertices.structByteSize);
+        GPU.writeBuffer(this.colors.buffer, new Float32Array(colorsData), armature.runtimeOffsetData.boneOffset * this.colors.structByteSize);
+        GPU.writeBuffer(this.physicsData.buffer, GPU.createBitData(physicsAttachmentData, this.physicsData.struct), armature.runtimeOffsetData.boneOffset * this.physicsData.structByteSize);
 
         for (let i = armature.runtimeOffsetData.boneOffset; i < armature.runtimeOffsetData.boneOffset + armature.MAX_BONES; i ++) {
             this.allBone[i] = null;
@@ -279,10 +279,9 @@ export class ArmatureData extends RuntimeDataBase {
         this.calculateBaseBoneData(armature);
         this.updatePropagateData();
     }
-    
+
     calculateBaseBoneData(armature) {
         GPU.runComputeShader(calculateBoneBaseDataPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw_Csr_Csr_Cu"), [this.baseBone.buffer, this.baseBoneMatrix.buffer, this.baseVertices.buffer, armature.parentsBuffer, armature.objectDataBuffer])], Math.ceil(armature.boneNum / 64));
-        GPU.consoleBufferData(this.baseBone.buffer, this.baseBone.struct, "ベース");
     }
 
     updateAllocationData(/** @type {Armature} */armature) {

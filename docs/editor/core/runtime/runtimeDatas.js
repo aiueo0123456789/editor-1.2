@@ -2,6 +2,7 @@ import { Application } from "../../app/app.js";
 import { ArmatureData } from "./object/armatureData.js";
 import { BezierModifierData } from "./object/bezierModifierData.js";
 import { GraphicMeshData } from "./object/graphicMeshData.js";
+import { ParticleData } from "./object/particle.js";
 
 export class RuntimeDatas {
     constructor(/** @type {Application} */ app) {
@@ -9,6 +10,7 @@ export class RuntimeDatas {
         this.graphicMeshData = new GraphicMeshData(app);
         this.armatureData = new ArmatureData(app);
         this.bezierModifierData = new BezierModifierData(app);
+        this.particle = new ParticleData(app);
     }
 
     getID(object) {
@@ -27,6 +29,6 @@ export class RuntimeDatas {
 
     delete(runtimeData, object) {
         runtimeData.delete(object);
-        runtimeData.setAllOffset();
+        runtimeData.setAllObjectOffset();
     }
 }

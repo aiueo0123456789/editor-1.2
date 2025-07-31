@@ -1,11 +1,16 @@
 import { ChecksTag, SelectTag } from "./customTags.js";
 import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
-import { isFunction, isPassByReference, isPlainObject } from "../utility.js";
+import { arrayToArrayCopy, changeParameter, hexToRgba, isFunction, isNumber, isPassByReference, isPlainObject, IsString, rgbToHex } from "../utility.js";
 import { KeyframeBlock } from "../../core/objects/keyframe.js";
 import { removeObjectInHTMLElement } from "./eventUpdator.js";
 import { ResizerForDOM } from "./resizer.js";
 import { app } from "../../app/app.js";
 import { MenuTag } from "./customTags/menuTag.js";
+import { TextEditor_textSplice, TextEditor_textRemove } from "../../commands/textEditor/textEditorCommand.js";
+
+function isFocus(t) {
+    return document.hasFocus() && document.activeElement === t;
+}
 
 export function createSelect(t, list = []) {
     console.log("セレクトの生成", t, list);
@@ -84,11 +89,440 @@ const tagCreater = {
         }
         return element;
     },
+    "textarea": (this_,t,searchTarget,child,flag) => {
+        const builtInFunction = [{name: "noise", return: "f32"}, {name: "arrayLength", return: "u32"}, {name: "vec2f", return: "f32"}, {name: "vec3f", return: "f32"}, {name: "vec4f", return: "f32"}, {name: "fract", return: "f32"}, {name: "floor", return: "f32"}, {name: "mix", return: "f32"}, {name: "abs", return: "f32"}, {name: "dot", return: "f32"}];
+        const sourceCode = this_.getParameter(searchTarget, child.source, 1);
+        /** @type {HTMLElement} */
+        let container = createTag(t, "div");
+        setStyle(container, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; overflow: hidden; backgroundColor: rgb(41, 41, 41); fontSize: 100%;");
+        /** @type {HTMLElement} */
+        let utilBar = createTag(container, "div");
+        setStyle(utilBar, "width: 100px; height: 100%; backgroundColor: rgb(50,50,50);");
+        /** @type {HTMLElement} */
+        let functionsGroupContainer = createTag(utilBar, "div");
+        let functionsGroupTitle = createTag(functionsGroupContainer, "div", {textContent: "functions"});
+        let functionsGroup = createTag(functionsGroupContainer, "div");
+        setStyle(functionsGroup, "width: 100px; height: fit-content; padding-left: 10px;");
+        /** @type {HTMLElement} */
+        let valuesGroupContainer = createTag(utilBar, "div");
+        let valuesGroupTitle = createTag(valuesGroupContainer, "div", {textContent: "values"});
+        let valuesGroup = createTag(valuesGroupContainer, "div");
+        setStyle(valuesGroup, "width: 100px; height: fit-content; padding-left: 10px;");
+        /** @type {HTMLElement} */
+        let codeContainer = createTag(container, "div");
+        setStyle(codeContainer, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; fontFamily: monospace; overflowX: hidden; overflowY: auto;");
+        /** @type {HTMLElement} */
+        let lineNumbers = createTag(codeContainer, "div");
+        setStyle(lineNumbers, "width: fit-content; height: 100%; textAlign: right; padding: 0px 2px; userSelect: none; color: gray; border: solid rgba(0, 0, 0, 0) 1px;");
+        // createTag(codeContainer, "div"); // dummy
+        /** @type {HTMLElement} */
+        // let element = createTag(container, "textarea");
+        /** @type {HTMLElement} */
+        let codeAreaContainer = createTag(codeContainer, "div");
+        setClass(codeAreaContainer, "codeArea")
+        let input = createTag(codeAreaContainer, "div");
+        input.append(document.createTextNode(""));
+        input.setAttribute("contenteditable", "true");
+        // setStyle(input, "display: none;");
+        setStyle(input, "width: 100px; height: 20px; position: absolute;");
+        let codeArea = createTag(codeAreaContainer, "div");
+        setStyle(codeArea, "width: fit-content; height: 100%; caretColor: rgb(255,255,255);");
+        codeArea.setAttribute("contenteditable", "true");
+        codeArea.setAttribute("spellcheck", "false");
+        let completionCandidatesArea = createTag(codeAreaContainer, "div");
+        setStyle(completionCandidatesArea, "width: 400px; height: fit-content; maxHeight: 200px; position: absolute; display: none; backgroundColor: rgb(41, 41, 41); border: solid rgb(90, 90, 90) 1px; overflowY: auto;");
+        const caret = createTag(codeAreaContainer, "div");
+        setClass(caret, "caret");
+
+        const getSumStringsUntilLine = (lineNumber) => {
+            let sum = 0;
+            const codeLines = sourceCode.object[sourceCode.parameter].match(/[^\n]*\n?/g).filter(line => line !== '');
+            for (let i = 0; i < lineNumber; i ++) {
+                sum += codeLines[i].length;
+            }
+            return sum;
+        }
+        const getSelectionOffset = (textNode, offset) => {
+            let sumStringsCount = 0;
+            const parentElem = textNode.parentElement;
+            for (const span of parentElem.parentElement.children) {
+                if (span == parentElem) {
+                    return [[...codeArea.children].indexOf(parentElem.parentElement),sumStringsCount + offset];
+                }
+                sumStringsCount += span.textContent.length;
+            }
+        }
+        let anchorLineOffset = 0;
+        let anchorLineInOffset = 0;
+        let focusLineOffset = 0;
+        let focusLineInOffset = 0;
+        const getStartAndEndOffset = () => {
+            const anchorOffset = getSumStringsUntilLine(anchorLineOffset) + anchorLineInOffset;
+            const focusOffset = getSumStringsUntilLine(focusLineOffset) + focusLineInOffset;
+            return [Math.min(anchorOffset, focusOffset),Math.max(anchorOffset, focusOffset)];
+        }
+        // コードの行数
+        const getCodeLinesNum = () => {
+            return (sourceCode.object[sourceCode.parameter].match(/\n/g) || []).length + 1;
+        }
+        // 選択中の行の文字数
+        const getActiveCodeLineNum = () => {
+            const codeLines = sourceCode.object[sourceCode.parameter].match(/[^\n]*\n?/g).filter(line => line !== '');
+            return codeLines[anchorLineOffset].length;
+        }
+        // タグとタグ内のオフセットからselectionOffset
+        const getLineInOffsetTextAndOffset = (div, offset) => {
+            let sumStringsCount = 0;
+            for (const span of div.children) {
+                if (span.textContent !== "\n") {
+                    const textLen = span.textContent.length;
+                    if (offset < sumStringsCount + textLen) {
+                        return [span.childNodes[0], offset - sumStringsCount];
+                    }
+                    sumStringsCount += textLen;
+                }
+            }
+            let lastChild = div.lastChild;
+            if (div.lastChild.textContent === "\n" && div.children.length > 1) {
+                lastChild = div.children[div.children.length - 2];
+            }
+            return [lastChild.childNodes[0], lastChild.textContent.length];
+        }
+        // window.getSelectionをselectionで更新
+        const setSection = () => {
+            suppressSelectionChange = true;
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.setStart(...getLineInOffsetTextAndOffset(codeArea.children[anchorLineOffset], anchorLineInOffset)); // 開始位置
+            range.setEnd(...getLineInOffsetTextAndOffset(codeArea.children[focusLineOffset], focusLineInOffset)); // 終了位置
+            selection.removeAllRanges(); // 既存の選択をクリア
+            selection.addRange(range);   // 新しい選択を追加
+            codeArea.focus(); // 重要
+        }
+        const setCaretPosition = () => {
+            const range = document.createRange();
+            const result = getLineInOffsetTextAndOffset(codeArea.children[focusLineOffset], anchorLineInOffset);
+            range.setStart(...result);   // 5文字目の直後
+            range.setEnd(...result);
+            const rect = range.getBoundingClientRect(); // その位置の矩形
+            const editorRect = codeArea.getBoundingClientRect();
+            const left = rect.left - editorRect.left;
+            const top = rect.top - editorRect.top;
+            caret.style.left = `${left}px`;
+            caret.style.top = `${top}px`;
+        }
+        let suppressSelectionChange = false;
+        // selectionをwindow.getSelectionで更新
+        document.addEventListener("selectionchange", (e) => {
+            if (suppressSelectionChange) {
+                suppressSelectionChange = false;
+                return ;
+            }
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const { startContainer, endContainer } = range;
+            // target の中で選択された場合のみ処理する
+            if (codeArea.contains(startContainer) && codeArea.contains(endContainer)) {
+                [anchorLineOffset, anchorLineInOffset] = getSelectionOffset(selection.anchorNode, selection.anchorOffset);
+                [focusLineOffset, focusLineInOffset] = getSelectionOffset(selection.focusNode, selection.focusOffset);
+                setCaretPosition();
+            }
+        })
+        codeArea.addEventListener("keydown", (e) => {
+            const cmdBool = (e.ctrlKey || e.metaKey);
+            if (e.key == "ArrowUp") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                if (cmdBool) {
+                    anchorLineOffset = 0;
+                    codeContainer.scrollTop = 0;
+                } else if (1 <= anchorLineOffset) {
+                    anchorLineOffset --;
+                }
+            }
+            if (e.key == "ArrowDown") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                if (cmdBool) {
+                    anchorLineOffset = getCodeLinesNum();
+                    codeContainer.scrollTop = codeContainer.scrollHeight;
+                } else if (anchorLineOffset < getCodeLinesNum()) {
+                    anchorLineOffset ++;
+                }
+            }
+            if (e.key == "ArrowRight") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                if (cmdBool) {
+                    anchorLineInOffset = getActiveCodeLineNum() - 1;
+                } else if (anchorLineInOffset < getActiveCodeLineNum() - 1) {
+                    anchorLineInOffset ++;
+                } else {
+                    anchorLineOffset ++;
+                    anchorLineInOffset = 0;
+                }
+            }
+            if (e.key == "ArrowLeft") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                if (cmdBool) {
+                    anchorLineInOffset = 0;
+                } else if (1 <= anchorLineInOffset) {
+                    anchorLineInOffset --;
+                }
+            }
+            if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(e.key)) {
+                if (!e.shiftKey) {
+                    focusLineOffset = anchorLineOffset;
+                    focusLineInOffset = anchorLineInOffset;
+                    console.log(focusLineOffset, focusLineInOffset)
+                }
+                setSection();
+                setCaretPosition();
+            }
+            if (e.key === "Enter") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                const insertBrCommand = new TextEditor_textSplice(sourceCode, ...getStartAndEndOffset());
+                insertBrCommand.update("\n");
+                app.operator.appendCommand(insertBrCommand);
+                app.operator.execute();
+                anchorLineOffset ++;
+                anchorLineInOffset = 0;
+                focusLineOffset = anchorLineOffset;
+                focusLineInOffset = anchorLineInOffset;
+                setSection();
+                setCaretPosition();
+                return ;
+            } else if ((e.ctrlKey || e.metaKey) && e.key === "/") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                const insertBrCommand = new TextEditor_textSplice(sourceCode, ...getStartAndEndOffset());
+                insertBrCommand.update("//");
+                app.operator.appendCommand(insertBrCommand);
+                app.operator.execute();
+                return ;
+            } else if (e.key === "Tab") {
+                e.preventDefault(); // デフォルトの改行動作を無効化
+                const insertBrCommand = new TextEditor_textSplice(sourceCode, ...getStartAndEndOffset());
+                insertBrCommand.update("    ");
+                app.operator.appendCommand(insertBrCommand);
+                app.operator.execute();
+                return ;
+            }
+        });
+        codeArea.addEventListener("paste", (e) => {
+            console.log("ペースト")
+            e.preventDefault(); // ブラウザの標準ペーストを止める
+            // プレーンテキストを取得
+            const text = (e.clipboardData || window.clipboardData).getData("text");
+            const insertBrCommand = new TextEditor_textSplice(sourceCode, ...getStartAndEndOffset());
+            insertBrCommand.update(text);
+            app.operator.appendCommand(insertBrCommand);
+            app.operator.execute();
+        });
+        document.addEventListener('copy', (e) => {
+            console.log("コピー")
+            // デフォルトのコピー動作を停止
+            e.preventDefault();
+            // カスタム処理（例：URLを追加）
+            const customText = sourceCode.object[sourceCode.parameter].slice(...getStartAndEndOffset());
+            // クリップボードに設定
+            e.clipboardData.setData('text/plain', customText);
+        });
+        let command = null;
+        let isInputFocus = false;
+        let lastAnchorLineInOffset = 0;
+        // 入力・編集をすべてブロック
+        codeArea.addEventListener("beforeinput", () => {
+            isInputFocus = true;
+            input.focus();
+            input.childNodes[0].nodeValue = "";
+            suppressSelectionChange = true;
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.setStart(input.childNodes[0],0); // 開始位置
+            range.setEnd(input.childNodes[0],0); // 終了位置
+            selection.removeAllRanges(); // 既存の選択をクリア
+            selection.addRange(range);   // 新しい選択を追加
+            // 選択状態の文字を消す
+            command = new TextEditor_textSplice(sourceCode, ...getStartAndEndOffset());
+            lastAnchorLineInOffset = anchorLineInOffset;
+            app.operator.appendCommand(command);
+        });
+        input.addEventListener("keydown", (e) => {
+            if (isInputFocus) {
+                if (e.key == " ") {
+                    app.operator.execute();
+                    input.childNodes[0].nodeValue = "";
+                    suppressSelectionChange = true;
+                    const selection = window.getSelection();
+                    const range = document.createRange();
+                    range.setStart(input.childNodes[0],0); // 開始位置
+                    range.setEnd(input.childNodes[0],0); // 終了位置
+                    selection.removeAllRanges(); // 既存の選択をクリア
+                    selection.addRange(range);   // 新しい選択を追加
+                    console.log(anchorLineOffset, anchorLineInOffset)
+                    command = new TextEditor_textSplice(sourceCode, ...getStartAndEndOffset());
+                    app.operator.appendCommand(command);
+                } else if (e.key === "Enter") {
+                    isInputFocus = false;
+                    e.preventDefault(); // デフォルトの改行動作を無効化
+                    if (input.childNodes[0].nodeValue  === "\n") {
+                        // 改行
+                    } else {
+                        // 決定
+                        app.operator.execute();
+                        input.childNodes[0].nodeValue = "";
+                        setSection();
+                    }
+                }
+            }
+        })
+        input.addEventListener("beforeinput", () => {
+            // input.childNodes[0].nodeValue = "";
+        })
+        let usingValues = [];
+        input.addEventListener("input", () => {
+            console.log(command);
+            command.update(input.textContent);
+            completionCandidatesArea.style.display = "block";
+            completionCandidatesArea.style.top = "50px";
+            completionCandidatesArea.style.left = "50px";
+            completionCandidatesArea.replaceChildren();
+            for (const value of [{name: input.textContent}].concat(usingValues)) {
+                const liContainer = createTag(completionCandidatesArea, "div");
+                setStyle(liContainer, "width: 100%; height: fit-content; display: grid; gridTemplateColumns: auto auto 1fr auto 1fr;");
+                const icon = createIcon(liContainer); // 属性
+                const name = createTag(liContainer, "div", {textContent: value.name}); // 変数や関数の名前
+                setStyle(name, "color: rgb(224, 224, 224);");
+                const padding0 = createTag(liContainer, "div");
+                const text = createTag(liContainer, "div", {textContent: "詳細..."}); // ディティール
+                setStyle(text, "color: rgb(90, 90, 90);");
+                const padding1 = createTag(liContainer, "div");
+            }
+            anchorLineInOffset = lastAnchorLineInOffset + input.textContent.length;
+            setCaretPosition();
+        })
+        input.addEventListener("focusout", () => {
+            console.log("フォーカスが外れました")
+            app.operator.execute();
+            completionCandidatesArea.style.display = "none";
+        })
+        // if (true) {
+        //     codeArea.append(document.createTextNode(sourceCode.object[sourceCode.parameter]));
+        // }
+
+        const lineNumbersUpdate = () => {
+            // DOMリセット
+            codeArea.replaceChildren();
+            lineNumbers.replaceChildren();
+            functionsGroup.replaceChildren();
+            valuesGroup.replaceChildren();
+            // 改行で配列化
+            const codeLines = sourceCode.object[sourceCode.parameter].match(/[^\n]*\n?/g).filter(line => line !== '');
+            for (let i = 0; i < codeLines.length; i ++) {
+                // 行番号
+                createTag(lineNumbers, "div", {textContent: i});
+                // 行を生成
+                const l = createTag(codeArea, "div");
+                setStyle(l, "width: fit-content; height: fit-content; whiteSpace: pre; display: flex;");
+            }
+
+            const extractStructs = (code) => {
+                const structRegex = /struct\s+([a-zA-Z_]\w*)\s*{[^}]*}/g;
+                const structs = [];
+                let match;
+                while ((match = structRegex.exec(code)) !== null) {
+                    structs.push({
+                        name: match[1],
+                    });
+                }
+                return structs;
+            };
+            const extractFunctions = (code) => {
+                const fnRegex = /\bfn\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\([^)]*\)\s*(?:->\s*([a-zA-Z0-9_<>,\s]+))?/g;
+                const functions = [];
+                let match;
+                while ((match = fnRegex.exec(code)) !== null) {
+                    functions.push({
+                        name: match[1],
+                        returnType: match[2]?.trim() ?? null,
+                    });
+                }
+                return functions;
+            };
+            function extractDeclaredVariables(code) {
+                const regex = /\b(?:let|var|const)\s+(?:[a-zA-Z0-9_]+\s*(?:<[^>]+>)?\s+)?([a-zA-Z_][a-zA-Z0-9_]*)/g;
+                const results = [];
+                let match;
+                while ((match = regex.exec(code)) !== null) {
+                    results.push({
+                        name: match[1]
+                    });
+                }
+                return results;
+            }
+            const tokens_ = sourceCode.object[sourceCode.parameter].match(/\/\/|[\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}ー々]+|[a-zA-Z0-9_]+|[ \t]+|\r?\n|[^\w\s]/gu) || [];
+            let lineNumber = 0;
+            const usingStructs = extractStructs(sourceCode.object[sourceCode.parameter]);
+            const usingFunctions = extractFunctions(sourceCode.object[sourceCode.parameter]).concat(builtInFunction);
+            usingValues = extractDeclaredVariables(sourceCode.object[sourceCode.parameter]);
+            let state = "";
+            for (const token of tokens_) {
+                let color = "rgb(255, 255, 255)";
+                if (token == "\n") {
+                    // const l_ = createTag(codeArea.children[lineNumber], "br");
+                    const l_ = createTag(codeArea.children[lineNumber], "span", {textContent: token});
+                    lineNumber ++;
+                    state = "";
+                    continue ;
+                } else if (token == "//" || state == "commentout") {
+                    state = "commentout";
+                    color = "rgb(0, 108, 25)";
+                } else if (token == " ") {
+                } else if (token == "@" || state == "@") {
+                    color = "rgb(116, 158, 54)";
+                    if (token == "@") {
+                        state = "@";
+                    } else {
+                        state = "";
+                    }
+                } else if (usingFunctions.filter(fn => fn.name == token).length > 0) { // 関数
+                    color = "rgb(255, 217, 0)";
+                } else if (usingStructs.filter(struct => struct.name == token).length > 0) {
+                    color = "rgb(38, 212, 90)";
+                } else if (isNumber(token)) { // 数字
+                    color = "rgb(181, 255, 216)";
+                } else if (token == "array" || token == "vec2" || token == "vec3" || token == "mat3x3" || token == "f32" || token == "u32" || token == "fn" || token == "struct" || token == "const" || token == "var" || token == "let") { // 特定の単語
+                    color = "rgb(63, 78, 190)";
+                } else if (token == "uniform" || token == "storage" || token == "read_write" || token == "read" || token == "return" || token == "if") { // 特定の単語
+                    color = "rgb(208, 65, 165)";
+                } else if (usingValues.filter(value => value.name == token).length > 0) { // 変数
+                    color = "rgb(103, 154, 220)";
+                } else {
+                    // const l_ = document.createTextNode(token)
+                    // codeArea.children[lineNumber].append(l_);
+                    // continue ;
+                }
+                const l_ = createTag(codeArea.children[lineNumber], "span", {textContent: token});
+                setStyle(l_, `color: ${color}; whiteSpace: pre;`);
+            }
+            for (const fn of usingFunctions) {
+                const l = createTag(functionsGroup, "div", {textContent: fn.name});
+                setStyle(l, "width: fit-content; height: fit-content; whiteSpace: pre;");
+            }
+            for (const fn of usingValues) {
+                const l = createTag(valuesGroup, "div", {textContent: fn.name});
+                setStyle(l, "width: fit-content; height: fit-content; whiteSpace: pre;");
+            }
+        };
+        lineNumbersUpdate();
+        managerForDOMs.set({o: sourceCode.object, i: sourceCode.parameter, g: this_.groupID}, null, lineNumbersUpdate);
+        // element.addEventListener("scroll", () => {
+        //     lineNumbers.scrollTop = element.scrollTop;
+        // })
+        return codeArea;
+    },
     "text": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "p");
         setClass(element, "text")
         const update = () => {
-            element.textContent = this_.getParameter(searchTarget, child.withObject, false);
+            element.textContent = this_.getParameter(searchTarget, child.withObject);
         }
         update();
         this_.setUpdateEventToParameter(searchTarget, child.withObject, update, flag);
@@ -126,9 +560,12 @@ const tagCreater = {
                 element = createTag(t, "input", child.options);
             }
             this_.setWith(element, child.withObject, searchTarget, flag);
+        } else if (child.options.type == "color") {
+            element = createTag(t, "input", child.options);
+            this_.setWith(element, child.withObject, searchTarget, flag);
         } else { // 数字型
             if (child.custom?.visual) {
-                element = createTag(t, "input", child.options);
+                element = createTag(t, "input", {type: "number"});
                 this_.setWith(element, child.withObject, searchTarget, flag);
             } else {
                 element = createTag(t, "div");
@@ -142,7 +579,7 @@ const tagCreater = {
                 range.style.borderBottomRightRadius = "0px";
                 this_.setWith(range, child.withObject, searchTarget, flag);
                 /** @type {HTMLElement} */
-                const number = createTag(element, "input", child.options);
+                const number = createTag(element, "input", {type: "number"});
                 number.style.gridColumn = "2/3";
                 number.style.borderTopLeftRadius = "0px";
                 number.style.borderBottomLeftRadius = "0px";
@@ -281,7 +718,8 @@ const tagCreater = {
         return element;
     },
     "icon-img": (this_,t,searchTarget,child,flag) => {
-        let element = createIcon(t, this_.getParameter(searchTarget, child.withObject, false));
+        console.log(this_.getParameter(searchTarget, child.withObject));
+        let element = createIcon(t, this_.getParameter(searchTarget, child.withObject));
         return element;
     },
     "flexBox": (this_,t,searchTarget,child,flag) => {
@@ -351,7 +789,7 @@ const tagCreater = {
             children.length = 0;
             const keep = createTag(null, "div");
             if (child.children) {
-                const o = this_.getParameter(searchTarget, child.sourceObject);
+                const o = this_.getParameter(searchTarget, child.sourceObject, 2);
                 if (o) {
                     if (isFunction(o)) {
                         console.log("関数",o,o())
@@ -382,11 +820,11 @@ const tagCreater = {
         console.log(searchTarget, child, this_.getParameter(searchTarget,child.formula.source))
         let bool = false;
         if (child.formula.conditions == "==") {
-            bool = this_.getParameter(searchTarget,child.formula.source, false) == child.formula.value;
+            bool = this_.getParameter(searchTarget,child.formula.source) == child.formula.value;
         } else if (child.formula.conditions == ">") {
-            bool = this_.getParameter(searchTarget,child.formula.source, false) > child.formula.value;
+            bool = this_.getParameter(searchTarget,child.formula.source) > child.formula.value;
         } else if (child.formula.conditions == "<") {
-            bool = this_.getParameter(searchTarget,child.formula.source, false) < child.formula.value;
+            bool = this_.getParameter(searchTarget,child.formula.source) < child.formula.value;
         }
         if (bool) {
             if (child.true) {
@@ -419,6 +857,10 @@ const tagCreater = {
         })
         // this_.setUpdateEventToParameter(searchTarget, child.targetObject, update, );
         managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: this_.groupID}, null, update);
+    },
+    "nodeFromFunction": (this_,t,searchTarget,child,flag) => {
+        const functionResult = this_.getParameter(searchTarget, child.source)();
+        this_.createFromChildren(t, functionResult, searchTarget, flag);
     }
 }
 
@@ -485,7 +927,7 @@ export class CreatorForUI {
         }
     }
 
-    getParameter(searchTarget, path, useParameterReference = true) {
+    getParameter(searchTarget, path, option = 0) {
         try {
             // pathをもとに参照
             if (path[0] == "/") {
@@ -508,15 +950,19 @@ export class CreatorForUI {
                 }
             }
             const final = object[lastRoot];
-            if (isFunction(final)) {
-                return final.bind(object);
-            } else if (isPassByReference(final)) {
-                return final;
+            if (option == 1) {
+                return new ParameterReference(object, lastRoot);
             } else {
-                if (useParameterReference) {
-                    return new ParameterReference(object, lastRoot);
-                } else {
+                if (isFunction(final)) {
+                    return final.bind(object);
+                } else if (isPassByReference(final)) {
                     return final;
+                } else {
+                    if (option == 2) {
+                        return new ParameterReference(object, lastRoot);
+                    } else {
+                        return final;
+                    }
                 }
             }
         } catch {
@@ -723,14 +1169,14 @@ export class CreatorForUI {
             createdTags.forEach((data, object) => {
                 const bool_ = activeSource.object[activeSource.parameter] == object;
                 if (bool_) {
-                    data.dom.container.classList.add("activeColor");
+                    data.dom.myContainer.classList.add("activeColor");
                 } else {
-                    data.dom.container.classList.remove("activeColor");
+                    data.dom.myContainer.classList.remove("activeColor");
                     const bool__ = result.selects.includes(object);
                     if (bool__) {
-                        data.dom.container.classList.add("activeColor2");
+                        data.dom.myContainer.classList.add("activeColor2");
                     } else {
-                        data.dom.container.classList.remove("activeColor2");
+                        data.dom.myContainer.classList.remove("activeColor2");
                     }
                 }
             })
@@ -788,12 +1234,14 @@ export class CreatorForUI {
             console.warn("構文が古いです", withObject);
             console.trace();
         } else {
-            let source = this.getParameter(searchTarget, withObject, true);
-            // console.log(source, t, withObject, searchTarget)
+            let source = this.getParameter(searchTarget, withObject, 1);
+            console.log(source, withObject, searchTarget)
             if (!source) { // 取得できなかったら切り上げ
                 console.warn("UIとパラメータの連携ができませんでした", withObject, searchTarget);
                 if (t.type == "number" || t.type == "range") { // 数字型
                     t.value = 0.5;
+                } else if (t.type == "color") {
+                    t.value = rgbToHex(0,0,0,1);
                 } else {
                     t.value = "エラー";
                 }
@@ -810,9 +1258,15 @@ export class CreatorForUI {
                     t.value = source.object[source.parameter];
                     updateRangeStyle(t);
                 };
+            } else if (t.type == "color") {
+                updateDOMsValue = () => {
+                    t.value = rgbToHex(...source.object[source.parameter]);
+                };
             } else {
                 updateDOMsValue = () => {
-                    t.value = source.object[source.parameter];
+                    if (!isFocus(t)) {
+                        t.value = source.object[source.parameter];
+                    }
                 };
             }
             updateDOMsValue();
@@ -824,6 +1278,12 @@ export class CreatorForUI {
                     source.object[source.parameter] = Number(t.value);
                 } else if (t.type == "checkbox") {
                     source.object[source.parameter] = t.checked;
+                } else if (t.type == "color") {
+                    const valueColor = hexToRgba(t.value, 1);
+                    source.object[source.parameter][0] = valueColor[0];
+                    source.object[source.parameter][1] = valueColor[1];
+                    source.object[source.parameter][2] = valueColor[2];
+                    source.object[source.parameter][3] = valueColor[3];
                 } else if (t.tagName === "SELECT") {
                     source.object[source.parameter] = t.value;
                 } else {

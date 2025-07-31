@@ -1,4 +1,4 @@
-import { isNumber } from "../../utils/utility.js";
+import { createArrayN, isNumber } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 
 export class BufferManager {
@@ -8,12 +8,11 @@ export class BufferManager {
         // this.buffer = GPU.createBuffer(0, ["s"]);
         this.buffer = GPU.createBuffer(0, ["v","s"]);
         this.struct = struct;
-        this.structByteSize = struct.length * 4;
+        this.structByteSize = GPU.getStructByteSize(struct);
         this.formula = calculateFormula;
         this.formulaParts = calculateFormula.split(" ");
         this.formulaParts = this.formulaParts.map(value => isNumber(value) ? Number(value) : value);
         this.sourceOffsetType = "";
-        console.log(GPU.getStructByteSize(struct))
     }
 
     async getObjectData(object) {
@@ -61,18 +60,25 @@ export class BufferManager {
         return influenceValues;
     }
 
-    remove(object) {
+    reset() {
+        // GPU.writeBuffer(this.buffer, GPU.createBitData(createArrayN(this.runtimeData.order.lenght * this.struct, [])));
+        this.buffer.destroy();
+        this.buffer = GPU.createBuffer(0, ["v","s"]);
     }
 
     delete(object) {
         const offset = object.runtimeOffsetData[this.sourceOffsetType];
         const readNum = this.getObjectUseSize(object);
-        console.log(this)
         this.buffer = GPU.deleteStructDataFromGPUBuffer(this.buffer, offset, readNum, this.struct);
     }
 
     append(object) {
         const byte = this.getObjectUseSize(object) * this.structByteSize;
         this.buffer = GPU.appendEmptyToBuffer(this.buffer, byte);
+    }
+
+    insert(object, offset) {
+        const byte = this.getObjectUseSize(object) * this.structByteSize;
+        this.buffer = GPU.insertEmptyToBuffer(this.buffer, offset, byte);
     }
 }

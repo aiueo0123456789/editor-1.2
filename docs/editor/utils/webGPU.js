@@ -610,14 +610,30 @@ class WebGPU {
         } else if (buffer instanceof EmptyGPUBuffer) { // 空バッファだったら
             // 渡されたbufferがGPUBufferではなかったら新規作成
             newBuffer = this.createBuffer(byteLength, buffer.usage);
-            console.log(newBuffer)
         } else {
-            console.trace("error");
+            console.trace("無効なオブジェクトが渡されました");
             console.log(buffer)
             newBuffer = this.createBuffer(byteLength, buffer.usage);
         }
         if (NaNset) {
             this.setNaNToBuffer(newBuffer);
+        }
+        return newBuffer;
+    }
+
+    insertEmptyToBuffer(buffer, offset, byteLength) {
+        let newBuffer;
+        if (buffer instanceof GPUBuffer) {
+            newBuffer = this.createBuffer(buffer.size + byteLength, buffer.usage);
+            GPU.copyBuffer(buffer, newBuffer, 0, 0, offset); // 差し込み前をコピー
+            GPU.copyBuffer(buffer, newBuffer, offset, offset + byteLength, buffer.size - offset); // 差し込み後をコピー
+        } else if (buffer instanceof EmptyGPUBuffer) { // 空バッファだったら
+            // 渡されたbufferがGPUBufferではなかったら新規作成
+            newBuffer = this.createBuffer(byteLength, buffer.usage);
+        } else {
+            console.trace("無効なオブジェクトが渡されました");
+            console.log(buffer)
+            newBuffer = this.createBuffer(byteLength, buffer.usage);
         }
         return newBuffer;
     }
@@ -686,7 +702,7 @@ class WebGPU {
         return newBuffer;
     }
 
-    createRenderPipelineFromOneFile(groupLayouts, shader, vertexBufferStruct, option = "", topologyType = "t") {
+    createRenderPipelineFromOneFile(groupLayouts, shader, vertexBufferStruct, option = "", topologyType = "t", depth = "_a") {
         if (IsString(shader)) {
             shader = this.createShaderModule(shader);
         }
@@ -738,8 +754,9 @@ class WebGPU {
         const vertexBuffers = vertexBufferStruct.map((x) => {
             return createBuffers(x);
         });
+        let object = {};
         if (option == "2d") {
-            return device.createRenderPipeline({
+            object = {
                 layout: device.createPipelineLayout({
                     bindGroupLayouts: groupLayouts,
                 }),
@@ -771,13 +788,17 @@ class WebGPU {
                         }
                     ],
                 },
+                depthStencil: {
+                    format: 'depth32float', // 必須: RenderPassで指定された深度フォーマット
+                    depthWriteEnabled: depth[0] == "w", // 深度を書き込む場合はtrue
+                    depthCompare: depth[1] == "l" ? "less" : "always", // 深度テストの比較方法
+                },
                 primitive: {
-                    // topology: 'triangle-list',
                     topology: topologyType == "t" ? 'triangle-list' : 'triangle-strip',
                 },
-            });
+            };
         } else if (option == "mask") {
-            return device.createRenderPipeline({
+            object = {
                 layout: device.createPipelineLayout({
                     bindGroupLayouts: groupLayouts,
                 }),
@@ -812,8 +833,9 @@ class WebGPU {
                     // topology: 'triangle-list',
                     topology: topologyType == "t" ? 'triangle-list' : 'triangle-strip',
                 },
-            });
+            };
         }
+        return device.createRenderPipeline(object);
     }
 
     // レンダーパイプラインの作成

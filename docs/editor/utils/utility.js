@@ -14,6 +14,7 @@ export function IsString(value) {
 }
 
 export function indexOfSplice(array, deleteValue) {
+    if (!array.includes(deleteValue)) return;
     array.splice(array.indexOf(deleteValue), 1);
     managerForDOMs.update(array);
 }
@@ -79,29 +80,15 @@ export function hexToRgba(hex, alpha = 1) {
     const g = parseInt(hex.slice(2, 4), 16) / 255;
     const b = parseInt(hex.slice(4, 6), 16) / 255;
     // RGBA形式で返す0
-    return { r, g, b, a: alpha };
-}
-
-// カラーコードとaからrgba配列
-export function hexToRgbaArray(hex, alpha = 1) {
-    // #を取り除く
-    hex = hex.replace(/^#/, '');
-    // R, G, Bを取り出して整数に変換
-    const r = parseInt(hex.slice(0, 2), 16) / 255;
-    const g = parseInt(hex.slice(2, 4), 16) / 255;
-    const b = parseInt(hex.slice(4, 6), 16) / 255;
-    // RGBA形式で返す0
     return [ r, g, b, alpha ];
 }
 
-// rgbまたはrgbaからカラーコード
-export function rgbToHex(r, g, b, a = null) {
-    const toHex = (c) => c.toString(16).padStart(2, '0');
-    if (a === null) {
-        return `#${toHex(Math.round(r * 255))}${toHex(Math.round(g * 255))}${toHex(Math.round(b * 255))}`;
-    } else {
-        return `#${toHex(Math.round(r * 255))}${toHex(Math.round(g * 255))}${toHex(Math.round(b * 255))}${toHex(Math.round(a * 255))}`;
-    }
+// rgbからカラーコード
+export function rgbToHex(r, g, b) {
+    const clamp = (val) => Math.max(0, Math.min(255, val)); // 範囲制限
+    const toHex = (val) => clamp(val).toString(16).padStart(2, "0");
+
+    return "#" + toHex(r * 255) + toHex(g * 255) + toHex(b * 255);
 }
 
 // 配列の最後の要素
@@ -186,9 +173,17 @@ export function changeParameter(object, parameter, newValue) {
     managerForDOMs.update(object, parameter);
 }
 
-export function pushArray(array, value) {
+export function arrayToPush(array, value) {
     array.push(value);
     managerForDOMs.update(array);
+}
+
+export function arrayToArrayCopy(target, source) {
+    target.length = 0;
+    for (const value of source) {
+        target.push(value);
+    }
+    managerForDOMs.update(target);
 }
 
 export function arrayToSet(array, data, index, structSize = 0) {

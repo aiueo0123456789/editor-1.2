@@ -71,6 +71,7 @@ export class Operator {
         this.stack.history.push(commandsToStack);
         this.stack.redoStack.length = 0; // 新しい操作をしたらRedoはリセット
         managerForDOMs.update(this.stack.history);
+        console.log(this.stack)
     }
 }
 

@@ -26,6 +26,17 @@ export class Area_Property {
                         ]},
                     ]}
                 ]},
+                {type: "section", name: "パラメーターコレクター", children: [
+                    {type: "list", appendEvent: () => {
+                        // appendAnimationToObject(app.scene.state.activeObject, "新規");
+                    }, deleteEvent: (animations) => {
+                        for (const animation of animations) {
+                            // deleteAnimationToObject(app.scene.state.activeObject, animation);
+                        }
+                    }, withObject: "scene/objects/parameterManagers", options: {}, liStruct:[
+                        {type: "nodeFromFunction", source: "/getNodeData"}
+                    ]}
+                ]}
             ],
         };
 

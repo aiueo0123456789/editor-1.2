@@ -15,10 +15,12 @@ import { indexOfSplice, loadFile } from "../utils/utility.js";
 import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
 import { HierarchySpaceData } from "../ui/area/areas/Hierarchy/area_HierarchySpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
-import { GraphicMesh } from "../core/objects/graphicMesh.js";
 import { GPU } from "../utils/webGPU.js";
 import { CreateObjectCommand, DeleteObjectCommand } from "../commands/object/object.js";
 import { Area } from "../ui/area/Area.js";
+import { CreateEdgeTool } from "../ui/tools/CreateEdge.js";
+import { NodeEditorSpaceData } from "../ui/area/areas/NodeEditor/area_NodeEditorSpaceData.js";
+import { Area_NodeEditor } from "../ui/area/areas/nodeEditor/area_NodeEditor.js";
 
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
 const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bezier.wgsl"));
@@ -37,6 +39,27 @@ class AppOptions {
                         baseHead: {co: [0,0]},
                         baseTail: {co: [0,100]},
                         animations: {blocks: []},
+                        attachments: {
+                            type: "アタッチメント",
+                            list: [
+                                {
+                                    type: "物理アタッチメント",
+                                    x: 0,
+                                    y: 0,
+                                    rotate: 0,
+                                    shearX: 0,
+                                    scaleX: 0,
+                                    inertia: 0,
+                                    strength: 0,
+                                    damping: 0,
+                                    mass: 0,
+                                    wind: 0,
+                                    gravity: 0,
+                                    mix: 0,
+                                    limit: 0,
+                                }
+                            ]
+                        }
                     }],
                     editor: {
                         boneColor: [0,0,0,1]
@@ -54,11 +77,53 @@ class AppOptions {
                                 baseHead: [0,110],
                                 baseTail: [0,210],
                                 animations: [],
+                                attachments: {
+                                    type: "アタッチメント",
+                                    list: [
+                                        {
+                                            type: "物理アタッチメント",
+                                            x: 0,
+                                            y: 0,
+                                            rotate: 0,
+                                            shearX: 0,
+                                            scaleX: 0,
+                                            inertia: 0,
+                                            strength: 0,
+                                            damping: 0,
+                                            mass: 0,
+                                            wind: 0,
+                                            gravity: 0,
+                                            mix: 0,
+                                            limit: 0,
+                                        }
+                                    ]
+                                }
                             }
                         ],
                         baseHead: [0,-100],
                         baseTail: [0,100],
                         animations: {blocks: []},
+                        attachments: {
+                            type: "アタッチメント",
+                            list: [
+                                {
+                                    type: "物理アタッチメント",
+                                    x: 0,
+                                    y: 0,
+                                    rotate: 0,
+                                    shearX: 0,
+                                    scaleX: 0,
+                                    inertia: 0,
+                                    strength: 0,
+                                    damping: 0,
+                                    mass: 0,
+                                    wind: 0,
+                                    gravity: 0,
+                                    mix: 0,
+                                    limit: 0,
+                                }
+                            ]
+                        }
                     }],
                     editor: {
                         boneColor: [0,0,0,1]
@@ -258,9 +323,7 @@ class AppConfig {
                         ]},
                     ]},
                     {label: "メッシュの生成", eventFn: async () => {
-                        for (const /** @type {GraphicMesh} */graphicMesh of this.app.scene.state.selectedObject) {
-                            await graphicMesh.editor.createEdgeFromTexture(1, 10);
-                        }
+                        this.app.activeArea.uiModel.modalOperator.setModal(CreateEdgeTool, this.app.activeArea.uiModel.inputs);
                     }},
                     {label: "削除", children: [
                         {label: "選択物", eventFn: () => {
@@ -372,13 +435,13 @@ export class Application { // 全てをまとめる
         this.scene.updateRenderingOrder();
         this.scene.updateAnimationCollectors();
         this.scene.update();
-        // this.animationPlayer.update(1 / 60);
-        this.animationPlayer.update(0.2);
+        // 単位: 秒
+        this.animationPlayer.update(1 / 60);
+        // this.animationPlayer.update(0.2);
         // ビューの更新
         this.areas.forEach((area) => {
             area.update();
-        })
-        // this.operator.execute();
+        });
     }
 }
 
@@ -388,6 +451,7 @@ export const useClassFromAreaType = {
     "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
     "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
     "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
+    "NodeEditor": {area: Area_NodeEditor, areaConfig: NodeEditorSpaceData},
 };
 
 // アニメーションのコントローラー
@@ -427,9 +491,12 @@ const area1 = app.createArea("w");
 const area1_h = app.createArea("h", area1.child1);
 const area2 = app.createArea("w", area1.child2);
 const area3 = app.createArea("h", area2.child2);
+const area4 = app.createArea("h", area2.child1);
 app.setAreaType(area1_h,0,"Viewer");
 app.setAreaType(area1_h,1,"Timeline");
-app.setAreaType(area2,0,"Hierarchy");
+app.setAreaType(area4,0,"Hierarchy");
+// app.setAreaType(area4,1,"NodeEditor");
+app.setAreaType(area4,1,"Property");
 app.setAreaType(area3,0,"Property");
 app.setAreaType(area3,1,"Inspector");
 

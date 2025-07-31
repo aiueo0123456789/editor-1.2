@@ -13,8 +13,8 @@ export class CreateObjectCommand {
     }
 
     undo() {
-        app.hierarchy.deleteHierarchy(this.object); // ヒエラルキーから削除
-        app.scene.objects.deleteObject(this.object);
+        app.hierarchy.removeHierarchy(this.object); // ヒエラルキーから削除
+        app.scene.objects.removeObject(this.object);
     }
 }
 
@@ -26,8 +26,8 @@ export class DeleteObjectCommand {
 
     execute() {
         for (const object of this.objects) {
-            app.hierarchy.deleteHierarchy(object); // ヒエラルキーから削除
-            app.scene.objects.deleteObject(object);
+            app.hierarchy.removeHierarchy(object); // ヒエラルキーから削除
+            app.scene.objects.removeObject(object);
         }
     }
 

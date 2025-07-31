@@ -10,37 +10,55 @@ export class RuntimeDataBase {
         this.offsetNameConverter = offsetNameConverter;
     }
 
-    append(object) {
-        if (this.order.includes(object)) return ;
-        this.order.push(object);
+    get allBuffers() {
         const buffers = [];
         for (const key in this) {
             if (this[key] instanceof BufferManager) {
                 buffers.push(this[key]);
             }
         }
-        for (const buffer of buffers) {
+        return buffers
+    }
+
+    append(object) {
+        if (this.order.includes(object)) return ;
+        this.order.push(object);
+        for (const buffer of this.allBuffers) {
             buffer.append(object);
         }
         this.setGroup();
         this.setOffset(object);
     }
 
+    insert(object, index) {
+        if (this.order.includes(object)) return ;
+        this.order.splice(index,0,object);
+        for (const buffer of this.allBuffers) {
+            buffer.insert(object, this.order[index].offsetAndFormulas[buffer.sourceOffsetType] * buffer.structByteSize);
+        }
+        this.setGroup();
+        this.setOffset(object);
+    }
+
+    update() {
+        for (const buffer of this.allBuffers) {
+            buffer.reset();
+            for (const object of this.order) {
+                buffer.append(object);
+            }
+        }
+        this.setGroup();
+        this.setAllObjectOffset();
+    }
+
     delete(object) {
         if (!this.order.includes(object)) return ;
         this.order.splice(this.order.indexOf(object), 1);
-        const buffers = [];
-        for (const key in this) {
-            if (this[key] instanceof BufferManager) {
-                buffers.push(this[key]);
-            }
-        }
-        for (const buffer of buffers) {
+        for (const buffer of this.allBuffers) {
             buffer.delete(object);
         }
         this.setGroup();
         this.setOffset(object);
-        console.log(this.order)
     }
 
     offsetCreate() {
@@ -97,7 +115,7 @@ export class RuntimeDataBase {
         }
     }
 
-    setAllOffset() {
+    setAllObjectOffset() {
         const offsets = {};
         for (const key in this.offsetAndFormulas) {
             offsets[key] = 0;

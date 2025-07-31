@@ -1,8 +1,8 @@
-import { app } from "../../../../../app/app.js";
-import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { WeightPaintCommand } from "../../../../../commands/mesh/weightPaint.js";
-import { ModalOperator } from "../../../../../operators/modalOperator.js";
+import { app } from "../../app/app.js";
+import { InputManager } from "../../app/inputManager/inputManager.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { WeightPaintCommand } from "../../commands/mesh/weightPaint.js";
+import { ModalOperator } from "../../operators/modalOperator.js";
 ModalOperator
 
 export class WeightPaintModal {
@@ -46,9 +46,12 @@ export class WeightPaintModal {
         
     }
 
-    mouseup(/** @type {InputManager} */inputManager) {
+    execute() {
         app.operator.appendCommand(this.command);
         app.operator.execute();
+    }
+
+    mouseup(/** @type {InputManager} */inputManager) {
         return {complete: true};
     }
 }

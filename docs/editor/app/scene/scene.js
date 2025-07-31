@@ -4,12 +4,15 @@ import { GraphicMesh } from '../../core/objects/graphicMesh.js';
 import { BezierModifier } from '../../core/objects/bezierModifier.js';
 import { Bone, Armature } from '../../core/objects/armature.js';
 import { AnimationCollector } from '../../core/objects/animationCollector.js';
-import { arrayToSet, changeParameter, createArrayN, indexOfSplice, isNumber, loadFile, objectInit, pushArray, range } from '../../utils/utility.js';
+import { arrayToSet, changeParameter, createArrayN, indexOfSplice, isNumber, loadFile, objectInit, arrayToPush, range } from '../../utils/utility.js';
 import { app, Application } from '../app.js';
 import { vec2 } from '../../utils/mathVec.js';
 import { mathMat3x3 } from '../../utils/mathMat.js';
 import { RuntimeDatas } from '../../core/runtime/runtimeDatas.js';
+import { ParameterManager } from '../../core/objects/parameterManager.js';
+import { Particle } from '../../core/objects/particle.js';
 
+const particleUpdatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_particle.wgsl"));
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
 const animationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_vec2.wgsl"));
@@ -43,6 +46,8 @@ class Objects {
         this.graphicMeshs = [];
         this.armatures = [];
         this.keyframeBlocks = [];
+        this.parameterManagers = [];
+        this.particles = [];
 
         this.allObject = [];
     }
@@ -61,12 +66,16 @@ class Objects {
         let dataType = data.dataType
         if (objectType == "アニメーションコレクター") {
             return new AnimationCollector("名称未設定");
-        }else if (objectType == "グラフィックメッシュ") {
+        } else if (objectType == "グラフィックメッシュ") {
             return new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
         } else if (objectType == "ベジェモディファイア") {
             return new BezierModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bezierModifier", dataType));
         } else if (objectType == "アーマチュア") {
             return new Armature("名称未設定", undefined, this.app.options.getPrimitiveData("boneModifer", dataType));
+        } else if (objectType == "パラメーターマネージャー") {
+            return new ParameterManager(data);
+        } else if (objectType == "パーティクル") {
+            return new Particle(data);
         }
     }
 
@@ -91,6 +100,12 @@ class Objects {
                 object.init(data);
                 this.animationCollectors.push(object);
                 managerForDOMs.update(this.animationCollectors);
+            } else if (data.type == "パラメーターマネージャー") {
+                object = new ParameterManager(data);
+                this.parameterManagers.push(object);
+            } else if (data.type == "パーティクル") {
+                object = new Particle(data);
+                this.particles.push(object);
             }
         } else { // 空のオブジェクトを作る
             let objectType = data.objectType;
@@ -99,6 +114,12 @@ class Objects {
                 object = new AnimationCollector("名称未設定");
                 this.animationCollectors.push(object);
                 managerForDOMs.update(this.animationCollectors);
+            } else if (objectType == "パラメーターマネージャー") {
+                object = new ParameterManager(data);
+                this.parameterManagers.push(object);
+            } else if (objectType == "パーティクル") {
+                object = new Particle(data);
+                this.particles.push(object);
             } else {
                 if (objectType == "グラフィックメッシュ") {
                     object = new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
@@ -113,23 +134,13 @@ class Objects {
                 }
             }
         }
-        pushArray(this.allObject,object);
+        arrayToPush(this.allObject,object);
         return object;
     }
 
     // オブジェクトの所属する配列を返す
     searchArrayFromObject(object) {
-        if (object.type == "グラフィックメッシュ") {
-            return this.graphicMeshs;
-        } else if (object.type == "ベジェモディファイア") {
-            return this.bezierModifiers;
-        } else if (object.type == "アーマチュア") {
-            return this.armatures;
-        } else if (object.type == "アニメーションコレクター") {
-            return this.animationCollectors;
-        } else if (object.type == "キーフレームブロック") {
-            return this.keyframeBlocks;
-        }
+        return this.searchArrayFromType(object.type);
     }
 
     // 属性から所属する配列を返す
@@ -144,19 +155,24 @@ class Objects {
             return this.animationCollectors;
         } else if (type == "キーフレームブロック") {
             return this.keyframeBlocks;
+        } else if (type == "パラメーターマネージャー") {
+            return this.parameterManagers;
+        } else if (type == "パーティクル") {
+            return this.particles;
         }
     }
 
     // オブジェクトの削除
-    deleteObject(object) {
+    removeObject(object) {
         indexOfSplice(this.searchArrayFromObject(object), object);
         indexOfSplice(this.allObject, object);
         this.app.scene.runtimeData.delete(object.runtimeData, object);
     }
 
     appendObject(object) {
-        this.app.hierarchy.addHierarchy("",object); // ヒエラルキーから削除
-        this.searchArrayFromType(object.type).push(object);
+        this.app.scene.runtimeData.append(object.runtimeData, object);
+        object.runtimeData.updateBaseData(object);
+        arrayToPush(this.searchArrayFromType(object.type), object);
         this.allObject.push(object);
     }
 }
@@ -166,6 +182,7 @@ export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
         this.objects = new Objects(app);
+        this.objects.createObjectAndSetUp({objectType: "パラメーターマネージャー"});
 
         this.renderingOrder = [];
 
@@ -216,6 +233,24 @@ export class Scene {
     }
 
     init() {
+        this.objects.appendObject(this.objects.createObject({
+            objectType: "パーティクル",
+            name: "パーティクルテスト",
+            spawnData: {
+                position: {min: [0,-1000],max: [0,0]},
+                zIndex: {min: 1, max: 10},
+                scale: {min: 5,max: 20},
+                angle: {min: 0,max: 3},
+                velocity: {min: [100,-80],max: [200,-50]},
+                zIndexVelocity: 0,
+                scaleVelocity: [0,0],
+                angleVelocity: {min: 0,max: 1},
+                maxLifeTime: 1000,
+            },
+            spawnNum: 1,
+            duration: 100,
+            startDelay: 10
+        }));
     }
 
     // 選択している頂点のBBoxを取得
@@ -253,9 +288,6 @@ export class Scene {
                 const resultBuffer = GPU.createStorageBuffer(4, [0], ["u32"]);
                 let hitTestGroup;
                 if (object.type === "グラフィックメッシュ") {
-                    // GPU.consoleBufferData(this.runtimeData.graphicMeshData.renderingVertices.buffer, ["f32","f32"]);
-                    // GPU.consoleBufferData(this.runtimeData.graphicMeshData.meshes.buffer, ["u32","u32","u32"]);
-                    // GPU.consoleBufferData(object.objectMeshData, ["u32"]);
                     hitTestGroup = GPU.createGroup(
                         GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu"),
                         [
@@ -311,6 +343,9 @@ export class Scene {
     }
 
     update() {
+        for (const particle of this.objects.particles) {
+            particle.update();
+        }
         if (!(this.objects.armatures.length || this.objects.graphicMeshs.length || this.objects.bezierModifiers.length)) return ;
         for (const graphicMesh of this.objects.graphicMeshs) {
             graphicMesh.animationBlock.list.forEach(animation => {
@@ -331,6 +366,13 @@ export class Scene {
         }
         const computeCommandEncoder = device.createCommandEncoder();
         const computePassEncoder = computeCommandEncoder.beginComputePass();
+        computePassEncoder.setBindGroup(0, this.runtimeData.particle.updateGroup); // 全てのグラフィックスメッシュのデータをバインド
+        for (const particle of this.objects.particles) {
+            computePassEncoder.setBindGroup(1, particle.C_objectDataGroup); // 全てのグラフィックスメッシュのデータをバインド
+            computePassEncoder.setPipeline(particle.updatePipeline);
+            computePassEncoder.dispatchWorkgroups(Math.ceil(particle.particlesNum / 64), 1, 1); // ワークグループ数をディスパッチ
+        }
+
         if (this.objects.graphicMeshs.length) {
             computePassEncoder.setPipeline(animationApplyPipeline);
             computePassEncoder.setBindGroup(0, this.runtimeData.graphicMeshData.animationApplyGroup); // 全てのグラフィックスメッシュのデータをバインド
@@ -403,8 +445,8 @@ export class Scene {
     }
 
     async getSaveData() {
-        const conversion = {"グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks"};
-        const result = {graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: []};
+        const conversion = {"グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "パラメーターマネージャー": "parameterManagers"};
+        const result = {graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
         // 各オブジェクトの保存処理を並列化
         const promises = this.objects.allObject.map(async (object) => {
             return { type: object.type, data: await object.getSaveData() };
@@ -438,7 +480,7 @@ export class Scene {
     }
 
     appendMaskTexture(name) {
-        pushArray(this.maskTextures, new MaskTexture(name, this.app.appConfig.MASKTEXTURESIZE));
+        arrayToPush(this.maskTextures, new MaskTexture(name, this.app.appConfig.MASKTEXTURESIZE));
     }
 
     deleteMaskTexture(maskTexture) {

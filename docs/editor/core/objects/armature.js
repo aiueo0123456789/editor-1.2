@@ -55,11 +55,8 @@ export class Bone {
         armature.setBone(this);
         /** @type {Bone[]} */
         this.childrenBone = [];
-        this.color = [0,0,0,1];
-        // this.color = [Math.random(),Math.random(),Math.random(),1];
+        this.color = data.color ? data.color : [0,0,0,1];
 
-        // this.baseHead = [...baseHead];
-        // this.baseTail = [...baseTail];
         this.baseHead = new Vertex(this, Object.assign({typeIndex: 0}, data.baseHead));
         this.baseTail = new Vertex(this, Object.assign({typeIndex: 1}, data.baseTail));
 
@@ -70,10 +67,14 @@ export class Bone {
         this.sx = 0;
         this.sy = 0;
         this.r = 0;
-        this.attachments = new Attachments(this);
+        this.attachments = new Attachments(Object.assign({bone: this}, data.attachments));
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y","sx","sy","r"], data.animations);
 
         this.matrix = new Float32Array(4 * 3);
+
+        managerForDOMs.set({o: this, i: "color"}, null, () => {
+            app.scene.runtimeData.armatureData.updateBaseData(this.armature);
+        });
     }
 
     clearAnimatoin() {
@@ -114,11 +115,13 @@ export class Bone {
         return {
             name: this.name,
             index: this.index,
-            parentIndex: this.parent ? this.parent.index : -1,
+            parentIndex: this.parent ? this.parent.localIndex : -1,
+            color: this.color,
             baseHead: this.baseHead.getSaveData(),
             baseTail: this.baseTail.getSaveData(),
             animations: this.keyframeBlockManager.getSaveData(),
             childrenBone: this.childrenBone.map(bone => bone.getSaveData()),
+            attachments: this.attachments.getSaveData(),
         };
     }
 }

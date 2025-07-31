@@ -1,0 +1,32 @@
+.caret {
+    position: absolute;
+}
+
+.caret::after {
+    content: '';
+    display: inline-block;
+    width: 1px;
+    height: 1em;
+    background-color: rgb(255, 255, 255);
+    margin-left: 2px;
+    animation: blink 1s steps(2, start) infinite;
+    vertical-align: bottom;
+    transform: translateX(-50%);
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.codeArea {
+    width: fit-content;
+    height: 100%;
+    position: relative;
+    user-select: none;
+}
+
+.codeArea, .codeArea * {
+  caret-color: transparent !important;
+}

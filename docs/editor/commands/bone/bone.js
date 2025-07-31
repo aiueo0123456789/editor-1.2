@@ -18,10 +18,50 @@ export class BoneExtrudeMoveCommand extends Base {
         this.createBones = [];
         targets.forEach(parentBone => {
             if (parentBone.baseHead.selected) {
-                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseHead.co}, baseTail: {co: [0,0]}}));
+                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseHead.co}, baseTail: {co: [0,0]}, attachments: {
+                    type: "アタッチメント",
+                    list: [
+                        {
+                            type: "物理アタッチメント",
+                            x: 0,
+                            y: 0,
+                            rotate: 0,
+                            shearX: 0,
+                            scaleX: 0,
+                            inertia: 0,
+                            strength: 0,
+                            damping: 0,
+                            mass: 0,
+                            wind: 0,
+                            gravity: 0,
+                            mix: 0,
+                            limit: 0,
+                        }
+                    ]
+                }}));
             }
             if (parentBone.baseTail.selected) {
-                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseTail.co}, baseTail: {co: [0,0]}}));
+                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseTail.co}, baseTail: {co: [0,0]}, attachments: {
+                    type: "アタッチメント",
+                    list: [
+                        {
+                            type: "物理アタッチメント",
+                            x: 0,
+                            y: 0,
+                            rotate: 0,
+                            shearX: 0,
+                            scaleX: 0,
+                            inertia: 0,
+                            strength: 0,
+                            damping: 0,
+                            mass: 0,
+                            wind: 0,
+                            gravity: 0,
+                            mix: 0,
+                            limit: 0,
+                        }
+                    ]
+                }}));
             }
         });
         this.value = [0,0];

@@ -1,9 +1,9 @@
-import { app } from "../../../../../app/app.js";
-import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { RotateCommand } from "../../../../../commands/transform/transform.js";
-import { vec2 } from "../../../../../utils/mathVec.js";
-import { ModalOperator } from "../../../../../operators/modalOperator.js";
+import { app } from "../../app/app.js";
+import { InputManager } from "../../app/inputManager/inputManager.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { RotateCommand } from "../../commands/transform/transform.js";
+import { vec2 } from "../../utils/mathVec.js";
+import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class RotateModal {
     constructor(/** @type {ModalOperator} */operator) {
@@ -14,10 +14,26 @@ export class RotateModal {
             app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
             app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
         ];
-        this.modal = null;
+        this.modal = {
+            inputObject: {"value": this.values},
+            DOM: [
+                {type: "div", class: "shelfe", children: [
+                    {type: "title", text: "TranslateModal", class: "shelfeTitle"},
+                    {type: "input", label: "回転量", withObject: "value/0", options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
+                    {type: "input", label: "スムーズ", withObject: "value/2", options: {type: "number",min: 0, max: 2}},
+                    {type: "input", label: "半径", withObject: "value/3", options: {type: "number",min: 0, max: 10000}},
+                ]}
+            ]
+        };
         this.activateKey = "r";
         this.center = [0,0];
         this.type = "";
+
+        const update = () => {
+            if (!this.command) return ;
+            this.command.update(this.values[0], "ローカル", this.values[1], this.values[2]);
+        }
+        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, null, update, null);
     }
 
     async init() {
@@ -58,18 +74,16 @@ export class RotateModal {
         } else {
             this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         }
-        // console.log(this.values)
-        this.update();
+        managerForDOMs.update(this.values);
         return true;
     }
 
-    mousedown(/** @type {InputManager} */inputManager) {
+    execute() {
         app.operator.appendCommand(this.command);
         app.operator.execute();
-        return {complete: true};
     }
 
-    update() {
-        this.command.update(this.values[0], "ローカル", this.values[1], this.values[2]);
+    mousedown(/** @type {InputManager} */inputManager) {
+        return {complete: true};
     }
 }

@@ -1,17 +1,17 @@
 import { ConvertCoordinate } from '../../../../utils/convertCoordinate.js';
 import { resizeObserver } from '../../../../utils/ui/resizeObserver.js';
-import { TranslateModal } from './tools/TranslateTool.js';
-import { RotateModal } from './tools/RotateTool.js';
-import { ResizeModal } from './tools/ResizeTool.js';
-import { ExtrudeMove } from './tools/ExtrudeMove.js';
-import { ParentPickModal } from './tools/ParentPick.js';
-import { DeleteTool } from './tools/Delete.js';
-import { WeightPaintModal } from './tools/WeightPaintTool.js';
+import { TranslateModal } from '../../../tools/TranslateTool.js';
+import { RotateModal } from '../../../tools/RotateTool.js';
+import { ResizeModal } from '../../../tools/ResizeTool.js';
+import { ExtrudeMove } from '../../../tools/ExtrudeMove.js';
+import { ParentPickModal } from '../../../tools/ParentPick.js';
+import { DeleteTool } from '../../../tools/Delete.js';
+import { WeightPaintModal } from '../../../tools/WeightPaintTool.js';
 import { ToolsBarOperator } from '../../../../operators/toolsBarOperator.js';
 import { BonePropertyModal } from './toolBar/bone.js';
 import { ArmaturePropertyModal } from './toolBar/armature.js';
-import { EdgeJoinTool } from './tools/EdgeJoin.js';
-import { AppendVertex } from './tools/appendVertex.js';
+import { EdgeJoinTool } from '../../../tools/EdgeJoin.js';
+import { AppendVertex } from '../../../tools/appendVertex.js';
 import { app } from '../../../../app/app.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
 import { sampler } from '../../../../utils/GPUObject.js';
@@ -22,9 +22,13 @@ import { BoneAttachmentsModal } from './toolBar/Attachments.js';
 import { InputManager } from '../../../../app/inputManager/inputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 import { ModalOperator } from '../../../../operators/modalOperator.js';
+import { CreateEdgeTool } from '../../../tools/CreateEdge.js';
+import { Particle } from '../../../../core/objects/particle.js';
 
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
-const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t");
+const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t", "wl");
+// const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t", "wa");
+const renderParticlePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/particleVertex.wgsl"), [], "2d", "s", "wl");
 const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./editor/shader/render/mask.wgsl"), [["u"]], "mask", "t");
 
 const verticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/graphicMesh/verticesShader.wgsl"), [], "2d", "s");
@@ -87,7 +91,8 @@ export class Area_Viewer {
                                 ]},
                                 {type: "menu", title: "ビュー", struct: [
                                     {label: "カメラ", children: [
-                                        {label: "すべてを表示", children: []},
+                                        {label: "すべてを表示", children: [], eventFn: () => {
+                                        }},
                                     ]},
                                 ]},
                                 {type: "menu", title: "選択", struct: [
@@ -141,7 +146,7 @@ export class Area_Viewer {
                                         {type: "padding", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
-                                                {type: "input", label: "値", withObject: "areasConfig/weightPaintMetaData/weightValue", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
+                                                {type: "input", withObject: "areasConfig/weightPaintMetaData/weightValue", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
                                             ]}
                                         ]},
                                         {type: "separator", size: "10px"},
@@ -153,7 +158,7 @@ export class Area_Viewer {
                                         {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
-                                                {type: "input", label: "塗り範囲", withObject: "areasConfig/weightPaintMetaData/paintSize", options: {type: "number", min: 0, max: 1000, step: 0.01}, custom: {visual: "1"}},
+                                                {type: "input", withObject: "areasConfig/weightPaintMetaData/paintSize", options: {type: "number", min: 0, max: 1000, step: 0.01}, custom: {visual: "1"}},
                                             ]}
                                         ]},
                                         {type: "padding", size: "10px"},
@@ -173,7 +178,7 @@ export class Area_Viewer {
                                         {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
-                                                {type: "input", label: "影響範囲", withObject: "areasConfig/proportionalSize", options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                                {type: "input", withObject: "areasConfig/proportionalSize", options: {type: "number", min: 0}, custom: {visual: "1"}},
                                             ]}
                                         ]},
                                         {type: "padding", size: "10px"},
@@ -192,7 +197,7 @@ export class Area_Viewer {
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
         this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer"), [ArmaturePropertyModal,BonePropertyModal,BoneAttachmentsModal]);
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
@@ -398,6 +403,9 @@ export class Renderer {
         this.camera = camera;
         this.viewer = viewer;
 
+        this.depthTexture = GPU.createDepthTexture2D([canvas.width, canvas.height]);
+        this.depthTextureView = this.depthTexture.createView();
+
         this.canvasAspectBuffer = GPU.createUniformBuffer(2 * 4, undefined, ["f32"]);
         this.resizeCVS();
         // レンダリングに使う汎用group
@@ -416,6 +424,8 @@ export class Renderer {
         //     size: [this.canvas.width, this.canvas.height]
         // });
         // GPU.writeBuffer(this.canvasAspectBuffer, new Float32Array([1 / this.canvas.width, 1 /  this.canvas.height]));
+        this.depthTexture = GPU.createDepthTexture2D([this.canvas.width, this.canvas.height]);
+        this.depthTextureView = this.depthTexture.createView();
         GPU.writeBuffer(this.canvasAspectBuffer, new Float32Array([1 / this.canvas.offsetWidth, 1 /  this.canvas.offsetHeight]));
     }
 
@@ -460,6 +470,12 @@ export class Renderer {
                     storeOp: 'store',
                 },
             ],
+            depthStencilAttachment: {
+                view: this.depthTextureView,
+                depthLoadOp: 'clear',
+                depthClearValue: 1.0,
+                depthStoreOp: 'store',
+            },
         });
         renderPass.setBindGroup(0, this.staticGroup);
         // グリッド
@@ -480,6 +496,16 @@ export class Renderer {
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }
+        }
+        if (app.scene.objects.particles.length) {
+            renderPass.setPipeline(renderParticlePipeline);
+            renderPass.setBindGroup(1, app.scene.runtimeData.particle.renderingGroup);
+            for (const /** @type {Particle} */ particle of app.scene.objects.particles) {
+                renderPass.setBindGroup(2, particle.objectDataGroup);
+                renderPass.draw(4, particle.particlesNum, 0, 0);
+            }
+        }
+        if (app.scene.objects.graphicMeshs.length) {
             if (this.viewer.spaceData.visibleObjects.graphicMesh) {
                 renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderingGizumoGroup);
                 for (const graphicMesh of app.scene.renderingOrder) {

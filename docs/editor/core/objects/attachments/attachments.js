@@ -1,26 +1,31 @@
-import { pushArray } from "../../../../editor/utils/utility.js";
+import { arrayToPush } from "../../../../editor/utils/utility.js";
 import { PhysicsAttachmentData } from "./physics/data.js";
 
 export class Attachments {
-    constructor(bone) {
-        this.bone = bone;
+    constructor(data) {
+        this.bone = data.bone;
         /** @type {PhysicsAttachmentData[]} */
         this.list = [];
-        this.append("物理");
+        for (const attachment of data.list) {
+            this.append(attachment);
+        }
     }
 
-    append(type) {
+    append(data) {
         let attachment;
-        if (type == "物理") {
-            attachment = new PhysicsAttachmentData(this.bone);
+        if (data.type == "物理アタッチメント") {
+            attachment = new PhysicsAttachmentData(Object.assign({bone: this.bone}, data));
         }
-        pushArray(this.list,attachment);
+        arrayToPush(this.list,attachment);
         return attachment;
     }
 
-    update() {
-        for (const attachment of this.list) {
-            attachment.update(encoder[attachment.encoderType]);
+    getSaveData() {
+        return {
+            type: "アタッチメント",
+            list: this.list.map(attachment => {
+                return attachment.getSaveData();
+            })
         }
     }
 }

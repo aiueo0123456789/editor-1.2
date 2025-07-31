@@ -1,9 +1,9 @@
-import { app } from "../../../../../app/app.js";
-import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { ResizeCommand } from "../../../../../commands/transform/transform.js";
-import { vec2 } from "../../../../../utils/mathVec.js";
-import { ModalOperator } from "../../../../../operators/modalOperator.js";
+import { app } from "../../app/app.js";
+import { InputManager } from "../../app/inputManager/inputManager.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { ResizeCommand } from "../../commands/transform/transform.js";
+import { vec2 } from "../../utils/mathVec.js";
+import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class ResizeModal {
     constructor(/** @type {ModalOperator} */operator) {
@@ -33,10 +33,7 @@ export class ResizeModal {
         const update = () => {
             this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
         }
-        managerForDOMs.set({o: this.values, g: "_", i: "0"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "1"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "2"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "3"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, null, update, null);
     }
 
     async init(/** @type {InputManager} */inputManager) {
@@ -78,9 +75,12 @@ export class ResizeModal {
         return true;
     }
 
-    mousedown(/** @type {InputManager} */inputManager) {
+    execute() {
         app.operator.appendCommand(this.command);
         app.operator.execute();
+    }
+
+    mousedown(/** @type {InputManager} */inputManager) {
         return {complete: true};
     }
 }

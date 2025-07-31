@@ -92,20 +92,20 @@ export class GraphicMeshData extends RuntimeDataBase {
         const uvArray = updateContent.vertex.uv ? await this.uv.getObjectData(graphicMesh) : [];
         const weightBlockArray = updateContent.vertex.weight ? await this.weightBlocks.getObjectData(graphicMesh) : [];
         for (const vertex of graphicMesh.allVertices) {
-            if (vertex.base != baseArray[vertex.index] || vertex.uv == uvArray[vertex.index]) {
+            if (vertex.base != baseArray[vertex.localIndex] || vertex.uv == uvArray[vertex.localIndex]) {
                 vertex.updated = true;
             } else {
                 vertex.updated = false;
             }
             if (updateContent.vertex.base) {
-                vertex.base = baseArray[vertex.index];
+                vertex.base = baseArray[vertex.localIndex];
             }
             if (updateContent.vertex.uv) {
-                vertex.uv = uvArray[vertex.index];
+                vertex.uv = uvArray[vertex.localIndex];
             }
             if (updateContent.vertex.weight) {
-                vertex.parentWeight.indexs = weightBlockArray[vertex.index].slice(0,4);
-                vertex.parentWeight.weights = weightBlockArray[vertex.index].slice(4,8);
+                vertex.parentWeight.indexs = weightBlockArray[vertex.localIndex].slice(0,4);
+                vertex.parentWeight.weights = weightBlockArray[vertex.localIndex].slice(4,8);
             }
         }
         this.write = false;
@@ -129,9 +129,11 @@ export class GraphicMeshData extends RuntimeDataBase {
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu_Csrw"), [this.selectedVertices.buffer, this.renderingVertices.buffer, graphicMesh.objectDataBuffer, optionBuffer, circleBuffer, atomicBuffer]);
             GPU.runComputeShader(selectOnlyVerticesPipeline, [group], Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
         }
-        const resultBone = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer, graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.vertexOffset + graphicMesh.verticesNum);
+        const resultSelected = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer, graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.vertexOffset + graphicMesh.verticesNum);
+        console.log(resultSelected)
         for (const vertex of graphicMesh.allVertices) {
-            vertex.selected = resultBone[vertex.index];
+            console.log(vertex.localIndex)
+            vertex.selected = resultSelected[vertex.localIndex];
         }
         // GPU.consoleBufferData(this.selectedVertices, ["u32"], "当たり判定", {start: Math.ceil(armature.runtimeOffsetData.vertexOffset * 2 / 32), num: Math.ceil((armature.MAX_BONES) * 2 / 32)});
         // GPU.consoleBufferData(this.selectedVertices, ["bit"], "当たり判定bool", {start: Math.ceil(armature.runtimeOffsetData.vertexOffset * 2 / 32), num: Math.ceil((armature.MAX_BONES) * 2 / 32)});
