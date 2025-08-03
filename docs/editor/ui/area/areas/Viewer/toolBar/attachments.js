@@ -11,7 +11,7 @@ export class BoneAttachmentsModal {
                     {type: "section", name: "ボーンアタッチメント", children: [
                         {type: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBone", updateEventTarget: "ボーン選択", children: [
                             // {type: "dbInput", withObject: {object: "0", parameter: "index"}, options: {type: "text"}},
-                            {type: "select", label: "", writeObject: null, sourceObject: ["物理"], options: {initValue: "アタッチメントの追加", submitEvent: (value) => {
+                            {type: "select", label: "", writeObject: null, sourceObject: ["物理"], options: {initValue: "アタッチメントの追加", writeObject: (value) => {
                                 app.scene.state.getSelectBone()[0].attachments.append(value);
                             }}},
                             {type: "list", appendEvent: () => {

@@ -25,11 +25,20 @@ import { Area_NodeEditor } from "../ui/area/areas/nodeEditor/area_NodeEditor.js"
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
 const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bezier.wgsl"));
 
+export const useClassFromAreaType = {
+    "Viewer": {area: Area_Viewer, areaConfig: ViewerSpaceData},
+    "Hierarchy": {area: Area_Hierarchy, areaConfig: HierarchySpaceData},
+    "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
+    "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
+    "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
+    "NodeEditor": {area: Area_NodeEditor, areaConfig: NodeEditorSpaceData},
+};
+
 class AppOptions {
     constructor(/** @type {Application} */app) {
         this.app = app;
         this.primitives = {
-            "boneModifer": {
+            "アーマチュア": {
                 "normal": {
                     type: "アーマチュア",
                     boneNum: 1,
@@ -130,7 +139,7 @@ class AppOptions {
                     }
                 }
             },
-            "bezierModifier": {
+            "ベジェモディファイア": {
                 "normal": {
                     type: "ベジェモディファイア",
                     points: [
@@ -140,8 +149,9 @@ class AppOptions {
                     animationKeyDatas: [],
                 }
             },
-            "graphicMesh": {
+            "グラフィックメッシュ": {
                 "normal": {
+                    type: "グラフィックメッシュ",
                     zIndex: 0,
                     imageBBox: {
                         min: [0, 0],
@@ -287,36 +297,36 @@ class AppConfig {
                     {label: "オブジェクトを追加", children: [
                         {label: "グラフィックメッシュ", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand({objectType: "グラフィックメッシュ", dataType: "normal"});
+                                const command = new CreateObjectCommand(app.options.getPrimitiveData("グラフィックメッシュ", "normal"));
                                 app.operator.appendCommand(command);
                                 app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
-                                const command = new CreateObjectCommand({objectType: "グラフィックメッシュ", dataType: "body"});
+                                const command = new CreateObjectCommand(app.options.getPrimitiveData("グラフィックメッシュ", "body"));
                                 app.operator.appendCommand(command);
                                 app.operator.execute();
                             }},
                         ]},
                         {label: "ベジェモディファイア", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand({objectType: "ベジェモディファイア", dataType: "normal"});
+                                const command = new CreateObjectCommand(app.options.getPrimitiveData("ベジェモディファイア", "normal"));
                                 app.operator.appendCommand(command);
                                 app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
-                                const command = new CreateObjectCommand({objectType: "ベジェモディファイア", dataType: "body"});
+                                const command = new CreateObjectCommand(app.options.getPrimitiveData("ベジェモディファイア", "body"));
                                 app.operator.appendCommand(command);
                                 app.operator.execute();
                             }},
                         ]},
                         {label: "アーマチュア", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand({objectType: "アーマチュア", dataType: "normal"});
+                                const command = new CreateObjectCommand(app.options.getPrimitiveData("アーマチュア", "normal"));
                                 app.operator.appendCommand(command);
                                 app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
-                                const command = new CreateObjectCommand({objectType: "アーマチュア", dataType: "body"});
+                                const command = new CreateObjectCommand(app.options.getPrimitiveData("アーマチュア", "body"));
                                 app.operator.appendCommand(command);
                                 app.operator.execute();
                             }},
@@ -445,15 +455,6 @@ export class Application { // 全てをまとめる
     }
 }
 
-export const useClassFromAreaType = {
-    "Viewer": {area: Area_Viewer, areaConfig: ViewerSpaceData},
-    "Hierarchy": {area: Area_Hierarchy, areaConfig: HierarchySpaceData},
-    "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
-    "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
-    "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
-    "NodeEditor": {area: Area_NodeEditor, areaConfig: NodeEditorSpaceData},
-};
-
 // アニメーションのコントローラー
 class AnimationPlayer {
     constructor(/** @type {Application} */app) {
@@ -495,8 +496,8 @@ const area4 = app.createArea("h", area2.child1);
 app.setAreaType(area1_h,0,"Viewer");
 app.setAreaType(area1_h,1,"Timeline");
 app.setAreaType(area4,0,"Hierarchy");
-// app.setAreaType(area4,1,"NodeEditor");
-app.setAreaType(area4,1,"Property");
+app.setAreaType(area4,1,"NodeEditor");
+// app.setAreaType(area4,1,"Property");
 app.setAreaType(area3,0,"Property");
 app.setAreaType(area3,1,"Inspector");
 

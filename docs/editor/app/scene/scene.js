@@ -11,6 +11,7 @@ import { mathMat3x3 } from '../../utils/mathMat.js';
 import { RuntimeDatas } from '../../core/runtime/runtimeDatas.js';
 import { ParameterManager } from '../../core/objects/parameterManager.js';
 import { Particle } from '../../core/objects/particle.js';
+import { Script } from '../../core/objects/script.js';
 
 const particleUpdatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_particle.wgsl"));
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
@@ -48,6 +49,7 @@ class Objects {
         this.keyframeBlocks = [];
         this.parameterManagers = [];
         this.particles = [];
+        this.scripts = [];
 
         this.allObject = [];
     }
@@ -62,20 +64,21 @@ class Objects {
     }
 
     createObject(data) {
-        let objectType = data.objectType;
-        let dataType = data.dataType
+        let objectType = data.type;
         if (objectType == "アニメーションコレクター") {
             return new AnimationCollector("名称未設定");
         } else if (objectType == "グラフィックメッシュ") {
-            return new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
+            return new GraphicMesh("名称未設定", undefined, data);
         } else if (objectType == "ベジェモディファイア") {
-            return new BezierModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bezierModifier", dataType));
+            return new BezierModifier("名称未設定", undefined, data);
         } else if (objectType == "アーマチュア") {
-            return new Armature("名称未設定", undefined, this.app.options.getPrimitiveData("boneModifer", dataType));
+            return new Armature("名称未設定", undefined, data);
         } else if (objectType == "パラメーターマネージャー") {
             return new ParameterManager(data);
         } else if (objectType == "パーティクル") {
             return new Particle(data);
+        } else if (objectType == "スクリプト") {
+            return new Script(data);
         }
     }
 
@@ -83,33 +86,36 @@ class Objects {
         let object;
         if (data.saveData) { // セーブデータからオブジェクトを作る
             data = data.saveData;
-            if (!data.type || data.type == "グラフィックメッシュ") {
+            let objectType = data.type;
+            if (objectType == "グラフィックメッシュ") {
                 object = new GraphicMesh(data.name,data.id, data);
                 this.graphicMeshs.push(object);
-                this.isChangeObjectsZindex = true;
-            } else if (data.type == "ベジェモディファイア") {
+            } else if (objectType == "ベジェモディファイア") {
                 object = new BezierModifier(data.name,data.id, data);
                 this.bezierModifiers.push(object);
-            } else if (data.type == "アーマチュア") {
-                console.log(data)
+            } else if (objectType == "アーマチュア") {
                 object = new Armature(data.name,data.id,data);
-                // object.init(data);
                 this.armatures.push(object);
-            } else if (data.type == "アニメーションコレクター" || data.type == "am") {
+            } else if (objectType == "アニメーションコレクター") {
                 object = new AnimationCollector(data.name,data.id);
                 object.init(data);
                 this.animationCollectors.push(object);
                 managerForDOMs.update(this.animationCollectors);
-            } else if (data.type == "パラメーターマネージャー") {
+            } else if (objectType == "パラメーターマネージャー") {
                 object = new ParameterManager(data);
                 this.parameterManagers.push(object);
-            } else if (data.type == "パーティクル") {
+            } else if (objectType == "パーティクル") {
                 object = new Particle(data);
                 this.particles.push(object);
+            } else if (objectType == "スクリプト") {
+                object = new Script(data);
+                this.scripts.push(object);
+            } else {
+                console.warn("不明なオブジェクトを追加しようとしました", objectType)
             }
         } else { // 空のオブジェクトを作る
-            let objectType = data.objectType;
-            let dataType = data.dataType
+            let objectType = data.type;
+            let dataType = data.dataType;
             if (objectType == "アニメーションコレクター") {
                 object = new AnimationCollector("名称未設定");
                 this.animationCollectors.push(object);
@@ -120,6 +126,9 @@ class Objects {
             } else if (objectType == "パーティクル") {
                 object = new Particle(data);
                 this.particles.push(object);
+            } else if (objectType == "スクリプト") {
+                object = new Script(data);
+                this.scripts.push(object);
             } else {
                 if (objectType == "グラフィックメッシュ") {
                     object = new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
@@ -144,21 +153,31 @@ class Objects {
     }
 
     // 属性から所属する配列を返す
-    searchArrayFromType(type) {
-        if (type == "グラフィックメッシュ") {
+    searchArrayFromType(objectType) {
+        if (objectType == "グラフィックメッシュ") {
             return this.graphicMeshs;
-        } else if (type == "ベジェモディファイア") {
+        } else if (objectType == "ベジェモディファイア") {
             return this.bezierModifiers;
-        } else if (type == "アーマチュア") {
+        } else if (objectType == "アーマチュア") {
             return this.armatures;
-        } else if (type == "アニメーションコレクター") {
+        } else if (objectType == "アニメーションコレクター") {
             return this.animationCollectors;
-        } else if (type == "キーフレームブロック") {
+        } else if (objectType == "キーフレームブロック") {
             return this.keyframeBlocks;
-        } else if (type == "パラメーターマネージャー") {
+        } else if (objectType == "パラメーターマネージャー") {
             return this.parameterManagers;
-        } else if (type == "パーティクル") {
+        } else if (objectType == "パーティクル") {
             return this.particles;
+        } else if (objectType == "スクリプト") {
+            return this.scripts;
+        }
+    }
+
+    getObjectFromID(id) {
+        try {
+            return this.allObject.filter(object => object.id == id)[0];
+        } catch (err) {
+            return null;
         }
     }
 
@@ -170,8 +189,10 @@ class Objects {
     }
 
     appendObject(object) {
-        this.app.scene.runtimeData.append(object.runtimeData, object);
-        object.runtimeData.updateBaseData(object);
+        if (object.runtimeData) {
+            this.app.scene.runtimeData.append(object.runtimeData, object);
+            object.runtimeData.updateBaseData(object);
+        }
         arrayToPush(this.searchArrayFromType(object.type), object);
         this.allObject.push(object);
     }
@@ -182,11 +203,9 @@ export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
         this.objects = new Objects(app);
-        this.objects.createObjectAndSetUp({objectType: "パラメーターマネージャー"});
+        this.objects.createObjectAndSetUp({type: "パラメーターマネージャー"});
 
         this.renderingOrder = [];
-
-        this.text = [];
 
         // フレーム範囲
         this.frame_start = 0;
@@ -234,7 +253,7 @@ export class Scene {
 
     init() {
         this.objects.appendObject(this.objects.createObject({
-            objectType: "パーティクル",
+            type: "パーティクル",
             name: "パーティクルテスト",
             spawnData: {
                 position: {min: [0,-1000],max: [0,0]},
@@ -250,6 +269,11 @@ export class Scene {
             spawnNum: 1,
             duration: 100,
             startDelay: 10
+        }));
+        this.objects.appendObject(this.objects.createObject({
+            type: "スクリプト",
+            name: "スクリプトテスト",
+            text: "abcdefg"
         }));
     }
 

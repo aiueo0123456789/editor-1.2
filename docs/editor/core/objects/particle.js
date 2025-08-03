@@ -180,11 +180,16 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     particles[fixVertexIndex] = particle;
 }`;
         this.updatePipeline = null;
-        const updatePipelineForUpdate = () => {
-            this.updatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Cu")], this.updatePipelineCode);
+        const updatePipelineForUpdate = async () => {
+            try {
+                const newPipeline = await GPU.createComputePipelineAsync([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Cu")], this.updatePipelineCode);
+                this.updatePipeline = newPipeline;
+            } catch (err) {
+                console.warn("パイプラインの作成に失敗しました")
+            }
         };
         updatePipelineForUpdate();
-        // managerForDOMs.set({o: this, i: "updatePipelineCode"}, null, updatePipelineForUpdate);
+        managerForDOMs.set({o: this, i: "updatePipelineCode"}, null, updatePipelineForUpdate);
     }
 
     getSaveData() {

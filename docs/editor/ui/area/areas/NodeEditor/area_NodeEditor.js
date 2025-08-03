@@ -1,25 +1,27 @@
 import { app } from "../../../../app/app.js";
+import { changeParameter } from "../../../../utils/utility.js";
 
 export class Area_NodeEditor {
     constructor(area) {
         this.dom = area.main;
-        this.spaceData = app.appConfig.areasConfig["Timeline"];
-
-        this.camera = [0,0];
-        // this.zoom = [1,1];
-        this.zoom = [5,5];
-
-        this.selectedOnly = false;
-
-        this.spaceData.mode = "select";
-        this.spaceData.mode = "move";
-
-        this.frameBarDrag = false;
+        this.areaConfig = app.appConfig.areasConfig["NodeEditor"];
 
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.hierarchy, "scene": app.scene, "animationPlayer": app.animationPlayer},
+            inputObject: {"areaConifg": this.areaConfig, "h": app.hierarchy, "scene": app.scene, "animationPlayer": app.animationPlayer},
             DOM: [
-                {type: "textarea", source: "scene/objects/particles/0/updatePipelineCode"}
+                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {type: "option", style: "padding: 5px", class: "sharpBoder", name: "情報", children: [
+                        {type: "select", label: "tool", writeObject: (value) => {
+                            console.log("書き換え")
+                            changeParameter(this.areaConfig, "sourceCode", app.scene.objects.getObjectFromID(value));
+                        }, sourceObject: () => {
+                            return app.scene.objects.scripts.map(script => {return {name: script.name, id: script.id}});
+                        }, options: {initValue: ""}},
+                    ]},
+                    {type: "path", sourceObject: "areaConifg/sourceCode", updateEventTarget: {path: "areaConifg/sourceCode"}, children: [
+                        {type: "codeEditor", source: "/"}
+                    ]}
+                ]}
             ],
             utility: {
                 "testTest": {}

@@ -288,7 +288,6 @@ export class Area_Timeline {
 
         resizeObserver.push(this.canvas, () => {
             this.canvasRect = this.canvas.getBoundingClientRect();
-            console.log(this.canvasRect, [this.canvas.offsetWidth,this.canvas.offsetHeight])
             this.canvas.width = this.canvasRect.width * this.pixelDensity;
             this.canvas.height = this.canvasRect.height * this.pixelDensity;
             this.canvasSize = [this.canvas.width,this.canvas.height];

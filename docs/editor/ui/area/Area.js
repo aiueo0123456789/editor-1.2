@@ -1,9 +1,6 @@
 import { app, useClassFromAreaType } from "../../app/app.js";
 import { CreatorForUI } from "../../utils/ui/creatorForUI.js";
-import { SelectTag } from "../../utils/ui/customTags.js";
 import { createIcon, createTag } from "../../utils/ui/util.js";
-import { createArrayFromHashKeys } from "../../utils/utility.js";
-
 // UIのエリア管理
 export class Area {
     constructor(type, /** @type {HTMLElement} */ dom) {
@@ -20,7 +17,7 @@ export class Area {
             app.deleteArea(this);
         })
         createIcon(this.header, "グラフィックメッシュ"); // アイコン
-        this.select = new SelectTag(this.header, createArrayFromHashKeys(useClassFromAreaType), {initValue: type});
+        // this.select = new SelectTag(null, this.header, createArrayFromHashKeys(useClassFromAreaType), {initValue: type});
 
         this.main = document.createElement("div");
         this.main.classList.add("main");
@@ -28,9 +25,9 @@ export class Area {
 
         this.setType(type);
 
-        this.select.input.addEventListener("input", () => {
-            this.setType(this.select.input.value);
-        })
+        // this.select.input.addEventListener("input", () => {
+        //     this.setType(this.select.input.value);
+        // })
 
         this.main.addEventListener("mouseover", () => {
             app.activeArea = this;
@@ -39,7 +36,7 @@ export class Area {
 
     setType(type) {
         this.creatorForUI.remove();
-        this.select.input.value = type; // タイトル
+        // this.select.input.value = type; // タイトル
         this.type = type;
         if (type in useClassFromAreaType) {
             this.uiModel = new useClassFromAreaType[type]["area"](this);

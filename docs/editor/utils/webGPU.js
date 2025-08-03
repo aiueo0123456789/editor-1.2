@@ -588,6 +588,22 @@ class WebGPU {
         });
     }
 
+    // コンピューターパイプラインの作成
+    async createComputePipelineAsync(groupLayouts, c) {
+        if (IsString(c)) {
+            c = this.createShaderModule(c);
+        }
+        return await device.createComputePipelineAsync({
+            layout: device.createPipelineLayout({
+                bindGroupLayouts: groupLayouts,
+            }),
+            compute: {
+                module: c,
+                entryPoint: 'main',
+            },
+        });
+    }
+
     appendDataToStorageBuffer(buffer, data) {
         let newBuffer;
         if (buffer instanceof GPUBuffer) {
