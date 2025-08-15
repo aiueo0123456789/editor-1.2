@@ -1,8 +1,8 @@
-import { app } from "../../../../../app/app.js";
-import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { KeyTranslateCommand } from "../../../../../commands/keyTransform/keyTransform.js";
-import { ModalOperator } from "../../../../../operators/modalOperator.js";
+import { KeyTranslateCommand } from "../../commands/keyTransform/keyTransform.js";
+import { app } from "../../app/app.js";
+import { InputManager } from "../../app/inputManager/inputManager.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class KeyTranslate {
     constructor(/** @type {ModalOperator} */operator) {
@@ -42,6 +42,11 @@ export class KeyTranslate {
         this.command.setCenterPoint(this.center);
     }
 
+    execute() {
+        app.operator.appendCommand(this.command);
+        app.operator.execute();
+    }
+
     mousemove(/** @type {InputManager} */inputManager) {
         this.values[0] += inputManager.movement[0];
         this.values[1] += inputManager.movement[1];
@@ -50,8 +55,6 @@ export class KeyTranslate {
     }
 
     mousedown(/** @type {InputManager} */inputManager) {
-        app.operator.appendCommand(this.command);
-        app.operator.execute();
         return {complete: true};
     }
 }

@@ -1,5 +1,5 @@
 import { app } from "../../app/app.js";
-import { searchAnimation } from "../../utils/objects/util.js";
+import { NameAndTypeAndID, searchAnimation } from "../../utils/objects/util.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
 import { changeParameter } from "../../utils/utility.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
@@ -10,16 +10,16 @@ class Editor {
     }
 }
 
-export class AnimationCollector {
-    constructor(name, id) {
-        this.id = id ? id : createID();
-        this.type = "アニメーションコレクター";
-        this.name = name;
+export class AnimationCollector extends NameAndTypeAndID {
+    constructor(data) {
+        super(data.name, "アニメーションコレクター", data.id);
         this.weight = 0;
         this.containedAnimations = [];
         this.isChange = false;
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
         this.editor = new Editor();
+
+        this.init(data);
     }
 
     // gc対象にしてメモリ解放

@@ -1,5 +1,6 @@
 struct Camera {
     position: vec2<f32>,
+    cvsSize: vec2<f32>,
     zoom: f32,
     padding: f32,
 }
@@ -20,8 +21,7 @@ struct Allocation {
     myType: u32,
 }
 
-@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
-@group(0) @binding(1) var<uniform> camera: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
 @group(1) @binding(2) var<storage, read> relationships: array<u32>;
@@ -37,7 +37,7 @@ struct VertexOutput {
 }
 
 fn worldPosToClipPos(position: vec2<f32>) -> vec4<f32> {
-    return vec4f((position - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+    return vec4f((position - camera.position) * camera.zoom * camera.cvsSize, 0, 1.0);
 }
 
 // バーテックスシェーダー

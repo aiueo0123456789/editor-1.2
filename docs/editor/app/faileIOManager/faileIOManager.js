@@ -1,5 +1,6 @@
 import { Application } from "../app.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
+import { isFunction } from "../../utils/utility.js";
 
 // 入力を受け取って指示を出す
 export class FaileIOManager {
@@ -14,18 +15,25 @@ export class FaileIOManager {
         if (json.ps) { // psフォルダのアップロードの場合
             for (const data of json.data.GraphicMesh) {
                 if (data.texture) {
-                    this.app.hierarchy.addHierarchy("", this.app.scene.objects.createObjectAndSetUp({saveData: data}));
+                    this.app.scene.hierarchy.append(this.app.scene.objects.createObjectAndSetUp({saveData: data}), "");
                 }
             }
         } else {
             console.log(json)
-            for (const objectType of ["bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
+            for (const objectType of ["scripts", "particles", "bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"]) { // rotateModifiersはロードしない
                 for (const data of json.scene[objectType]) {
-                    this.app.scene.objects.createObjectAndSetUp({saveData: data});
+                    this.app.scene.objects.createObjectAndSetUp(data);
+                }
+            }
+            // オブジェクト同士の参照を解決
+            for (const object of this.app.scene.objects.allObject) {
+                if (isFunction(object.resolvePhase)) {
+                    object.resolvePhase();
                 }
             }
             // ヒエラルキーを構築
-            this.app.hierarchy.setHierarchy(json.hierarchy);
+            this.app.scene.hierarchy.set(json.scene.hierarchy);
+            // this.app.scene.hierarchy.set(json.hierarchy);
         }
         managerForDOMs.allUpdate();
         console.log(this.app)

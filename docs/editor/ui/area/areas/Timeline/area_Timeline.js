@@ -5,10 +5,10 @@ import { vec2 } from "../../../../utils/mathVec.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
-import { KeyDelete } from "./tools/KeyDelete.js";
-import { KeyResize } from "./tools/KeyResize.js";
-import { KeyRotate } from "./tools/KeyRotate.js";
-import { KeyTranslate } from "./tools/KeyTranslate.js";
+import { KeyDelete } from "../../../tools/KeyDelete.js";
+import { KeyResize } from "../../../tools/KeyResize.js";
+import { KeyRotate } from "../../../tools/KeyRotate.js";
+import { KeyTranslate } from "../../../tools/KeyTranslate.js";
 
 const targetValueToColor = {
     "x": "rgb(0, 0, 255)",
@@ -173,7 +173,7 @@ export class Area_Timeline {
         this.frameBarDrag = false;
 
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.hierarchy, "scene": app.scene, "animationPlayer": app.animationPlayer},
+            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.scene.hierarchy, "scene": app.scene},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option",style: "height: 25px;", name: "情報", children: [
@@ -189,8 +189,8 @@ export class Area_Timeline {
                                 {type: "button", name: "skip", options: {type: "checkbox", look: "skipMinus"}, submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_start);
                                 }},
-                                {type: "input", name: "isPlaying", withObject: "animationPlayer/isReversePlaying", options: {type: "checkbox", look: "isReversePlaying"}},
-                                {type: "input", name: "isPlaying", withObject: "animationPlayer/isPlaying", options: {type: "checkbox", look: "isPlaying"}},
+                                {type: "input", name: "isPlaying", withObject: "scene/isReversePlaying", options: {type: "checkbox", look: "isReversePlaying"}},
+                                {type: "input", name: "isPlaying", withObject: "scene/isPlaying", options: {type: "checkbox", look: "isPlaying"}},
                                 {type: "button", name: "skip", options: {type: "checkbox", look: "skipPlus"}, submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_end);
                                 }},
@@ -226,7 +226,7 @@ export class Area_Timeline {
                                     activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                                 },
                                 withObject: "/",
-                                loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager/blocks"], "キーフレームブロックマネージャー": ["blocks"], "others": ["animationBlock/list","keyframeBlockManager"]}},
+                                loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager/blocks"], "キーフレームブロックマネージャー": ["blocks"], others: ["animationBlock/list","keyframeBlockManager"]}},
                                 structures: [
                                     {type: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
                                         true: [

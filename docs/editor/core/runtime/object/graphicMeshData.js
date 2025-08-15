@@ -149,10 +149,10 @@ export class GraphicMeshData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {GraphicMesh} */graphicMesh) {
-        if (graphicMesh.parent) {
-            return new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.allocationOffset, GPU.padding]);
-        } else {
+        if (graphicMesh.parent.isRoot || graphicMesh.parent.type == "init") {
             return new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, 0, 0, GPU.padding]);
+        } else {
+            return new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.allocationOffset, GPU.padding]);
         }
     }
 
@@ -168,12 +168,7 @@ export class GraphicMeshData extends RuntimeDataBase {
     setAllocation(/** @type {GraphicMesh} */graphicMesh) {
         for (const object of this.order) {
         }
-        let allocationData;
-        if (graphicMesh.parent) {
-            allocationData = new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.allocationOffset, GPU.padding]);
-        } else {
-            allocationData = new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, 0, 0, GPU.padding]);
-        }
+        let allocationData = this.getAllocationData(graphicMesh);
         GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
     }
 

@@ -75,7 +75,6 @@ class Mesh {
 class Editor extends ObjectEditorBase {
     constructor(graphicMesh) {
         super();
-        this.baseVertices = [];
         this.baseEdges = [];
         this.baseSilhouetteEdges = [];
         this.graphicMesh = graphicMesh;
@@ -86,12 +85,10 @@ class Editor extends ObjectEditorBase {
         this.baseEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
         this.outlineVertices = [];
         this.outlineEdges = [];
-        this.layerParent = "";
 
         this.lastCreateMeshTime = Date.now();
 
         this.updateEdgeGPU = () => {
-            console.log("GPUデータアップデート")
             if (this.baseSilhouetteEdges.length == 0) {
                 this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
             } else {
@@ -291,8 +288,8 @@ class Editor extends ObjectEditorBase {
 
 export class GraphicMesh extends ObjectBase {
     static VERTEX_LEVEL = 1; // 小オブジェクトごとに何個の頂点を持つか
-    constructor(name, id, data) {
-        super(name, "グラフィックメッシュ", id);
+    constructor(data) {
+        super(data.name, "グラフィックメッシュ", data.id);
         this.runtimeData = app.scene.runtimeData.graphicMeshData;
 
         this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
@@ -334,7 +331,8 @@ export class GraphicMesh extends ObjectBase {
         /** @type {Mesh[]} */
         this.allMeshes = [];
 
-        this.parent = "";
+        this.baseEdges = [];
+        this.baseSilhouetteEdges = [];
 
         this.renderingTargetTexture = null;
         this.maskTargetTexture = null;
@@ -404,9 +402,6 @@ export class GraphicMesh extends ObjectBase {
         for (const mesh of data.meshes) {
             new Mesh(this, undefined, mesh.indexs);
         }
-        // app.scene.runtimeData.graphicMeshData.prepare(this);
-        app.scene.runtimeData.append(app.scene.runtimeData.graphicMeshData, this);
-        app.scene.runtimeData.graphicMeshData.updateBaseData(this);
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
             app.scene.runtimeData.graphicMeshData.setAnimationData(this, animationData, index);
@@ -470,7 +465,6 @@ export class GraphicMesh extends ObjectBase {
             name: this.name,
             id: this.id,
             type: this.type,
-            parentID: this.parent.id,
             baseTransformIsLock: this.baseTransformIsLock,
             zIndex: this.zIndex,
             vertices: this.allVertices.map(vertex => vertex.getSaveData()),

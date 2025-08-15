@@ -1,5 +1,6 @@
 struct Camera {
     position: vec2<f32>,
+    cvsSize: vec2<f32>,
     zoom: f32,
     padding: f32,
 }
@@ -22,8 +23,7 @@ struct Particle {
     zIndex: f32,
 }
 
-@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
-@group(0) @binding(1) var<uniform> camera: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> particles: array<Particle>;
 @group(2) @binding(0) var<uniform> objectData: Allocation;
 
@@ -50,12 +50,12 @@ fn vmain(
     var output: VertexOutput;
     let fixIndex = objectData.particleOffset + instanceIndex;
     let particle = particles[fixIndex];
-    output.position = vec4f((particle.position + pointData[localIndex] * particle.scale - camera.position) * camera.zoom * cvsAspect, 1.0 / (particles[fixIndex].zIndex + 1.0), 1.0);
+    output.position = vec4f((particle.position + pointData[localIndex] * particle.scale - camera.position) * camera.zoom * camera.cvsSize, 1.0 / (particles[fixIndex].zIndex + 1.0), 1.0);
     output.uv = pointData[localIndex] + 0.5;
     return output;
 }
 
-@group(0) @binding(2) var mySampler: sampler;
+@group(0) @binding(1) var mySampler: sampler;
 
 struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)

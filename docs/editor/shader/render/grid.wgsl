@@ -1,8 +1,8 @@
-@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
-@group(0) @binding(1) var<uniform> camera: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 
 struct Camera {
     position: vec2<f32>,
+    cvsSize: vec2<f32>,
     zoom: f32,
     padding: f32,
 }
@@ -26,7 +26,7 @@ fn vmain(
     var output: VertexOutput;
     let point = pointData[vertexIndex];
     output.position = vec4<f32>(point.xy, 0.0, 1.0);
-    output.uv = point.xy * (1 / cvsAspect) / camera.zoom + camera.position;
+    output.uv = point.xy * (1 / camera.cvsSize) / camera.zoom + camera.position;
     return output;
 }
 

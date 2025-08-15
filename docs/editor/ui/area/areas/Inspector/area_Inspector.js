@@ -7,7 +7,7 @@ export class Area_Inspector {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
+            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
             DOM: [
                 {type: "section", name: "基本情報", children: [
                     {type: "section", name: "基本情報", options: {min: true}, children: [
@@ -98,7 +98,7 @@ export class Area_Inspector {
     }
 
     update() {
-        for (const object of app.hierarchy.root) {
+        for (const object of app.scene.hierarchy.root) {
             const div = document.createElement("div");
             div.textContent = object.name;
         }

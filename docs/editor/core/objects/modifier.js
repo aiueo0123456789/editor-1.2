@@ -118,7 +118,7 @@ export class Modifier extends ObjectBase {
 
     setChildrenBBox() {
         const childrenBBox = [];
-        for (const child of this.children.objects) {
+        for (const child of this.children) {
             childrenBBox.push(...child.baseBBox);
         }
         console.log(childrenBBox);

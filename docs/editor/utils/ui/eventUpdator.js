@@ -103,6 +103,7 @@ export class DOMsManager {
     set(IDs, DOM, updateFn, others = null) {
         if (!IDs.i) IDs.i = "defo";
         if (!IDs.f) IDs.f = "defo";
+        if (!IDs.g) IDs.g = "defo";
         const object = IDs.o;
         const groupID = IDs.g;
         const ID = IDs.i;
@@ -119,7 +120,7 @@ export class DOMsManager {
             i.set(groupID, []);
         }
         const dataBlock = new DOMsManager_DataBlock(object, groupID, ID, flag, DOM, updateFn, others);
-        const g = i.get(groupID).push(dataBlock);
+        i.get(groupID).push(dataBlock);
         if (!this.flags.has(flag)) {
             this.flags.set(flag, []);
         }

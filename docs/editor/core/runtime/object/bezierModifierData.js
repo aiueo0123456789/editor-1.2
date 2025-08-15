@@ -119,10 +119,10 @@ export class BezierModifierData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {BezierModifier} */bezierModifier) {
-        if (bezierModifier.parent) {
-            return new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, objectToNumber[bezierModifier.parent.type], bezierModifier.parent.runtimeOffsetData.allocationOffset, this.myType]);
-        } else {
+        if (bezierModifier.parent.isRoot || bezierModifier.parent.type == "init") {
             return new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, 0, 0, this.myType]);
+        } else {
+            return new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, objectToNumber[bezierModifier.parent.type], bezierModifier.parent.runtimeOffsetData.allocationOffset, this.myType]);
         }
     }
 
@@ -131,13 +131,7 @@ export class BezierModifierData extends RuntimeDataBase {
     }
 
     updateParent(/** @type {BezierModifier} */bezierModifier) {
-        let allocationData;
-        if (bezierModifier.parent) {
-            allocationData = new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, objectToNumber[bezierModifier.parent.type], bezierModifier.parent.runtimeOffsetData.allocationOffset, this.myType]);
-        } else {
-            allocationData = new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, 0, 0, this.myType]);
-        }
-        console.log(allocationData)
+        let allocationData = this.getAllocationData(bezierModifier);
         GPU.writeBuffer(this.allocations.buffer, allocationData, (bezierModifier.runtimeOffsetData.allocationOffset * 8) * 4);
         GPU.writeBuffer(bezierModifier.objectDataBuffer, allocationData);
     }

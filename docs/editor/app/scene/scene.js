@@ -7,13 +7,12 @@ import { AnimationCollector } from '../../core/objects/animationCollector.js';
 import { arrayToSet, changeParameter, createArrayN, indexOfSplice, isNumber, loadFile, objectInit, arrayToPush, range } from '../../utils/utility.js';
 import { app, Application } from '../app.js';
 import { vec2 } from '../../utils/mathVec.js';
-import { mathMat3x3 } from '../../utils/mathMat.js';
 import { RuntimeDatas } from '../../core/runtime/runtimeDatas.js';
 import { ParameterManager } from '../../core/objects/parameterManager.js';
 import { Particle } from '../../core/objects/particle.js';
 import { Script } from '../../core/objects/script.js';
+import { Camera } from '../../core/objects/camera.js';
 
-const particleUpdatePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_particle.wgsl"));
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
 const animationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_vec2.wgsl"));
@@ -33,6 +32,86 @@ const BBoxResultBuffer = GPU.createStorageBuffer(2 * 4 * 2, undefined, ["f32"]);
 const BBoxCalculateBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["i32"]);
 const BBoxGroup0 = GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw"), [BBoxResultBuffer,BBoxCalculateBuffer]);
 
+const templateParticleUpdateCode = `
+// MIT License. © Stefan Gustavson, Munrocket
+fn permute4(x: vec4f) -> vec4f { return ((x * 34. + 1.) * x) % vec4f(289.); }
+fn fade2(t: vec2f) -> vec2f { return t * t * t * (t * (t * 6. - 15.) + 10.); }
+fn perlinNoise2(P: vec2f) -> f32 {
+    var Pi: vec4f = floor(P.xyxy) + vec4f(0., 0., 1., 1.);
+    let Pf = fract(P.xyxy) - vec4f(0., 0., 1., 1.);
+    Pi = Pi % vec4f(289.); // To avoid truncation effects in permutation
+    let ix = Pi.xzxz;
+    let iy = Pi.yyww;
+    let fx = Pf.xzxz;
+    let fy = Pf.yyww;
+    let i = permute4(permute4(ix) + iy);
+    var gx: vec4f = 2. * fract(i * 0.0243902439) - 1.; // 1/41 = 0.024...
+    let gy = abs(gx) - 0.5;
+    let tx = floor(gx + 0.5);
+    gx = gx - tx;
+    var g00: vec2f = vec2f(gx.x, gy.x);
+    var g10: vec2f = vec2f(gx.y, gy.y);
+    var g01: vec2f = vec2f(gx.z, gy.z);
+    var g11: vec2f = vec2f(gx.w, gy.w);
+    let norm = 1.79284291400159 - 0.85373472095314 *
+        vec4f(dot(g00, g00), dot(g01, g01), dot(g10, g10), dot(g11, g11));
+    g00 = g00 * norm.x;
+    g01 = g01 * norm.y;
+    g10 = g10 * norm.z;
+    g11 = g11 * norm.w;
+    let n00 = dot(g00, vec2f(fx.x, fy.x));
+    let n10 = dot(g10, vec2f(fx.y, fy.y));
+    let n01 = dot(g01, vec2f(fx.z, fy.z));
+    let n11 = dot(g11, vec2f(fx.w, fy.w));
+    let fade_xy = fade2(Pf.xy);
+    let n_x = mix(vec2f(n00, n01), vec2f(n10, n11), vec2f(fade_xy.x));
+    let n_xy = mix(n_x.x, n_x.y, fade_xy.y);
+    return 2.3 * n_xy;
+}
+
+struct Allocation {
+    particleOffset: u32,
+    MAX_PARTICLES: u32,
+    padding0: u32,
+    padding1: u32,
+    padding2: u32,
+    padding3: u32,
+    padding4: u32,
+    padding5: u32,
+}
+
+struct Particle {
+    position: vec2<f32>,
+    scale: vec2<f32>,
+    angle: f32,
+    zIndex: f32,
+}
+
+const delet = 1.0 / 60.0;
+
+@group(0) @binding(0) var<storage, read_write> particles: array<Particle>;
+@group(0) @binding(1) var<storage, read_write> updateDatas: array<Particle>;
+@group(1) @binding(0) var<uniform> allocation: Allocation;
+
+@compute @workgroup_size(8, 8)
+fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+    let instanceIndex = global_id.y;
+    if (allocation.MAX_PARTICLES <= instanceIndex) {
+        return ;
+    }
+
+    let fixVertexIndex = allocation.particleOffset + instanceIndex;
+    var particle = particles[fixVertexIndex];
+    var updateData = updateDatas[fixVertexIndex];
+    // updateData.position += vec2<f32>(0.5,-0.1);
+    updateData.position += vec2<f32>(perlinNoise2(particle.position / 10.0), perlinNoise2(particle.position / 10.0 + 10.0)) * 2.0;
+    particle.position += updateData.position * delet;
+    particle.scale += updateData.scale * delet;
+    particle.angle += updateData.angle * delet;
+    updateDatas[fixVertexIndex] = updateData;
+    particles[fixVertexIndex] = particle;
+}`;
+
 export const objectToNumber = {
     "グラフィックメッシュ": 1,
     "ベジェモディファイア": 2,
@@ -40,8 +119,9 @@ export const objectToNumber = {
 };
 
 class Objects {
-    constructor(/** @type {Application} */ app) {
-        this.app = app;
+    constructor(scene) {
+        this.scene = scene;
+        this.previewCamera = [];
         this.animationCollectors = [];
         this.bezierModifiers = [];
         this.graphicMeshs = [];
@@ -50,6 +130,7 @@ class Objects {
         this.parameterManagers = [];
         this.particles = [];
         this.scripts = [];
+        this.renderingCamera = new Camera();
 
         this.allObject = [];
     }
@@ -68,11 +149,11 @@ class Objects {
         if (objectType == "アニメーションコレクター") {
             return new AnimationCollector("名称未設定");
         } else if (objectType == "グラフィックメッシュ") {
-            return new GraphicMesh("名称未設定", undefined, data);
+            return new GraphicMesh(data);
         } else if (objectType == "ベジェモディファイア") {
-            return new BezierModifier("名称未設定", undefined, data);
+            return new BezierModifier(data);
         } else if (objectType == "アーマチュア") {
-            return new Armature("名称未設定", undefined, data);
+            return new Armature(data);
         } else if (objectType == "パラメーターマネージャー") {
             return new ParameterManager(data);
         } else if (objectType == "パーティクル") {
@@ -82,69 +163,12 @@ class Objects {
         }
     }
 
+    createEmptyObject() {
+        return ;
+    }
+
     createObjectAndSetUp(data) {
-        let object;
-        if (data.saveData) { // セーブデータからオブジェクトを作る
-            data = data.saveData;
-            let objectType = data.type;
-            if (objectType == "グラフィックメッシュ") {
-                object = new GraphicMesh(data.name,data.id, data);
-                this.graphicMeshs.push(object);
-            } else if (objectType == "ベジェモディファイア") {
-                object = new BezierModifier(data.name,data.id, data);
-                this.bezierModifiers.push(object);
-            } else if (objectType == "アーマチュア") {
-                object = new Armature(data.name,data.id,data);
-                this.armatures.push(object);
-            } else if (objectType == "アニメーションコレクター") {
-                object = new AnimationCollector(data.name,data.id);
-                object.init(data);
-                this.animationCollectors.push(object);
-                managerForDOMs.update(this.animationCollectors);
-            } else if (objectType == "パラメーターマネージャー") {
-                object = new ParameterManager(data);
-                this.parameterManagers.push(object);
-            } else if (objectType == "パーティクル") {
-                object = new Particle(data);
-                this.particles.push(object);
-            } else if (objectType == "スクリプト") {
-                object = new Script(data);
-                this.scripts.push(object);
-            } else {
-                console.warn("不明なオブジェクトを追加しようとしました", objectType)
-            }
-        } else { // 空のオブジェクトを作る
-            let objectType = data.type;
-            let dataType = data.dataType;
-            if (objectType == "アニメーションコレクター") {
-                object = new AnimationCollector("名称未設定");
-                this.animationCollectors.push(object);
-                managerForDOMs.update(this.animationCollectors);
-            } else if (objectType == "パラメーターマネージャー") {
-                object = new ParameterManager(data);
-                this.parameterManagers.push(object);
-            } else if (objectType == "パーティクル") {
-                object = new Particle(data);
-                this.particles.push(object);
-            } else if (objectType == "スクリプト") {
-                object = new Script(data);
-                this.scripts.push(object);
-            } else {
-                if (objectType == "グラフィックメッシュ") {
-                    object = new GraphicMesh("名称未設定", undefined, this.app.options.getPrimitiveData("graphicMesh", dataType));
-                    this.graphicMeshs.push(object);
-                    this.isChangeObjectsZindex = true;
-                } else if (objectType == "ベジェモディファイア") {
-                    object = new BezierModifier("名称未設定", undefined, this.app.options.getPrimitiveData("bezierModifier", dataType));
-                    this.bezierModifiers.push(object);
-                } else if (objectType == "アーマチュア") {
-                    object = new Armature("名称未設定", undefined, this.app.options.getPrimitiveData("boneModifer", dataType));
-                    this.armatures.push(object);
-                }
-            }
-        }
-        arrayToPush(this.allObject,object);
-        return object;
+        return this.appendObject(this.createObject(data));
     }
 
     // オブジェクトの所属する配列を返す
@@ -185,16 +209,125 @@ class Objects {
     removeObject(object) {
         indexOfSplice(this.searchArrayFromObject(object), object);
         indexOfSplice(this.allObject, object);
-        this.app.scene.runtimeData.delete(object.runtimeData, object);
+        this.scene.runtimeData.delete(object.runtimeData, object);
     }
 
     appendObject(object) {
         if (object.runtimeData) {
-            this.app.scene.runtimeData.append(object.runtimeData, object);
+            this.scene.runtimeData.append(object.runtimeData, object);
             object.runtimeData.updateBaseData(object);
         }
         arrayToPush(this.searchArrayFromType(object.type), object);
         this.allObject.push(object);
+        return object;
+    }
+}
+
+class Hierarchy {
+    constructor(scene) {
+        this.scene = scene;
+        this.objects = {type: "objects", id: "&objects", isRoot: true, children: []};
+        this.scripts = {type: "scripts", id: "&scripts", isRoot: true, children: []};
+        this.particles = {type: "particles", id: "&particles", isRoot: true, children: []};
+        this.root = [
+            this.objects,
+            this.scripts,
+            this.particles,
+        ];
+    }
+
+    get includeObjects() {
+        const getLoopChildren = (children, result = []) => {
+            for (const child of children) {
+                if (!child.isRoot) {
+                    result.push(child);
+                }
+                if (child.children) { // 子要素がある場合ループする
+                    getLoopChildren(child.children, result);
+                }
+            }
+            return result;
+        }
+        return getLoopChildren(this.root);
+    }
+
+    // 全てのオブジェクトをgc対象にしてメモリ解放
+    destroy() {
+        this.root.length = 0;
+    }
+
+    searchObjectFromID(id) {
+        if (id == "&objects") {
+            return this.objects;
+        } else if (id == "&scripts") {
+            return this.scripts;
+        } else if (id == "&particles") {
+            return this.particles;
+        } else {
+            return this.scene.searchObjectFromID(id);
+        }
+    }
+
+    getSaveData() {
+        const allObject = this.includeObjects;
+        const saveData = [];
+        for (const object of allObject) {
+            if (object.type != "アニメーションコレクター") {
+                // [[親の情報: [name,type], 自分の情報: [name,type]],...]
+                console.log(object)
+                saveData.push([object.parent.id,object.id]);
+            }
+        }
+        return saveData;
+    }
+
+    set(saveData) {
+        for (const [parentID, myID] of saveData) {
+            const parent = this.searchObjectFromID(parentID);
+            const child = this.searchObjectFromID(myID);
+            console.log(child,parent)
+            this.append(child, parent);
+        }
+    }
+
+    updateParent(object) {
+        if (object.type == "グラフィックメッシュ" || object.type == "ベジェモディファイア") {
+            object.runtimeData.updateAllocationData(object);
+        }
+    }
+
+    append(object, parent) { // ヒエラルキーに追加
+        if (parent) {
+            object.parent = parent;
+            parent.children.push(object);
+        } else {
+            this.root[0].children.push(object);
+            object.parent = this.root[0];
+        }
+        this.updateParent(object);
+        managerForDOMs.update(this.root);
+    }
+
+    insert(object, parent) { // ヒエラルキーの並び替え
+        this.remove(object);
+        this.append(object, parent);
+        if (parent) {
+            if (object.autoWeight) {
+                this.scene.app.options.assignWeights(object);
+            }
+        }
+    }
+
+    remove(object) {
+        object.parent.children.splice(object.parent.children.indexOf(object), 1);
+        if (object.children) {
+            // 削除対象の子要素を削除対象の親要素の子要素にする
+            while (object.children.length > 0) {
+                this.addHierarchy(object.parent, object.children.pop());
+            }
+        }
+        this.updateParent(object);
+        managerForDOMs.update(this.root);
     }
 }
 
@@ -202,17 +335,20 @@ class Objects {
 export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
-        this.objects = new Objects(app);
+        this.objects = new Objects(this);
+        this.hierarchy = new Hierarchy(this);
         this.objects.createObjectAndSetUp({type: "パラメーターマネージャー"});
 
         this.renderingOrder = [];
 
-        // フレーム範囲
+        // フレーム
+        this.isPlaying = false;
+        this.isReversePlaying = false;
+        this.frame_speed = 1.0;
         this.frame_start = 0;
-        this.frame_end = 30;
-
-        // 現在のフレーム
+        this.frame_end = 10;
         this.frame_current = 0;
+        this.beforeFrame = this.frame_current;
 
         // 背景
         this.world = new World(app);
@@ -253,28 +389,29 @@ export class Scene {
 
     init() {
         this.objects.appendObject(this.objects.createObject({
-            type: "パーティクル",
-            name: "パーティクルテスト",
-            spawnData: {
-                position: {min: [0,-1000],max: [0,0]},
-                zIndex: {min: 1, max: 10},
-                scale: {min: 5,max: 20},
-                angle: {min: 0,max: 3},
-                velocity: {min: [100,-80],max: [200,-50]},
-                zIndexVelocity: 0,
-                scaleVelocity: [0,0],
-                angleVelocity: {min: 0,max: 1},
-                maxLifeTime: 1000,
-            },
-            spawnNum: 1,
-            duration: 100,
-            startDelay: 10
-        }));
-        this.objects.appendObject(this.objects.createObject({
             type: "スクリプト",
             name: "スクリプトテスト",
-            text: "abcdefg"
+            id: "templateParticleUpdateCode",
+            text: templateParticleUpdateCode
         }));
+        // this.objects.appendObject(this.objects.createObject({
+        //     type: "パーティクル",
+        //     name: "パーティクルテスト",
+        //     spawnData: {
+        //         position: {min: [0,-1000],max: [0,0]},
+        //         zIndex: {min: 1, max: 10},
+        //         scale: {min: 5,max: 20},
+        //         angle: {min: 0,max: 3},
+        //         velocity: {min: [100,-80],max: [200,-50]},
+        //         zIndexVelocity: 0,
+        //         scaleVelocity: [0,0],
+        //         angleVelocity: {min: 0,max: 1},
+        //         maxLifeTime: 1000,
+        //     },
+        //     spawnNum: 1,
+        //     duration: 100,
+        //     startDelay: 10
+        // }));
     }
 
     // 選択している頂点のBBoxを取得
@@ -366,6 +503,26 @@ export class Scene {
         return result;
     }
 
+    frameUpdate(dt) {
+        if (this.isPlaying) {
+            this.frame_current += dt * this.frame_speed;
+            managerForDOMs.update("タイムライン-canvas");
+        } else if (this.isReversePlaying) {
+            this.frame_current -= dt * this.frame_speed;
+            managerForDOMs.update("タイムライン-canvas");
+        }
+        if (this.beforeFrame != this.frame_current) {
+            if (this.frame_end < this.frame_current) {
+                this.frame_current = this.frame_start;
+            }
+            if (this.frame_current < this.frame_start) {
+                this.frame_current = this.frame_end;
+            }
+            this.beforeFrame = this.frame_current;
+            managerForDOMs.update(this, "frame_current");
+        }
+    }
+
     update() {
         for (const particle of this.objects.particles) {
             particle.update();
@@ -393,7 +550,7 @@ export class Scene {
         computePassEncoder.setBindGroup(0, this.runtimeData.particle.updateGroup); // 全てのグラフィックスメッシュのデータをバインド
         for (const particle of this.objects.particles) {
             computePassEncoder.setBindGroup(1, particle.C_objectDataGroup); // 全てのグラフィックスメッシュのデータをバインド
-            computePassEncoder.setPipeline(particle.updatePipeline);
+            computePassEncoder.setPipeline(particle.updatePipeline.pipeline);
             computePassEncoder.dispatchWorkgroups(Math.ceil(particle.particlesNum / 64), 1, 1); // ワークグループ数をディスパッチ
         }
 
@@ -428,7 +585,7 @@ export class Scene {
 
         const childrenRoop = (children) => {
             for (const child of children) {
-                if (child.parent) {
+                if (!child.parent.root) {
                     if (child.type == "ベジェモディファイア") {
                         // ベジェモディファイア親の変形を適応
                         computePassEncoder.setBindGroup(0, child.individualGroup);
@@ -436,14 +593,14 @@ export class Scene {
                     }
                 }
                 if (child.children) { // 子要素がある場合ループする
-                    childrenRoop(child.children.objects);
+                    childrenRoop(child.children);
                 }
             }
         }
         computePassEncoder.setBindGroup(1, this.runtimeData.bezierModifierData.parentApplyGroup);
         computePassEncoder.setBindGroup(2, this.runtimeData.armatureData.applyParentGroup);
         computePassEncoder.setPipeline(treeAnimationApplyPipeline);
-        childrenRoop(this.app.hierarchy.root);
+        childrenRoop(this.hierarchy.root[0].children);
 
         // グラフィックメッシュ親の変形を適応
         if (this.objects.graphicMeshs.length) {
@@ -469,8 +626,8 @@ export class Scene {
     }
 
     async getSaveData() {
-        const conversion = {"グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "パラメーターマネージャー": "parameterManagers"};
-        const result = {graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
+        const conversion = {"スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "パラメーターマネージャー": "parameterManagers"};
+        const result = {scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
         // 各オブジェクトの保存処理を並列化
         const promises = this.objects.allObject.map(async (object) => {
             return { type: object.type, data: await object.getSaveData() };
@@ -480,6 +637,7 @@ export class Scene {
         for (const { type, data } of resolved) {
             result[conversion[type]].push(data);
         }
+        result.hierarchy = this.hierarchy.getSaveData();
         return result;
     }
 
@@ -499,7 +657,7 @@ export class Scene {
 
     destroy() {
         this.maskTextures.length = 0;
-        this.app.hierarchy.destroy();
+        this.hierarchy.destroy();
         this.objects.destroy();
     }
 
@@ -525,6 +683,7 @@ export class Scene {
     }
 
     searchObjectFromID(id) {
+        if (!id) return null;
         for (const object of this.objects.allObject) {
             if (object.id == id) {
                 return object;

@@ -277,7 +277,7 @@ input[type="radio"]:checked + .radioElement { /* チェックを表示 */
 }
 
 button {
-    height: 25px;
+    height: 20px;
     border-radius: 4px;
     padding: 2px;
     border: solid 1px rgb(77, 77, 77);

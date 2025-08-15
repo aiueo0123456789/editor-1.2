@@ -6,7 +6,7 @@ export class SelectTag {
         this.customTag = true;
         this.element = createTag(t, "div");
         this.input = createTag(this.element, "input", {style: "display: none;"});
-        if (!isFunction(child.options.writeObject)) {
+        if (!isFunction(child.writeObject)) {
             this_.setWith(this.input, child.writeObject, searchTarget, flag);
         }
         this.element.classList.add("custom-select");
@@ -38,8 +38,8 @@ export class SelectTag {
                 document.removeEventListener("click", removeFn); // ドキュメントからイベントリスナーを削除
             }
             function submit(value) {
-                if (isFunction(child.options.writeObject)) {
-                    child.options.writeObject(value);
+                if (isFunction(child.writeObject)) {
+                    child.writeObject(value);
                 }
                 removeFn();
             }

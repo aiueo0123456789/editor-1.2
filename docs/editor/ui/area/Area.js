@@ -1,6 +1,7 @@
 import { app, useClassFromAreaType } from "../../app/app.js";
 import { CreatorForUI } from "../../utils/ui/creatorForUI.js";
 import { createIcon, createTag } from "../../utils/ui/util.js";
+import { isFunction } from "../../utils/utility.js";
 // UIのエリア管理
 export class Area {
     constructor(type, /** @type {HTMLElement} */ dom) {
@@ -47,7 +48,7 @@ export class Area {
     }
 
     update() {
-        if (this.type == "Viewer" || this.type == "Preview") {
+        if (isFunction(this.uiModel.update)) {
             this.uiModel.update();
         }
     }

@@ -1,29 +1,29 @@
 import { vec2 } from "../mathVec.js";
 import { createID, managerForDOMs } from "../ui/util.js";
 
-export class ObjectBase {
-    constructor(name,type,id = createID()) {
+export class NameAndTypeAndID {
+    constructor(name, type, id) {
+        this.type = type;
+        this.name = name ? name : "名称未設定";
+        this.id = id ? id : createID();
+    }
+}
+
+export class ObjectBase extends NameAndTypeAndID{
+    constructor(name,type,id) {
+        super(name, type, id);
         this.isChange = true;
         this.isInit = false;
-        this.type = type;
-        this.name = name;
-        this.id = id;
 
         this.selected = false;
 
         this.mode = "オブジェクト";
 
         this.runtimeOffsetData = {};
-    }
-}
 
-export class VerticesObjectBase {
-    constructor() {
-        this.B_Vert_co = null; // baseVerticesCoordinate
-        this.R_Vert_co = null; // renderingVerticesCoordinate
-        this.parent = ""; // 親要素
+        this.parent = {type: "init", id: "init"};
 
-        this.vertNum = 0; // 頂点数
+        this.children = [];
     }
 }
 

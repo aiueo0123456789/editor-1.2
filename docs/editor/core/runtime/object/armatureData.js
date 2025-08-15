@@ -243,7 +243,6 @@ export class ArmatureData extends RuntimeDataBase {
 
     // ベースデータの更新
     updateBaseData(/** @type {Armature} */armature) {
-        console.log("|---ボーンベース---|", armature);
         armature.boneNum = armature.allBone.length;
         armature.verticesNum = armature.boneNum * 2;
         const boneVerticesData = Array(armature.boneNum * this.vertexBlockByteLength / 4).fill(0);

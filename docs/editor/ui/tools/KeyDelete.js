@@ -1,5 +1,5 @@
-import { app } from "../../../../../app/app.js";
-import { ModalOperator } from "../../../../../operators/modalOperator.js";
+import { app } from "../../app/app.js";
+import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class KeyDelete {
     constructor(/** @type {ModalOperator} */operator) {
@@ -9,9 +9,12 @@ export class KeyDelete {
     }
 
     init() {
+        return {complete: true};
+    }
+
+    execute() {
         this.selectKeys.forEach((key) => {
             key.keyframeBlock.deleteKeyframe(key);
         })
-        return {complete: true};
     }
 }

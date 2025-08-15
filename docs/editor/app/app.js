@@ -2,7 +2,6 @@ import { FaileIOManager } from "./faileIOManager/faileIOManager.js";
 import { Scene } from "./scene/scene.js";
 import { AutoGrid } from "../utils/ui/grid.js";
 import { createID, managerForDOMs } from "../utils/ui/util.js";
-import { Hierarchy } from "./hierarchy/hierarchy.js";
 import { Operator } from "../operators/commandOperator.js";
 import { Area_Viewer } from "../ui/area/areas/Viewer/area_Viewer.js";
 import { Area_Hierarchy } from "../ui/area/areas/Hierarchy/area_Hierarchy.js";
@@ -21,6 +20,8 @@ import { Area } from "../ui/area/Area.js";
 import { CreateEdgeTool } from "../ui/tools/CreateEdge.js";
 import { NodeEditorSpaceData } from "../ui/area/areas/NodeEditor/area_NodeEditorSpaceData.js";
 import { Area_NodeEditor } from "../ui/area/areas/nodeEditor/area_NodeEditor.js";
+import { Area_Previewer } from "../ui/area/areas/Previewer/area_Previewer.js";
+import { PreviewerSpaceData } from "../ui/area/areas/Previewer/area_PreviewerSpaceData.js";
 
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
 const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bezier.wgsl"));
@@ -32,6 +33,7 @@ export const useClassFromAreaType = {
     "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
     "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
     "NodeEditor": {area: Area_NodeEditor, areaConfig: NodeEditorSpaceData},
+    "Previewer": {area: Area_Previewer, areaConfig: PreviewerSpaceData},
 };
 
 class AppOptions {
@@ -212,7 +214,7 @@ class AppOptions {
 
     // 自動ウェイトペイント
     async assignWeights(object) {
-        if (!object.parent) return ;
+        if (object.parent.isRoot) return ;
         let parentVerticesBuffer;
         let parentAllocationBuffer;
         if (object.parent.type == "アーマチュア") {
@@ -363,27 +365,14 @@ class AppConfig {
     }
 }
 
-class AreaOperator {
-    constructor(app) {
-        this.app = app;
-        this.areaMap = new Map();
-    }
-
-    setArea() {
-
-    }
-}
-
 export class Application { // 全てをまとめる
     constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
         this.appConfig = new AppConfig(this);
         this.options = new AppOptions(this);
 
-        this.hierarchy = new Hierarchy(this);
         this.scene = new Scene(this);
         this.appConfig.stContextmenuItems();
-        this.animationPlayer = new AnimationPlayer(this);
 
         this.areas = [];
         this.areaMap = new Map();
@@ -401,7 +390,7 @@ export class Application { // 全てをまとめる
 
     async getSaveData() {
         const result = {};
-        result.hierarchy = this.hierarchy.getSaveData();
+        // result.hierarchy = this.hierarchy.getSaveData();
         result.scene = await this.scene.getSaveData();
         return result;
     }
@@ -444,45 +433,13 @@ export class Application { // 全てをまとめる
         // 表示順番の再計算
         this.scene.updateRenderingOrder();
         this.scene.updateAnimationCollectors();
-        this.scene.update();
         // 単位: 秒
-        this.animationPlayer.update(1 / 60);
-        // this.animationPlayer.update(0.2);
+        this.scene.frameUpdate(1 / 60);
+        this.scene.update();
         // ビューの更新
         this.areas.forEach((area) => {
             area.update();
         });
-    }
-}
-
-// アニメーションのコントローラー
-class AnimationPlayer {
-    constructor(/** @type {Application} */app) {
-        this.app = app;
-        this.isPlaying = false;
-        this.isReversePlaying = false;
-        this.speed = 1.0;
-        this.beforeFrame = app.scene.frame_current;
-    }
-
-    update(dt) {
-        if (this.isPlaying) {
-            this.app.scene.frame_current += dt * this.speed;
-            managerForDOMs.update("タイムライン-canvas");
-        } else if (this.isReversePlaying) {
-            this.app.scene.frame_current -= dt * this.speed;
-            managerForDOMs.update("タイムライン-canvas");
-        }
-        if (this.beforeFrame != this.app.scene.frame_current) {
-            if (this.app.scene.frame_end < this.app.scene.frame_current) {
-                this.app.scene.frame_current = this.app.scene.frame_start;
-            }
-            if (this.app.scene.frame_current < this.app.scene.frame_start) {
-                this.app.scene.frame_current = this.app.scene.frame_end;
-            }
-            this.beforeFrame = this.app.scene.frame_current;
-            managerForDOMs.update(this.app.scene, "frame_current");
-        }
     }
 }
 
@@ -496,6 +453,8 @@ const area4 = app.createArea("h", area2.child1);
 app.setAreaType(area1_h,0,"Viewer");
 app.setAreaType(area1_h,1,"Timeline");
 app.setAreaType(area4,0,"Hierarchy");
+// app.setAreaType(area4,0,"Previewer");
+// app.setAreaType(area4,1,"Previewer");
 app.setAreaType(area4,1,"NodeEditor");
 // app.setAreaType(area4,1,"Property");
 app.setAreaType(area3,0,"Property");

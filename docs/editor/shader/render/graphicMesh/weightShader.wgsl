@@ -1,5 +1,6 @@
 struct Camera {
     position: vec2<f32>,
+    cvsSize: vec2<f32>,
     zoom: f32,
     padding: f32,
 }
@@ -25,8 +26,7 @@ struct WeightBlock {
     weights: vec4<f32>,
 }
 
-@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
-@group(0) @binding(1) var<uniform> camera: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
 @group(1) @binding(1) var<storage, read> meshLoops: array<MeshLoop>;
 @group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
@@ -60,7 +60,7 @@ fn vmain(
     let point = pointData[vertexIndex % 4u];
 
     var output: VertexOutput;
-    output.position = vec4f((verticesPosition[fixIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+    output.position = vec4f((verticesPosition[fixIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * camera.cvsSize, 0, 1.0);
     output.uv = point.zw;
     // 表示ターゲットのindexを検索する
     let data = weightBlocks[fixIndex];

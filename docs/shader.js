@@ -605,7 +605,7 @@ fn main(
     return output;
 }`)
 // f_テクスチャ表示.wgsl
-shaders.set('./script/wgsl/レンダー/f_テクスチャ表示.wgsl',`@group(0) @binding(2) var mySampler: sampler;
+shaders.set('./script/wgsl/レンダー/f_テクスチャ表示.wgsl',`@group(0) @binding(1) var mySampler: sampler;
 @group(2) @binding(1) var myTexture: texture_2d<f32>;
 @group(3) @binding(0) var<uniform> color: vec4<f32>;
 
@@ -700,7 +700,7 @@ fn main(
     return output;
 }`)
 // f_render.wgsl
-shaders.set('./script/wgsl/レンダー/f_render.wgsl',`@group(0) @binding(2) var mySampler: sampler;
+shaders.set('./script/wgsl/レンダー/f_render.wgsl',`@group(0) @binding(1) var mySampler: sampler;
 @group(1) @binding(2) var myTexture: texture_2d<f32>;
 @group(1) @binding(3) var maskTexture: texture_2d<f32>;
 @group(1) @binding(4) var<uniform> maskType: f32;
@@ -1723,7 +1723,7 @@ fn main(
     return output;
 }`)
 // f.wgsl
-shaders.set('./script/wgsl/レンダー/マスク/f.wgsl',`@group(0) @binding(2) var mySampler: sampler;
+shaders.set('./script/wgsl/レンダー/マスク/f.wgsl',`@group(0) @binding(1) var mySampler: sampler;
 @group(1) @binding(2) var myTexture: texture_2d<f32>;
 
 struct FragmentOutput {

@@ -73,6 +73,7 @@ export class Bone {
         this.matrix = new Float32Array(4 * 3);
 
         managerForDOMs.set({o: this, i: "color"}, null, () => {
+            console.log(this.color);
             app.scene.runtimeData.armatureData.updateBaseData(this.armature);
         });
     }
@@ -128,8 +129,8 @@ export class Bone {
 
 export class Armature extends ObjectBase {
     static VERTEX_LEVEL = 2; // 小オブジェクトごとに何個の頂点を持つか
-    constructor(name, id, data) {
-        super(name, "アーマチュア", id);
+    constructor(data) {
+        super(data.name, "アーマチュア", data.id);
         this.runtimeData = app.scene.runtimeData.armatureData;
 
         this.MAX_BONES = app.appConfig.MAX_BONES_PER_ARMATURE;
@@ -149,12 +150,11 @@ export class Armature extends ObjectBase {
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
-        this.children = new Children();
+        // this.children = new Children();
         /** @type {Bone[]} */
         this.root = [];
         /** @type {Bone[]} */
         this.allBone = [];
-        this.parent = "";
 
         this.mode = "オブジェクト";
 
@@ -231,9 +231,6 @@ export class Armature extends ObjectBase {
         this.boneNum = data.boneNum;
         this.propagateBuffers = [];
 
-        // app.scene.runtimeData.armatureData.prepare(this);
-        app.scene.runtimeData.append(app.scene.runtimeData.armatureData, this);
-
         const roopChildren = (children, parent = null, depth = 0) => {
             for (const child of children) {
                 const childBone = new Bone(this, Object.assign(child, {parent: parent}));
@@ -241,8 +238,6 @@ export class Armature extends ObjectBase {
             }
         }
         roopChildren(data.bones);
-
-        app.scene.runtimeData.armatureData.updateBaseData(this);
 
         this.isInit = true;
         this.isChange = true;

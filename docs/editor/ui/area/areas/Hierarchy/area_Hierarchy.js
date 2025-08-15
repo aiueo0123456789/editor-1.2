@@ -5,20 +5,17 @@ export class Area_Hierarchy {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
+            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
             DOM: [
                 {type: "option", name: "情報", children: [
                     {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
                         {type: "padding", size: "10px"},
-
                         {type: "flexBox", interval: "5px", name: "", children: [
                             {type: "button", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
                             {type: "button", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
                             {type: "button", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
                         ]},
-
                         {type: "separator", size: "10px"},
-
                         {type: "flexBox", interval: "5px", name: "", children: [
                             {type: "buttons", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
                         ]},
@@ -48,14 +45,39 @@ export class Area_Hierarchy {
                             app.scene.state.setActiveObject(array[endIndex]);
                         }
                     },
-                    activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "h/root", loopTarget: "children/objects", structures: [
-                    {type: "gridBox", axis: "c", allocation: "auto auto 50% 1fr 20%", children: [
-                        {type: "input", name: "visibleCheck", withObject: "/visible", options: {type: "checkbox", look: "eye-icon"}},
-                        {type: "icon-img", name: "icon", withObject: "/type"},
-                        {type: "dbInput", withObject: "/name", options: {type: "text"}},
-                        {type: "padding", size: "10px"},
-                        {type: "input", withObject: "/zIndex", options: {type: "number", min: 0, max: 100, step: 1}, custom: {visual: "1"}},
-                    ]},
+                    activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "h/root", loopTarget: "children", structures: [
+                        {
+                            type: "if",
+                            formula: {source: "/", conditions: "in", value: "name"},
+                            true: [
+                                {
+                                    type: "if",
+                                    formula: {source: "/", conditions: "in", value: "zIndex"},
+                                    true: [
+                                        {type: "gridBox", axis: "c", allocation: "auto 50% 1fr auto 20%", children: [
+                                            {type: "icon-img", name: "icon", withObject: "/type"},
+                                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                            {type: "padding", size: "10px"},
+                                            {type: "input", name: "visibleCheck", withObject: "/visible", options: {type: "checkbox", look: "eye-icon"}},
+                                            {type: "input", withObject: "/zIndex", options: {type: "number", min: 0, max: 100, step: 1}, custom: {visual: "1"}},
+                                        ]},
+                                    ],
+                                    false: [
+                                        {type: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
+                                            {type: "icon-img", name: "icon", withObject: "/type"},
+                                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                            {type: "padding", size: "10px"},
+                                        ]},
+                                    ]
+                                }
+                            ],
+                            false: [
+                                {type: "gridBox", axis: "c", allocation: "50% 1fr", children: [
+                                    {type: "dbInput", withObject: "/type", options: {type: "text"}},
+                                    {type: "padding", size: "10px"},
+                                ]},
+                            ]
+                        }
                 ]},
             ],
             utility: {
@@ -70,7 +92,7 @@ export class Area_Hierarchy {
     }
 
     update() {
-        for (const object of app.hierarchy.root) {
+        for (const object of app.scene.hierarchy.root) {
             const div = document.createElement("div");
             div.textContent = object.name;
         }

@@ -1,5 +1,6 @@
 struct Camera {
     position: vec2<f32>,
+    cvsSize: vec2<f32>,
     zoom: f32,
     padding: f32,
 }
@@ -26,8 +27,7 @@ struct WeightBlock {
     weights: vec4<f32>,
 }
 
-@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
-@group(0) @binding(1) var<uniform> camera: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<Bezier>;
 @group(1) @binding(1) var<storage, read> verticesSelected: array<u32>;
 @group(1) @binding(2) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
@@ -51,7 +51,7 @@ fn getBoolFromIndex(index: u32) -> bool {
 }
 
 fn worldPosToClipPos(position: vec2<f32>) -> vec4<f32> {
-    return vec4f((position - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+    return vec4f((position - camera.position) * camera.zoom * camera.cvsSize, 0, 1.0);
 }
 
 const pointData = array<vec2<f32>, 6>(

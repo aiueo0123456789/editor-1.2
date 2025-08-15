@@ -1,5 +1,6 @@
 struct Camera {
     position: vec2<f32>,
+    cvsSize: vec2<f32>,
     zoom: f32,
     padding: f32,
 }
@@ -24,8 +25,7 @@ struct WeightBlock {
     weights: vec4<f32>,
 }
 
-@group(0) @binding(0) var<uniform> cvsAspect: vec2<f32>;
-@group(0) @binding(1) var<uniform> camera: Camera;
+@group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
 @group(1) @binding(1) var<storage, read> meshLoops: array<MeshLoop>;
 @group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
@@ -62,12 +62,12 @@ fn vmain(
     let flagBitIndex = fixIndex % 32u;
 
     let point = pointData[vertexIndex % 4u];
-    output.position = vec4f((verticesPosition[fixIndex] + point.xy * size / camera.zoom - camera.position) * camera.zoom * cvsAspect, 0, 1.0);
+    output.position = vec4f(((verticesPosition[fixIndex] - camera.position) * camera.zoom + point.xy * size) * camera.cvsSize, 0, 1.0);
     output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), getBoolFromBit(verticesSelectedArrayIndex, flagBitIndex));
     return output;
 }
 
-@group(0) @binding(2) var mySampler: sampler;
+@group(0) @binding(1) var mySampler: sampler;
 
 struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)

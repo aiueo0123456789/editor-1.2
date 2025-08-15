@@ -1,7 +1,8 @@
 import { app } from "../../../app/app.js";
 import { TextEditor_textSplice } from "../../../commands/textEditor/textEditorCommand.js";
 import { isNumber } from "../../utility.js";
-import { createTag, managerForDOMs, setClass, setStyle } from "../util.js";
+import { AutoGrid } from "../grid.js";
+import { createIcon, createTag, managerForDOMs, setClass, setStyle } from "../util.js";
 
 export class CodeEditorTag {
     constructor (this_,t,searchTarget,child,flag) {
@@ -11,47 +12,54 @@ export class CodeEditorTag {
         this.container = createTag(t, "div");
         setStyle(this.container, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; overflow: hidden; backgroundColor: rgb(52, 52, 52); fontSize: 100%;");
         /** @type {HTMLElement} */
-        const utilBar = createTag(this.container, "div");
-        setStyle(utilBar, "width: 100px; height: 100%; backgroundColor: rgb(34, 34, 34); overflowX: hidden; overflowY: auto;");
+        this.utilBar = createTag(this.container, "div");
+        setStyle(this.utilBar, "width: 100px; height: 100%; backgroundColor: rgb(34, 34, 34); overflowX: hidden; overflowY: auto;");
         /** @type {HTMLElement} */
-        const functionsGroupContainer = createTag(utilBar, "div");
-        const functionsGroupTitle = createTag(functionsGroupContainer, "div", {textContent: "functions"});
-        const functionsGroup = createTag(functionsGroupContainer, "div");
-        setStyle(functionsGroup, "width: 100px; height: fit-content; padding-left: 10px;");
+        this.functionsGroupContainer = createTag(this.utilBar, "div");
+        this.functionsGroupTitle = createTag(this.functionsGroupContainer, "div", {textContent: "functions"});
+        setStyle(this.functionsGroupTitle, "color: rgb(242, 251, 0);");
+        this.functionsGroup = createTag(this.functionsGroupContainer, "div");
+        setStyle(this.functionsGroup, "width: 100px; height: fit-content; padding-left: 10px;");
         /** @type {HTMLElement} */
-        const valuesGroupContainer = createTag(utilBar, "div");
-        const valuesGroupTitle = createTag(valuesGroupContainer, "div", {textContent: "values"});
-        const valuesGroup = createTag(valuesGroupContainer, "div");
-        setStyle(valuesGroup, "width: 100px; height: fit-content; padding-left: 10px;");
+        this.valuesGroupContainer = createTag(this.utilBar, "div");
+        this.valuesGroupTitle = createTag(this.valuesGroupContainer, "div", {textContent: "values"});
+        this.valuesGroup = createTag(this.valuesGroupContainer, "div");
+        setStyle(this.valuesGroup, "width: 100px; height: fit-content; padding-left: 10px;");
         /** @type {HTMLElement} */
-        const rightContainer = createTag(this.container, "div");
-        setStyle(rightContainer, "width: 100%; height: 100%; display: grid; gridTemplateRows: 1fr 20%; overflow: hidden;");
-        const mainContainer = createTag(rightContainer, "div");
-        setStyle(mainContainer, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; fontFamily: monospace; overflowX: hidden; overflowY: auto;");
+        this.rightContainer = createTag(this.container, "div");
+        const rightContainerGrid = new AutoGrid("codeTagRightContainer" + this_.groupID, this.rightContainer, "r", "1fr");
+        setStyle(this.rightContainer, "width: 100%; height: 100%; overflow: hidden;");
         /** @type {HTMLElement} */
-        const lineNumbers = createTag(mainContainer, "div");
-        setStyle(lineNumbers, "width: fit-content; height: 100%; textAlign: right; padding: 0px 2px; userSelect: none; color: gray; border: solid rgba(0, 0, 0, 0) 1px;");
+        this.mainContainer = createTag(rightContainerGrid.child1, "div");
+        setStyle(this.mainContainer, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; fontFamily: monospace; overflowX: hidden; overflowY: auto;");
         /** @type {HTMLElement} */
-        const codeAreaContainer = createTag(mainContainer, "div");
-        setClass(codeAreaContainer, "codeAreaContainer")
-        const input = createTag(codeAreaContainer, "div");
+        this.lineNumbers = createTag(this.mainContainer, "div");
+        setStyle(this.lineNumbers, "width: fit-content; height: 100%; textAlign: right; padding: 0px 2px; userSelect: none; color: gray; border: solid rgba(0, 0, 0, 0) 1px;");
+        /** @type {HTMLElement} */
+        this.codeAreaContainer = createTag(this.mainContainer, "div");
+        setClass(this.codeAreaContainer, "codeAreaContainer")
+        const input = createTag(this.codeAreaContainer, "div");
         input.append(document.createTextNode(""));
         input.setAttribute("contenteditable", "true");
         // setStyle(input, "display: none;");
         setStyle(input, "width: 100px; height: 20px; position: absolute;");
-        const autocompleteArea = createTag(codeAreaContainer, "div");
-        setStyle(autocompleteArea, "width: 400px; height: fit-content; maxHeight: 200px; position: absolute; display: none; backgroundColor: rgb(41, 41, 41); border: solid rgb(90, 90, 90) 1px; overflowY: auto;");
-        const selectionArea = createTag(codeAreaContainer, "div");
-        setStyle(selectionArea, "width: 0px; height: 0px; position: absolute;");
-        const caret = createTag(codeAreaContainer, "div");
-        setClass(caret, "caret");
-        const textViewArea = createTag(codeAreaContainer, "div");
-        setStyle(textViewArea, "width: fit-content; height: 100%;");
-        textViewArea.setAttribute("contenteditable", "true");
-        textViewArea.setAttribute("spellcheck", "false");
+        this.autocompleteArea = createTag(this.codeAreaContainer, "div");
+        setStyle(this.autocompleteArea, "width: 400px; height: fit-content; maxHeight: 200px; position: absolute; display: none; backgroundColor: rgb(41, 41, 41); border: solid rgb(90, 90, 90) 1px; overflowY: auto;");
+        this.selectionArea = createTag(this.codeAreaContainer, "div");
+        setStyle(this.selectionArea, "width: 0px; height: 0px; position: absolute;");
+        this.caret = createTag(this.codeAreaContainer, "div");
+        setClass(this.caret, "caret");
+        this.textViewArea = createTag(this.codeAreaContainer, "div");
+        setStyle(this.textViewArea, "width: fit-content; height: 100%; backgroundColor: rgb(41, 41, 41);");
+        this.textViewArea.setAttribute("contenteditable", "true");
+        this.textViewArea.setAttribute("spellcheck", "false");
 
-        const debuglogAreaContainer = createTag(rightContainer, "div");
-        setStyle(debuglogAreaContainer, "width: 100%; height: 100%; backgroundColor: rgb(124, 124, 124); borderRadius: 0px;");
+        this.debuglogAreaContainer = createTag(rightContainerGrid.child2, "div");
+        setStyle(this.debuglogAreaContainer, "width: 100%; height: 100%; backgroundColor: rgb(41, 41, 41); borderRadius: 0px; userSelect: text; overflow: auto; whiteSpace: pre;");
+
+        let lastScrollX = 0;
+        let lastScrollY = 0;
+        let isRestoringScroll = false;
 
         const getStringsOffsetFromLineOffset = (lineNumber) => {
             let sum = 0;
@@ -66,7 +74,7 @@ export class CodeEditorTag {
             const parentElem = textNode.parentElement;
             for (const span of parentElem.parentElement.children) {
                 if (span == parentElem) {
-                    return [[...textViewArea.children].indexOf(parentElem.parentElement),sumStringsCount + offset];
+                    return [[...this.textViewArea.children].indexOf(parentElem.parentElement),sumStringsCount + offset];
                 }
                 sumStringsCount += span.textContent.length;
             }
@@ -122,15 +130,20 @@ export class CodeEditorTag {
         }
         const getPositionFromOffsets = (lineOffset, offsetInLine) => {
             const range = document.createRange();
-            const result = getOffsetInLineTextAndOffset(textViewArea.children[lineOffset], offsetInLine);
+            const result = getOffsetInLineTextAndOffset(this.textViewArea.children[lineOffset], offsetInLine);
             range.setStart(...result);   // 5文字目の直後
             range.setEnd(...result);
-            const rect = range.getBoundingClientRect(); // その位置の矩形
-            const editorRect = textViewArea.getBoundingClientRect();
-            return [rect.left - editorRect.left, rect.top - editorRect.top];
+            const editorRect = this.textViewArea.getBoundingClientRect();
+            if (result[0].wholeText == "\n") {
+                const rect = result[0].parentElement.parentElement.getBoundingClientRect(); // その位置の矩形
+                return [rect.left - editorRect.left, rect.top - editorRect.top];
+            } else {
+                const rect = range.getBoundingClientRect(); // その位置の矩形
+                return [rect.left - editorRect.left, rect.top - editorRect.top];
+            }
         }
         const selectionViewUpdate = () => {
-            selectionArea.replaceChildren();
+            this.selectionArea.replaceChildren();
             if (anchorLineOffset == focusLineOffset && anchorOffsetInLine == focusOffsetInLine) {
                 return ;
             }
@@ -148,7 +161,7 @@ export class CodeEditorTag {
                     max[1] = min[1];
                     min[1] = keep;
                 }
-                const div = createTag(selectionArea, "div", {class: "selection"});
+                const div = createTag(this.selectionArea, "div", {class: "selection"});
                 let left, top, width;
                 [left,top] = getPositionFromOffsets(...min);
                 width = getPositionFromOffsets(...max)[0] - left;
@@ -157,7 +170,7 @@ export class CodeEditorTag {
                 div.style.width = `${width}px`;
             } else {
                 for (let lineOffset = min[0]; lineOffset <= max[0]; lineOffset ++) {
-                    const div = createTag(selectionArea, "div", {class: "selection"});
+                    const div = createTag(this.selectionArea, "div", {class: "selection"});
                     let left, top, width;
                     if (lineOffset == min[0]) {
                         [left,top] = getPositionFromOffsets(...min);
@@ -176,20 +189,21 @@ export class CodeEditorTag {
             }
         }
         // window.getSelectionをselectionで更新
-        const setSection = () => {
-            // suppressSelectionChange = true;
-            // const selection = window.getSelection();
-            // const range = document.createRange();
-            // range.setStart(...getOffsetInLineTextAndOffset(textViewArea.children[anchorLineOffset], anchorOffsetInLine)); // 開始位置
-            // range.setEnd(...getOffsetInLineTextAndOffset(textViewArea.children[focusLineOffset], focusOffsetInLine)); // 終了位置
-            // selection.removeAllRanges(); // 既存の選択をクリア
-            // selection.addRange(range);   // 新しい選択を追加
-            // textViewArea.focus(); // 重要
-        }
+        // const setSection = () => {
+        //     suppressSelectionChange = true;
+        //     const selection = window.getSelection();
+        //     const range = document.createRange();
+        //     range.setStart(...getOffsetInLineTextAndOffset(textViewArea.children[anchorLineOffset], anchorOffsetInLine)); // 開始位置
+        //     range.setEnd(...getOffsetInLineTextAndOffset(textViewArea.children[focusLineOffset], focusOffsetInLine)); // 終了位置
+        //     selection.removeAllRanges(); // 既存の選択をクリア
+        //     selection.addRange(range);   // 新しい選択を追加
+        //     textViewArea.focus(); // 重要
+        // }
         const setCaretPosition = () => {
-            const [left, top] = getPositionFromOffsets(focusLineOffset, focusOffsetInLine);
-            caret.style.left = `${left}px`;
-            caret.style.top = `${top}px`;
+            const [left, top] = getPositionFromOffsets(focusLineOffset, focusOffsetInLine).map(x => Math.max(0, x));
+            console.log(left,top)
+            this.caret.style.left = `${left}px`;
+            this.caret.style.top = `${top}px`;
         }
         const getStringsFromOffset = (offset1, offset2) => {
             return this.sourceCode.object[this.sourceCode.parameter].slice(offset1, offset2);
@@ -205,20 +219,20 @@ export class CodeEditorTag {
             const range = selection.getRangeAt(0);
             const { startContainer, endContainer } = range;
             // target の中で選択された場合のみ処理する
-            if (textViewArea.contains(startContainer) && textViewArea.contains(endContainer)) {
+            if (this.textViewArea.contains(startContainer) && this.textViewArea.contains(endContainer)) {
                 [anchorLineOffset, anchorOffsetInLine] = getSelectionOffset(selection.anchorNode, selection.anchorOffset);
                 [focusLineOffset, focusOffsetInLine] = getSelectionOffset(selection.focusNode, selection.focusOffset);
                 setCaretPosition();
                 selectionViewUpdate();
             }
         })
-        textViewArea.addEventListener("keydown", (e) => {
+        this.textViewArea.addEventListener("keydown", (e) => {
             const cmdBool = (e.ctrlKey || e.metaKey);
             if (e.key == "ArrowUp") {
                 e.preventDefault(); // デフォルトの改行動作を無効化
                 if (cmdBool) {
                     anchorLineOffset = 0;
-                    mainContainer.scrollTop = 0;
+                    this.mainContainer.scrollTop = 0;
                 } else if (1 <= anchorLineOffset) {
                     anchorLineOffset --;
                 }
@@ -227,7 +241,7 @@ export class CodeEditorTag {
                 e.preventDefault(); // デフォルトの改行動作を無効化
                 if (cmdBool) {
                     anchorLineOffset = getCodeLinesNum();
-                    mainContainer.scrollTop = mainContainer.scrollHeight;
+                    this.mainContainer.scrollTop = this.mainContainer.scrollHeight;
                 } else if (anchorLineOffset < getCodeLinesNum()) {
                     anchorLineOffset ++;
                 }
@@ -266,15 +280,18 @@ export class CodeEditorTag {
                 e.preventDefault(); // デフォルトの改行動作を無効化
                 const [startOffset,endOffset] = getStartAndEndOffset();
                 const minLineOffset = Math.min(anchorLineOffset, focusLineOffset);
-                console.log(startOffset, endOffset, getStringsNumFromLineOffset(minLineOffset))
                 let insertBrCommand;
                 if (cmdBool) {
                     insertBrCommand = new TextEditor_textSplice(this.sourceCode, getStringsOffsetFromLineOffset(minLineOffset), endOffset);
-                    anchorLineOffset = minLineOffset;
                     anchorOffsetInLine = 0;
                 } else {
                     insertBrCommand = new TextEditor_textSplice(this.sourceCode, startOffset - 1, endOffset);
                     anchorOffsetInLine --;
+                }
+                anchorLineOffset = minLineOffset;
+                if (anchorOffsetInLine < 0) {
+                    anchorLineOffset --;
+                    anchorOffsetInLine = getStringsNumFromLineOffset(anchorLineOffset);
                 }
                 insertBrCommand.update("");
                 app.operator.appendCommand(insertBrCommand);
@@ -282,6 +299,7 @@ export class CodeEditorTag {
                 focusLineOffset = anchorLineOffset;
                 focusOffsetInLine = anchorOffsetInLine;
                 setCaretPosition();
+                selectionViewUpdate();
                 return ;
             } else if (e.key === "Enter") {
                 e.preventDefault(); // デフォルトの改行動作を無効化
@@ -331,7 +349,7 @@ export class CodeEditorTag {
                 return ;
             }
         });
-        textViewArea.addEventListener("paste", (e) => {
+        this.textViewArea.addEventListener("paste", (e) => {
             console.log("ペースト")
             e.preventDefault(); // ブラウザの標準ペーストを止める
             // プレーンテキストを取得
@@ -343,18 +361,23 @@ export class CodeEditorTag {
         });
         document.addEventListener('copy', (e) => {
             console.log("コピー")
-            // デフォルトのコピー動作を停止
-            e.preventDefault();
-            // カスタム処理（例：URLを追加）
-            const customText = this.sourceCode.object[this.sourceCode.parameter].slice(...getStartAndEndOffset());
-            // クリップボードに設定
-            e.clipboardData.setData('text/plain', customText);
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const { startContainer, endContainer } = range;
+            if ((this.textViewArea.contains(startContainer) && this.textViewArea.contains(endContainer)) || this.input.contains(startContainer) && this.input.contains(endContainer)) {
+                // デフォルトのコピー動作を停止
+                e.preventDefault();
+                // カスタム処理（例：URLを追加）
+                const customText = this.sourceCode.object[this.sourceCode.parameter].slice(...getStartAndEndOffset());
+                // クリップボードに設定
+                e.clipboardData.setData('text/plain', customText);
+            }
         });
         let command = null;
         let isInputFocus = false;
         let lastAnchorOffsetInLine = 0;
         // textViewAreaに対する入力・編集をすべてブロック
-        textViewArea.addEventListener("beforeinput", () => {
+        this.textViewArea.addEventListener("beforeinput", () => {
             isInputFocus = true;
             input.focus();
             input.childNodes[0].nodeValue = "";
@@ -463,21 +486,26 @@ export class CodeEditorTag {
         input.addEventListener("input", () => {
             console.log(command);
             command.update(input.textContent);
-            autocompleteArea.style.display = "block";
+            this.autocompleteArea.style.display = "block";
             const range = document.createRange();
-            const result = getOffsetInLineTextAndOffset(textViewArea.children[focusLineOffset], anchorOffsetInLine);
+            const result = getOffsetInLineTextAndOffset(this.textViewArea.children[focusLineOffset], anchorOffsetInLine);
             range.setStart(...result);   // 5文字目の直後
             range.setEnd(...result);
             const rect = range.getBoundingClientRect(); // その位置の矩形
-            const editorRect = textViewArea.getBoundingClientRect();
+            const editorRect = this.textViewArea.getBoundingClientRect();
             const left = rect.left - editorRect.left;
             const top = rect.top - editorRect.top;
-            autocompleteArea.style.left = `${left}px`;
-            autocompleteArea.style.top = `${top + 11.5}px`;
-            autocompleteArea.replaceChildren();
+            this.autocompleteArea.style.left = `${left}px`;
+            this.autocompleteArea.style.top = `${top + 11.5}px`;
+            this.autocompleteArea.replaceChildren();
             for (const value of autocompleteFilter(input.textContent)) {
-                const liContainer = createTag(autocompleteArea, "div");
-                setStyle(liContainer, "width: 100%; height: fit-content; display: grid; gridTemplateColumns: auto auto 1fr auto 1fr;");
+                const liContainer = createTag(this.autocompleteArea, "div");
+                setClass(liContainer, "autocompleteFilterItem");
+                liContainer.addEventListener("mousedown", () => {
+                    console.log("予測", value)
+                    input.textContent = value.name;
+                    command.update(input.textContent);
+                })
                 const icon = createIcon(liContainer); // 属性
                 const name = createTag(liContainer, "div", {textContent: value.name}); // 変数や関数の名前
                 setStyle(name, "color: rgb(224, 224, 224);");
@@ -491,31 +519,50 @@ export class CodeEditorTag {
             focusOffsetInLine = anchorOffsetInLine;
             setCaretPosition();
         })
+        // this.mainContainer.addEventListener("mousedown", (e) => {
+        //     if (!input.contains(e.target)) {
+        //         console.log("フォーカスが外れました")
+        //         app.operator.execute();
+        //         this.autocompleteArea.style.display = "none";
+        //     }
+        // })
         input.addEventListener("focusout", () => {
             console.log("フォーカスが外れました")
             app.operator.execute();
-            autocompleteArea.style.display = "none";
+            this.autocompleteArea.style.display = "none";
         })
-        // if (true) {
-        //     codeArea.append(document.createTextNode(sourceCode.object[sourceCode.parameter]));
-        // }
+
+        this.mainContainer.addEventListener('scroll', () => {
+            if (isRestoringScroll) {
+                this.mainContainer.scrollLeft = lastScrollX;
+                this.mainContainer.scrollTop = lastScrollY;
+                isRestoringScroll = false;
+                return ;
+            } else {
+                console.log("scrollS", this.mainContainer.scrollLeft, this.mainContainer.scrollTop);
+                lastScrollX = this.mainContainer.scrollLeft;
+                lastScrollY = this.mainContainer.scrollTop;
+                console.log("scrollE",lastScrollX, lastScrollY)
+            }
+        });
 
         const viewUpdate = () => {
+            // lastScrollX = this.mainContainer.scrollLeft;
+            // lastScrollY = this.mainContainer.scrollTop;
             // DOMリセット
-            textViewArea.replaceChildren();
-            lineNumbers.replaceChildren();
-            functionsGroup.replaceChildren();
-            valuesGroup.replaceChildren();
+            this.textViewArea.replaceChildren();
+            this.lineNumbers.replaceChildren();
+            this.functionsGroup.replaceChildren();
+            this.valuesGroup.replaceChildren();
             // 改行で配列化
             const codeLines = this.sourceCode.object[this.sourceCode.parameter].match(/[^\n]*\n?/g).filter(line => line !== '');
             for (let i = 0; i < codeLines.length; i ++) {
                 // 行番号
-                createTag(lineNumbers, "div", {textContent: i});
+                createTag(this.lineNumbers, "div", {textContent: i});
                 // 行を生成
-                const l = createTag(textViewArea, "div");
+                const l = createTag(this.textViewArea, "div");
                 setStyle(l, "width: fit-content; height: fit-content; whiteSpace: pre; display: flex;");
             }
-
             const extractStructs = (code) => {
                 const structRegex = /struct\s+([a-zA-Z_]\w*)\s*{[^}]*}/g;
                 const structs = [];
@@ -563,7 +610,7 @@ export class CodeEditorTag {
                 let color = "rgb(255, 255, 255)";
                 if (token == "\n") {
                     // const l_ = createTag(codeArea.children[lineNumber], "br");
-                    const l_ = createTag(textViewArea.children[lineNumber], "span", {textContent: token});
+                    const l_ = createTag(this.textViewArea.children[lineNumber], "span", {textContent: token});
                     lineNumber ++;
                     state = "";
                     continue ;
@@ -595,7 +642,7 @@ export class CodeEditorTag {
                     // codeArea.children[lineNumber].append(l_);
                     // continue ;
                 }
-                const span = createTag(textViewArea.children[lineNumber], "span", {textContent: token});
+                const span = createTag(this.textViewArea.children[lineNumber], "span", {textContent: token});
                 span.addEventListener("dblclick", (e) => {
                     [anchorLineOffset, anchorOffsetInLine] = getSelectionDataFromSpan(span, 0);
                     [focusLineOffset, focusOffsetInLine] = getSelectionDataFromSpan(span, span.textContent.length);
@@ -607,16 +654,40 @@ export class CodeEditorTag {
                 setStyle(span, `color: ${color};`);
             }
             for (const fn of usingFunctions) {
-                const l = createTag(functionsGroup, "div", {textContent: fn.name});
+                const l = createTag(this.functionsGroup, "div", {textContent: fn.name});
                 setStyle(l, "width: fit-content; height: fit-content; whiteSpace: pre;");
             }
             for (const fn of usingValues) {
-                const l = createTag(valuesGroup, "div", {textContent: fn.name});
+                const l = createTag(this.valuesGroup, "div", {textContent: fn.name});
                 setStyle(l, "width: fit-content; height: fit-content; whiteSpace: pre;");
             }
+            isRestoringScroll = true;
         };
+        const debuglogUpdate = () => {
+            const logContainer = createTag(this.debuglogAreaContainer, "div");
+            setStyle(logContainer, "width: 100%; height: fit-content; display: grid; gridTemplateColumns: auto 1fr;");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.style.display = "none";
+            checkbox.checked = true;
+            const label = document.createElement("label");
+            const span = document.createElement("span");
+            span.classList.add("arrow");
+            label.append(checkbox,span);
+            logContainer.append(label);
+            const logText = createTag(logContainer, "div", {textContent: this.sourceCode.object["result"]});
+            checkbox.addEventListener("input", () => {
+                if (checkbox.checked) {
+                    logText.style.display = "block";
+                } else {
+                    logText.style.display = "none";
+                }
+            })
+        }
         viewUpdate();
-        managerForDOMs.set({o: this.sourceCode.object, i: this.sourceCode.parameter, g: this_.groupID}, null, viewUpdate);
+        debuglogUpdate();
+        managerForDOMs.set({o: this.sourceCode.object, i: this.sourceCode.parameter, g: this_.groupID, f: flag}, null, viewUpdate);
+        managerForDOMs.set({o: this.sourceCode.object, i: "result", g: this_.groupID, f: flag}, null, debuglogUpdate);
     }
 
     remove() {

@@ -92,8 +92,8 @@ class Editor extends ObjectEditorBase {
 
 export class BezierModifier extends ObjectBase {
     static VERTEX_LEVEL = 3; // 小オブジェクトごとに何個の頂点を持つか
-    constructor(name, id, data) {
-        super(name, "ベジェモディファイア", id);
+    constructor(data) {
+        super(data.name, "ベジェモディファイア", data.id);
         this.runtimeData = app.scene.runtimeData.bezierModifierData;
 
         this.MAX_POINTS = app.appConfig.MAX_POINTS_PER_BEZIERMODIFIER;
@@ -127,10 +127,8 @@ export class BezierModifier extends ObjectBase {
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
         this.individualGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.objectDataBuffer]);
 
-        this.children = new Children();
+        // this.children = new Children();
         this.editor = new Editor(this);
-
-        this.parent = "";
 
         this.mode = "オブジェクト";
 
@@ -170,9 +168,6 @@ export class BezierModifier extends ObjectBase {
         for (const point of data.points) {
             new Point(this, point);
         }
-        // app.scene.runtimeData.bezierModifierData.prepare(this);
-        app.scene.runtimeData.append(app.scene.runtimeData.bezierModifierData, this);
-        app.scene.runtimeData.bezierModifierData.updateBaseData(this);
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;
             app.scene.runtimeData.bezierModifierData.setAnimationData(this, animationData, index);

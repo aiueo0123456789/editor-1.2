@@ -5,12 +5,12 @@ export class Area_Property {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"], "app": app},
+            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"], "app": app},
             DOM: [
                 {type: "section", name: "アニメーション", children: [
                     {type: "input", label: "開始", withObject: "scene/frame_start", options: {type: "number", min: 0, max: 500, step: 1}},
                     {type: "input", label: "終了", withObject: "scene/frame_end", options: {type: "number", min: 0, max: 500, step: 1}},
-                    {type: "input", label: "再生速度", withObject: "app/animationPlayer/speed", options: {type: "number", min: 0, max: 10, step: 0.1}},
+                    {type: "input", label: "再生速度", withObject: "scene/frame_speed", options: {type: "number", min: 0, max: 10, step: 0.1}},
                 ]},
                 {type: "section", name: "マスク", children: [
                     {type: "list", appendEvent: () => {
@@ -36,6 +36,10 @@ export class Area_Property {
                     }, withObject: "scene/objects/parameterManagers", options: {}, liStruct:[
                         {type: "nodeFromFunction", source: "/getNodeData"}
                     ]}
+                ]},
+                {type: "section", name: "カメラ", children: [
+                    {type: "input", label: "表示範囲x", withObject: "scene/objects/renderingCamera/displayRange/0", options: {type: "number", min: 1, max: 2048, step: 1}},
+                    {type: "input", label: "表示範囲y", withObject: "scene/objects/renderingCamera/displayRange/1", options: {type: "number", min: 1, max: 2048, step: 1}},
                 ]}
             ],
         };
@@ -47,7 +51,7 @@ export class Area_Property {
     }
 
     update() {
-        for (const object of app.hierarchy.root) {
+        for (const object of app.scene.hierarchy.root) {
             const div = document.createElement("div");
             div.textContent = object.name;
         }

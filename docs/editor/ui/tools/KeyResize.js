@@ -1,9 +1,8 @@
-import { app } from "../../../../../app/app.js";
-import { InputManager } from "../../../../../app/inputManager/inputManager.js";
-import { managerForDOMs } from "../../../../../utils/ui/util.js";
-import { GPU } from "../../../../../utils/webGPU.js";
-import { KeyTranslateCommand } from "../../../../../commands/keyTransform/keyTransform.js";
-import { ModalOperator } from "../../../../../operators/modalOperator.js";
+import { KeyResizeCommand, KeyTranslateCommand } from "../../commands/keyTransform/keyTransform.js";
+import { app } from "../../app/app.js";
+import { InputManager } from "../../app/inputManager/inputManager.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
+import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class KeyResize {
     constructor(/** @type {ModalOperator} */operator) {
@@ -38,29 +37,19 @@ export class KeyResize {
     }
 
     async init() {
-        if (type == "メッシュ編集") {
-            this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.graphicMeshData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices, app.scene.runtimeData.graphicMeshData.selectedVertices);
-        } else if (type == "頂点アニメーション編集") {
-            // this.command = new TranslateCommand(app.scene.state.selectedObject);
-        } else if (type == "ボーン編集") {
-            this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.armatureData.selectedVertices));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices, app.scene.runtimeData.armatureData.selectedVertices);
-        } else if (type == "ベジェ編集") {
-            this.command = new ResizeCommand(app.scene.state.selectedObject, await GPU.getSelectIndexFromBufferBit(app.scene.runtimeData.bezierModifierData.selectedVertices.buffer));
-            this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-        }
+        this.command = new KeyResizeCommand(app.appConfig.areasConfig["Timeline"].getSelectVertices());
+        this.center = app.appConfig.areasConfig["Timeline"].getSelectVerticesCenter();
         this.command.setCenterPoint(this.center);
+    }
+
+    execute() {
+        this.operator.execute();
+        return {complete: true};
     }
 
     mousemove(/** @type {InputManager} */inputManager) {
         this.values[0] += inputManager.movement[0];
         this.values[1] += inputManager.movement[1];
         managerForDOMs.update(this.values);
-    }
-
-    mousedown(/** @type {InputManager} */inputManager) {
-        this.operator.execute();
-        return {complete: true};
     }
 }

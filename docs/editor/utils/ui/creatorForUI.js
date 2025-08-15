@@ -9,6 +9,7 @@ import { MenuTag } from "./customTags/menuTag.js";
 import { TextEditor_textSplice, TextEditor_textRemove } from "../../commands/textEditor/textEditorCommand.js";
 import { CodeEditorTag } from "./customTags/codeEditorTag.js";
 import { SelectTag } from "./customTags/selectTag.js";
+import { ChangeParameterCommand } from "../../commands/utile/utile.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -175,7 +176,11 @@ const tagCreater = {
             element = createTag(label, "button");
             setClass(element, child.options.look)
         } else {
-            element = createButton(t, "グループ", child.label);
+            if (child.icon) {
+                element = createButton(t, "グループ", child.label);
+            } else {
+                element = createTag(t, "button", child.options);
+            }
         }
         if (isFunction(child.submitFunction)) {
             element.addEventListener("click", () => {
@@ -346,6 +351,7 @@ const tagCreater = {
             managerForDOMs.deleteFlag(myFlag);
             // 関連づけられていない小要素を削除
             for (const childTag of children) {
+                childTag?.remove();
                 removeObjectInHTMLElement(childTag);
             }
             children.length = 0;
@@ -354,7 +360,6 @@ const tagCreater = {
                 const o = this_.getParameter(searchTarget, child.sourceObject, 2);
                 if (o) {
                     if (isFunction(o)) {
-                        console.log("関数",o,o())
                         children = this_.createFromChildren(keep, child.children, o(), myFlag, true);
                     } else if (o instanceof ParameterReference) {
                         // console.warn("伝播できません", o)
@@ -387,6 +392,8 @@ const tagCreater = {
             bool = this_.getParameter(searchTarget,child.formula.source) > child.formula.value;
         } else if (child.formula.conditions == "<") {
             bool = this_.getParameter(searchTarget,child.formula.source) < child.formula.value;
+        } else if (child.formula.conditions == "in") {
+            bool = child.formula.value in this_.getParameter(searchTarget,child.formula.source);
         }
         if (bool) {
             if (child.true) {
@@ -797,7 +804,6 @@ export class CreatorForUI {
             console.trace();
         } else {
             let source = this.getParameter(searchTarget, withObject, 1);
-            console.log(source, withObject, searchTarget)
             if (!source) { // 取得できなかったら切り上げ
                 console.warn("UIとパラメータの連携ができませんでした", withObject, searchTarget);
                 if (t.type == "number" || t.type == "range") { // 数字型
@@ -833,27 +839,34 @@ export class CreatorForUI {
             }
             updateDOMsValue();
             this.setUpdateEventToParameter(searchTarget, withObject, updateDOMsValue, flag);
+            let command;
             // イベントを作成
             // t.addEventListener("change", () => {
             t.addEventListener("input", () => {
+                let newValue;
                 if (t.type == "number" || t.type == "range") { // 数字型
-                    source.object[source.parameter] = Number(t.value);
+                    newValue = Number(t.value);
                 } else if (t.type == "checkbox") {
-                    source.object[source.parameter] = t.checked;
+                    newValue = t.checked;
                 } else if (t.type == "color") {
                     const valueColor = hexToRgba(t.value, 1);
-                    source.object[source.parameter][0] = valueColor[0];
-                    source.object[source.parameter][1] = valueColor[1];
-                    source.object[source.parameter][2] = valueColor[2];
-                    source.object[source.parameter][3] = valueColor[3];
+                    newValue = valueColor;
                 } else if (t.tagName === "SELECT") {
-                    source.object[source.parameter] = t.value;
+                    newValue = t.value;
                 } else {
-                    source.object[source.parameter] = t.value;
+                    newValue = t.value;
                 }
-                console.log("htmlからオブジェクトの更新", source, t)
-                managerForDOMs.update(source.object,source.parameter);
+                if (command) {
+                    command.update(newValue);
+                } else {
+                    command = new ChangeParameterCommand(source.object, source.parameter, newValue);
+                }
             });
+            t.addEventListener("change", () => {
+                app.operator.appendCommand(command);
+                app.operator.execute();
+                command = null;
+            })
         }
     }
 
