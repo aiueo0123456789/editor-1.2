@@ -357,10 +357,24 @@ export class Scene {
 
         this.state = new State(app);
 
-        this.maskTextures = [
-            new MaskTexture("base", [1,1]),
-            new MaskTexture("test1", [1024,1024]),
-        ];
+        this.maskTextures = [];
+
+        const updateKeyframe = () => {
+            this.updateAnimation(this.frame_current);
+        }
+
+        managerForDOMs.set({o: this, g: "_", i: "frame_current"}, null, updateKeyframe);
+    }
+
+    init() {
+        this.objects.appendObject(this.objects.createObject({
+            type: "スクリプト",
+            name: "スクリプトテスト",
+            id: "templateParticleUpdateCode",
+            text: templateParticleUpdateCode
+        }));
+
+        this.maskTextures.push(new MaskTexture("base"));
 
         if (true) { // 白のマスクテクスチャ
             const commandEncoder = device.createCommandEncoder();
@@ -379,39 +393,6 @@ export class Scene {
             maskRenderPass.end();
             device.queue.submit([commandEncoder.finish()]);
         }
-
-        const updateKeyframe = () => {
-            this.updateAnimation(this.frame_current);
-        }
-
-        managerForDOMs.set({o: this, g: "_", i: "frame_current"}, null, updateKeyframe);
-    }
-
-    init() {
-        this.objects.appendObject(this.objects.createObject({
-            type: "スクリプト",
-            name: "スクリプトテスト",
-            id: "templateParticleUpdateCode",
-            text: templateParticleUpdateCode
-        }));
-        // this.objects.appendObject(this.objects.createObject({
-        //     type: "パーティクル",
-        //     name: "パーティクルテスト",
-        //     spawnData: {
-        //         position: {min: [0,-1000],max: [0,0]},
-        //         zIndex: {min: 1, max: 10},
-        //         scale: {min: 5,max: 20},
-        //         angle: {min: 0,max: 3},
-        //         velocity: {min: [100,-80],max: [200,-50]},
-        //         zIndexVelocity: 0,
-        //         scaleVelocity: [0,0],
-        //         angleVelocity: {min: 0,max: 1},
-        //         maxLifeTime: 1000,
-        //     },
-        //     spawnNum: 1,
-        //     duration: 100,
-        //     startDelay: 10
-        // }));
     }
 
     // 選択している頂点のBBoxを取得
@@ -682,6 +663,14 @@ export class Scene {
         return null;
     }
 
+    searchMaskTextureFromID(id) {
+        for (const texture of this.maskTextures) {
+            if (texture.id == id) return texture;
+        }
+        console.warn("マスクテクスチャが見つかりませんでした");
+        return null;
+    }
+
     searchObjectFromID(id) {
         if (!id) return null;
         for (const object of this.objects.allObject) {
@@ -793,13 +782,24 @@ class World {
 }
 
 class MaskTexture {
-    constructor(name, size = [1024,1024]) {
+    constructor(name) {
         this.id = createID();
         this.type = "マスク";
         this.name = name;
-        this.textureSize = [...size];
-        this.texture= GPU.createTexture2D(this.textureSize,"r8unorm");
-        this.textureView = this.texture.createView();
+        this.texture = null;
+        this.textureView = null;
+        if (name == "base") { // baseだけ特別
+            this.texture = GPU.createTexture2D([1,1],"r8unorm");
+            this.textureView = this.texture.createView();
+        } else {
+            const updateTextureSize = () => {
+                this.texture = GPU.createTexture2D(app.scene.objects.renderingCamera.displayRange,"r8unorm");
+                this.textureView = this.texture.createView();
+                managerForDOMs.update(this, "textureView");
+            }
+            managerForDOMs.set({o: app.scene.objects.renderingCamera, i: "displayRange"}, null, updateTextureSize);
+            updateTextureSize();
+        }
         this.renderingObjects = [];
         this.useObjects = [];
     }

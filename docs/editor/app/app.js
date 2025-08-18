@@ -1,7 +1,7 @@
 import { FaileIOManager } from "./faileIOManager/faileIOManager.js";
 import { Scene } from "./scene/scene.js";
 import { AutoGrid } from "../utils/ui/grid.js";
-import { createID, managerForDOMs } from "../utils/ui/util.js";
+import { createID } from "../utils/ui/util.js";
 import { Operator } from "../operators/commandOperator.js";
 import { Area_Viewer } from "../ui/area/areas/Viewer/area_Viewer.js";
 import { Area_Hierarchy } from "../ui/area/areas/Hierarchy/area_Hierarchy.js";

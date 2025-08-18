@@ -137,13 +137,6 @@ export class Armature extends ObjectBase {
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
 
-        this.BBox = {min: [0,0], max: [0,0]};
-        this.BBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-        this.BBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [this.BBoxBuffer]);
-
-        this.baseBBox = [0,0,0,0];
-        this.baseBBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-
         this.boneNum = 0;
         this.baseTransformIsLock = false;
 

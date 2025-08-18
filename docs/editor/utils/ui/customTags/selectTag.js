@@ -10,12 +10,18 @@ export class SelectTag {
             this_.setWith(this.input, child.writeObject, searchTarget, flag);
         }
         this.element.classList.add("custom-select");
-        const value = createTag(this.element, "p", {textContent: "選択されていません"});
+        let initValue = "選択されていません";
+        const value = createTag(this.element, "p");
         setClass(value, "nowrap")
         if (child.options.initValue) {
-            value.textContent = child.options.initValue;
-            this.input.value = child.options.initValue;
+            if (child.options.initValue.path) {
+                initValue = this_.getParameter(searchTarget, child.options.initValue.path);
+            } else {
+                initValue = child.options.initValue;
+            }
         }
+        value.textContent = initValue;
+        this.input.value = initValue;
         const isOpen = createTag(this.element, "span", {class: "downArrow"});
         this.element.addEventListener("click", (e) => {
             let items;

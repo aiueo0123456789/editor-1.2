@@ -315,13 +315,6 @@ export class GraphicMesh extends ObjectBase {
         // その他
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
-        this.BBox = {min: [0,0], max: [0,0]};
-        this.BBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-        this.BBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.BBoxBuffer, type: 'b'}]);
-
-        this.baseBBox = [0,0,0,0];
-        this.baseBBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-
         this.verticesNum = null;
         this.meshesNum = null;
 
@@ -336,7 +329,7 @@ export class GraphicMesh extends ObjectBase {
 
         this.renderingTargetTexture = null;
         this.maskTargetTexture = null;
-        this.changeMaskTexture(app.scene.searchMaskTextureFromName("base"));
+        // this.changeMaskTexture(app.scene.searchMaskTextureFromName("base"));
         this.maskTypeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         GPU.writeBuffer(this.maskTypeBuffer, new Float32Array([0])); // 0　マスク 反転マスク
 
@@ -436,12 +429,16 @@ export class GraphicMesh extends ObjectBase {
     changeMaskTexture(target) {
         if (this.maskTargetTexture) {
             indexOfSplice(this.maskTargetTexture.useObjects, this);
+            managerForDOMs.deleteDataBlockFromObjectAndID(this.maskTargetTexture, "textureView", this.managerForDOMs_maskTargetTexture_textureView_dataBlock);
         }
         this.maskTargetTexture = target;
         this.maskTargetTexture.useObjects.push(this);
-        if (this.isInit) {
-            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
+        const updateGroup = () => {
+            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.zIndexBuffer, this.textureView, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
+            console.log("renderGroup");
         }
+        updateGroup();
+        this.managerForDOMs_maskTargetTexture_textureView_dataBlock = managerForDOMs.set({o: this.maskTargetTexture, i: "textureView"}, null, updateGroup);
     }
 
     changeRenderingTarget(target) {
@@ -450,7 +447,6 @@ export class GraphicMesh extends ObjectBase {
         }
         this.renderingTargetTexture = target;
         this.renderingTargetTexture.renderingObjects.push(this);
-        this.isChange = true;
     }
 
     setGroup() {

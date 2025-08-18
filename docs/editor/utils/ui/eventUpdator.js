@@ -125,6 +125,17 @@ export class DOMsManager {
             this.flags.set(flag, []);
         }
         this.flags.get(flag).push(dataBlock);
+        return dataBlock;
+    }
+
+    deleteDataBlockFromObjectAndID(object, id, dataBlock) {
+        const o = this.objectsMap.get(object);
+        const i = o.get(id);
+        if (i) {
+            i.forEach((g, groupID) => {
+                indexOfSplice(g, dataBlock);
+            })
+        }
     }
 
     deleteDOM(object, groupID, ID) {

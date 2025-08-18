@@ -435,12 +435,12 @@ export class Renderer {
             return ;
         }
         const commandEncoder = device.createCommandEncoder();
-        for (const value of app.scene.maskTextures) {
-            if (value.renderingObjects.length > 0 && value.name != "base") {
+        for (const maskTexture of app.scene.maskTextures) {
+            if (maskTexture.renderingObjects.length > 0 && maskTexture.name != "base") {
                 const maskRenderPass = commandEncoder.beginRenderPass({
                     colorAttachments: [
                         {
-                            view: value.textureView,
+                            view: maskTexture.textureView,
                             clearValue: { r: 0, g: 0, b: 0, a: 0 },
                             loadOp: 'clear',
                             storeOp: 'store',
@@ -451,7 +451,7 @@ export class Renderer {
                 maskRenderPass.setPipeline(maskRenderPipeline);
                 maskRenderPass.setBindGroup(0, this.staticGroup);
                 maskRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
-                for (const graphicMesh of value.renderingObjects) {
+                for (const graphicMesh of maskTexture.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
                     maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);

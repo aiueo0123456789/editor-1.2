@@ -26,6 +26,16 @@ export class Area_Inspector {
                                 {type: "input", label: "頂点数", withObject: "/verticesNum", options: {type: "number"}, custom: {collision: false, visual: "1"}},
                                 {type: "input", label: "アニメーション最大数", withObject: "/MAX_ANIMATIONS", options: {type: "number"}, custom: {collision: false, visual: "1"}},
                                 {type: "input", label: "自動のウェイト", withObject: "/autoWeight", options: {type: "checkbox", look: "defo"}},
+                                {type: "select", label: "マスク", writeObject: (value) => {
+                                    app.scene.state.activeObject.changeMaskTexture(app.scene.searchMaskTextureFromID(value));
+                                }, sourceObject: () => {
+                                    return app.scene.maskTextures.map(texture => {return {name: texture.name, id: texture.id}});
+                                }, options: {initValue: {path: "scene/state/activeObject/maskTargetTexture/name"}}},
+                                {type: "select", label: "レンダリング", writeObject: (value) => {
+                                    app.scene.state.activeObject.changeRenderingTarget(app.scene.searchMaskTextureFromID(value));
+                                }, sourceObject: () => {
+                                    return app.scene.maskTextures.map(texture => {return {name: texture.name, id: texture.id}});
+                                }, options: {initValue: {path: "scene/state/activeObject/renderingTargetTexture/name"}}},
                             ],
                             false: [
                                 {type: "if", formula: {source: "/type", conditions: "==", value: "ベジェモディファイア"},

@@ -102,18 +102,7 @@ export class BezierModifier extends ObjectBase {
         this.animationBufferOffset = 0;
         this.weightBufferOffset = 0;
 
-        this.renderBBoxData = {max: [1,1], min: [-1,-1]};
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
-
-        this.calculateAllBBoxGroup = null;
-        this.GUIrenderGroup = null;
-
-        this.BBox = {min: [0,0], max: [0,0]};
-        this.BBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
-        this.BBoxRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr"), [{item: this.BBoxBuffer, type: 'b'}]);
-
-        this.baseBBox = [0,0,0,0];
-        this.baseBBoxBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["f32"]);
 
         this.pointNum = 0;
         this.baseTransformIsLock = false;
