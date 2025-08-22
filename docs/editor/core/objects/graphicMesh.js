@@ -18,21 +18,21 @@ class Vertex {
         this.graphicMesh = graphicMesh;
         this.base = [...data.base];
         this.uv = [...data.uv];
-        let maxIndex = -1;
-        for (let i = 0; i < 4; i ++) {
-            if (data.parentWeight.weights[i] > 0.85) {
-                maxIndex = i;
-            }
-        }
-        if (maxIndex != -1) {
-            for (let i = 0; i < 4; i ++) {
-                if (maxIndex == i) {
-                    data.parentWeight.weights[i] = 1;
-                } else {
-                    data.parentWeight.weights[i] = 0;
-                }
-            }
-        }
+        // let maxIndex = -1;
+        // for (let i = 0; i < 4; i ++) {
+        //     if (data.parentWeight.weights[i] > 0.85) {
+        //         maxIndex = i;
+        //     }
+        // }
+        // if (maxIndex != -1) {
+        //     for (let i = 0; i < 4; i ++) {
+        //         if (maxIndex == i) {
+        //             data.parentWeight.weights[i] = 1;
+        //         } else {
+        //             data.parentWeight.weights[i] = 0;
+        //         }
+        //     }
+        // }
         this.parentWeight = data.parentWeight;
         this.updated = true;
     }
@@ -85,8 +85,6 @@ class Editor extends ObjectEditorBase {
         this.baseEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
         this.outlineVertices = [];
         this.outlineEdges = [];
-
-        this.lastCreateMeshTime = Date.now();
 
         this.updateEdgeGPU = () => {
             if (this.baseSilhouetteEdges.length == 0) {
@@ -153,24 +151,21 @@ class Editor extends ObjectEditorBase {
         }
         app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
         this.setBaseSilhouetteEdges(result.edges);
-        this.createMesh(true);
+        this.createMesh();
         app.options.assignWeights(this.graphicMesh);
     }
 
-    async createMesh(compulsion = false) {
-        if (compulsion || Date.now() - this.lastCreateMeshTime > 0.1 * 1000) { // 処理が重いので
-            await waitUntilFrame(() => {return !app.scene.runtimeData.graphicMeshData.write});
-            this.lastCreateMeshTime = Date.now();
-            const vertices = this.graphicMesh.allVertices.map(vertex => vertex.base);
-            const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges.concat(this.baseSilhouetteEdges)), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
-            // const meshData = createMeshFromTexture(vertices, this.baseEdges); // メッシュの作成とシルエットの外の三角形を削除
-            this.graphicMesh.allMeshes.length = 0;
-            for (let i = 0; i < meshData.length; i ++) {
-                new Mesh(this.graphicMesh,undefined, meshData[i]);
-            }
-            app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
-            this.updateEdgeGPU();
+    async createMesh() {
+        await waitUntilFrame(() => {return !app.scene.runtimeData.graphicMeshData.write});
+        const vertices = this.graphicMesh.allVertices.map(vertex => vertex.base);
+        const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges.concat(this.baseSilhouetteEdges)), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
+        // const meshData = createMeshFromTexture(vertices, this.baseEdges); // メッシュの作成とシルエットの外の三角形を削除
+        this.graphicMesh.allMeshes.length = 0;
+        for (let i = 0; i < meshData.length; i ++) {
+            new Mesh(this.graphicMesh,undefined, meshData[i]);
         }
+        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
+        this.updateEdgeGPU();
     }
 
     deleteBaseVertices(indexs) {
@@ -213,7 +208,7 @@ class Editor extends ObjectEditorBase {
     appendBaseEdge(edge) {
         if (this.hasEdge(edge)) return ;
         arrayToPush(this.baseEdges, edge);
-        this.createMesh(true);
+        this.createMesh();
     }
 
     deleteBaseEdge(edge) {
@@ -226,7 +221,7 @@ class Editor extends ObjectEditorBase {
                 this.baseEdges.splice(i, 1);
             }
         }
-        this.createMesh(true);
+        this.createMesh();
         managerForDOMs.update(this.baseEdges);
     }
 
@@ -275,13 +270,13 @@ class Editor extends ObjectEditorBase {
 
     appendVertex(vertex) {
         this.graphicMesh.allVertices.push(vertex);
-        this.createMesh(true);
+        this.createMesh();
         app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
     }
 
     deleteVertex(vertex) {
         indexOfSplice(this.graphicMesh.allVertices, vertex)
-        this.createMesh(true);
+        this.createMesh();
         app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
     }
 }

@@ -1,5 +1,4 @@
 import { GPU } from "../../utils/webGPU.js";
-import { Children } from "../../utils/objects/children.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
 import { app } from "../../app/app.js";
@@ -10,21 +9,21 @@ class Vertex {
         this.co = data.co;
         this.typeIndex = data.typeIndex;
         this.selected = false;
-        let maxIndex = -1;
-        for (let i = 0; i < 4; i ++) {
-            if (data.parentWeight.weights[i] > 0.85) {
-                maxIndex = i;
-            }
-        }
-        if (maxIndex != -1) {
-            for (let i = 0; i < 4; i ++) {
-                if (maxIndex == i) {
-                    data.parentWeight.weights[i] = 1;
-                } else {
-                    data.parentWeight.weights[i] = 0;
-                }
-            }
-        }
+        // let maxIndex = -1;
+        // for (let i = 0; i < 4; i ++) {
+        //     if (data.parentWeight.weights[i] > 0.85) {
+        //         maxIndex = i;
+        //     }
+        // }
+        // if (maxIndex != -1) {
+        //     for (let i = 0; i < 4; i ++) {
+        //         if (maxIndex == i) {
+        //             data.parentWeight.weights[i] = 1;
+        //         } else {
+        //             data.parentWeight.weights[i] = 0;
+        //         }
+        //     }
+        // }
         this.parentWeight = data.parentWeight ? data.parentWeight : {indexs: [0,0,0,0], weights: [0,0,0,0]};
     }
 

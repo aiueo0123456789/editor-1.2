@@ -1,6 +1,7 @@
 import { app } from "../../../../app/app.js";
 import { appendAnimationToObject, deleteAnimationToObject } from "../../../../utils/objects/util.js";
 import { changeParameter } from "../../../../utils/utility.js";
+import { format } from "../../../../utils/webGPU.js";
 
 export class Area_Inspector {
     constructor(area) {
@@ -64,36 +65,41 @@ export class Area_Inspector {
                     ]}
                 ]},
                 {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
-                    {type: "section", name: "アニメーション", children: [
-                        {type: "input", label: "アニメーション最大数", withObject: "/MAX_ANIMATIONS", options: {type: "number"}, custom: {collision: false, visual: "1"}},
-                        {type: "list", appendEvent: () => {
-                            appendAnimationToObject(app.scene.state.activeObject, "新規");
-                        }, deleteEvent: (animations) => {
-                            for (const animation of animations) {
-                                deleteAnimationToObject(app.scene.state.activeObject, animation);
-                            }
-                        }, withObject: "/animationBlock/list", options: {type: "min", selectSource: {
-                            function: (index, object) => {
-                            },
-                            getFunction: (object) => {
-                            }
-                        }, activeSource: {
-                            function: (index, object) => {
-                                changeParameter(app.scene.state.activeObject.animationBlock, "activeAnimationIndex", index);
-                            },
-                            getFunction: (object) => {
-                                console.log(object)
-                                return object.belongObject.animationBlock.activeAnimation == object;
-                            }
-                        }}, liStruct:[
-                            {type: "gridBox", axis: "c", allocation: "50% 1fr 50px 20px", children: [
-                                {type: "dbInput", withObject: "/name", options: {type: "text"}},
-                                {type: "padding", size: "10px"},
-                                {type: "input", withObject: "/weight", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
-                                {type: "hasKeyframeCheck", targetObject: "/keyframeBlockManager/blocksMap/weight"}
-                            ]},
-                        ]}
-                    ]}
+                    {type: "if", formula: {source: "/", conditions: "in", value: "MAX_ANIMATIONS"},
+                        true: [
+                            {type: "section", name: "アニメーション", children: [
+                                {type: "input", label: "アニメーション最大数", withObject: "/MAX_ANIMATIONS", options: {type: "number"}, custom: {collision: false, visual: "1"}},
+                                {type: "list", appendEvent: () => {
+                                    appendAnimationToObject(app.scene.state.activeObject, "新規");
+                                }, deleteEvent: (animations) => {
+                                    for (const animation of animations) {
+                                        deleteAnimationToObject(app.scene.state.activeObject, animation);
+                                    }
+                                }, withObject: "/animationBlock/list", options: {type: "min", selectSource: {
+                                    function: (index, object) => {
+                                    },
+                                    getFunction: (object) => {
+                                    }
+                                }, activeSource: {
+                                    function: (index, object) => {
+                                        changeParameter(app.scene.state.activeObject.animationBlock, "activeAnimationIndex", index);
+                                    },
+                                    getFunction: (object) => {
+                                        console.log(object)
+                                        return object.belongObject.animationBlock.activeAnimation == object;
+                                    }
+                                }}, liStruct:[
+                                    {type: "gridBox", axis: "c", allocation: "50% 1fr 50px 20px", children: [
+                                        {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                        {type: "padding", size: "10px"},
+                                        {type: "input", withObject: "/weight", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
+                                        {type: "hasKeyframeCheck", targetObject: "/keyframeBlockManager/blocksMap/weight"}
+                                    ]},
+                                ]}
+                            ]}
+                        ], false: [
+                        ]
+                    }
                 ]}
             ],
             utility: {

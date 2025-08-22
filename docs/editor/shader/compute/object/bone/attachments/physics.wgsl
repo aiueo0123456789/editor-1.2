@@ -21,6 +21,8 @@ struct PhysicsAttachmentData {
     limit: f32, // 最大速度
 
     reset_: u32, // 初期化済みか
+    update_: u32, // 更新するか
+    pose_: u32, // 停止
 
     // runtime
     u: vec2<f32>, // 最終位置
@@ -52,7 +54,7 @@ mat3x3(
 @group(0) @binding(0) var<storage, read_write> boneMatrixs: array<mat3x3<f32>>; // 出力
 @group(0) @binding(1) var<storage, read_write> baseBone: array<Bone>; // ローカルベースボーン
 @group(0) @binding(2) var<storage, read_write> physicsAttachmentDatas: array<PhysicsAttachmentData>; // 物理アタッチメント
-@group(1) @binding(0) var<storage, read> boneIndexs: array<u32>; // 親のindexと自分の深度
+@group(1) @binding(0) var<storage, read> boneIndexs: array<u32>; // 適応するboneのindex
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
@@ -94,7 +96,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (attachmentData.reset_ == 0u) {
         attachmentData.reset_ = 1u;
         attachmentData.u = b;
-    } else {
+    } else if (attachmentData.update_ == 1u) {
         if (x || y) {
             // 慣性
             if (x) {
@@ -203,6 +205,13 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
                 s = sin(r);
             }
         }
+    } else if (attachmentData.pose_ == 1u) {
+        if (x) {
+            boneMatrix[2][0] += attachmentData.offset.x * mix * attachmentData.translate.x;
+        }
+        if (y) {
+            boneMatrix[2][1] += attachmentData.offset.y * mix * attachmentData.translate.y;
+        }
     }
 
     attachmentData.c = boneMatrix[2].xy;
@@ -245,7 +254,9 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         boneMatrix[0][0] *= s;
         boneMatrix[0][1] *= s;
     }
-    attachmentData.t = vec2<f32>(boneMatrix[0][0],boneMatrix[0][1]) * l;
+    if (attachmentData.pose_ == 0u) {
+        attachmentData.t = vec2<f32>(boneMatrix[0][0],boneMatrix[0][1]) * l;
+    }
 
     physicsAttachmentDatas[boneIndex] = attachmentData;
     boneMatrixs[boneIndex] = boneMatrix;

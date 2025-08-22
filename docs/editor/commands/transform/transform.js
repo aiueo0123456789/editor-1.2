@@ -280,7 +280,7 @@ class TransformCommand {
         } else if (this.type == "メッシュ編集") {
             for (const graphicMesh of this.graphicMeshs) {
                 GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv.buffer, app.scene.runtimeData.graphicMeshData.baseVertices.buffer, graphicMesh.editor.imageBBoxBuffer, graphicMesh.objectDataBuffer])],this.workNumX);
-                graphicMesh.editor.createMesh(true);
+                graphicMesh.editor.createMesh();
             }
         }
     }
@@ -306,7 +306,7 @@ class TransformCommand {
                 for (const graphicMesh of this.graphicMeshs) {
                     GPU.runComputeShader(updateForUVPipeline,[GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu"), [app.scene.runtimeData.graphicMeshData.uv.buffer, app.scene.runtimeData.graphicMeshData.baseVertices.buffer, graphicMesh.editor.imageBBoxBuffer, graphicMesh.objectDataBuffer])],this.workNumX);
                     app.scene.runtimeData.graphicMeshData.updateCPUDataFromGPUBuffer(graphicMesh, {vertex: {base: true, uv: true}});
-                    graphicMesh.editor.createMesh(true);
+                    graphicMesh.editor.createMesh();
                 }
             } else if (this.type == "ベジェ編集") {
                 for (const bezierModifier of this.bezierModifiers) {

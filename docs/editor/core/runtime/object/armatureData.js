@@ -67,6 +67,8 @@ export class ArmatureData extends RuntimeDataBase {
             "f32", // 最大速度
 
             "u32", // リセット済みか
+            "u32", // 更新
+            "u32", // 停止
 
             "f32", "f32",
             "f32", "f32",
@@ -259,7 +261,7 @@ export class ArmatureData extends RuntimeDataBase {
             arrayToSet(boneVerticesData, bone.baseHead.co.concat(bone.baseTail.co), bone.index, 4);
             arrayToSet(colorsData, bone.color, bone.index, 4);
             const physicsData = bone.attachments.list[0];
-            arrayToSet(physicsAttachmentData, [physicsData.x, physicsData.y, physicsData.rotate, physicsData.scaleX, physicsData.shearX, physicsData.inertia, physicsData.strength, physicsData.damping, 1 / physicsData.mass, physicsData.wind, physicsData.gravity, physicsData.mix, physicsData.limit], bone.index, this.physicsData.struct.length);
+            arrayToSet(physicsAttachmentData, [physicsData.x, physicsData.y, physicsData.rotate, physicsData.scaleX, physicsData.shearX, physicsData.inertia, physicsData.strength, physicsData.damping, 1 / physicsData.mass, physicsData.wind, physicsData.gravity, physicsData.mix, physicsData.limit, 0, 1, 0], bone.index, this.physicsData.struct.length);
         }
         armature.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
 

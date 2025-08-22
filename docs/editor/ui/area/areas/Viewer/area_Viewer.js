@@ -112,7 +112,7 @@ export class Area_Viewer {
                                     ]},
                                 ]},
                                 {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
+                                    // {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
                                 ]},
                                 {type: "flexBox", interval: "5px", name: "", children: [
                                     {type: "checks", icon: "test", label: "test", options: {textContent: "test"}, withObjects: [{text: "graphicMesh", path: "o/visibleObjects/graphicMesh"},{text: "armature", path: "o/visibleObjects/armature"},{text: "bezierModifier", path: "o/visibleObjects/bezierModifier"}]},
@@ -142,14 +142,8 @@ export class Area_Viewer {
                             {type: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
                                 {type: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュウェイト編集"},
                                 true: [
-                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
+                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto 1fr", children: [
                                         {type: "padding", size: "10px"},
-                                        {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "heightCenter", children: [
-                                                {type: "input", withObject: "areasConfig/weightPaintMetaData/weightValue", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
-                                            ]}
-                                        ]},
-                                        {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
                                                 {type: "select", label: "ベジェの種類", writeObject: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
@@ -164,12 +158,8 @@ export class Area_Viewer {
                                         {type: "padding", size: "10px"},
                                     ]},
                                 ], false: [
-                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
+                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto 1fr", children: [
                                         {type: "padding", size: "10px"},
-                                        {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "buttons", icon: "test", label: "test", options: {textContent: "test"}},
-                                        ]},
-                                        {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
                                                 {type: "select", label: "種類", writeObject: "areasConfig/proportionalEditType", sourceObject: "areasConfig/proportionalEditTypes", options: {initValue: "0"}},

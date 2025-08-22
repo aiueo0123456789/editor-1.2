@@ -205,7 +205,7 @@ export class Area_Timeline {
                         ]},
                     ]},
                     {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto;", axis: "c", allocation: "20% 1fr", name: "", children: [
-                        {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto; backgroundColor: rgb(45, 45, 45);", axis: "r", allocation: "auto 1fr", name: "", children: [
+                        {type: "gridBox", style: "width: 100%; height: 100%; overflow: auto; backgroundColor: var(--baseColor);", axis: "r", allocation: "auto 1fr", name: "", children: [
                             {type: "input", options: {type: "text"}},
                             {type: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBone", updateEventTarget: "ボーン選択", children: [
                                 {type: "hierarchy", name: "hierarchy",
@@ -260,7 +260,7 @@ export class Area_Timeline {
                             ]}
                         ]},
                         {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: rgb(65, 65, 65);"},
+                            {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--subColor);"},
                         ]},
                     ]}
                 ]}

@@ -43,7 +43,10 @@ export function searchAnimation(object, animationName) {
 
 export function appendAnimationToObject(object, name) {
     console.log("アニメーションの追加",object,name)
-    object.animationBlock.appendAnimation(name);
+    const animaton = object.animationBlock.appendAnimation(name);
+    if (animaton === null) {
+        console.warn("これ以上の追加はできません");
+    }
 }
 
 export function deleteAnimationToObject(object, animation) {

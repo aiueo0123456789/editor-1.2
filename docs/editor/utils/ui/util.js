@@ -346,21 +346,6 @@ export function createDoubleClickInput(fn, object) {
     return inputTag;
 }
 
-function setModeSelectOption(target, selectMode) {
-    for (const mode in modes) {
-        const modeSelectOptionTag = document.createElement('option');
-        modeSelectOptionTag.textContent = mode;
-        // modeSelectOptionTag.style.width = "10px";
-        // modeSelectOptionTag.style.height = "10px";
-        // modeSelectOptionTag.style.backgroundImage = `url(config/画像データ/ui_icon/${mode}.png)`;
-        modeSelectOptionTag.value = mode;
-        if (mode == selectMode) {
-            modeSelectOptionTag.selected = true;
-        }
-        target.appendChild(modeSelectOptionTag);
-    }
-}
-
 export function createShelf(target, title = "テスト") {
     const container = document.createElement("div");
     container.classList.add("shelf");

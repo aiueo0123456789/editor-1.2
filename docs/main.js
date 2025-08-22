@@ -8,20 +8,7 @@ const appendModal = document.getElementById("appendModal");
 const directories = document.getElementById("directories");
 appendModal.classList.add("hidden");
 
-export const mouseEvent = {};
 const projectNameInputTag = document.getElementById("projectName-input");
-
-// マウスイベント管理
-document.addEventListener("mousedown", (e) => {
-    mouseEvent.down = true;
-    mouseEvent.click = true;
-    mouseEvent.clickPosition = [e.clientX,e.clientY];
-    mouseEvent.movement = [e.movementX,e.movementY];
-})
-document.addEventListener("mouseup", (e) => {
-    mouseEvent.down = false;
-    mouseEvent.position = [e.clientX,e.clientY];
-})
 
 // セーブ
 document.getElementById("save-btn").addEventListener("click", () => {

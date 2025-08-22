@@ -130,9 +130,7 @@ export class GraphicMeshData extends RuntimeDataBase {
             GPU.runComputeShader(selectOnlyVerticesPipeline, [group], Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
         }
         const resultSelected = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer, graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.vertexOffset + graphicMesh.verticesNum);
-        console.log(resultSelected)
         for (const vertex of graphicMesh.allVertices) {
-            console.log(vertex.localIndex)
             vertex.selected = resultSelected[vertex.localIndex];
         }
         // GPU.consoleBufferData(this.selectedVertices, ["u32"], "当たり判定", {start: Math.ceil(armature.runtimeOffsetData.vertexOffset * 2 / 32), num: Math.ceil((armature.MAX_BONES) * 2 / 32)});

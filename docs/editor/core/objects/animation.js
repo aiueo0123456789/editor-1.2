@@ -32,11 +32,15 @@ export class AnimationBlock {
     }
 
     appendAnimation(name = "名称未設定") {
-        const animation = new this.useClass(name, this.belongObject);
-        this.list.push(animation);
-        managerForDOMs.update(this.list);
-        managerForDOMs.update(this.list.animationBlock);
-        return animation;
+        if (this.list.length < this.belongObject.MAX_ANIMATIONS) {
+            const animation = new this.useClass(name, this.belongObject);
+            this.list.push(animation);
+            managerForDOMs.update(this.list);
+            managerForDOMs.update(this.list.animationBlock);
+            return animation;
+        } else {
+            return null;
+        }
     }
 
     deleteAnimation(animation) {
@@ -98,10 +102,6 @@ class AnimationBase {
 
     get worldWeightIndex() {
         return this.belongObject.runtimeOffsetData.animationWeightOffset + this.index;
-    }
-
-    hasKeyFromFrame() {
-
     }
 
     // gc対象にしてメモリ解放

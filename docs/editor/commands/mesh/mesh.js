@@ -72,7 +72,7 @@ export class CreateEdge {
         app.scene.runtimeData.graphicMeshData.updateBaseData(graphicMesh);
         graphicMesh.editor.setBaseSilhouetteEdges(result.edges);
         console.log(result);
-        graphicMesh.editor.createMesh(true);
+        graphicMesh.editor.createMesh();
         app.options.assignWeights(graphicMesh);
     }
 

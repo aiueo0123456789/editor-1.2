@@ -551,14 +551,14 @@ export class CreatorForUI {
         let searchFilter = "";
         let searchParameter = "type";
         if (options.arrange) {
-            const section = createTag(t, "div", {style: "display: grid; width: 100%; height: fit-content; gridTemplateRows: auto auto 1fr; backgroundColor: var(--colorSection); border-radius: 5px; border: 1px solid var(--colorSectionBoder);"});
+            const section = createTag(t, "div", {style: "display: grid; width: 100%; height: fit-content; gridTemplateRows: auto auto 1fr; backgroundColor: var(--sub2Color); border-radius: 5px; border: 1px solid var(--subColor);"});
             const title = createTag(section, "div", {style: "textAlign: center;"});
             const seachTag = createTag(title, "input", {style: "fontSize: 120%",value: ""});
             seachTag.addEventListener("input", () => {
                 searchFilter = seachTag.value;
                 hierarchyUpdate();
             })
-            const splitLine = createTag(section, "div", {style: "width: 100%; height: 1px; backgroundColor: var(--colorSectionBoder)"});
+            const splitLine = createTag(section, "div", {style: "width: 100%; height: 1px; backgroundColor: var(--subColor)"});
             scrollableContainer = createTag(section, "div", {style: "padding: 0px 0px 15px 0px; height: 300px"});
             new ResizerForDOM(scrollableContainer, "h", 100, 1000);
         }

@@ -201,7 +201,6 @@ export class CodeEditorTag {
         // }
         const setCaretPosition = () => {
             const [left, top] = getPositionFromOffsets(focusLineOffset, focusOffsetInLine).map(x => Math.max(0, x));
-            console.log(left,top)
             this.caret.style.left = `${left}px`;
             this.caret.style.top = `${top}px`;
         }
@@ -272,7 +271,6 @@ export class CodeEditorTag {
                 if (!e.shiftKey) {
                     focusLineOffset = anchorLineOffset;
                     focusOffsetInLine = anchorOffsetInLine;
-                    console.log(focusLineOffset, focusOffsetInLine)
                 }
                 setCaretPosition();
             }
@@ -317,7 +315,6 @@ export class CodeEditorTag {
                 e.preventDefault(); // デフォルトの改行動作を無効化
                 const minLineOffset = Math.min(anchorLineOffset, focusLineOffset);
                 const offset = getStringsOffsetFromLineOffset(minLineOffset);
-                console.log(getStringsFromOffset(offset, offset + 1))
                 let insertBrCommand;
                 if (getStringsFromOffset(offset, offset + 2) == "//") {
                     insertBrCommand = new TextEditor_textSplice(this.sourceCode, offset, offset + 2);
@@ -350,7 +347,6 @@ export class CodeEditorTag {
             }
         });
         this.textViewArea.addEventListener("paste", (e) => {
-            console.log("ペースト")
             e.preventDefault(); // ブラウザの標準ペーストを止める
             // プレーンテキストを取得
             const text = (e.clipboardData || window.clipboardData).getData("text");
@@ -360,7 +356,6 @@ export class CodeEditorTag {
             app.operator.execute();
         });
         document.addEventListener('copy', (e) => {
-            console.log("コピー")
             const selection = window.getSelection();
             const range = selection.getRangeAt(0);
             const { startContainer, endContainer } = range;
@@ -406,7 +401,6 @@ export class CodeEditorTag {
                     range.setEnd(input.childNodes[0],0); // 終了位置
                     selection.removeAllRanges(); // 既存の選択をクリア
                     selection.addRange(range);   // 新しい選択を追加
-                    console.log(anchorLineOffset, anchorOffsetInLine)
                     command = new TextEditor_textSplice(this.sourceCode, ...getStartAndEndOffset());
                     lastAnchorOffsetInLine = anchorOffsetInLine;
                     app.operator.appendCommand(command);
@@ -484,7 +478,6 @@ export class CodeEditorTag {
         let usingFunctions = [];
         let reservedWords = [{name: "struct"}, {name: "if"}, {name: "else"}, {name: "return"}, {name: "vec2"}, {name: "vec3"}, {name: "vec4"}];
         input.addEventListener("input", () => {
-            console.log(command);
             command.update(input.textContent);
             this.autocompleteArea.style.display = "block";
             const range = document.createRange();
@@ -502,7 +495,6 @@ export class CodeEditorTag {
                 const liContainer = createTag(this.autocompleteArea, "div");
                 setClass(liContainer, "autocompleteFilterItem");
                 liContainer.addEventListener("mousedown", () => {
-                    console.log("予測", value)
                     input.textContent = value.name;
                     command.update(input.textContent);
                 })
@@ -519,13 +511,7 @@ export class CodeEditorTag {
             focusOffsetInLine = anchorOffsetInLine;
             setCaretPosition();
         })
-        // this.mainContainer.addEventListener("mousedown", (e) => {
-        //     if (!input.contains(e.target)) {
-        //         console.log("フォーカスが外れました")
-        //         app.operator.execute();
-        //         this.autocompleteArea.style.display = "none";
-        //     }
-        // })
+
         input.addEventListener("focusout", () => {
             console.log("フォーカスが外れました")
             app.operator.execute();
@@ -537,12 +523,9 @@ export class CodeEditorTag {
                 this.mainContainer.scrollLeft = lastScrollX;
                 this.mainContainer.scrollTop = lastScrollY;
                 isRestoringScroll = false;
-                return ;
             } else {
-                console.log("scrollS", this.mainContainer.scrollLeft, this.mainContainer.scrollTop);
                 lastScrollX = this.mainContainer.scrollLeft;
                 lastScrollY = this.mainContainer.scrollTop;
-                console.log("scrollE",lastScrollX, lastScrollY)
             }
         });
 
@@ -574,7 +557,6 @@ export class CodeEditorTag {
                         values: [...match[0].matchAll(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g)].map(match => match[1])
                     });
                 }
-                console.log(structs)
                 return structs;
             };
             const extractFunctions = (code) => {
