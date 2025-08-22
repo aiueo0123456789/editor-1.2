@@ -1,4 +1,4 @@
-import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/メッシュの自動生成/画像からメッシュを作る.js";
+import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
 import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
 import { arrayToArrayCopy, arrayToPush, indexOfSplice, waitUntilFrame } from "../../utils/utility.js";
 import { vec2 } from "../../utils/mathVec.js";
