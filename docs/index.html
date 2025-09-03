@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="style/menubar.css">
     <link rel="stylesheet" href="style/grid.css">
     <link rel="stylesheet" href="style/contextmenu.css">
-    <link rel="stylesheet" href="style/hierarchy.css">
+    <link rel="stylesheet" href="style/outliner.css">
     <link rel="stylesheet" href="style/timeLine.css">
     <link rel="stylesheet" href="style/inspector.css">
     <link rel="stylesheet" href="style/view.css">
@@ -48,10 +48,10 @@
     </div>
 
     <div class="all">
-        <ul id="contextmenu"></ul>
-        <ul id="custom-menu-items"></ul>
-        <ul id="custom-select-items"></ul>
-        <div id="menubar" class="menubar">
+        <ul id="contextmenu" class="hidden"></ul>
+        <ul id="custom-menu-items" class="hidden"></ul>
+        <ul id="custom-select-items" class="hidden"></ul>
+        <div class="menubar">
             <!-- <div class="label-input" id="projectNameContainer"> -->
             <div id="projectNameContainer">
                 <label for="projectName-input">プロジェク名</label>
@@ -67,12 +67,21 @@
             <label>アペンド
                 <input id="file-append-btn" type="file">
             </label>
-            <span style="position: relative;">
+            <!-- <span style="position: relative;">
                 <input type="number" value="100" style="width: fit-content; position: absolute; top: 0; left: 0;">
                 <p style="position: absolute; top: 0; left: 10px;">test</p>
-            </span>
+            </span> -->
+            <div style="width: 100%; display: flex; gap: 10px; align-items: center; overflow-x: auto;" id="workSpaces"></div>
         </div>
         <div id="app" class="main"></div>
+        <div class="menubar">
+            <div class="label-input">
+                <label>メモリ</label>
+                <div style="width: 100%; display: grid; grid-template-columns: 1fr 50px;">
+                    <input type="number">
+                </div>
+            </div>
+        </div>
     </div>
     <script src="main.js" type="module"></script>
 </body>

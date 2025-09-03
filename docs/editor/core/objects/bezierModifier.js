@@ -2,6 +2,7 @@ import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
 import { app } from "../../app/app.js";
+import { vec2 } from "../../utils/mathVec.js";
 
 class Vertex {
     constructor(/** @type {Point} */point,data) {
@@ -9,22 +10,7 @@ class Vertex {
         this.co = data.co;
         this.typeIndex = data.typeIndex;
         this.selected = false;
-        // let maxIndex = -1;
-        // for (let i = 0; i < 4; i ++) {
-        //     if (data.parentWeight.weights[i] > 0.85) {
-        //         maxIndex = i;
-        //     }
-        // }
-        // if (maxIndex != -1) {
-        //     for (let i = 0; i < 4; i ++) {
-        //         if (maxIndex == i) {
-        //             data.parentWeight.weights[i] = 1;
-        //         } else {
-        //             data.parentWeight.weights[i] = 0;
-        //         }
-        //     }
-        // }
-        this.parentWeight = data.parentWeight ? data.parentWeight : {indexs: [0,0,0,0], weights: [0,0,0,0]};
+        this.parentWeight = data.parentWeight;
     }
 
     getWorldAnimationIndex(animation) {
@@ -55,8 +41,6 @@ class Point {
         this.basePoint = new Vertex(this,Object.assign({typeIndex: 0},data.point));
         this.baseLeftControlPoint = new Vertex(this,Object.assign({typeIndex: 1},data.leftControlPoint));
         this.baseRightControlPoint = new Vertex(this,Object.assign({typeIndex: 2},data.rightControlPoint));
-
-        bezierModifier.allPoint.push(this);
     }
 
     get localIndex() {
@@ -79,13 +63,29 @@ class Point {
 }
 
 class Editor extends ObjectEditorBase {
-    constructor(bezierModifier) {
+    constructor(/** @type {BezierModifier} */bezierModifier) {
         super();
         this.bezierModifier = bezierModifier;
     }
 
     destroy() {
         this.bezierModifier = null;
+    }
+
+    createPoint(coordinate) {
+        return new Point(this.bezierModifier, {point: {co: coordinate, parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}, leftControlPoint: {co: vec2.addR(coordinate, [0, -10]), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}, rightControlPoint: {co: vec2.addR(coordinate, [0, 10]), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}});
+    }
+
+    appendPoint(point) {
+        console.trace("追加")
+        this.bezierModifier.allPoint.push(point);
+        app.scene.runtimeData.bezierModifierData.updateBaseData(this.bezierModifier);
+    }
+
+    deletePoint(point) {
+        if (!this.bezierModifier.allPoint.includes(point)) return ;
+        this.bezierModifier.allPoint.splice(this.bezierModifier.allPoint.indexOf(point), 1);
+        app.scene.runtimeData.bezierModifierData.updateBaseData(this.bezierModifier);
     }
 }
 
@@ -154,7 +154,7 @@ export class BezierModifier extends ObjectBase {
     init(data) {
         console.log(data)
         for (const point of data.points) {
-            new Point(this, point);
+            this.allPoint.push(new Point(this, point));
         }
         data.animationKeyDatas.forEach((keyData,index) => {
             const animationData = keyData.transformData.transformData;

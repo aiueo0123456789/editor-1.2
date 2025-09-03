@@ -12,6 +12,7 @@ import { ParameterManager } from '../../core/objects/parameterManager.js';
 import { Particle } from '../../core/objects/particle.js';
 import { Script } from '../../core/objects/script.js';
 import { Camera } from '../../core/objects/camera.js';
+import { DeleteObjectCommand } from '../../commands/object/object.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
@@ -209,7 +210,9 @@ class Objects {
     removeObject(object) {
         indexOfSplice(this.searchArrayFromObject(object), object);
         indexOfSplice(this.allObject, object);
-        this.scene.runtimeData.delete(object.runtimeData, object);
+        if (object.runtimeData) {
+            this.scene.runtimeData.delete(object.runtimeData, object);
+        }
     }
 
     appendObject(object) {
@@ -223,7 +226,7 @@ class Objects {
     }
 }
 
-class Hierarchy {
+class Outliner {
     constructor(scene) {
         this.scene = scene;
         this.objects = {type: "objects", id: "&objects", isRoot: true, children: []};
@@ -323,7 +326,7 @@ class Hierarchy {
         if (object.children) {
             // 削除対象の子要素を削除対象の親要素の子要素にする
             while (object.children.length > 0) {
-                this.addHierarchy(object.parent, object.children.pop());
+                this.addOutliner(object.parent, object.children.pop());
             }
         }
         this.updateParent(object);
@@ -336,8 +339,8 @@ export class Scene {
     constructor(/** @type {Application} */ app) {
         this.app = app;
         this.objects = new Objects(this);
-        this.hierarchy = new Hierarchy(this);
-        this.objects.createObjectAndSetUp({type: "パラメーターマネージャー"});
+        this.outliner = new Outliner(this);
+        // this.objects.createObjectAndSetUp({type: "パラメーターマネージャー"});
 
         this.renderingOrder = [];
 
@@ -367,12 +370,15 @@ export class Scene {
     }
 
     init() {
-        this.objects.appendObject(this.objects.createObject({
+        const script = this.objects.createObject({
             type: "スクリプト",
             name: "スクリプトテスト",
             id: "templateParticleUpdateCode",
             text: templateParticleUpdateCode
-        }));
+        });
+        this.objects.appendObject(script);
+
+        this.outliner.append(script, this.outliner.scripts);
 
         this.maskTextures.push(new MaskTexture("base"));
 
@@ -393,6 +399,11 @@ export class Scene {
             maskRenderPass.end();
             device.queue.submit([commandEncoder.finish()]);
         }
+    }
+
+    reset() {
+        app.operator.appendCommand(new DeleteObjectCommand(this.objects.allObject));
+        app.operator.execute();
     }
 
     // 選択している頂点のBBoxを取得
@@ -566,12 +577,10 @@ export class Scene {
 
         const childrenRoop = (children) => {
             for (const child of children) {
-                if (!child.parent.root) {
-                    if (child.type == "ベジェモディファイア") {
-                        // ベジェモディファイア親の変形を適応
-                        computePassEncoder.setBindGroup(0, child.individualGroup);
-                        computePassEncoder.dispatchWorkgroups(Math.ceil(child.verticesNum / 64), 1, 1); // ワークグループ数をディスパッチ
-                    }
+                if (child.type == "ベジェモディファイア") {
+                    // ベジェモディファイア親の変形を適応
+                    computePassEncoder.setBindGroup(0, child.individualGroup);
+                    computePassEncoder.dispatchWorkgroups(Math.ceil(child.verticesNum / 64), 1, 1); // ワークグループ数をディスパッチ
                 }
                 if (child.children) { // 子要素がある場合ループする
                     childrenRoop(child.children);
@@ -581,7 +590,7 @@ export class Scene {
         computePassEncoder.setBindGroup(1, this.runtimeData.bezierModifierData.parentApplyGroup);
         computePassEncoder.setBindGroup(2, this.runtimeData.armatureData.applyParentGroup);
         computePassEncoder.setPipeline(treeAnimationApplyPipeline);
-        childrenRoop(this.hierarchy.root[0].children);
+        childrenRoop(this.outliner.root[0].children);
 
         // グラフィックメッシュ親の変形を適応
         if (this.objects.graphicMeshs.length) {
@@ -618,7 +627,7 @@ export class Scene {
         for (const { type, data } of resolved) {
             result[conversion[type]].push(data);
         }
-        result.hierarchy = this.hierarchy.getSaveData();
+        result.outliner = this.outliner.getSaveData();
         return result;
     }
 
@@ -638,7 +647,7 @@ export class Scene {
 
     destroy() {
         this.maskTextures.length = 0;
-        this.hierarchy.destroy();
+        this.outliner.destroy();
         this.objects.destroy();
     }
 
@@ -735,7 +744,7 @@ class State {
         return this.selectedObject.includes(object);
     }
 
-    getSelectBone() {
+    getSelectBones() {
         const result = [];
         for (const /** @type {Armature} */ armature of this.selectedObject.filter(object => object.type == "アーマチュア")) {
             result.push(...armature.allBone.filter(bone => bone && bone.selectedBone));

@@ -5,7 +5,7 @@ export class Area_Property {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"], "app": app},
+            inputObject: {"h": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
             DOM: [
                 {type: "section", name: "アニメーション", children: [
                     {type: "input", label: "開始", withObject: "scene/frame_start", options: {type: "number", min: 0, max: 500, step: 1}},
@@ -13,7 +13,7 @@ export class Area_Property {
                     {type: "input", label: "再生速度", withObject: "scene/frame_speed", options: {type: "number", min: 0, max: 10, step: 0.1}},
                 ]},
                 {type: "section", name: "マスク", children: [
-                    {type: "list", appendEvent: () => {
+                    {type: "list", label: "マスク", appendEvent: () => {
                         app.scene.appendMaskTexture("新規");
                     }, deleteEvent: (masks) => {
                         for (const mask of masks) {
@@ -51,7 +51,7 @@ export class Area_Property {
     }
 
     update() {
-        for (const object of app.scene.hierarchy.root) {
+        for (const object of app.scene.outliner.root) {
             const div = document.createElement("div");
             div.textContent = object.name;
         }

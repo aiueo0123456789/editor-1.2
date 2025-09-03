@@ -1,4 +1,4 @@
-.hierarchy {
+.outliner {
     display: grid;
     width: 100%;
     height: 20px;
@@ -6,41 +6,41 @@
     border-radius: 0px;
 }
 
-.hierarchy-checkBox {
+.outliner-checkBox {
     height: 100%;
     height: 100%;
     grid-column: 1 / 2;
 }
 
-.hierarchy-name {
+.outliner-name {
     display: grid;
     grid-template-columns: 10px auto 20px 1fr;
     height: 100%;
     grid-column: 3 / 4;
 }
 
-.hierarchy-name button {
+.outliner-name button {
     grid-column: 1 / 2;
     width: fit-content;
 }
 
-.hierarchy-name img {
+.outliner-name img {
     aspect-ratio: 1 / 1;
     width: 100%;
     height: 100%;
     grid-column: 3 / 4;
 }
 
-.hierarchy-name input {
+.outliner-name input {
     grid-column: 2 / 3;
 }
 
-.hierarchy-zIndex {
+.outliner-zIndex {
     height: 100%;
     grid-column: 4 / 5;
 }
 
-.hierarchy-hide {
+.outliner-hide {
     height: 100%;
     width: fit-content;
     grid-column: 5 / 6;

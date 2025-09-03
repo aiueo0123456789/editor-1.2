@@ -155,7 +155,6 @@ export class DOMsManager {
     }
 
     deleteFlag(flag) {
-        console.log(this.flags, flag)
         if (!this.flags.has(flag)) return ;
         for (const data of this.flags.get(flag)) {
             data.remove();

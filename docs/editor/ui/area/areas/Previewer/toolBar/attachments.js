@@ -5,14 +5,14 @@ export class BoneAttachmentsModal {
         this.name = "ボーンアタッチメント";
         this.values = [0,0,0,0];
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.scene.hierarchy, "scene": app.scene, "values": this.values},
+            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.scene.outliner, "scene": app.scene, "values": this.values},
             DOM: [
                 {type: "div", class: "sideBar-shelfe", children: [
                     {type: "section", name: "ボーンアタッチメント", children: [
-                        {type: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBone", updateEventTarget: "ボーン選択", children: [
+                        {type: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBone", updateEventTarget: "選択物", children: [
                             // {type: "dbInput", withObject: {object: "0", parameter: "index"}, options: {type: "text"}},
                             {type: "select", label: "", writeObject: null, sourceObject: ["物理"], options: {initValue: "アタッチメントの追加", writeObject: (value) => {
-                                app.scene.state.getSelectBone()[0].attachments.append(value);
+                                app.scene.state.getSelectBones()[0].attachments.append(value);
                             }}},
                             {type: "list", appendEvent: () => {
                                 // appendAnimationToObject(app.scene.state.activeObject, "新規");

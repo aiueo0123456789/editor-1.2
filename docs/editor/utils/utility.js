@@ -112,15 +112,24 @@ export function allFalse(array) {
     return true;
 }
 
-// textを読み込む
+// ファイルを読み込む（text または json）
 export async function loadFile(path) {
     try {
         const res = await fetch(path);
-        if (res.status == 404) console.trace("ファイルが見つかりません", e);
-        return await res.text();
+        if (!res.ok) {
+            console.trace("ファイルが見つかりません:", path);
+            return null;
+        }
+
+        // 拡張子で判定
+        if (path.toLowerCase().endsWith(".json")) {
+            return await res.json();
+        } else {
+            return await res.text();
+        }
     } catch (e) {
         console.trace("エラー", e);
-        return "";
+        return null;
     }
 }
 

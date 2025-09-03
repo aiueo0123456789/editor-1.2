@@ -1,0 +1,27 @@
+{
+    "日本語": {
+        "Outliner": "アウトライナー",
+        "Inspector": "インスペクタ",
+        "Property": "プロパティ",
+        "Previewer": "プレビュー",
+        "Viewer": "ビュアー",
+        "Timeline2": "タイムライン2",
+        "Timeline": "タイムライン",
+        "firstFrame": "開始",
+        "finalFrame": "終了",
+        "currentFrame": "現在",
+        "frameSpeed": "再生速度",
+        "objectMode": "オブジェクトモード",
+        "projectName": "プロジェクト名",
+        "camera": "カメラ",
+        "maskTexture": "マスクテクスチャ",
+        "view": "ビュー",
+        "select": "選択",
+        "allSelect": "全選択",
+        "add": "追加",
+        "noSelected": "選択されていません",
+        "options": "オプション"
+    },
+    "英語": {
+    }
+}

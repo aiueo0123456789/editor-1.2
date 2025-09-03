@@ -9,11 +9,11 @@ export class CreateObjectCommand {
 
     execute() {
         app.scene.objects.appendObject(this.object);
-        app.scene.hierarchy.append(this.object, "")
+        app.scene.outliner.append(this.object, "")
     }
 
     undo() {
-        app.scene.hierarchy.remove(this.object); // ヒエラルキーから削除
+        app.scene.outliner.remove(this.object); // ヒエラルキーから削除
         app.scene.objects.remove(this.object);
     }
 }
@@ -26,7 +26,7 @@ export class DeleteObjectCommand {
 
     execute() {
         for (const object of this.objects) {
-            app.scene.hierarchy.remove(object); // ヒエラルキーから削除
+            app.scene.outliner.remove(object); // ヒエラルキーから削除
             app.scene.objects.removeObject(object);
         }
     }
@@ -34,7 +34,7 @@ export class DeleteObjectCommand {
     undo() {
         for (const object of this.objects) {
             app.scene.objects.appendObject(object);
-            app.scene.hierarchy.append(object, "")
+            app.scene.outliner.append(object, "")
         }
     }
 }
@@ -49,13 +49,13 @@ export class ChangeParentCommand {
 
     execute() {
         this.targets.forEach((target) => {
-            app.scene.hierarchy.insert(target, this.newParent);
+            app.scene.outliner.insert(target, this.newParent);
         })
     }
 
     undo() {
         this.targets.forEach((target, index) => {
-            app.scene.hierarchy.insert(target, this.originalParent[index]);
+            app.scene.outliner.insert(target, this.originalParent[index]);
         })
     }
 }

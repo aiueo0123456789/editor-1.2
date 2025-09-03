@@ -1,3 +1,5 @@
+import { createID } from "./util.js";
+
 export const connectingString = "><-/*+><";
 
 function clamp(min,max,value) {
@@ -10,7 +12,7 @@ function clamp(min,max,value) {
     return value;
 }
 
-const minGridSize = 50;
+const resizerWidth = 3;
 
 export class AutoGrid {
     constructor(id, t, axis, initWidthOrHeight) {
@@ -21,27 +23,30 @@ export class AutoGrid {
         this.child1 = document.createElement("div");
         this.child2 = document.createElement("div");
         if (axis) {
-            this.container.className = axis === "w" ? "grid-w" : "grid-h";
+            this.container.className = "grid";
 
-            this.child1.className = axis === "w" ? "grid-w-left" : "grid-h-top";
+            this.child1.className = "grid-child";
             this.child1.id = id + connectingString + "0";
 
             const resizerDiv = document.createElement("div");
-            resizerDiv.className = axis === "w" ? "grid-resizer-w" : "grid-resizer-h";
+            resizerDiv.className = "grid-resizer";
 
             resizerDiv.addEventListener("contextmenu", () => {
                 console.log("グリッド追加");
                 // appendGrid(this.htmlElement, {id: "ui1_1", type: "", children: []},);
             })
 
-            this.child2.className = axis === "w" ? "grid-w-right" : "grid-h-bottom";
+            this.child2.className = "grid-child";
             this.child2.id = id + connectingString + "1";
 
             this.container.append(this.child1,resizerDiv,this.child2);
 
-            if (axis === "w") {
-                if (initWidthOrHeight) {
-                    this.container.style.gridTemplateColumns = `${initWidthOrHeight}% 4px 1fr`;
+            if (axis === "c") {
+                resizerDiv.style.cursor = "col-resize";
+                if (!initWidthOrHeight || initWidthOrHeight == "1fr") {
+                    this.container.style.gridTemplateColumns = `1fr ${resizerWidth}px 1fr`;
+                } else {
+                    this.container.style.gridTemplateColumns = `${initWidthOrHeight}% ${resizerWidth}px 1fr`;
                 }
                 resizerDiv.addEventListener("mousedown", (e) => {
                     e.stopPropagation();
@@ -55,7 +60,7 @@ export class AutoGrid {
                         const x = e.pageX - (rect.left + window.scrollX);
                         // const y = e.pageY - (rect.top + window.scrollY);
                         const newWidth = clamp(0.1, 0.9, x / maxX);
-                        this.container.style.gridTemplateColumns = `${newWidth * 100}% 4px 1fr`;
+                        this.container.style.gridTemplateColumns = `${newWidth * 100}% ${resizerWidth}px 1fr`;
                     };
                     const onMouseUp = () => {
                         this.isResizing = false;
@@ -68,8 +73,11 @@ export class AutoGrid {
                     document.addEventListener("mouseup", onMouseUp);
                 });
             } else {
-                if (initWidthOrHeight) {
-                    this.container.style.gridTemplateRows = `${initWidthOrHeight}% 4px 1fr`;
+                resizerDiv.style.cursor = "row-resize";
+                if (!initWidthOrHeight || initWidthOrHeight == "1fr") {
+                    this.container.style.gridTemplateRows = `1fr ${resizerWidth}px 1fr`;
+                } else {
+                    this.container.style.gridTemplateRows = `${initWidthOrHeight}% ${resizerWidth}px 1fr`;
                 }
                 resizerDiv.addEventListener("mousedown", (e) => {
                     e.stopPropagation();
@@ -82,7 +90,7 @@ export class AutoGrid {
                         // サイズを計算して適用
                         const y = e.pageY - (rect.top + window.scrollY);
                         const newHeight = clamp(0.1, 0.9, y / maxY);
-                        this.container.style.gridTemplateRows = `${newHeight * 100}% 4px 1fr`;
+                        this.container.style.gridTemplateRows = `${newHeight * 100}% ${resizerWidth}px 1fr`;
                     };
                     const onMouseUp = () => {
                         this.isResizing = false;
@@ -105,4 +113,8 @@ export class AutoGrid {
     getchildrenTag() {
         return ;
     }
+}
+
+export function createGrid(t, axis) {
+    return new AutoGrid(createID(), t, axis, "1fr");
 }

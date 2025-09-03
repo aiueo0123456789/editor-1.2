@@ -114,9 +114,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     let fixVertexIndex = allocation.vertexBufferOffset * 3 + vertexIndex;
-    let targetVertices = select(vec2<f32>(0.0), renderingBezier[fixVertexIndex], allocation.myType == 2u);
-    // var newPosition = targetVertices;
-    // var newPosition = renderingBezier[fixVertexIndex];
+    let targetVertices = renderingBezier[fixVertexIndex];
     var newPosition = vec2<f32>(0.0);
     if (allocation.parentType == 2) { // 親がベジェモディファイア
         let weightBlock = bezierWeightBlocks[fixVertexIndex];
@@ -144,8 +142,6 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         let position = vec3<f32>(targetVertices,1.0);
         let indexs = weightBlock.indexs;
         let weights = weightBlock.weights;
-        // let indexs = vec4<u32>(6u,0u,0u,0u);
-        // let weights = vec4<f32>(1.0,0.0,0.0,0.0);
         // 各ボーンのワールド行列を用いてスキニング
         for (var i = 0u; i < 4u; i = i + 1u) {
             let weight = weights[i];
@@ -154,9 +150,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
                 newPosition += weight * (boneMatrix[boneIndex] * inverseMat3x3(baseBoneMatrix[boneIndex]) * position).xy;
             }
         }
+    } else if (allocation.parentType == 0) { // 親なし
+        newPosition = targetVertices;
     }
-    if (allocation.myType == 2u) {
-        renderingBezier[fixVertexIndex] = newPosition;
-    } else {
-    }
+    renderingBezier[fixVertexIndex] = newPosition;
 }

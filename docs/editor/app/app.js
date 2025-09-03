@@ -4,7 +4,7 @@ import { AutoGrid } from "../utils/ui/grid.js";
 import { createID } from "../utils/ui/util.js";
 import { Operator } from "../operators/commandOperator.js";
 import { Area_Viewer } from "../ui/area/areas/Viewer/area_Viewer.js";
-import { Area_Hierarchy } from "../ui/area/areas/Hierarchy/area_Hierarchy.js";
+import { Area_Outliner } from "../ui/area/areas/Outliner/area_Outliner.js";
 import { Area_Inspector } from "../ui/area/areas/Inspector/area_Inspector.js";
 import { Area_Timeline } from "../ui/area/areas/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "../ui/area/areas/Viewer/area_ViewerSpaceData.js";
@@ -12,7 +12,7 @@ import { TimelineSpaceData } from "../ui/area/areas/Timeline/area_TimelineSpaceD
 import { InputManager } from "./inputManager/inputManager.js";
 import { indexOfSplice, loadFile } from "../utils/utility.js";
 import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
-import { HierarchySpaceData } from "../ui/area/areas/Hierarchy/area_HierarchySpaceData.js";
+import { OutlinerSpaceData } from "../ui/area/areas/Outliner/area_OutlinerSpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
 import { GPU } from "../utils/webGPU.js";
 import { CreateObjectCommand, DeleteObjectCommand } from "../commands/object/object.js";
@@ -22,15 +22,19 @@ import { NodeEditorSpaceData } from "../ui/area/areas/NodeEditor/area_NodeEditor
 import { Area_NodeEditor } from "../ui/area/areas/nodeEditor/area_NodeEditor.js";
 import { Area_Previewer } from "../ui/area/areas/Previewer/area_Previewer.js";
 import { PreviewerSpaceData } from "../ui/area/areas/Previewer/area_PreviewerSpaceData.js";
+import { WorkSpaces } from "./workSpaces/workSpaces.js";
+import { Area_Timeline2 } from "../ui/area/areas/Timeline2/area_Timeline2.js";
 
+const allLanguageData = await loadFile("./config/language/language.json");
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
 const calculateParentWeightForBezier = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bezier.wgsl"));
 
 export const useClassFromAreaType = {
     "Viewer": {area: Area_Viewer, areaConfig: ViewerSpaceData},
-    "Hierarchy": {area: Area_Hierarchy, areaConfig: HierarchySpaceData},
+    "Outliner": {area: Area_Outliner, areaConfig: OutlinerSpaceData},
     "Inspector": {area: Area_Inspector, areaConfig: ViewerSpaceData},
     "Timeline": {area: Area_Timeline, areaConfig: TimelineSpaceData},
+    "Timeline2": {area: Area_Timeline2, areaConfig: TimelineSpaceData},
     "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
     "NodeEditor": {area: Area_NodeEditor, areaConfig: NodeEditorSpaceData},
     "Previewer": {area: Area_Previewer, areaConfig: PreviewerSpaceData},
@@ -270,6 +274,8 @@ class AppConfig {
         this.projectName = "名称未設定";
         this.workSpaceTool = new WorkSpaceTool();
 
+        this.language = allLanguageData["日本語"];
+
         this.MASKTEXTURESIZE = [1024,1024];
 
         this.MAX_GRAPHICMESH = 200; // グラフィックメッシュの最大数
@@ -281,7 +287,7 @@ class AppConfig {
         this.MAX_BONES_PER_ARMATURE = 500; // アーマチュアあたりの最大ボーン数
 
         this.MAX_BEZIERMODIFIER = 32; // ベジェモディファイアの最大数
-        this.MAX_POINTS_PER_BEZIERMODIFIER = 5; // ベジェモディファイアあたりの最大頂点数
+        this.MAX_POINTS_PER_BEZIERMODIFIER = 50; // ベジェモディファイアあたりの最大頂点数
         this.MAX_ANIMATIONS_PER_BEZIERMODIFIER = 10; // ベジェモディファイアあたりの最大アニメーション数
 
         this.areasConfig = {};
@@ -349,7 +355,7 @@ class AppConfig {
                 //     {label: "test"},
                 // ],
             },
-            "Hierarchy": {
+            "Outliner": {
                 "オブジェクト": [
                     {label: "オブジェクトを追加", children: [
                         {label: "グラフィックメッシュ"},
@@ -377,20 +383,24 @@ export class Application { // 全てをまとめる
         this.areas = [];
         this.areaMap = new Map();
         this.activeArea = null;
+        this.workSpaces = new WorkSpaces(this);
         this.fileIO = new FaileIOManager(this);
         this.input = new InputManager(this);
         this.operator = new Operator(this);
+
 
         this.contextmenu = new ContextmenuOperator(this);
     }
 
     init() {
         this.scene.init();
+        this.workSpaces.init();
+        console.log(this)
     }
 
     async getSaveData() {
         const result = {};
-        // result.hierarchy = this.hierarchy.getSaveData();
+        // result.outliner = this.outliner.getSaveData();
         result.scene = await this.scene.getSaveData();
         return result;
     }
@@ -401,15 +411,13 @@ export class Application { // 全てをまとめる
         return area;
     }
 
-    setAreaType(/** @type {AutoGrid} */grid, index, type) {
+    setAreaType(t, type) {
         const area_dom = document.createElement("div");
         area_dom.style.width = "100%";
         area_dom.style.height = "100%";
         const area = new Area(type,area_dom);
-        area.grid = grid;
         this.areas.push(area);
-        this.areaMap.get(grid).push(area);
-        grid[`child${index + 1}`].append(area_dom);
+        t.append(area_dom);
     }
 
     deleteArea(/** @type {Area} */area) {
@@ -444,21 +452,6 @@ export class Application { // 全てをまとめる
 }
 
 export const app = new Application(document.getElementById("app"));
-
-const area1 = app.createArea("w");
-const area1_h = app.createArea("h", area1.child1);
-const area2 = app.createArea("w", area1.child2);
-const area3 = app.createArea("h", area2.child2);
-const area4 = app.createArea("h", area2.child1);
-app.setAreaType(area1_h,0,"Viewer");
-app.setAreaType(area1_h,1,"Timeline");
-app.setAreaType(area4,0,"Hierarchy");
-// app.setAreaType(area4,0,"Previewer");
-// app.setAreaType(area4,1,"Previewer");
-app.setAreaType(area4,1,"NodeEditor");
-// app.setAreaType(area4,1,"Property");
-app.setAreaType(area3,0,"Property");
-app.setAreaType(area3,1,"Inspector");
 
 app.init();
 

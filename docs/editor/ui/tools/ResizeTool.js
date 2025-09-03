@@ -56,7 +56,7 @@ export class ResizeModal {
                 this.command = new ResizeCommand(this.type, app.scene.state.getSelectVertices(), {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
             } else if (this.type == "ボーンアニメーション編集") {
-                this.command = new ResizeCommand(this.type,app.scene.state.getSelectBone());
+                this.command = new ResizeCommand(this.type,app.scene.state.getSelectBones());
                 this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
             }
             this.command.setCenterPoint(this.center);

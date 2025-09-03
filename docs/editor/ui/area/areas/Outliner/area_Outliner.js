@@ -1,35 +1,13 @@
 import { app } from "../../../../app/app.js";
 
-export class Area_Hierarchy {
+export class Area_Outliner {
     constructor(area) {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
+            inputObject: {"h": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
             DOM: [
-                {type: "option", name: "情報", children: [
-                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto auto auto 1fr", children: [
-                        {type: "padding", size: "10px"},
-                        {type: "flexBox", interval: "5px", name: "", children: [
-                            {type: "button", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                            {type: "button", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                            {type: "button", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                        ]},
-                        {type: "separator", size: "10px"},
-                        {type: "flexBox", interval: "5px", name: "", children: [
-                            {type: "buttons", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                        ]},
-
-                        {type: "separator", size: "10px"},
-
-                        {type: "flexBox", interval: "5px", name: "", children: [
-                            {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                        ]},
-
-                        {type: "padding", size: "10px"},
-                    ]}
-                ]},
-                {type: "hierarchy", name: "hierarchy", options: {arrange: true, clickEventFn: (event, object) => {
+                {type: "outliner", name: "outliner", options: {arrange: true, clickEventFn: (event, object) => {
                         if (app.scene.state.currentMode == "オブジェクト") {
                             app.scene.state.setSelectedObject(object, app.input.keysDown["Ctrl"]);
                             app.scene.state.setActiveObject(object);
@@ -92,7 +70,7 @@ export class Area_Hierarchy {
     }
 
     update() {
-        for (const object of app.scene.hierarchy.root) {
+        for (const object of app.scene.outliner.root) {
             const div = document.createElement("div");
             div.textContent = object.name;
         }

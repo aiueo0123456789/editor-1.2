@@ -47,9 +47,9 @@ export function setStyle(element,style) {
 export function setLabel(target, labelText, inner) {
     const label = document.createElement("label");
     label.textContent = labelText;
-
     const div = document.createElement("div");
     div.className = "label-input";
+    // div.append(document.createElement("span"),label,document.createElement("span"),inner,document.createElement("span"));
     div.append(label,inner);
     target.append(div);
     return div;
@@ -63,7 +63,7 @@ export function createMinButton(target, text) {
     return button;
 }
 
-export function createMinList(target, listName) {
+export function createMinList(target, listName, appendEvent, deleteEvent) {
     const listNameTag = document.createElement("p");
     listNameTag.textContent = listName;
     const container = document.createElement("div");
@@ -74,11 +74,11 @@ export function createMinList(target, listName) {
 
     const appendButton = createMinButton(actionButtons, "+");
     const deleteButton = createMinButton(actionButtons, "-");
-    const listContainer = document.createElement("ul");
+    const listContainer = document.createElement("div");
     listContainer.classList.add("minList");
     listContainer.style.height = "200px";
     new ResizerForDOM(listContainer, "h", 100, 600);
-    const list = document.createElement("ul");
+    const list = document.createElement("div");
     list.classList.add("scrollable","gap-2px");
     listContainer.append(list);
 
@@ -86,60 +86,6 @@ export function createMinList(target, listName) {
     target.append(listNameTag);
     target.append(container);
     return {container: container, listContainer: listContainer, list: list, appendButton: appendButton, deleteButton: deleteButton};
-}
-
-export function createMinListNoAppend(listName) {
-    const target = document.createElement("div");
-    const listNameTag = document.createElement("p");
-    listNameTag.textContent = listName;
-    const container = document.createElement("div");
-    container.classList.add("flex-gap10px");
-
-    const actionButtons = document.createElement("div");
-    actionButtons.style.width = "20px";
-
-    const appendButton = createMinButton(actionButtons, "+");
-    const deleteButton = createMinButton(actionButtons, "-");
-    const listContainer = document.createElement("ul");
-    listContainer.classList.add("minList");
-    listContainer.style.height = "200px";
-    new ResizerForDOM(listContainer, "h", 100, 600);
-    const list = document.createElement("ul");
-    list.classList.add("scrollable","gap-2px");
-    listContainer.append(list);
-
-    container.append(listContainer, actionButtons)
-    target.append(listNameTag);
-    target.append(container);
-    return target;
-}
-
-export function createMinWorkSpace(target, listName, workSpace = null, buttons = []) {
-    const listNameTag = document.createElement("p");
-    listNameTag.textContent = listName;
-    const container = document.createElement("div");
-    container.classList.add("flex-gap10px");
-
-    const actionButtons = document.createElement("div");
-    actionButtons.style.width = "20px";
-
-    const buttonsForDOM = {};
-    for (const button of buttons) {
-        buttonsForDOM[button] = createMinButton(actionButtons, button);
-    }
-    const listContainer = document.createElement("ul");
-    listContainer.classList.add("minList");
-    listContainer.style.height = "200px";
-    new ResizerForDOM(listContainer, "h", 100, 600);
-    if (!workSpace) {
-        workSpace = document.createElement("div");
-    }
-    listContainer.append(workSpace);
-
-    container.append(listContainer, actionButtons)
-    target.append(listNameTag);
-    target.append(container);
-    return {container: container, listContainer: listContainer, list: workSpace, buttons: buttonsForDOM};
 }
 
 export function createSection(target, sectionName, section, className = "section") {
@@ -213,7 +159,7 @@ export function createChecks(target, checks) {
     return result;
 }
 
-export function createCheckbox(type = "custom-checkbox", text = "") {
+function createCheckbox(type = "custom-checkbox", text = "") {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.style.display = "none";

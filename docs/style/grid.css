@@ -1,67 +1,19 @@
-.grid-w {
+.grid-resizer {
+    width: 100%;
+    height: 100%;
+    background-color: var(--backColor);
+}
+
+/* グリッド分割 */
+.grid {
     display: grid;
     width: 100%;
     height: 100%;
-    grid-template-columns: 1fr 4px 1fr; /* 左右2分割 */
-    grid-template-rows: 1fr; /* 上下1分割 */
 }
 
-.grid-resizer-w {
-    width: 4px;
+/* グリッドの子要素 */
+.grid-child {
     height: 100%;
-    background-color: #121212;
-    grid-column: 2 / 3;
-    grid-row: 1;
-    cursor: col-resize;
-}
-
-.grid-w-left {
-    grid-column: 1 / 2; /* 右上 */
-    grid-row: 1;
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* 内容が高さに影響を与えないようにする */
-}
-
-.grid-w-right {
-    grid-column: 3 / 4; /* 右下 */
-    grid-row: 1;
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* 内容が高さに影響を与えないようにする */
-}
-
-/* グリッド縦分割 */
-.grid-h {
-    display: grid;
-    width: 100%;
-    height: 100%;
-    grid-template-columns: 1fr; /* 左右1分割 */
-    grid-template-rows: 1fr 4px 1fr; /* 上下2分割 */
-}
-
-.grid-resizer-h {
-    width: 100%;
-    height: 4px;
-    background-color: #121212;
-    grid-column: 1; /* 右上 */
-    grid-row: 2 / 3;
-    cursor: row-resize;
-}
-
-/* グリッド縦分割の上 */
-.grid-h-top {
-    height: 100%;
-    grid-column: 1; /* 右上 */
-    grid-row: 1 / 2;
-    overflow: hidden; /* 内容が高さに影響を与えないようにする */
-}
-
-/* グリッド縦分割の下 */
-.grid-h-bottom {
-    height: 100%;
-    grid-column: 1; /* 右下 */
-    grid-row: 3 / 4;
     overflow: hidden; /* 内容が高さに影響を与えないようにする */
 }
 
@@ -72,6 +24,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: auto;
 }
 
 .container {

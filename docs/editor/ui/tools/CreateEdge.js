@@ -1,11 +1,11 @@
 import { app } from "../../app/app.js";
-import { CreateEdge } from "../../commands/mesh/mesh.js";
+import { CreateEdgeFromeTextureCommand } from "../../commands/mesh/mesh.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 
 export class CreateEdgeTool {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
-        this.command = new CreateEdge(app.scene.state.selectedObject);
+        this.command = new CreateEdgeFromeTextureCommand(app.scene.state.selectedObject);
         this.values = [
             1,10, // スライド量
         ];

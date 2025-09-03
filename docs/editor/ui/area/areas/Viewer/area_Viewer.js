@@ -24,6 +24,8 @@ import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 import { ModalOperator } from '../../../../operators/modalOperator.js';
 import { CreateEdgeTool } from '../../../tools/CreateEdge.js';
 import { Particle } from '../../../../core/objects/particle.js';
+import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
+import { AppendPoint } from '../../../tools/AppendPoint.js';
 
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t", "wl");
@@ -66,11 +68,11 @@ export class Area_Viewer {
         this.areasConfig = app.appConfig.areasConfig["Viewer"];
 
         this.struct = {
-            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
+            inputObject: {"h": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option", style: "padding: 5px", class: "sharpBoder", name: "情報", children: [
-                        {type: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
+                    {type: "option", name: "情報", children: [
+                        {type: "gridBox", style: "padding: 2px;", class: "minLimitClear", axis: "c", allocation: "auto 1fr auto", children: [
                             {type: "flexBox", interval: "10px", children: [
                                 {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: {path: "scene/state/%activeObject"}, children: [
                                     {type: "if", formula: {source: "/type", conditions: "==", value: "グラフィックメッシュ"},
@@ -142,36 +144,30 @@ export class Area_Viewer {
                             {type: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
                                 {type: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュウェイト編集"},
                                 true: [
-                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto 1fr", children: [
-                                        {type: "padding", size: "10px"},
+                                    {type: "flexBox", interval: "10px", children: [
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
                                                 {type: "select", label: "ベジェの種類", writeObject: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
                                             ]}
                                         ]},
-                                        {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
                                                 {type: "input", withObject: "areasConfig/weightPaintMetaData/paintSize", options: {type: "number", min: 0, max: 1000, step: 0.01}, custom: {visual: "1"}},
                                             ]}
                                         ]},
-                                        {type: "padding", size: "10px"},
                                     ]},
                                 ], false: [
-                                    {type: "gridBox", axis: "c", allocation: "1fr auto auto auto 1fr", children: [
-                                        {type: "padding", size: "10px"},
+                                    {type: "flexBox", interval: "10px", children: [
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
                                                 {type: "select", label: "種類", writeObject: "areasConfig/proportionalEditType", sourceObject: "areasConfig/proportionalEditTypes", options: {initValue: "0"}},
                                             ]}
                                         ]},
-                                        {type: "separator", size: "10px"},
                                         {type: "flexBox", interval: "5px", name: "", children: [
                                             {type: "heightCenter", children: [
                                                 {type: "input", withObject: "areasConfig/proportionalSize", options: {type: "number", min: 0}, custom: {visual: "1"}},
                                             ]}
                                         ]},
-                                        {type: "padding", size: "10px"},
                                     ]},
                                 ]}
                             ]},
@@ -251,13 +247,17 @@ export class Area_Viewer {
                     if (state.currentMode == "オブジェクト") {
                         if (state.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
                             state.setModeForSelected("メッシュ頂点アニメーション編集");
+                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else if (inputManager.consumeKeys(["w"])) {
                             state.setModeForSelected("メッシュウェイト編集");
+                            this.modalOperator.changeModals({"e": ExtrudeMove,"x": DeleteTool});
                         } else {
                             state.setModeForSelected("メッシュ編集");
+                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "p": ParentPickModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool});
                         }
                     } else {
                         state.setModeForSelected("オブジェクト");
+                        this.modalOperator.changeModals({"p": ParentPickModal});
                     }
                 }
             } else if (state.activeObject.type == "アーマチュア") {
@@ -265,15 +265,18 @@ export class Area_Viewer {
                     if (state.currentMode == "オブジェクト") {
                         if (inputManager.consumeKeys(["a"])) {
                             state.setModeForSelected("ボーンアニメーション編集");
+                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else {
                             state.setModeForSelected("ボーン編集");
+                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove,"x": DeleteTool});
                         }
                     } else {
                         state.setModeForSelected("オブジェクト");
+                        this.modalOperator.changeModals({"p": ParentPickModal});
                     }
                 }
                 if (inputManager.consumeKeys(["i"])) {
-                    const bones = app.scene.state.getSelectBone();
+                    const bones = app.scene.state.getSelectBones();
                     bones.forEach(bone => {
                         app.options.keyframeInsert(bone, app.scene.frame_current);
                     })
@@ -283,13 +286,17 @@ export class Area_Viewer {
                     if (state.currentMode == "オブジェクト") {
                         if (state.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
                             state.setModeForSelected("ベジェ頂点アニメーション編集");
+                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else if (inputManager.consumeKeys(["w"])) {
                             state.setModeForSelected("ベジェウェイト編集");
+                            this.modalOperator.changeModals({});
                         } else {
                             state.setModeForSelected("ベジェ編集");
+                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "v": AppendPoint});
                         }
                     } else {
                         state.setModeForSelected("オブジェクト");
+                        this.modalOperator.changeModals({"p": ParentPickModal});
                     }
                 }
             }
@@ -297,6 +304,11 @@ export class Area_Viewer {
         if (state.activeObject.type == "オブジェクト") {
             if (inputManager.consumeKeys(["a"])) {
                 app.scene.state.selectAll();
+            }
+        }
+        if (state.currentMode == "ベジェ編集") {
+            if (inputManager.consumeKeys(["e"])) {
+                app.operator.appendCommand(new AppendPointCommand());
             }
         }
     }
@@ -339,7 +351,7 @@ export class Area_Viewer {
         } else if (state.currentMode == "メッシュウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.scene.state.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
-                const bone = app.scene.runtimeData.armatureData.getSelectBone();
+                const bone = app.scene.runtimeData.armatureData.getSelectBones();
                 changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
             } else {
                 this.modalOperator.setModal(WeightPaintModal, this.inputs);
@@ -347,7 +359,7 @@ export class Area_Viewer {
         } else if (state.currentMode == "ベジェウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.scene.state.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
-                const bone = app.scene.runtimeData.armatureData.getSelectBone();
+                const bone = app.scene.runtimeData.armatureData.getSelectBones();
                 changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
             } else {
                 this.modalOperator.setModal(WeightPaintModal, this.inputs);

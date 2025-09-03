@@ -1,7 +1,8 @@
 import { app } from "../../app/app.js";
-import { AppendVertexCommand } from "../../commands/mesh/mesh.js";
+import { AppendPointCommand } from "../../commands/mesh/bezier.js";
 
-export class AppendVertex {
+
+export class AppendPoint {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         this.modal = {
@@ -17,7 +18,7 @@ export class AppendVertex {
     }
 
     async init(input) {
-        this.command = new AppendVertexCommand(app.scene.state.activeObject, input.position);
+        this.command = new AppendPointCommand(app.scene.state.activeObject, input.position);
         return {complete: true};
     }
 }

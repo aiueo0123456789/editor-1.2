@@ -6,10 +6,11 @@ import { removeObjectInHTMLElement } from "./eventUpdator.js";
 import { ResizerForDOM } from "./resizer.js";
 import { app } from "../../app/app.js";
 import { MenuTag } from "./customTags/menuTag.js";
-import { TextEditor_textSplice, TextEditor_textRemove } from "../../commands/textEditor/textEditorCommand.js";
 import { CodeEditorTag } from "./customTags/codeEditorTag.js";
 import { SelectTag } from "./customTags/selectTag.js";
 import { ChangeParameterCommand } from "../../commands/utile/utile.js";
+import { createGrid } from "./grid.js";
+import { OutlinerTag } from "./customTags/outliner.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -21,7 +22,7 @@ export function createSelect(t, list = []) {
     const select = createTag(container, "input", {style: "display: none;"});
     // const listContainer = createTag(container,"ul");
     container.classList.add("custom-select");
-    const value = createTag(container, "p", {textContent: "選択されていません"});
+    const value = createTag(container, "p", {textContent: app.appConfig.language["noSelected"]});
     const isOpen = createTag(container, "span", {class: "downArrow"});
     container.addEventListener("click", (e) => {
         const rect = container.getBoundingClientRect();
@@ -82,7 +83,7 @@ function createCheckbox(t, type = "custom-checkbox", text = "") {
     return checkbox;
 }
 
-const tagCreater = {
+export const tagCreater = {
     // 要素の作成
     "boxs": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
@@ -221,7 +222,7 @@ const tagCreater = {
     "list": (this_,t,searchTarget,child,flag) => {
         let element;
         if (child.options.type == "min") {
-            element = createMinList(t,child.name);
+            element = createMinList(t,child.label);
             const listOutputData = this_.createListChildren(element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
             if (child.appendEvent) {
                 if (isFunction(child.appendEvent)) {
@@ -285,7 +286,7 @@ const tagCreater = {
         return element;
     },
     "icon-img": (this_,t,searchTarget,child,flag) => {
-        console.log(this_.getParameter(searchTarget, child.withObject));
+        // console.log(this_.getParameter(searchTarget, child.withObject));
         let element = createIcon(t, this_.getParameter(searchTarget, child.withObject));
         return element;
     },
@@ -296,6 +297,12 @@ const tagCreater = {
         if (child.children) {
             this_.createFromChildren(element, child.children, searchTarget, flag);
         }
+        return element;
+    },
+    "grid": (this_,t,searchTarget,child,flag) => {
+        let element = createGrid(t, child.axis);
+        this_.createFromChildren(element.child1, child.child1, searchTarget, flag);
+        this_.createFromChildren(element.child2, child.child2, searchTarget, flag);
         return element;
     },
     "gridBox": (this_,t,searchTarget,child,flag) => {
@@ -322,8 +329,10 @@ const tagCreater = {
         element.style.width = child.size;
         return element;
     },
-    "hierarchy": (this_,t,searchTarget,child,flag) => {
-        this_.createHierarchy(t, child.withObject, child.loopTarget, child.structures, searchTarget, child.options, flag);
+    "outliner": (this_,t,searchTarget,child,flag) => {
+        // return this_.createOutliner(t, child.withObject, child.loopTarget, child.structures, searchTarget, child.options, flag);
+        return new OutlinerTag(this_, t, searchTarget, child, flag);
+
     },
     "scrollable": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "scrollable"});
@@ -384,7 +393,7 @@ const tagCreater = {
         childrenReset();
     },
     "if": (this_,t,searchTarget,child,flag) => {
-        console.log(searchTarget, child, this_.getParameter(searchTarget,child.formula.source))
+        // console.log(searchTarget, child, this_.getParameter(searchTarget,child.formula.source))
         let bool = false;
         if (child.formula.conditions == "==") {
             bool = this_.getParameter(searchTarget,child.formula.source) == child.formula.value;
@@ -539,14 +548,14 @@ export class CreatorForUI {
         }
     }
 
-    createHierarchy(t, withObject, loopTarget, structures, searchTarget, options, flag) {
+    createOutliner(t, withObject, loopTarget, structures, searchTarget, options, flag) {
         let loopTargetIsPlainObject = false;
         if (loopTarget.parameter && loopTarget.loopTargets) {
             loopTargetIsPlainObject = true;
         } else if (!Array.isArray(loopTarget)) {
             loopTarget = [loopTarget];
         }
-        const hierarchyID = createID();
+        const outlinerID = createID();
         let scrollableContainer = t;
         let searchFilter = "";
         let searchParameter = "type";
@@ -556,7 +565,7 @@ export class CreatorForUI {
             const seachTag = createTag(title, "input", {style: "fontSize: 120%",value: ""});
             seachTag.addEventListener("input", () => {
                 searchFilter = seachTag.value;
-                hierarchyUpdate();
+                outlinerUpdate();
             })
             const splitLine = createTag(section, "div", {style: "width: 100%; height: 1px; backgroundColor: var(--subColor)"});
             scrollableContainer = createTag(section, "div", {style: "padding: 0px 0px 15px 0px; height: 300px"});
@@ -635,20 +644,20 @@ export class CreatorForUI {
             }
             return getLoopChildren(rootObject).result;
         }
-        const hierarchyUpdate = (o, gID, t) => {
+        const outlinerUpdate = (o, gID, t) => {
             array.length = 0;
             const allObject = getAllObject();
             // 削除があった場合対応するDOMを削除
             for (const object of lastUpdateObjects) {
                 if (!allObject.includes(object)) {
-                    managerForDOMs.deleteDOM(object, this.groupID, hierarchyID);
+                    managerForDOMs.deleteDOM(object, this.groupID, outlinerID);
                 }
             }
             // 追加があった場合新規作成
             for (const object of allObject) {
-                // if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, hierarchyID).length) {
+                // if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, outlinerID).length) {
                 if (!lastUpdateObjects.includes(object)) {
-                    const container = createTag(null, "div", {style: "paddingLeft: 2px;"});
+                    const container = createTag(null, "div", {style: "paddingLeft: 2px; height: fit-content; minHeight: auto;"});
                     container.addEventListener("click", (event) => {
                         if (app.input.keysDown["Shift"]) {
                             rangeEndIndex = array.indexOf(object);
@@ -673,22 +682,17 @@ export class CreatorForUI {
                         }
                     });
 
-                    const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr;"});
+                    const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr; height: fit-content;"});
                     const visibleCheck = createCheckbox(upContainer, "arrow");
                     visibleCheck.checked = true;
                     /** @type {HTMLElement} */
                     const myContainer = createTag(upContainer, "div");
-                    const childrenContainer = createTag(container, "div");
+                    const childrenContainer = createTag(container, "div", {style: "marginLeft: 10px; height: fit-content;"});
                     this.createFromChildren(myContainer, structures, object, flag);
-                    childrenContainer.style.marginLeft = "10px";
                     visibleCheck.addEventListener("change", () => {
-                        if (visibleCheck.checked) {
-                            childrenContainer.classList.remove("hidden");
-                        } else {
-                            childrenContainer.classList.add("hidden");
-                        }
+                        childrenContainer.classList.toggle("hidden");
                     })
-                    managerForDOMs.set({o: object, g: this.groupID, i: hierarchyID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
+                    managerForDOMs.set({o: object, g: this.groupID, i: outlinerID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
                 }
             }
             lastUpdateObjects = [...allObject];
@@ -696,7 +700,7 @@ export class CreatorForUI {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {
                         try {
-                            const managerObject = managerForDOMs.getObjectAndGroupID(child, this.groupID, hierarchyID)[0].dom;
+                            const managerObject = managerForDOMs.getObjectAndGroupID(child, this.groupID, outlinerID)[0].dom;
                             targetDOM.append(managerObject.container);
                             if (loopTargetIsPlainObject) {
                                 const targetType = child[loopTarget.parameter];
@@ -734,7 +738,7 @@ export class CreatorForUI {
         // 選択表示の更新
         const listActive = (o, gID, t) => {
             console.log("ヒエラルキーアクティブ")
-            const createdTags = managerForDOMs.getGroupAndID(this.groupID, hierarchyID); // すでに作っている場合
+            const createdTags = managerForDOMs.getGroupAndID(this.groupID, outlinerID); // すでに作っている場合
             createdTags.forEach((data, object) => {
                 const bool_ = activeSource.object[activeSource.parameter] == object;
                 if (bool_) {
@@ -752,7 +756,7 @@ export class CreatorForUI {
         }
         managerForDOMs.set({o: activeSource.object, g: this.groupID, i: activeSource.parameter, f: flag}, t, listActive, null);
         managerForDOMs.set({o: result.selects, g: this.groupID, f: flag}, t, listActive, null);
-        managerForDOMs.set({o: rootObject, g: this.groupID, f: flag}, scrollable, hierarchyUpdate);
+        managerForDOMs.set({o: rootObject, g: this.groupID, f: flag}, scrollable, outlinerUpdate);
         managerForDOMs.updateGroupInObject(rootObject, this.groupID);
     }
 
@@ -910,7 +914,9 @@ export class CreatorForUI {
                 }
                 for (const object of list) {
                     if (!lastUpdateObjects.includes(object)) { // ない場合新規作成
-                        const li = document.createElement("li");
+                        const li = document.createElement("div");
+                        li.style.minHeight = "fit-content";
+                        li.style.height = "fit-content";
                         t.append(li);
                         li.addEventListener("click", () => {
                             if (isFunction(activeSource)) { // 関数の場合

@@ -17,7 +17,7 @@ export class TimelineSpaceData {
     }
 
     getSelectKey() {
-        const keys = this.getAllKeyframe();
+        const keys = this.getAllKeyframe;
         const result = [];
         for (const key of keys) {
             if (key.pointSelected) {
@@ -39,8 +39,22 @@ export class TimelineSpaceData {
         return vec2.averageR(this.selectVertices);
     }
 
-    getAllKeyframe() {
+    get getAllKeyframeBlock() {
         const result = [];
+        if (!app.scene.state.activeObject) return result;
+        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
+                if (keyframeBlock.visible) {
+                    result.push(keyframeBlock);
+                }
+            }
+        }
+        return result;
+    }
+
+    get getAllKeyframe() {
+        const result = [];
+        if (!app.scene.state.activeObject) return result;
         for (const bone of app.scene.state.activeObject.getSelectBones()) {
             for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
                 if (keyframeBlock.visible) {
@@ -49,6 +63,15 @@ export class TimelineSpaceData {
                     }
                 }
             }
+        }
+        return result;
+    }
+
+    get getAllObject() {
+        const result = [];
+        if (!app.scene.state.activeObject) return result;
+        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+            result.push(bone);
         }
         return result;
     }

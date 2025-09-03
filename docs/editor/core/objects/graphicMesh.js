@@ -10,29 +10,11 @@ import { managerForDOMs } from "../../utils/ui/util.js";
 
 class Vertex {
     constructor(/** @type {GraphicMesh} */ graphicMesh, data) {
-        if (!data.parentWeight) {
-            data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
-        }
         this.type = "頂点";
         this.selected = false;
         this.graphicMesh = graphicMesh;
         this.base = [...data.base];
         this.uv = [...data.uv];
-        // let maxIndex = -1;
-        // for (let i = 0; i < 4; i ++) {
-        //     if (data.parentWeight.weights[i] > 0.85) {
-        //         maxIndex = i;
-        //     }
-        // }
-        // if (maxIndex != -1) {
-        //     for (let i = 0; i < 4; i ++) {
-        //         if (maxIndex == i) {
-        //             data.parentWeight.weights[i] = 1;
-        //         } else {
-        //             data.parentWeight.weights[i] = 0;
-        //         }
-        //     }
-        // }
         this.parentWeight = data.parentWeight;
         this.updated = true;
     }
@@ -265,7 +247,7 @@ class Editor extends ObjectEditorBase {
     }
 
     createVertex(coordinate) {
-        return new Vertex(this.graphicMesh, {base: coordinate, uv: this.calculatWorldPositionToUV(coordinate)});
+        return new Vertex(this.graphicMesh, {base: coordinate, uv: this.calculatWorldPositionToUV(coordinate), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}});
     }
 
     appendVertex(vertex) {
@@ -378,7 +360,6 @@ export class GraphicMesh extends ObjectBase {
         this.verticesNum = data.vertices.length;
         this.meshesNum = data.meshes.length;
 
-        console.log(data)
         for (const vertex of data.vertices) {
             this.allVertices.push(new Vertex(this, vertex));
             for (const weight of vertex.parentWeight.weights) {

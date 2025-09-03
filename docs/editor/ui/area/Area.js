@@ -17,7 +17,7 @@ export class Area {
         deleteButton.addEventListener("click", () => {
             app.deleteArea(this);
         })
-        createIcon(this.header, "グラフィックメッシュ"); // アイコン
+        this.title = createTag(this.header, "div", {textContent: "未設定"}); // バツボタン
         // this.select = new SelectTag(null, this.header, createArrayFromHashKeys(useClassFromAreaType), {initValue: type});
 
         this.main = document.createElement("div");
@@ -39,6 +39,7 @@ export class Area {
         this.creatorForUI.remove();
         // this.select.input.value = type; // タイトル
         this.type = type;
+        this.title.textContent = type;
         if (type in useClassFromAreaType) {
             this.uiModel = new useClassFromAreaType[type]["area"](this);
         } else {

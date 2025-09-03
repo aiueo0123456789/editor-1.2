@@ -8,15 +8,9 @@ export class Area_Inspector {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.scene.hierarchy, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Hierarchy"]},
+            inputObject: {"h": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
             DOM: [
                 {type: "section", name: "基本情報", children: [
-                    {type: "section", name: "基本情報", options: {min: true}, children: [
-                        {type: "section", name: "基本情報", options: {min: true}, children: [
-                            {type: "section", name: "基本情報", options: {min: true}, children: [
-                            ]},
-                        ]},
-                    ]},
                     {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
                         {type: "if", formula: {source: "/type", conditions: "==", value: "グラフィックメッシュ"},
                             true: [
@@ -69,7 +63,7 @@ export class Area_Inspector {
                         true: [
                             {type: "section", name: "アニメーション", children: [
                                 {type: "input", label: "アニメーション最大数", withObject: "/MAX_ANIMATIONS", options: {type: "number"}, custom: {collision: false, visual: "1"}},
-                                {type: "list", appendEvent: () => {
+                                {type: "list", label: "アニメーション", appendEvent: () => {
                                     appendAnimationToObject(app.scene.state.activeObject, "新規");
                                 }, deleteEvent: (animations) => {
                                     for (const animation of animations) {
@@ -100,6 +94,9 @@ export class Area_Inspector {
                         ], false: [
                         ]
                     }
+                ]},
+                {type: "section", name: "詳細設定", children: [
+
                 ]}
             ],
             utility: {
@@ -114,7 +111,7 @@ export class Area_Inspector {
     }
 
     update() {
-        for (const object of app.scene.hierarchy.root) {
+        for (const object of app.scene.outliner.root) {
             const div = document.createElement("div");
             div.textContent = object.name;
         }

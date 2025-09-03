@@ -10,12 +10,11 @@ export class FaileIOManager {
 
     // セーブデータを読み込み
     loadFile(json) {
-        // オブジェクトの追加
-        // this.app.scene.destroy();
+        this.app.scene.reset();
         if (json.ps) { // psフォルダのアップロードの場合
             for (const data of json.data.GraphicMesh) {
                 if (data.texture) {
-                    this.app.scene.hierarchy.append(this.app.scene.objects.createObjectAndSetUp({saveData: data}), "");
+                    this.app.scene.outliner.append(this.app.scene.objects.createObjectAndSetUp({saveData: data}), "");
                 }
             }
         } else {
@@ -32,8 +31,8 @@ export class FaileIOManager {
                 }
             }
             // ヒエラルキーを構築
-            this.app.scene.hierarchy.set(json.scene.hierarchy);
-            // this.app.scene.hierarchy.set(json.hierarchy);
+            this.app.scene.outliner.set(json.scene.outliner);
+            // this.app.scene.outliner.set(json.outliner);
         }
         managerForDOMs.allUpdate();
         console.log(this.app)

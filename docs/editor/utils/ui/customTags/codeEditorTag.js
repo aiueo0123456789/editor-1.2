@@ -1,40 +1,68 @@
 import { app } from "../../../app/app.js";
 import { TextEditor_textSplice } from "../../../commands/textEditor/textEditorCommand.js";
 import { isNumber } from "../../utility.js";
-import { AutoGrid } from "../grid.js";
-import { createIcon, createTag, managerForDOMs, setClass, setStyle } from "../util.js";
+import { tagCreater } from "../creatorForUI.js";
+import { AutoGrid, createGrid } from "../grid.js";
+import { createIcon, createTag, managerForDOMs, setClass, setLabel, setStyle } from "../util.js";
+
+function createGroup(t, name) {
+    const container = createTag(t, "div");
+    const head = createTag(container, "div");
+    setStyle(head, "width: 100px; height: 10px; display: flex;");
+
+    const label = createTag(head, "label");
+    // const span = document.createElement("span");
+    const checkbox = createTag(label, "input", {type: "checkbox", checked: true});
+    checkbox.style.display = "none";
+    const span = createTag(label, "span", {class: "arrow"});
+
+    checkbox.addEventListener("input", () => {
+        inner.classList.toggle("hidden");
+    })
+
+    const title = createTag(head, "div");
+    title.textContent = name;
+    const inner = createTag(container, "div");
+    setStyle(inner, "width: 100px; height: fit-content; padding-left: 20px;");
+    return inner;
+}
+
+function createUtil(t, name) {
+    const container = createTag(t, "div");
+    setStyle(container, "width: 100%; height: 100%; overflowY: hidden; display: grid; gridTemplateRows: auto 1fr;");
+    const title = createTag(container, "div");
+    // title.textContent = name;
+    const innerContainer = createTag(container, "div");
+    setStyle(innerContainer, "width: 100%; height: 100%;");
+    const filter = createTag(null, "input");
+    setLabel(innerContainer, "filter", filter);
+    const inner = createTag(innerContainer, "div");
+    setStyle(inner, "width: 100%; height: 100%; overflowY: auto;");
+    return inner;
+}
 
 export class CodeEditorTag {
     constructor (this_,t,searchTarget,child,flag) {
         const builtInFunction = [{name: "noise", return: "f32"}, {name: "arrayLength", return: "u32"}, {name: "vec2f", return: "f32"}, {name: "vec3f", return: "f32"}, {name: "vec4f", return: "f32"}, {name: "fract", return: "f32"}, {name: "floor", return: "f32"}, {name: "mix", return: "f32"}, {name: "abs", return: "f32"}, {name: "dot", return: "f32"}];
         this.sourceCode = this_.getParameter(searchTarget, child.source, 1);
         /** @type {HTMLElement} */
-        this.container = createTag(t, "div");
-        setStyle(this.container, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; overflow: hidden; backgroundColor: rgb(52, 52, 52); fontSize: 100%;");
+        this.container = createGrid(t, "c");
+        // setStyle(this.container, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; overflow: hidden; backgroundColor: rgb(52, 52, 52); fontSize: 100%;");
         /** @type {HTMLElement} */
-        this.utilBar = createTag(this.container, "div");
-        setStyle(this.utilBar, "width: 100px; height: 100%; backgroundColor: rgb(34, 34, 34); overflowX: hidden; overflowY: auto;");
+        this.utilBar = createUtil(this.container.child1, "util");
         /** @type {HTMLElement} */
-        this.functionsGroupContainer = createTag(this.utilBar, "div");
-        this.functionsGroupTitle = createTag(this.functionsGroupContainer, "div", {textContent: "functions"});
-        setStyle(this.functionsGroupTitle, "color: rgb(242, 251, 0);");
-        this.functionsGroup = createTag(this.functionsGroupContainer, "div");
-        setStyle(this.functionsGroup, "width: 100px; height: fit-content; padding-left: 10px;");
+        this.functionsGroup = createGroup(this.utilBar, "funcitions");
         /** @type {HTMLElement} */
-        this.valuesGroupContainer = createTag(this.utilBar, "div");
-        this.valuesGroupTitle = createTag(this.valuesGroupContainer, "div", {textContent: "values"});
-        this.valuesGroup = createTag(this.valuesGroupContainer, "div");
-        setStyle(this.valuesGroup, "width: 100px; height: fit-content; padding-left: 10px;");
+        this.valuesGroup = createGroup(this.utilBar, "values");
         /** @type {HTMLElement} */
-        this.rightContainer = createTag(this.container, "div");
-        const rightContainerGrid = new AutoGrid("codeTagRightContainer" + this_.groupID, this.rightContainer, "r", "1fr");
-        setStyle(this.rightContainer, "width: 100%; height: 100%; overflow: hidden;");
+        const rightContainerGrid = new AutoGrid("codeTagRightContainer" + this_.groupID, this.container.child2, "r", "1fr");
+        // setStyle(this.rightContainer, "width: 100%; height: 100%; overflow: hidden;");
         /** @type {HTMLElement} */
         this.mainContainer = createTag(rightContainerGrid.child1, "div");
         setStyle(this.mainContainer, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; fontFamily: monospace; overflowX: hidden; overflowY: auto;");
         /** @type {HTMLElement} */
         this.lineNumbers = createTag(this.mainContainer, "div");
-        setStyle(this.lineNumbers, "width: fit-content; height: 100%; textAlign: right; padding: 0px 2px; userSelect: none; color: gray; border: solid rgba(0, 0, 0, 0) 1px;");
+        setStyle(this.lineNumbers, "width: fit-content; height: fit-content; textAlign: right; padding: 0px 2px; userSelect: none; backgroundColor: var(--sub3Color); border: solid rgba(0, 0, 0, 0) 1px;");
         /** @type {HTMLElement} */
         this.codeAreaContainer = createTag(this.mainContainer, "div");
         setClass(this.codeAreaContainer, "codeAreaContainer")
@@ -44,18 +72,18 @@ export class CodeEditorTag {
         // setStyle(input, "display: none;");
         setStyle(input, "width: 100px; height: 20px; position: absolute;");
         this.autocompleteArea = createTag(this.codeAreaContainer, "div");
-        setStyle(this.autocompleteArea, "width: 400px; height: fit-content; maxHeight: 200px; position: absolute; display: none; backgroundColor: rgb(41, 41, 41); border: solid rgb(90, 90, 90) 1px; overflowY: auto;");
+        setStyle(this.autocompleteArea, "width: 400px; height: fit-content; maxHeight: 200px; position: absolute; display: none; backgroundColor: var(--sub3Color); border: solid rgb(90, 90, 90) 1px; overflowY: auto;");
         this.selectionArea = createTag(this.codeAreaContainer, "div");
         setStyle(this.selectionArea, "width: 0px; height: 0px; position: absolute;");
         this.caret = createTag(this.codeAreaContainer, "div");
         setClass(this.caret, "caret");
         this.textViewArea = createTag(this.codeAreaContainer, "div");
-        setStyle(this.textViewArea, "width: fit-content; height: 100%; backgroundColor: rgb(41, 41, 41);");
+        setStyle(this.textViewArea, "width: fit-content; height: fit-content; backgroundColor: var(--sub3Color);");
         this.textViewArea.setAttribute("contenteditable", "true");
         this.textViewArea.setAttribute("spellcheck", "false");
 
         this.debuglogAreaContainer = createTag(rightContainerGrid.child2, "div");
-        setStyle(this.debuglogAreaContainer, "width: 100%; height: 100%; backgroundColor: rgb(41, 41, 41); borderRadius: 0px; userSelect: text; overflow: auto; whiteSpace: pre;");
+        setStyle(this.debuglogAreaContainer, "width: 100%; height: 100%; backgroundColor: var(--sub3Color); borderRadius: 0px; userSelect: text; overflow: auto; whiteSpace: pre;");
 
         let lastScrollX = 0;
         let lastScrollY = 0;

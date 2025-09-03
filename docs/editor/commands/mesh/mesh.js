@@ -51,7 +51,7 @@ export class DeleteVerticesCommand {
     }
 }
 
-export class CreateEdge {
+export class CreateEdgeFromeTextureCommand {
     constructor(targets) {
         this.targets = targets;
         this.meta = [];

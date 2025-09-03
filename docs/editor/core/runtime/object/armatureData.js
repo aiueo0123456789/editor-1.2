@@ -106,7 +106,7 @@ export class ArmatureData extends RuntimeDataBase {
         // bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await this.renderingBoneMatrix.getObjectData(bone));
     }
 
-    getSelectBone() {
+    getSelectBones() {
         return this.allBone.filter(bone => bone && bone.selectedBone);
     }
 
@@ -141,6 +141,7 @@ export class ArmatureData extends RuntimeDataBase {
         for (const bone of armature.allBone) {
             bone.selectedBone = resultBone[bone.index];
         }
+        managerForDOMs.update("選択物");
     }
 
     getSelectVerticesInBone() {
@@ -185,7 +186,7 @@ export class ArmatureData extends RuntimeDataBase {
         for (const bone of armature.allBone) {
             bone.selectedBone = result[bone.index];
         }
-        managerForDOMs.update("ボーン選択");
+        managerForDOMs.update("選択物");
     }
 
     updatePropagateData() {

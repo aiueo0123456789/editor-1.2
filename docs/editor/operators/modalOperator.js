@@ -13,6 +13,10 @@ export class ModalOperator {
         this.creatorForUI = new CreatorForUI();
     }
 
+    changeModals(newModals) {
+        this.modals = newModals;
+    }
+
     reset() {
         this.state = 0;
         this.nowModal = null;

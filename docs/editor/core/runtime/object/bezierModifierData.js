@@ -45,15 +45,19 @@ export class BezierModifierData extends RuntimeDataBase {
     // 選択
     async selectedForVertices(/** @type {BezierModifier} */ bezierModifier, object, option) {
         const optionBuffer = GPU.createUniformBuffer((2) * 4, [option.add,3], ["u32"]);
-        // console.log("最大頂点数", graphicMesh.MAX_VERTICES, "起動されるグループ数", Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
         if (object.box) { // ボックス選択
             const boxBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.box.min, ...object.box.max], ["f32","f32","f32","f32"]);
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices.buffer, this.renderingVertices.buffer, bezierModifier.objectDataBuffer, optionBuffer, boxBuffer]);
             GPU.runComputeShader(boxSelectVerticesPipeline, [group], Math.ceil(Math.ceil((bezierModifier.MAX_POINTS * 3) / 32) / 64));
-        } else {
+        } else if (option.circle) {
             const circleBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.circle, 0], ["f32","f32","f32","f32"]);
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu"), [this.selectedVertices.buffer, this.renderingVertices.buffer, bezierModifier.objectDataBuffer, optionBuffer, circleBuffer]);
             GPU.runComputeShader(circleSelectBoneVerticesPipeline, [group], Math.ceil(Math.ceil((bezierModifier.MAX_POINTS * 3) / 32) / 64));
+        } else { // 一つだけ選択
+            const circleBuffer = GPU.createUniformBuffer((2 + 2) * 4, [...object.circle, 0], ["f32","f32","f32","f32"]);
+            const atomicBuffer = GPU.createStorageBuffer((1 + 1) * 4);
+            const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu_Csrw"), [this.selectedVertices.buffer, this.renderingVertices.buffer, bezierModifier.objectDataBuffer, optionBuffer, circleBuffer, atomicBuffer]);
+            GPU.runComputeShader(selectOnlyVerticesPipeline, [group], Math.ceil(Math.ceil(bezierModifier.MAX_POINTS * 3 / 32) / 64));
         }
         const resultBone = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer, bezierModifier.runtimeOffsetData.pointOffset * 3, (bezierModifier.runtimeOffsetData.pointOffset + bezierModifier.pointNum) * 3);
         for (const point of bezierModifier.allPoint) {
@@ -70,6 +74,7 @@ export class BezierModifierData extends RuntimeDataBase {
     async updateCPUDataFromGPUBuffer(/** @type {BezierModifier} */bezierModifier, updateContent = {vertex: {weight: true, base: true}}) {
         this.write = true;
         const baseArray = updateContent.vertex.base ? await GPU.getVerticesDataFromGPUBuffer(this.baseVertices.buffer, bezierModifier.runtimeOffsetData.pointOffset * 3, bezierModifier.verticesNum) : [];
+        console.log(baseArray)
         const weightBlockArray = updateContent.vertex.weight ? await GPU.getStructDataFromGPUBuffer(this.weightBlocks.buffer, ["u32","u32","u32","u32","f32","f32","f32","f32"], bezierModifier.runtimeOffsetData.pointOffset * 3, bezierModifier.verticesNum) : [];
         for (const point of bezierModifier.allPoint) {
             for (let i = 0; i < 3; i ++) {
