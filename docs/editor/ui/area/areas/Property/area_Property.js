@@ -5,7 +5,7 @@ export class Area_Property {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
+            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
             DOM: [
                 {type: "section", name: "アニメーション", children: [
                     {type: "input", label: "開始", withObject: "scene/frame_start", options: {type: "number", min: 0, max: 500, step: 1}},

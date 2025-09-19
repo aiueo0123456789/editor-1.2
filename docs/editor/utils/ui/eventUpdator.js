@@ -102,8 +102,8 @@ export class DOMsManager {
 
     set(IDs, DOM, updateFn, others = null) {
         if (!IDs.i) IDs.i = "defo";
-        if (!IDs.f) IDs.f = "defo";
         if (!IDs.g) IDs.g = "defo";
+        if (!IDs.f) IDs.f = "defo";
         const object = IDs.o;
         const groupID = IDs.g;
         const ID = IDs.i;

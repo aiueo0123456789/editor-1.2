@@ -55,7 +55,7 @@ export class TimelineSpaceData {
     get getAllKeyframe() {
         const result = [];
         if (!app.scene.state.activeObject) return result;
-        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+        if (app.scene.state.activeObject.type == "アーマチュア") {
             for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
                 if (keyframeBlock.visible) {
                     for (const keyData of keyframeBlock.keys) {
@@ -63,6 +63,7 @@ export class TimelineSpaceData {
                     }
                 }
             }
+        } else {
         }
         return result;
     }
@@ -70,8 +71,11 @@ export class TimelineSpaceData {
     get getAllObject() {
         const result = [];
         if (!app.scene.state.activeObject) return result;
-        for (const bone of app.scene.state.activeObject.getSelectBones()) {
-            result.push(bone);
+        if (app.scene.state.activeObject.type == "アーマチュア") {
+            for (const bone of app.scene.state.activeObject.getSelectBones()) {
+                result.push(bone);
+            }
+        } else {
         }
         return result;
     }

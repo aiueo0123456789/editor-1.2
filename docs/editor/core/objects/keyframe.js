@@ -132,7 +132,8 @@ export class KeyframeBlock {
         }
         this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
         managerForDOMs.update(this);
-        managerForDOMs.update("タイムライン-canvas")
+        managerForDOMs.update(this, "keys");
+        // managerForDOMs.update("タイムライン-canvas");
     }
 
     deleteKeyframe(key) {

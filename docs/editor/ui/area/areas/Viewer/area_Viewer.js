@@ -68,7 +68,7 @@ export class Area_Viewer {
         this.areasConfig = app.appConfig.areasConfig["Viewer"];
 
         this.struct = {
-            inputObject: {"h": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
+            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option", name: "情報", children: [

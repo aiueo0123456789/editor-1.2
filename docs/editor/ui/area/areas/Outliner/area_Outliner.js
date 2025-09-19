@@ -5,7 +5,7 @@ export class Area_Outliner {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
+            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
             DOM: [
                 {type: "outliner", name: "outliner", options: {arrange: true, clickEventFn: (event, object) => {
                         if (app.scene.state.currentMode == "オブジェクト") {
@@ -23,7 +23,7 @@ export class Area_Outliner {
                             app.scene.state.setActiveObject(array[endIndex]);
                         }
                     },
-                    activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "h/root", loopTarget: "children", structures: [
+                    activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "outliner/root", loopTarget: "children", structures: [
                         {
                             type: "if",
                             formula: {source: "/", conditions: "in", value: "name"},

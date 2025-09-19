@@ -5,7 +5,7 @@ export class ArmaturePropertyModal {
         this.name = "アーマチュア";
         this.values = [0,0,0,0];
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.scene.outliner, "scene": app.scene, "values": this.values},
+            inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene, "values": this.values},
             DOM: [
                 {type: "div", class: "sideBar-shelfe", children: [
                     {type: "section", name: "アーマチュア", children: [

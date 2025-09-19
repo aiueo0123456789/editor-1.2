@@ -1,14 +1,13 @@
 import { app } from "../../../../app/app.js";
 import { appendAnimationToObject, deleteAnimationToObject } from "../../../../utils/objects/util.js";
 import { changeParameter } from "../../../../utils/utility.js";
-import { format } from "../../../../utils/webGPU.js";
 
 export class Area_Inspector {
     constructor(area) {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"h": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
+            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
             DOM: [
                 {type: "section", name: "基本情報", children: [
                     {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
@@ -20,7 +19,7 @@ export class Area_Inspector {
                                 {type: "input", label: "最大頂点数", withObject: "/MAX_VERTICES", options: {type: "number"}, custom: {visual: "1"}},
                                 {type: "input", label: "頂点数", withObject: "/verticesNum", options: {type: "number"}, custom: {collision: false, visual: "1"}},
                                 {type: "input", label: "アニメーション最大数", withObject: "/MAX_ANIMATIONS", options: {type: "number"}, custom: {collision: false, visual: "1"}},
-                                {type: "input", label: "自動のウェイト", withObject: "/autoWeight", options: {type: "checkbox", look: "defo"}},
+                                {type: "input", label: "自動のウェイト", withObject: "/autoWeight", options: {type: "checkbox", look: "custom-checkbox"}},
                                 {type: "select", label: "マスク", writeObject: (value) => {
                                     app.scene.state.activeObject.changeMaskTexture(app.scene.searchMaskTextureFromID(value));
                                 }, sourceObject: () => {
@@ -79,7 +78,6 @@ export class Area_Inspector {
                                         changeParameter(app.scene.state.activeObject.animationBlock, "activeAnimationIndex", index);
                                     },
                                     getFunction: (object) => {
-                                        console.log(object)
                                         return object.belongObject.animationBlock.activeAnimation == object;
                                     }
                                 }}, liStruct:[
@@ -89,6 +87,12 @@ export class Area_Inspector {
                                         {type: "input", withObject: "/weight", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
                                         {type: "hasKeyframeCheck", targetObject: "/keyframeBlockManager/blocksMap/weight"}
                                     ]},
+                                ]},
+                                {type: "path", sourceObject: "scene/state/activeObject/animationBlock/activeAnimation", updateEventTarget: {path: "scene/state/activeObject/animationBlock/activeAnimationIndex"}, children :[
+                                    {type: "input", label: "名称", withObject: "/name", options: {type: "text"}},
+                                    // {type: "padding", size: "10px"},
+                                    {type: "input", label: "重み", withObject: "/weight", options: {type: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
+                                    {type: "hasKeyframeCheck", label: "キーフレーム", targetObject: "/keyframeBlockManager/blocksMap/weight"}
                                 ]}
                             ]}
                         ], false: [

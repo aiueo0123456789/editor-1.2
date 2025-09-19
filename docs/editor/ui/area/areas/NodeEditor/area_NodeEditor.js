@@ -8,7 +8,7 @@ export class Area_NodeEditor {
         this.areaConfig = app.appConfig.areasConfig["NodeEditor"];
 
         this.struct = {
-            inputObject: {"areaConifg": this.areaConfig, "h": app.scene.outliner, "scene": app.scene},
+            inputObject: {"areaConifg": this.areaConfig, "outliner": app.scene.outliner, "scene": app.scene},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option", name: "情報", children: [

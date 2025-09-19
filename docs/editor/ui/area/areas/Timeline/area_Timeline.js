@@ -174,7 +174,7 @@ export class Area_Timeline {
         this.frameBarDrag = false;
 
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "h": app.scene.outliner, "scene": app.scene},
+            inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene},
             DOM: [
                 {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {type: "option",style: "height: 25px;", name: "情報", children: [

@@ -1,36 +1,7 @@
 import { app } from "../../../app/app.js";
 import { isFunction } from "../../utility.js";
 import { createID, createTag, managerForDOMs } from "../util.js";
-
-function createCheckbox(t, type = "custom-checkbox", text = "") {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.style.display = "none";
-    const label = document.createElement("label");
-    label.classList.add("box");
-    label.setAttribute("name", "checkbox");
-    const span = document.createElement("span");
-    if (type == "eye-icon") { // 表示/非表示
-        span.classList.add("eye-icon-container");
-        const eye = document.createElement("span");
-        eye.classList.add("eye-icon");
-        label.append(eye);
-        const pupil = document.createElement("span");
-        pupil.classList.add("eye-icon-pupil");
-        span.append(eye, pupil);
-    } else {
-        if (type == "button-checkbox") {
-            const textTag = document.createElement("p");
-            textTag.textContent = `${text}`;
-            textTag.classList.add("button-checkbox-text");
-            span.append(textTag);
-        }
-        span.classList.add(type);
-    }
-    label.append(checkbox,span);
-    t.append(label);
-    return checkbox;
-}
+import { Checkbox } from "./checkbox.js";
 
 function isFilterIncluded(object, filter = "all") {
     if (filter == "all" || filter == "") {
@@ -185,13 +156,13 @@ export class OutlinerTag {
                     });
 
                     const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr; height: fit-content;"});
-                    const visibleCheck = createCheckbox(upContainer, "arrow");
-                    visibleCheck.checked = true;
+                    const visibleCheck = new Checkbox(this,upContainer,{},{type: "checkbox", options: {look: "arrow"}},"defo");
+                    visibleCheck.checkbox.checked = true;
                     /** @type {HTMLElement} */
                     const myContainer = createTag(upContainer, "div");
                     const childrenContainer = createTag(container, "div", {style: "marginLeft: 10px; height: fit-content;"});
                     this_.createFromChildren(myContainer, structures, object, flag);
-                    visibleCheck.addEventListener("change", () => {
+                    visibleCheck.checkbox.addEventListener("change", () => {
                         childrenContainer.classList.toggle("hidden");
                     })
                     this.objectDomMap.set(object, container);

@@ -36,7 +36,7 @@ export class Area_Previewer {
         this.areasConfig = app.appConfig.areasConfig["Previewer"];
 
         this.struct = {
-            inputObject: {"h": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
+            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
                 {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; display: flex; justifyContent: center; alignItems: center; backgroundColor: rgb(55, 55, 55);", children: [
                     // {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},

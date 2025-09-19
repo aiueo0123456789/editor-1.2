@@ -11,6 +11,7 @@ import { SelectTag } from "./customTags/selectTag.js";
 import { ChangeParameterCommand } from "../../commands/utile/utile.js";
 import { createGrid } from "./grid.js";
 import { OutlinerTag } from "./customTags/outliner.js";
+import { Checkbox } from "./customTags/checkbox.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -58,7 +59,7 @@ function createCheckbox(t, type = "custom-checkbox", text = "") {
     checkbox.type = "checkbox";
     checkbox.style.display = "none";
     const label = document.createElement("label");
-    label.classList.add("box");
+    // label.classList.add("box");
     label.setAttribute("name", "checkbox");
     const span = document.createElement("span");
     if (type == "eye-icon") { // 表示/非表示
@@ -132,12 +133,7 @@ export const tagCreater = {
             element = createTag(t, "input", child.options);
             this_.setWith(element, child.withObject, searchTarget, flag);
         } else if (child.options.type == "checkbox") {
-            if (child.options.look && child.options.look != "defo") {
-                element = createCheckbox(t, child.options.look);
-            } else {
-                element = createTag(t, "input", child.options);
-            }
-            this_.setWith(element, child.withObject, searchTarget, flag);
+            element = new Checkbox(this_,t,searchTarget,child,flag);
         } else if (child.options.type == "color") {
             element = createTag(t, "input", child.options);
             this_.setWith(element, child.withObject, searchTarget, flag);
@@ -330,9 +326,7 @@ export const tagCreater = {
         return element;
     },
     "outliner": (this_,t,searchTarget,child,flag) => {
-        // return this_.createOutliner(t, child.withObject, child.loopTarget, child.structures, searchTarget, child.options, flag);
         return new OutlinerTag(this_, t, searchTarget, child, flag);
-
     },
     "scrollable": (this_,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "scrollable"});
@@ -415,17 +409,11 @@ export const tagCreater = {
         }
     },
     "hasKeyframeCheck": (this_,t,searchTarget,child,flag) => {
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        t.append(checkbox);
+        const checkbox = createTag(t, "input", {type: "checkbox"});
         /** @type {KeyframeBlock} */
         const object = this_.getParameter(searchTarget, child.targetObject);
         const update = () => {
-            if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
-                checkbox.checked = true;
-            } else {
-                checkbox.checked = false;
-            }
+            checkbox.checked = object.hasKeyFromFrame(app.scene.frame_current, 0.2);
         }
         checkbox.addEventListener("click", () => {
             if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
@@ -433,8 +421,11 @@ export const tagCreater = {
                 object.insert(app.scene.frame_current, object.targetObject[object.targetValue], 0.2);
             }
         })
+        update();
         // this_.setUpdateEventToParameter(searchTarget, child.targetObject, update, );
         managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: this_.groupID}, null, update);
+        managerForDOMs.set({o: object, i: "keys", f: flag, g: this_.groupID}, null, update);
+        return checkbox;
     },
     "nodeFromFunction": (this_,t,searchTarget,child,flag) => {
         const functionResult = this_.getParameter(searchTarget, child.source)();
@@ -546,218 +537,6 @@ export class CreatorForUI {
         } catch {
             console.trace("値の取得", path, searchTarget, "でエラーが出ました");
         }
-    }
-
-    createOutliner(t, withObject, loopTarget, structures, searchTarget, options, flag) {
-        let loopTargetIsPlainObject = false;
-        if (loopTarget.parameter && loopTarget.loopTargets) {
-            loopTargetIsPlainObject = true;
-        } else if (!Array.isArray(loopTarget)) {
-            loopTarget = [loopTarget];
-        }
-        const outlinerID = createID();
-        let scrollableContainer = t;
-        let searchFilter = "";
-        let searchParameter = "type";
-        if (options.arrange) {
-            const section = createTag(t, "div", {style: "display: grid; width: 100%; height: fit-content; gridTemplateRows: auto auto 1fr; backgroundColor: var(--sub2Color); border-radius: 5px; border: 1px solid var(--subColor);"});
-            const title = createTag(section, "div", {style: "textAlign: center;"});
-            const seachTag = createTag(title, "input", {style: "fontSize: 120%",value: ""});
-            seachTag.addEventListener("input", () => {
-                searchFilter = seachTag.value;
-                outlinerUpdate();
-            })
-            const splitLine = createTag(section, "div", {style: "width: 100%; height: 1px; backgroundColor: var(--subColor)"});
-            scrollableContainer = createTag(section, "div", {style: "padding: 0px 0px 15px 0px; height: 300px"});
-            new ResizerForDOM(scrollableContainer, "h", 100, 1000);
-        }
-        let result = {active: null, selects: []};
-        if (options.selectSource) {
-            result.selects = this.findSource(options.selectSource.object, this.globalInputObject);
-        }
-        let activeSource = null;
-        if (options.activeSource) {
-            activeSource = {object: this.findSource(options.activeSource.object, this.globalInputObject), parameter: options.activeSource.parameter};
-        } else {
-            activeSource = {object: result, parameter: "active"};
-        }
-        // 最後の更新時に更新されたオブジェクトたち
-        let lastUpdateObjects = [];
-        let rangeStartIndex = 0;
-        let rangeEndIndex = 0;
-        const scrollable = createTag(scrollableContainer, "div", {class: "scrollable"});
-        const array = [];
-        const rootObject = this.getParameter(searchTarget, withObject);
-        const getAllObject = () => {
-            const getLoopChildren = (children, resultObject = []) => {
-                let filterBool_ = false;
-                const filterData = options.filter;
-                const fn0 = (child) => {
-                    let filterBool = filterData ? false : true;
-                    if (filterData) {
-                        if (filterData.contains) {
-                            if (child[searchParameter] == searchFilter) {
-                                filterBool = true;
-                            }
-                        }
-                    }
-                    if (loopTargetIsPlainObject) {
-                        const targetType = child[loopTarget.parameter];
-                        const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
-                        for (const l of loopTargets) {
-                            const nextChildren = this.findSource(l, child);
-                            if (nextChildren) { // 子要素がある場合ループする
-                                const fnResult = getLoopChildren(nextChildren, resultObject);
-                                if (filterData) {
-                                    if (fnResult.filter) {
-                                        filterBool = true;
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        for (const l of loopTarget) {
-                            const nextChildren = this.findSource(l, child);
-                            if (nextChildren) { // 子要素がある場合ループする
-                                const fnResult = getLoopChildren(nextChildren, resultObject);
-                                if (filterData) {
-                                    if (fnResult.filter) {
-                                        filterBool = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (filterBool) {
-                        resultObject.push(child);
-                        filterBool_ = true;
-                    }
-                }
-                if (Array.isArray(children)) {
-                    for (const child of children) {
-                        fn0(child);
-                    }
-                } else {
-                    fn0(children);
-                }
-                return {filter: filterBool_,result: resultObject};
-            }
-            return getLoopChildren(rootObject).result;
-        }
-        const outlinerUpdate = (o, gID, t) => {
-            array.length = 0;
-            const allObject = getAllObject();
-            // 削除があった場合対応するDOMを削除
-            for (const object of lastUpdateObjects) {
-                if (!allObject.includes(object)) {
-                    managerForDOMs.deleteDOM(object, this.groupID, outlinerID);
-                }
-            }
-            // 追加があった場合新規作成
-            for (const object of allObject) {
-                // if (!managerForDOMs.getObjectAndGroupID(object, this.groupID, outlinerID).length) {
-                if (!lastUpdateObjects.includes(object)) {
-                    const container = createTag(null, "div", {style: "paddingLeft: 2px; height: fit-content; minHeight: auto;"});
-                    container.addEventListener("click", (event) => {
-                        if (app.input.keysDown["Shift"]) {
-                            rangeEndIndex = array.indexOf(object);
-                            if (isFunction(options.rangeSelectEventFn)) {
-                                options.rangeSelectEventFn(event, array, rangeStartIndex, rangeEndIndex);
-                            }
-                        } else {
-                            rangeStartIndex = array.indexOf(object);
-                            if (isFunction(options.clickEventFn)) { // 関数が設定されていたら適応
-                                options.clickEventFn(event, object);
-                            } else {
-                                activeSource.object[activeSource.parameter] = object;
-                                result.active = object;
-                                if (!app.input.keysDown["Shift"]) {
-                                    result.selects.length = 0;
-                                }
-                                result.selects.push(object);
-                                console.log(result,activeSource);
-                                event.stopPropagation();
-                                // managerForDOMs.update(list, "選択情報");
-                            }
-                        }
-                    });
-
-                    const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr; height: fit-content;"});
-                    const visibleCheck = createCheckbox(upContainer, "arrow");
-                    visibleCheck.checked = true;
-                    /** @type {HTMLElement} */
-                    const myContainer = createTag(upContainer, "div");
-                    const childrenContainer = createTag(container, "div", {style: "marginLeft: 10px; height: fit-content;"});
-                    this.createFromChildren(myContainer, structures, object, flag);
-                    visibleCheck.addEventListener("change", () => {
-                        childrenContainer.classList.toggle("hidden");
-                    })
-                    managerForDOMs.set({o: object, g: this.groupID, i: outlinerID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
-                }
-            }
-            lastUpdateObjects = [...allObject];
-            const looper = (children,targetDOM = scrollable) => {
-                const fn0 = (child) => {
-                    if (allObject.includes(child)) {
-                        try {
-                            const managerObject = managerForDOMs.getObjectAndGroupID(child, this.groupID, outlinerID)[0].dom;
-                            targetDOM.append(managerObject.container);
-                            if (loopTargetIsPlainObject) {
-                                const targetType = child[loopTarget.parameter];
-                                const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
-                                for (const l of loopTargets) {
-                                    const nextChildren = this.findSource(l, child);
-                                    if (nextChildren) { // 子要素がある場合ループする
-                                        looper(nextChildren, managerObject.childrenContainer);
-                                    }
-                                }
-                            } else {
-                                for (const l of loopTarget) {
-                                    const nextChildren = this.findSource(l, child);
-                                    if (nextChildren) { // 子要素がある場合ループする
-                                        looper(nextChildren, managerObject.childrenContainer);
-                                    }
-                                }
-                            }
-                            array.push(child);
-                        } catch {
-                            console.warn("ヒエラルキーが正常に生成できませんでした");
-                        }
-                    }
-                }
-                if (Array.isArray(children)) {
-                    for (const child of children) {
-                        fn0(child);
-                    }
-                } else {
-                    fn0(children);
-                }
-            }
-            looper(rootObject);
-        }
-        // 選択表示の更新
-        const listActive = (o, gID, t) => {
-            console.log("ヒエラルキーアクティブ")
-            const createdTags = managerForDOMs.getGroupAndID(this.groupID, outlinerID); // すでに作っている場合
-            createdTags.forEach((data, object) => {
-                const bool_ = activeSource.object[activeSource.parameter] == object;
-                if (bool_) {
-                    data.dom.myContainer.classList.add("activeColor");
-                } else {
-                    data.dom.myContainer.classList.remove("activeColor");
-                    const bool__ = result.selects.includes(object);
-                    if (bool__) {
-                        data.dom.myContainer.classList.add("activeColor2");
-                    } else {
-                        data.dom.myContainer.classList.remove("activeColor2");
-                    }
-                }
-            })
-        }
-        managerForDOMs.set({o: activeSource.object, g: this.groupID, i: activeSource.parameter, f: flag}, t, listActive, null);
-        managerForDOMs.set({o: result.selects, g: this.groupID, f: flag}, t, listActive, null);
-        managerForDOMs.set({o: rootObject, g: this.groupID, f: flag}, scrollable, outlinerUpdate);
-        managerForDOMs.updateGroupInObject(rootObject, this.groupID);
     }
 
     // パスからオブジェクトの参照を見つける
