@@ -1,7 +1,7 @@
-import { app } from "../../../app/app.js";
+import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
 import { createID, createTag, managerForDOMs } from "../util.js";
-import { Checkbox } from "./checkbox.js";
+import { Checkbox } from "./checkboxTag.js";
 
 function isFilterIncluded(object, filter = "all") {
     if (filter == "all" || filter == "") {
@@ -20,7 +20,7 @@ function isFilterIncluded(object, filter = "all") {
 
 export class OutlinerTag {
     // constructor(this_, t, withObject, loopTarget, structures, searchTarget, options, flag) {
-        constructor (this_,t,searchTarget,child,flag) {
+        constructor(this_,t,searchTarget,child,flag) {
         const options = child.options;
         const withObject = child.withObject;
         const structures = child.structures;

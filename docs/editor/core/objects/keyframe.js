@@ -1,7 +1,8 @@
 import { vec2 } from "../../utils/mathVec.js";
 import { changeParameter } from "../../utils/utility.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
+
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す

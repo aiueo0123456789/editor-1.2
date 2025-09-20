@@ -1,4 +1,4 @@
-import { app } from "../app/app.js";
+import { app } from "../../main.js";
 import { InputManager } from "../app/inputManager/inputManager.js";
 import { CreatorForUI } from "../utils/ui/creatorForUI.js";
 import { createTag } from "../utils/ui/util.js";

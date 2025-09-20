@@ -1,4 +1,5 @@
-import { app, useClassFromAreaType } from "../../app/app.js";
+import { app } from "../../../main.js";
+import { useClassFromAreaType } from "../../app/app.js";
 import { CreatorForUI } from "../../utils/ui/creatorForUI.js";
 import { createIcon, createTag } from "../../utils/ui/util.js";
 import { isFunction } from "../../utils/utility.js";

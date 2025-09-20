@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { ChangeParentCommand } from "../../commands/object/object.js";
 import { ModalOperator } from "../../operators/modalOperator.js";

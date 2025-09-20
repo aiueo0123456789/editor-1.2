@@ -1,8 +1,8 @@
-import { app } from "../../../../app/app.js";
+import { app } from "../../../../../main.js";
 import { InputManager } from "../../../../app/inputManager/inputManager.js";
 import { ModalOperator } from "../../../../operators/modalOperator.js";
 import { vec2 } from "../../../../utils/mathVec.js";
-import { OutlinerTag } from "../../../../utils/ui/customTags/outliner.js";
+import { OutlinerTag } from "../../../../utils/ui/customTags/outlinerTag.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";

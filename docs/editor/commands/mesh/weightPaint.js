@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { loadFile } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 

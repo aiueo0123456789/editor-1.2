@@ -1,4 +1,4 @@
-import { app } from "../../../../app/app.js";
+import { app } from "../../../../../main.js";
 import { vec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {

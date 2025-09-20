@@ -1,5 +1,5 @@
 import { KeyResizeCommand, KeyTranslateCommand } from "../../commands/keyTransform/keyTransform.js";
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { ModalOperator } from "../../operators/modalOperator.js";

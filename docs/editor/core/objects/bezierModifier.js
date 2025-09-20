@@ -1,8 +1,8 @@
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
-import { app } from "../../app/app.js";
 import { vec2 } from "../../utils/mathVec.js";
+import { app } from "../../../main.js";
 
 class Vertex {
     constructor(/** @type {Point} */point,data) {

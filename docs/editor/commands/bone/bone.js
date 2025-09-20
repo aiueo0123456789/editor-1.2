@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { Bone } from "../../core/objects/armature.js";
 import { vec2 } from "../../utils/mathVec.js";
 import { indexOfSplice, removeDuplicates } from "../../utils/utility.js";

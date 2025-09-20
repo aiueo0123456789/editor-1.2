@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { AppendVertexCommand } from "../../commands/mesh/mesh.js";
 
 export class AppendVertex {

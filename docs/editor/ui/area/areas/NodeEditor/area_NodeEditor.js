@@ -1,4 +1,4 @@
-import { app } from "../../../../app/app.js";
+import { app } from "../../../../../main.js";
 import { CreateObjectCommand } from "../../../../commands/object/object.js";
 import { changeParameter } from "../../../../utils/utility.js";
 

@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { DeleteVerticesCommand } from "../../commands/mesh/mesh.js";
 import { BoneDelete } from "../../commands/bone/bone.js";
 

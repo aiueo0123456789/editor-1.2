@@ -10,7 +10,7 @@ import { Area_Timeline } from "../ui/area/areas/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "../ui/area/areas/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "../ui/area/areas/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./inputManager/inputManager.js";
-import { indexOfSplice, loadFile } from "../utils/utility.js";
+import { changeParameter, indexOfSplice, loadFile } from "../utils/utility.js";
 import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
 import { OutlinerSpaceData } from "../ui/area/areas/Outliner/area_OutlinerSpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
@@ -24,6 +24,7 @@ import { Area_Previewer } from "../ui/area/areas/Previewer/area_Previewer.js";
 import { PreviewerSpaceData } from "../ui/area/areas/Previewer/area_PreviewerSpaceData.js";
 import { WorkSpaces } from "./workSpaces/workSpaces.js";
 import { Area_Timeline2 } from "../ui/area/areas/Timeline2/area_Timeline2.js";
+import { UI } from "./ui/ui.js";
 
 const allLanguageData = await loadFile("./config/language/language.json");
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
@@ -305,38 +306,38 @@ class AppConfig {
                     {label: "オブジェクトを追加", children: [
                         {label: "グラフィックメッシュ", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand(app.options.getPrimitiveData("グラフィックメッシュ", "normal"));
-                                app.operator.appendCommand(command);
-                                app.operator.execute();
+                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("グラフィックメッシュ", "normal"));
+                                this.app.operator.appendCommand(command);
+                                this.app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
-                                const command = new CreateObjectCommand(app.options.getPrimitiveData("グラフィックメッシュ", "body"));
-                                app.operator.appendCommand(command);
-                                app.operator.execute();
+                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("グラフィックメッシュ", "body"));
+                                this.app.operator.appendCommand(command);
+                                this.app.operator.execute();
                             }},
                         ]},
                         {label: "ベジェモディファイア", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand(app.options.getPrimitiveData("ベジェモディファイア", "normal"));
-                                app.operator.appendCommand(command);
-                                app.operator.execute();
+                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("ベジェモディファイア", "normal"));
+                                this.app.operator.appendCommand(command);
+                                this.app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
-                                const command = new CreateObjectCommand(app.options.getPrimitiveData("ベジェモディファイア", "body"));
-                                app.operator.appendCommand(command);
-                                app.operator.execute();
+                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("ベジェモディファイア", "body"));
+                                this.app.operator.appendCommand(command);
+                                this.app.operator.execute();
                             }},
                         ]},
                         {label: "アーマチュア", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand(app.options.getPrimitiveData("アーマチュア", "normal"));
-                                app.operator.appendCommand(command);
-                                app.operator.execute();
+                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("アーマチュア", "normal"));
+                                this.app.operator.appendCommand(command);
+                                this.app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
-                                const command = new CreateObjectCommand(app.options.getPrimitiveData("アーマチュア", "body"));
-                                app.operator.appendCommand(command);
-                                app.operator.execute();
+                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("アーマチュア", "body"));
+                                this.app.operator.appendCommand(command);
+                                this.app.operator.execute();
                             }},
                         ]},
                     ]},
@@ -346,8 +347,8 @@ class AppConfig {
                     {label: "削除", children: [
                         {label: "選択物", eventFn: () => {
                             const command = new DeleteObjectCommand(this.app.scene.state.selectedObject);
-                            app.operator.appendCommand(command);
-                            app.operator.execute();
+                            this.app.operator.appendCommand(command);
+                            this.app.operator.execute();
                         }},
                     ]},
                 ],
@@ -371,12 +372,34 @@ class AppConfig {
     }
 }
 
+class AppPerformance {
+    constructor(/** @type {Application} */ app) {
+        this.app = app;
+        this.jsHeapMByteSizeLimit = 0;　// 使用可能なメモリ(MB)
+        this.jsHeapByteSizeLimit = 0;　// 使用可能なメモリ(B)
+        this.totalJSHeapMByteSize = 0; // 割り当てられた(MB)
+        this.totalJSHeapByteSize = 0; // 割り当てられた(B)
+        this.usedJSHeapMByteSize = 0; // 使用中のメモリ(MB)
+        this.usedJSHeapByteSize = 0; // 使用中のメモリ(B)
+    }
+
+    update() {
+        changeParameter(this, "jsHeapMByteSizeLimit", performance.memory.jsHeapSizeLimit / 1024 / 1024);
+        changeParameter(this, "jsHeapByteSizeLimit", performance.memory.jsHeapSizeLimit);
+        changeParameter(this, "totalJSHeapMByteSize", performance.memory.totalJSHeapSize / 1024 / 1024);
+        changeParameter(this, "totalJSHeapByteSize", performance.memory.totalJSHeapSize);
+        changeParameter(this, "usedJSHeapMByteSize", performance.memory.usedJSHeapSize / 1024 / 1024);
+        changeParameter(this, "usedJSHeapByteSize", performance.memory.usedJSHeapSize);
+    }
+}
+
 export class Application { // 全てをまとめる
     constructor(/** @type {HTMLElement} **/ dom) {
         this.dom = dom; // エディターが作られるdom
+        this.appPerformance = new AppPerformance(this);
         this.appConfig = new AppConfig(this);
         this.options = new AppOptions(this);
-
+        this.ui = new UI(this);
         this.scene = new Scene(this);
         this.appConfig.stContextmenuItems();
 
@@ -388,8 +411,8 @@ export class Application { // 全てをまとめる
         this.input = new InputManager(this);
         this.operator = new Operator(this);
 
-
         this.contextmenu = new ContextmenuOperator(this);
+
     }
 
     init() {
@@ -405,39 +428,9 @@ export class Application { // 全てをまとめる
         return result;
     }
 
-    createArea(axis, target = this.dom) { // エリアの作成
-        const area = new AutoGrid(createID(), target, axis, 50);
-        this.areaMap.set(area, []);
-        return area;
-    }
-
-    setAreaType(t, type) {
-        const area_dom = document.createElement("div");
-        area_dom.style.width = "100%";
-        area_dom.style.height = "100%";
-        const area = new Area(type,area_dom);
-        this.areas.push(area);
-        t.append(area_dom);
-    }
-
-    deleteArea(/** @type {Area} */area) {
-        area.target.replaceChildren();
-        /** @type {AutoGrid} */
-        const grid = area.grid;
-        const gridInnner = this.areaMap.get(grid);
-        indexOfSplice(gridInnner, area);
-        console.log(gridInnner)
-        console.log(grid.container);
-        console.log(grid.target);
-        grid.target.replaceChildren();
-        if (gridInnner.length) {
-            grid.target.append(gridInnner[0].target);
-        }
-        indexOfSplice(this.areas, area);
-        this.areaMap.delete(area);
-    }
-
     update() {
+        // パフォーマンスの更新
+        this.appPerformance.update();
         // 表示順番の再計算
         this.scene.updateRenderingOrder();
         this.scene.updateAnimationCollectors();
@@ -451,17 +444,11 @@ export class Application { // 全てをまとめる
     }
 }
 
-export const app = new Application(document.getElementById("app"));
-
-app.init();
-
-function appUpdate() {
+export function appUpdate(app) {
     try {
         app.update();
-    } catch(error) {
-        console.error(error)
+    } catch (error) {
+        console.error(error);
     }
-    requestAnimationFrame(appUpdate);
+    requestAnimationFrame(() => appUpdate(app));
 }
-
-appUpdate();

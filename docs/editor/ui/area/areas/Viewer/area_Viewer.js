@@ -12,7 +12,6 @@ import { BonePropertyModal } from './toolBar/bone.js';
 import { ArmaturePropertyModal } from './toolBar/armature.js';
 import { EdgeJoinTool } from '../../../tools/EdgeJoin.js';
 import { AppendVertex } from '../../../tools/appendVertex.js';
-import { app } from '../../../../app/app.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
 import { sampler } from '../../../../utils/GPUObject.js';
 import { boolTo0or1, calculateLocalMousePosition, changeParameter, loadFile } from '../../../../utils/utility.js';
@@ -26,6 +25,7 @@ import { CreateEdgeTool } from '../../../tools/CreateEdge.js';
 import { Particle } from '../../../../core/objects/particle.js';
 import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
 import { AppendPoint } from '../../../tools/AppendPoint.js';
+import { app } from '../../../../../main.js';
 
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t", "wl");

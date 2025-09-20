@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { NameAndTypeAndID, searchAnimation } from "../../utils/objects/util.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
 import { changeParameter } from "../../utils/utility.js";

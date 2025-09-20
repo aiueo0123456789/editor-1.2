@@ -1,4 +1,4 @@
-import { app } from "../../../app/app.js";
+import { app } from "../../../../main.js";
 import { TextEditor_textSplice } from "../../../commands/textEditor/textEditorCommand.js";
 import { isNumber } from "../../utility.js";
 import { tagCreater } from "../creatorForUI.js";

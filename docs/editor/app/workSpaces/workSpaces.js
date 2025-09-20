@@ -1,8 +1,9 @@
 import { createGrid } from "../../utils/ui/grid.js";
 import { createTag } from "../../utils/ui/util.js";
+import { Application } from "../app.js";
 
 export class WorkSpaces {
-    constructor(app) {
+    constructor(/** @type {Application} */ app) {
         this.app = app;
         this.spacesInitData = {
             "layout": {
@@ -107,7 +108,7 @@ export class WorkSpaces {
     }
 
     init() {
-        const workSpacesDiv = document.getElementById("workSpaces");
+        const workSpacesDiv = this.app.ui.creatorForUI.getDOMFromID("workSpaces");
         // 初期化
         for (const spaceName in this.spacesInitData) {
             const spaceInitData = this.spacesInitData[spaceName];
@@ -118,10 +119,10 @@ export class WorkSpaces {
                     looper(data.child2, grid.child2);
                     return grid;
                 } else {
-                    this.app.setAreaType(t,data.areaType);
+                    this.app.ui.setAreaType(t,data.areaType);
                 }
             }
-            const grid = looper(spaceInitData, this.app.dom);
+            const grid = looper(spaceInitData, this.app.ui.creatorForUI.getDOMFromID("main"));
             grid.container.classList.add("hidden");
             const header = createTag(workSpacesDiv, "div", {textContent: spaceName});
             header.addEventListener("click", () => {

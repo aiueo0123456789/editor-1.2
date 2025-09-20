@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { CreateEdgeFromeTextureCommand } from "../../commands/mesh/mesh.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 

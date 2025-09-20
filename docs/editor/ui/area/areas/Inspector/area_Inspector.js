@@ -1,4 +1,4 @@
-import { app } from "../../../../app/app.js";
+import { app } from "../../../../../main.js";
 import { appendAnimationToObject, deleteAnimationToObject } from "../../../../utils/objects/util.js";
 import { changeParameter } from "../../../../utils/utility.js";
 

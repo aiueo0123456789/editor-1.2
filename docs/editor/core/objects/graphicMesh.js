@@ -2,11 +2,11 @@ import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle 
 import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
 import { arrayToArrayCopy, arrayToPush, indexOfSplice, waitUntilFrame } from "../../utils/utility.js";
 import { vec2 } from "../../utils/mathVec.js";
-import { app } from "../../app/app.js";
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { isNotTexture } from "../../utils/GPUObject.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
+import { app } from "../../../main.js";
 
 class Vertex {
     constructor(/** @type {GraphicMesh} */ graphicMesh, data) {

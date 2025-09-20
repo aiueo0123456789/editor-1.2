@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { ObjectBase } from "../../utils/objects/util.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
 import { createArrayN, isNumber, IsString } from "../../utils/utility.js";

@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class KeyDelete {

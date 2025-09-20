@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { EdgeJoinCommand } from "../../commands/mesh/mesh.js";
 
 export class EdgeJoinTool {

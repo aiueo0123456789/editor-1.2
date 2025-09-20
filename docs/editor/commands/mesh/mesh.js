@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { GraphicMesh } from "../../core/objects/graphicMesh.js";
 import { createEdgeFromTexture } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
 import { arrayToArrayCopy } from "../../utils/utility.js";

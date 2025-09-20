@@ -3,9 +3,9 @@ import { GPU } from "../../utils/webGPU.js";
 import { Children } from "../../utils/objects/children.js";
 import { ObjectBase, sharedDestroy } from "../../utils/objects/util.js";
 import { indexOfSplice } from "../../utils/utility.js";
-import { app } from "../../app/app.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
+import { app } from "../../../main.js";
 
 class Vertex {
     constructor(/** @type {Bone} */bone,data) {

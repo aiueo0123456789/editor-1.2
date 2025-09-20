@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 
 // 追加のコマンド
 export class CreateObjectCommand {

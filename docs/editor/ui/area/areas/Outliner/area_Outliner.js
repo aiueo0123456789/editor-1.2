@@ -1,4 +1,4 @@
-import { app } from "../../../../app/app.js";
+import { app } from "../../../../../main.js";
 
 export class Area_Outliner {
     constructor(area) {

@@ -5,7 +5,7 @@ import { BezierModifier } from '../../core/objects/bezierModifier.js';
 import { Bone, Armature } from '../../core/objects/armature.js';
 import { AnimationCollector } from '../../core/objects/animationCollector.js';
 import { arrayToSet, changeParameter, createArrayN, indexOfSplice, isNumber, loadFile, objectInit, arrayToPush, range } from '../../utils/utility.js';
-import { app, Application } from '../app.js';
+import { Application } from '../app.js';
 import { vec2 } from '../../utils/mathVec.js';
 import { RuntimeDatas } from '../../core/runtime/runtimeDatas.js';
 import { ParameterManager } from '../../core/objects/parameterManager.js';
@@ -13,6 +13,7 @@ import { Particle } from '../../core/objects/particle.js';
 import { Script } from '../../core/objects/script.js';
 import { Camera } from '../../core/objects/camera.js';
 import { DeleteObjectCommand } from '../../commands/object/object.js';
+import { app } from '../../../main.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));

@@ -1,4 +1,4 @@
-import { app } from "../../../../app/app.js";
+import { app } from "../../../../../main.js";
 import { managerForDOMs } from "../../../../utils/ui/util.js";
 import { Bone } from "../../armature.js";
 

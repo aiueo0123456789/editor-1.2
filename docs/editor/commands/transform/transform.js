@@ -1,4 +1,4 @@
-import { app } from "../../app/app.js";
+import { app } from "../../../main.js";
 import { Armature } from "../../core/objects/armature.js";
 import { BezierModifier } from "../../core/objects/bezierModifier.js";
 import { GraphicMesh } from "../../core/objects/graphicMesh.js";
