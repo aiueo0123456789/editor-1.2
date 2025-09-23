@@ -84,3 +84,29 @@ input[type="checkbox"]:checked + .button-checkbox {
     font-size: 10px;
     color: rgb(255, 255, 255);
 }
+
+/* チェックボックスのカスタムデザイン */
+.hasKeyframeCheck {
+    display: inline-block;
+    width: 15px;  /* サイズ調整 */
+    height: 15px;
+    position: relative;
+    cursor: pointer;
+}
+.hasKeyframeCheck::after {
+    content: '';
+    display: block;
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    left: 50%;
+    top: 50%;
+    background: #ffffff;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+input[type="checkbox"]:checked + .hasKeyframeCheck::after { /* あった場合表示 */
+    border-radius: 0;  /* 角 */
+}
+input[type="checkbox"]:not(:checked) + .hasKeyframeCheck::after { /* なかった場合表示 */
+    border-radius: 100%;  /* 角丸 */
+}

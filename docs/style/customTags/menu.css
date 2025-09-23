@@ -42,7 +42,7 @@
     overflow-x: hidden;
 } */
 
-#custom-menu-items {
+.custom-menu-items {
     border-top-left-radius: 0px;
     position: absolute;
     top: 0;
@@ -55,13 +55,13 @@
     padding: 5px;
 }
 
-#custom-menu-items > * {
+.custom-menu-items > * {
     border-radius: 0px;
     /* width: fit-content; */
     width: 100%;
     height: 15px;
 }
 
-#custom-menu-items > * > * {
+.custom-menu-items > * > * {
     width: 100%;
 }

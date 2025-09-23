@@ -62,7 +62,7 @@ export class Area_Inspector {
                         true: [
                             {type: "section", name: "アニメーション", children: [
                                 {type: "input", label: "アニメーション最大数", withObject: "/MAX_ANIMATIONS", options: {type: "number"}, custom: {collision: false, visual: "1"}},
-                                {type: "list", label: "アニメーション", appendEvent: () => {
+                                {type: "list", name: "アニメーション", appendEvent: () => {
                                     appendAnimationToObject(app.scene.state.activeObject, "新規");
                                 }, deleteEvent: (animations) => {
                                     for (const animation of animations) {

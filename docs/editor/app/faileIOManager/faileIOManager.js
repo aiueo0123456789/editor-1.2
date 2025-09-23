@@ -11,11 +11,14 @@ export class FaileIOManager {
     // セーブデータを読み込み
     loadFile(json) {
         this.app.scene.reset();
-        if (json.ps) { // psフォルダのアップロードの場合
-            for (const data of json.data.GraphicMesh) {
-                if (data.texture) {
-                    this.app.scene.outliner.append(this.app.scene.objects.createObjectAndSetUp({saveData: data}), "");
-                }
+        console.log(this.app)
+        console.log("実際に送られたデータ",json)
+        if (json.ww) { // psフォルダのアップロードの場合
+            for (const data of json.data.textures) {
+                this.app.scene.outliner.append(this.app.scene.objects.createObjectAndSetUp(data), this.app.scene.outliner.textures);
+            }
+            for (const data of json.data.graphicMeshs) {
+                this.app.scene.outliner.append(this.app.scene.objects.createObjectAndSetUp(data), this.app.scene.outliner.objects);
             }
         } else {
             console.log(json)
@@ -39,20 +42,28 @@ export class FaileIOManager {
     }
 
     async save() {
-        // JSONデータを作成
-        const data = await this.app.getSaveData();
-        console.log(data)
-        // JSONデータを文字列化
-        const jsonString = JSON.stringify(data, null, 2);
-        // Blobを作成
-        const blob = new Blob([jsonString], { type: "application/json" });
-        // ダウンロード用のリンクを作成
+        const zip = new JSZip();
+        const data = await this.app.scene.getSaveData();
+        // フォルダを作成
+        const texturesFolder = zip.folder("textures");
+
+        // 画像をフォルダに追加
+        data.sceen.textures.forEach(texture => {
+            texturesFolder.file(`${texture.id}.png`, texture.texture, { binary: true });
+            texture.texture = "";
+        });
+
+        // JSONを追加
+        zip.file("data.json", JSON.stringify(data.json));
+
+        // ZIP生成
+        const blob = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `${this.app.appConfig.projectName}.anm`;
-        // リンクをクリックしてダウンロードを開始
-        a.click();
+        a.href = url;
+        a.download = `${this.app.appConfig.projectName}.zip`;
+        a.click(); // 自動クリックでダウンロード開始
         // メモリ解放
-        URL.revokeObjectURL(a.href);
+        URL.revokeObjectURL(url);
     }
 }

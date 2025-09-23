@@ -1,4 +1,4 @@
-#contextmenu {
+.contextmenu {
     width: fit-content;
     height: fit-content;
     position: absolute; /* 必要に応じて位置を調整 */

@@ -8,7 +8,7 @@ export class ContextmenuOperator {
         this.app = app;
         this.creator = new CreatorForUI();
         /** @type {HTMLElement} */
-        this.dom = document.getElementById("contextmenu");
+        this.dom = app.ui.creatorForUI.getDOMFromID("contextmenu");
     }
 
     showContextmenu(position) {

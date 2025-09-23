@@ -171,9 +171,16 @@ export class GraphicMeshData extends RuntimeDataBase {
     }
 
     setGroup() {
-        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.renderingVertices.buffer, this.uv.buffer]); // 表示用
-        this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), [this.renderingVertices.buffer, this.meshes.buffer, this.selectedVertices.buffer, this.weightBlocks.buffer]); // 表示用
-        this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.renderingVertices.buffer, this.baseVertices.buffer, this.animations.buffer, this.animationWights.buffer, this.allocations.buffer]); // アニメーション用
-        this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.renderingVertices.buffer, this.weightBlocks.buffer, this.allocations.buffer]); // 親の変形を適応するた
+        if (this.order.length) {
+            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.renderingVertices.buffer, this.uv.buffer]); // 表示用
+            this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), [this.renderingVertices.buffer, this.meshes.buffer, this.selectedVertices.buffer, this.weightBlocks.buffer]); // 表示用
+            this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.renderingVertices.buffer, this.baseVertices.buffer, this.animations.buffer, this.animationWights.buffer, this.allocations.buffer]); // アニメーション用
+            this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.renderingVertices.buffer, this.weightBlocks.buffer, this.allocations.buffer]); // 親の変形を適応するた
+        } else {
+            this.renderGroup = null; // 表示用
+            this.renderingGizumoGroup = null; // 表示用
+            this.animationApplyGroup = null; // アニメーション用
+            this.parentApplyGroup = null; // 親の変形を適応するた
+        }
     }
 }

@@ -101,7 +101,6 @@ export class RuntimeDataBase {
                 for (const key in offsets) {
                     nowObject.runtimeOffsetData[this.offsetNameConverter[key]] = offsets[key];
                 }
-                console.log(nowObject)
                 this.updateAllocationData(object);
                 return ;
             }

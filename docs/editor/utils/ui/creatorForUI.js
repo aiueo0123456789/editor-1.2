@@ -13,6 +13,7 @@ import { createGrid } from "./grid.js";
 import { OutlinerTag } from "./customTags/outlinerTag.js";
 import { Checkbox } from "./customTags/checkboxTag.js";
 import { MeterTag } from "./customTags/meterTag.js";
+import { HasKeyframeCheck } from "./customTags/hasKeyframeCheckTag.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -28,7 +29,7 @@ export function createSelect(t, list = []) {
     const isOpen = createTag(container, "span", {class: "downArrow"});
     container.addEventListener("click", (e) => {
         const rect = container.getBoundingClientRect();
-        const listContainer = document.getElementById("custom-select-items");
+        const listContainer = app.ui.creatorForUI.getDOMFromID("custom-select-items");
         listContainer.style.left = `${rect.left}px`;
         listContainer.style.top = `${rect.top + 15}px`;
         listContainer.replaceChildren();
@@ -225,7 +226,7 @@ export const tagCreater = {
     "list": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
         let element;
         if (child.options.type == "min") {
-            element = createMinList(t,child.label);
+            element = createMinList(t,child.name);
             const listOutputData = this_.createListChildren(element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
             if (child.appendEvent) {
                 if (isFunction(child.appendEvent)) {
@@ -360,6 +361,7 @@ export const tagCreater = {
         const childrenReset = () => {
             managerForDOMs.deleteFlag(myFlag);
             // 関連づけられていない小要素を削除
+            console.log("削除",child,[...children]);
             for (const childTag of children) {
                 childTag?.remove();
                 removeObjectInHTMLElement(childTag);
@@ -416,23 +418,7 @@ export const tagCreater = {
         }
     },
     "hasKeyframeCheck": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        const checkbox = createTag(t, "input", {type: "checkbox"});
-        /** @type {KeyframeBlock} */
-        const object = this_.getParameter(searchTarget, child.targetObject);
-        const update = () => {
-            checkbox.checked = object.hasKeyFromFrame(app.scene.frame_current, 0.2);
-        }
-        checkbox.addEventListener("click", () => {
-            if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
-            } else {
-                object.insert(app.scene.frame_current, object.targetObject[object.targetValue], 0.2);
-            }
-        })
-        update();
-        // this_.setUpdateEventToParameter(searchTarget, child.targetObject, update, );
-        managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: this_.groupID}, null, update);
-        managerForDOMs.set({o: object, i: "keys", f: flag, g: this_.groupID}, null, update);
-        return checkbox;
+        return new HasKeyframeCheck(this_, t, searchTarget, child, flag);
     },
     "nodeFromFunction": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
         const functionResult = this_.getParameter(searchTarget, child.source)();

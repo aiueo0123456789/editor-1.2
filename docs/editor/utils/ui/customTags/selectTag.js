@@ -1,3 +1,4 @@
+import { app } from "../../../../main.js";
 import { isFunction, isPlainObject, IsString } from "../../utility.js";
 import { createIcon, createTag, managerForDOMs, setClass } from "../util.js";
 
@@ -33,7 +34,7 @@ export class SelectTag {
                 items = child.sourceObject();
             }
             const rect = this.element.getBoundingClientRect();
-            const listContainer = document.getElementById("custom-select-items");
+            const listContainer = app.ui.creatorForUI.getDOMFromID("custom-select-items");
             listContainer.style.left = `${rect.left}px`;
             listContainer.style.top = `${rect.top + 15}px`;
             listContainer.replaceChildren();

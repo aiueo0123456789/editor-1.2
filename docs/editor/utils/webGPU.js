@@ -1991,6 +1991,56 @@ class WebGPU {
     //     base64String = null;
     //     image.close();
     // }
+
+
+    async textureToBlob(texture) {
+        // 1. バッファを作成 (RGBA8 1ピクセル = 4バイト)
+        const bytesPerPixel = 4;
+        const align = 256; // WebGPU の行ピッチは 256 バイトアライン必須
+        const paddedBytesPerRow = Math.ceil(texture.width * bytesPerPixel / align) * align;
+        const bufferSize = paddedBytesPerRow * texture.height;
+        const gpuBuffer = device.createBuffer({
+            size: bufferSize,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+        // 2. コマンドエンコーダーでコピー
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyTextureToBuffer(
+            { texture: texture },
+            {
+                buffer: gpuBuffer,
+                bytesPerRow: paddedBytesPerRow,
+                rowsPerImage: texture.height,
+            },
+            { width: texture.width, height: texture.height, depthOrArrayLayers: 1 }
+        );
+        device.queue.submit([commandEncoder.finish()]);
+        // 3. CPU側に読み込む
+        await gpuBuffer.mapAsync(GPUMapMode.READ);
+        const copyArrayBuffer = gpuBuffer.getMappedRange();
+        const data = new Uint8Array(copyArrayBuffer);
+
+        // 4. paddingを取り除いて ImageData に変換
+        const imageDataArray = new Uint8ClampedArray(texture.width * texture.height * 4);
+        for (let y = 0; y < texture.height; y++) {
+            const srcStart = y * paddedBytesPerRow;
+            const srcEnd = srcStart + texture.width * bytesPerPixel;
+            const dstStart = y * texture.width * bytesPerPixel;
+            imageDataArray.set(data.subarray(srcStart, srcEnd), dstStart);
+        }
+        const imageData = new ImageData(imageDataArray, texture.width, texture.height);
+        // 5. Canvas に描画して Blob 化
+        const canvas = document.createElement("canvas");
+        canvas.width = texture.width;
+        canvas.height = texture.height;
+        const ctx = canvas.getContext("2d");
+        ctx.putImageData(imageData, 0, 0);
+        const blob = await new Promise((resolve) =>
+            canvas.toBlob(resolve, "image/png")
+        );
+        gpuBuffer.unmap();
+        return blob;
+    }
 }
 
 export const userLang = navigator.language || navigator.userLanguage;

@@ -3,6 +3,7 @@ import { CreatorForUI } from "../../utils/ui/creatorForUI.js";
 import { AutoGrid } from "../../utils/ui/grid.js";
 import { createID } from "../../utils/ui/util.js";
 import { changeParameter, indexOfSplice } from "../../utils/utility.js";
+import { GPU } from "../../utils/webGPU.js";
 import { Application } from "../app.js";
 
 export class UI {
@@ -15,21 +16,23 @@ export class UI {
             {
                 inputObject: {"app": app},
                 DOM: [
-                    {type: "html", id: "contextmenu", class: "hidden", tag: "ul"},
-                    {type: "html", id: "custom-menu-items", class: "hidden", tag: "ul"},
-                    {type: "html", id: "custom-select-items", class: "hidden", tag: "ul"},
+                    {type: "html", id: "contextmenu", class: "contextmenu hidden", tag: "ul"},
+                    {type: "html", id: "custom-menu-items", class: "custom-menu-items hidden", tag: "ul"},
+                    {type: "html", id: "custom-select-items", class: "custom-select-items hidden", tag: "ul"},
                     {type: "div", id: "headMenubar", class: "menubar", children: [
                         {type: "input", label: "プロジェクト名", withObject: "app/appConfig/projectName", options: {type: "text"}},
                         {type: "button", look: {type: "string", text: "セーブ"}, submitFunction: () => {
                             app.fileIO.save();
                         }},
                         {type: "input", id: "open-btn", labelIn: "開く", options: {type: "file"}},
+                        {type: "input", id: "ww-open-btn", labelIn: "開く2", options: {type: "file",  webkitdirectory: true, directory: true, multiple: true}},
                         {type: "html", id: "workSpaces", style: "width: 100%; display: flex; gap: 10px; alignItems: center; overflowX: auto;", tag: "div"},
                     ]},
                     {type: "html", id: "main", class: "main", tag: "div"},
                     {type: "div", id: "headMenubar", class: "menubar", children: [
                         // {type: "meter", label: "メモリ", valueSource: "app/appPerformance/usedJSHeapByteSize", maxSource: "app/appPerformance/jsHeapByteSizeLimit"},
                         {type: "meter", label: "メモリ", valueSource: "app/appPerformance/usedJSHeapByteSize", maxSource: "app/appPerformance/totalJSHeapByteSize"},
+                        {type: "input", label: "DOM数", withObject: "app/appPerformance/domCount", options: {type: "number"}},
                     ]}
                 ]
             },
@@ -168,52 +171,48 @@ export class UI {
         });
 
         // フォトショップから読み込む
-        // document.getElementById('ps-open-btn').addEventListener('change', (event) => {
-        //     const files = event.target.files;
-        //     // 画像とJSONファイルを格納する配列
-        //     const images = {};
-        //     const jsonFiles = [];
-        //     // ファイルを非同期で処理
-        //     Promise.all(Array.from(files).map(file => {
-        //         // ファイルの拡張子を取得
-        //         const extension = file.name.split('.').pop().toLowerCase();
-        //         if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
-        //             // 画像ファイルの処理
-        //             return GPU.imageFileToTexture2D(file).then(texture => {
-        //                 images[file.name] = texture;
-        //             });
-        //         } else if (extension === 'json') {
-        //             // JSONファイルの処理
-        //             return readTextFile(file).then(jsonText => {
-        //                 try {
-        //                     const jsonData = JSON.parse(jsonText);
-        //                     jsonFiles.push(jsonData);
-        //                 } catch (e) {
-        //                     console.error(`JSONパースエラー (${file.name}):`, e);
-        //                 }
-        //             });
-        //         } else {
-        //             // 対象外のファイルタイプは何もしない
-        //             return Promise.resolve();
-        //         }
-        //     })).then(() => {
-        //         // ここで画像やJSONデータを使った処理を行う
-        //         const data = jsonFiles[0];
-        //         const layers = data.GraphicMesh;
-        //         for (let i = 0; i < layers.length; i ++) {
-        //             const layer = layers[i];
-        //             if (images[layer.imagePath]) {
-        //                 layer.texture = images[layer.imagePath].texture;
-        //                 layer.zIndex = layers.length - i;
-        //             }
-        //         }
-        //         app.fileIO.loadFile({ps: true, data: data});
-        //         console.log('画像ファイル:', images);
-        //         console.log('JSONファイル:', jsonFiles);
-        //     }).catch(error => {
-        //         console.error('エラー:', error);
-        //     });
-        // });
+        this.creatorForUI.getDOMFromID('ww-open-btn').addEventListener('change', (event) => {
+            const files = event.target.files;
+            // 画像とJSONファイルを格納する配列
+            const images = {};
+            const jsonFiles = [];
+            // ファイルを非同期で処理
+            Promise.all(Array.from(files).map(file => {
+                // ファイルの拡張子を取得
+                const extension = file.name.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension)) {
+                    // 画像ファイルの処理
+                    return GPU.imageFileToTexture2D(file).then(texture => {
+                        images[file.name] = texture;
+                    });
+                } else if (extension === 'json') {
+                    // JSONファイルの処理
+                    return readTextFile(file).then(jsonText => {
+                        try {
+                            const jsonData = JSON.parse(jsonText);
+                            jsonFiles.push(jsonData);
+                        } catch (e) {
+                            console.error(`JSONパースエラー (${file.name}):`, e);
+                        }
+                    });
+                } else {
+                    // 対象外のファイルタイプは何もしない
+                    return Promise.resolve();
+                }
+            })).then(() => {
+                // ここで画像やJSONデータを使った処理を行う
+                console.log('画像ファイル:', images);
+                console.log('JSONファイル:', jsonFiles);
+                const data = jsonFiles[0];
+                const submitData = data;
+                for (const texture of submitData.textures) {
+                    texture.texture = images[`${texture.id}.png`].texture;
+                }
+                app.fileIO.loadFile({ww: true, data: submitData});
+            }).catch(error => {
+                console.error('エラー:', error);
+            });
+        });
         // テキストファイル（JSON）を読み込む関数
         function readTextFile(file) {
             return new Promise((resolve, reject) => {

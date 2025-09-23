@@ -1,3 +1,4 @@
+import { app } from "../../../../main.js";
 import { isFunction, looper } from "../../utility.js";
 import { createTag, setClass } from "../util.js";
 
@@ -12,7 +13,7 @@ export class MenuTag {
         this.element.classList.add("custom-menu");
         this.element.addEventListener("click", (e) => {
             const rect = this.element.getBoundingClientRect();
-            const listContainer = document.getElementById("custom-menu-items");
+            const listContainer = app.ui.creatorForUI.getDOMFromID("custom-menu-items");
             function removeFn() {
                 listContainer.replaceChildren();
                 listContainer.classList.add("hidden");

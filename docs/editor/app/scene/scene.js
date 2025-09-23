@@ -14,6 +14,8 @@ import { Script } from '../../core/objects/script.js';
 import { Camera } from '../../core/objects/camera.js';
 import { DeleteObjectCommand } from '../../commands/object/object.js';
 import { app } from '../../../main.js';
+import { Texture } from '../../core/objects/texture.js';
+import { isNotTexture } from '../../utils/GPUObject.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
@@ -132,6 +134,8 @@ class Objects {
         this.parameterManagers = [];
         this.particles = [];
         this.scripts = [];
+        this.textures = [];
+
         this.renderingCamera = new Camera();
 
         this.allObject = [];
@@ -162,6 +166,8 @@ class Objects {
             return new Particle(data);
         } else if (objectType == "スクリプト") {
             return new Script(data);
+        } else if (objectType == "テクスチャ") {
+            return new Texture(data);
         }
     }
 
@@ -196,6 +202,8 @@ class Objects {
             return this.particles;
         } else if (objectType == "スクリプト") {
             return this.scripts;
+        } else if (objectType == "テクスチャ") {
+            return this.textures;
         }
     }
 
@@ -233,10 +241,12 @@ class Outliner {
         this.objects = {type: "objects", id: "&objects", isRoot: true, children: []};
         this.scripts = {type: "scripts", id: "&scripts", isRoot: true, children: []};
         this.particles = {type: "particles", id: "&particles", isRoot: true, children: []};
+        this.textures = {type: "textures", id: "&textures", isRoot: true, children: []};
         this.root = [
             this.objects,
             this.scripts,
             this.particles,
+            this.textures,
         ];
     }
 
@@ -267,6 +277,8 @@ class Outliner {
             return this.scripts;
         } else if (id == "&particles") {
             return this.particles;
+        } else if (id == "&textures") {
+            return this.textures;
         } else {
             return this.scene.searchObjectFromID(id);
         }
@@ -371,6 +383,16 @@ export class Scene {
     }
 
     init() {
+        const texture = this.objects.createObject({
+            type: "テクスチャ",
+            name: "未設定テクスチャ",
+            id: "isNotTexture",
+            texture: isNotTexture
+        });
+        this.objects.appendObject(texture);
+
+        this.outliner.append(texture, this.outliner.textures);
+
         const script = this.objects.createObject({
             type: "スクリプト",
             name: "スクリプトテスト",
@@ -617,8 +639,8 @@ export class Scene {
     }
 
     async getSaveData() {
-        const conversion = {"スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "パラメーターマネージャー": "parameterManagers"};
-        const result = {scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
+        const conversion = {"テクスチャ": "textures", "スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "パラメーターマネージャー": "parameterManagers"};
+        const result = {textures: [], scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
         // 各オブジェクトの保存処理を並列化
         const promises = this.objects.allObject.map(async (object) => {
             return { type: object.type, data: await object.getSaveData() };
@@ -629,7 +651,7 @@ export class Scene {
             result[conversion[type]].push(data);
         }
         result.outliner = this.outliner.getSaveData();
-        return result;
+        return {"sceen": result};
     }
 
     // フレームを適応

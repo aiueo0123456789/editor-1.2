@@ -381,9 +381,12 @@ class AppPerformance {
         this.totalJSHeapByteSize = 0; // 割り当てられた(B)
         this.usedJSHeapMByteSize = 0; // 使用中のメモリ(MB)
         this.usedJSHeapByteSize = 0; // 使用中のメモリ(B)
+
+        this.domCount = 0;
     }
 
     update() {
+        changeParameter(this, "domCount", this.app.dom.querySelectorAll("*").length);
         changeParameter(this, "jsHeapMByteSizeLimit", performance.memory.jsHeapSizeLimit / 1024 / 1024);
         changeParameter(this, "jsHeapByteSizeLimit", performance.memory.jsHeapSizeLimit);
         changeParameter(this, "totalJSHeapMByteSize", performance.memory.totalJSHeapSize / 1024 / 1024);
@@ -419,13 +422,6 @@ export class Application { // 全てをまとめる
         this.scene.init();
         this.workSpaces.init();
         console.log(this)
-    }
-
-    async getSaveData() {
-        const result = {};
-        // result.outliner = this.outliner.getSaveData();
-        result.scene = await this.scene.getSaveData();
-        return result;
     }
 
     update() {
