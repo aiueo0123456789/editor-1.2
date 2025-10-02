@@ -13,29 +13,49 @@ export class MenuTag {
         this.element.classList.add("custom-menu");
         this.element.addEventListener("click", (e) => {
             const rect = this.element.getBoundingClientRect();
-            const listContainer = app.ui.creatorForUI.getDOMFromID("custom-menu-items");
+            const menuItemsContainer = app.ui.creatorForUI.getDOMFromID("custom-menu-items");
             function removeFn() {
-                listContainer.replaceChildren();
-                listContainer.classList.add("hidden");
+                menuItemsContainer.replaceChildren();
+                menuItemsContainer.classList.add("hidden");
                 document.removeEventListener("click", removeFn); // ドキュメントからイベントリスナーを削除
             }
-            listContainer.style.left = `${rect.left}px`;
-            listContainer.style.top = `${rect.top + 15}px`;
-            listContainer.replaceChildren();
-            listContainer.classList.remove("hidden");
+            menuItemsContainer.style.left = `${rect.left}px`;
+            menuItemsContainer.style.top = `${rect.top + 15}px`;
+            menuItemsContainer.replaceChildren();
+            menuItemsContainer.classList.remove("hidden");
             const createItemTag = (object, parent, depth) => {
                 /** @type {HTMLElement} */
-                const li = createTag(parent,"li",{textContent: object.label});
+                const li = createTag(parent,"li");
+                const container = createTag(li,"div");
+                container.className = "custom-menu-itemContainer";
+                const img = createTag(container, "img");
+                if (object.icon) {
+                    img.src = app.ui.getImgURLFromImgName(object.icon);
+                } else {
+                    img.style.width = "0px";
+                }
+                const text = createTag(container, "div",{textContent: object.label});
+                if (object.type == "file") {
+                    const fileInput = createTag(null, "input", {type: "file"});
+                    li.addEventListener("click", (event) => {
+                        fileInput.click();
+                        event.stopPropagation();
+                    })
+                    fileInput.addEventListener("change", (event) => {
+                        object.submitFunction(event);
+                    });
+                } else {
+                    li.addEventListener("click", (event) => {
+                        object.submitFunction(event);
+                        event.stopPropagation();
+                    })
+                }
                 li.className = "custom-menu-item";
                 const children = createTag(li, "ul");
-                li.addEventListener("click", (event) => {
-                    object.eventFn();
-                    event.stopPropagation();
-                })
                 children.className = "custom-menu-item-submenu";
                 return children;
             }
-            looper(struct, "children", createItemTag, listContainer);
+            looper(struct, "children", createItemTag, menuItemsContainer);
 
             document.addEventListener("click", removeFn); // セレクト以外がクリックされたら(ドキュメント)非表示
             e.stopPropagation();

@@ -13,7 +13,6 @@ import { ArmaturePropertyModal } from './toolBar/armature.js';
 import { EdgeJoinTool } from '../../../tools/EdgeJoin.js';
 import { AppendVertex } from '../../../tools/appendVertex.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
-import { sampler } from '../../../../utils/GPUObject.js';
 import { boolTo0or1, calculateLocalMousePosition, changeParameter, loadFile } from '../../../../utils/utility.js';
 import { vec2 } from '../../../../utils/mathVec.js';
 import { Camera } from '../../../../core/objects/camera.js';
@@ -27,6 +26,7 @@ import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
 import { AppendPoint } from '../../../tools/AppendPoint.js';
 import { app } from '../../../../../main.js';
 
+const devMaskTexturePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft")], await loadFile("./editor/shader/render/devMaskTexture.wgsl"), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
 const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t", "wl");
 // const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/main.wgsl"), [["u"]], "2d", "t", "wa");
@@ -70,102 +70,109 @@ export class Area_Viewer {
         this.struct = {
             inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
-                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option", name: "情報", children: [
-                        {type: "gridBox", style: "padding: 2px;", class: "minLimitClear", axis: "c", allocation: "auto 1fr auto", children: [
-                            {type: "flexBox", interval: "10px", children: [
-                                {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: {path: "scene/state/%activeObject"}, children: [
-                                    {type: "if", formula: {source: "/type", conditions: "==", value: "グラフィックメッシュ"},
-                                        true: [
-                                            {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["オブジェクト", "メッシュ編集", "メッシュウェイト編集", "メッシュアニメーション編集"], options: {initValue: "オブジェクト"}},
-                                        ], false: [
-                                            {type: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},
-                                                true: [
-                                                    {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ボーン編集", "ボーンアニメーション編集"], options: {initValue: "オブジェクト"}},
-                                                ], false: [
-                                                    {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ベジェ編集", "ベジェウェイト編集", "ベジェアニメーション編集"], options: {initValue: "オブジェクト"}},
-                                                ]
-                                            }
-                                        ],
-                                    }
-                                ], errorChildren: [
-                                    {type: "select", label: "tool", sourceObject: ["オブジェクト"], options: {initValue: "オブジェクト"}},
-                                ]},
-                                {type: "menu", title: "ビュー", struct: [
-                                    {label: "カメラ", children: [
-                                        {label: "すべてを表示", children: [], eventFn: () => {
-                                        }},
-                                    ]},
-                                ]},
-                                {type: "menu", title: "選択", struct: [
-                                    {label: "すべて選択", children: []},
-                                    {label: "選択解除", children: []},
-                                    {label: "反転", children: []},
-                                    {label: "ランダム選択", children: []},
-                                ]},
-                                {type: "menu", title: "追加", struct: [
-                                    {label: "メッシュ", children: [
-                                        {label: "板"},
-                                        {label: "サークル"},
-                                    ]},
-                                    {label: "ベジェ", children: [
-                                        {label: "板"},
-                                        {label: "サークル"},
-                                    ]},
-                                ]},
-                                {type: "flexBox", interval: "5px", name: "", children: [
-                                    // {type: "radios", name: "aa", icon: "test", label: "test", options: {textContent: "test"}},
-                                ]},
-                                {type: "flexBox", interval: "5px", name: "", children: [
-                                    {type: "checks", icon: "test", label: "test", options: {textContent: "test"}, withObjects: [{text: "graphicMesh", path: "o/visibleObjects/graphicMesh"},{text: "armature", path: "o/visibleObjects/armature"},{text: "bezierModifier", path: "o/visibleObjects/bezierModifier"}]},
-                                ]},
-                                {type: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
-                                    {type: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュ編集"},
-                                        true: [
-                                            {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択", "メッシュ"], options: {initValue: "すべて選択"}},
-                                        ], false: [
-                                            {type: "if", formula: {source: "/currentMode", conditions: "==", value: "ボーン編集"},
+                {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {tagType: "option", name: "情報", children: [
+                        {tagType: "gridBox", style: "padding: 2px;", class: "minLimitClear", axis: "c", allocation: "auto 1fr auto", children: [
+                            {tagType: "flexBox", interval: "10px", children: [
+                                {tagType: "heightCenter", children: [
+                                    {tagType: "path", sourceObject: "scene/state/activeObject", updateEventTarget: {path: "scene/state/%activeObject"}, children: [
+                                        {tagType: "if", formula: {source: "/type", conditions: "==", value: "グラフィックメッシュ"},
                                             true: [
-                                                {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択", "ボーン"], options: {initValue: "すべて選択"}},
+                                                {tagType: "select", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["オブジェクト", "メッシュ編集", "メッシュウェイト編集", "メッシュアニメーション編集"], options: {initValue: "オブジェクト"}},
                                             ], false: [
-                                                    {type: "if", formula: {source: "/currentMode", conditions: "==", value: "ボーン編集"},
+                                                {tagType: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},
                                                     true: [
-                                                        {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択", "ベジェ"], options: {initValue: "すべて選択"}},
+                                                        {tagType: "select", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ボーン編集", "ボーンアニメーション編集"], options: {initValue: "オブジェクト"}},
                                                     ], false: [
-                                                        {type: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択"], options: {initValue: "すべて選択"}},
-                                                    ]}
-                                                ]
-                                            }
-                                        ],
-                                    }
+                                                        {tagType: "select", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ベジェ編集", "ベジェウェイト編集", "ベジェアニメーション編集"], options: {initValue: "オブジェクト"}},
+                                                    ]
+                                                }
+                                            ],
+                                        }
+                                    ], errorChildren: [
+                                        {tagType: "select", sourceObject: ["オブジェクト"], options: {initValue: "オブジェクト"}},
+                                    ]},
                                 ]},
+                                {tagType: "heightCenter", children: [
+                                    {tagType: "menu", title: "ビュー", struct: [
+                                        {label: "カメラ", children: [
+                                            {label: "すべてを表示", children: []},
+                                        ]},
+                                    ]},
+                                ]},
+                                {tagType: "heightCenter", children: [
+                                    {tagType: "menu", title: "選択", struct: [
+                                        {label: "すべて選択", children: []},
+                                        {label: "選択解除", children: []},
+                                        {label: "反転", children: []},
+                                        {label: "ランダム選択", children: []},
+                                    ]},
+                                ]},
+                                {tagType: "heightCenter", children: [
+                                    {tagType: "menu", title: "追加", struct: [
+                                        {label: "メッシュ", children: [
+                                            {label: "板"},
+                                            {label: "サークル"},
+                                        ]},
+                                        {label: "ベジェ", children: [
+                                            {label: "板"},
+                                            {label: "サークル"},
+                                        ]},
+                                    ]},
+                                ]},
+                                {tagType: "checks", icon: "test", options: {textContent: "test"}, withObjects: [{text: "graphicMesh", path: "o/visibleObjects/graphicMesh"},{text: "armature", path: "o/visibleObjects/armature"},{text: "bezierModifier", path: "o/visibleObjects/bezierModifier"}]},
+                                // {tagType: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
+                                //     {tagType: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュ編集"},
+                                //         true: [
+                                //             {tagType: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択", "メッシュ"], options: {initValue: "すべて選択"}},
+                                //         ],
+                                //         false: [
+                                //             {tagType: "if", formula: {source: "/currentMode", conditions: "==", value: "ボーン編集"},
+                                //                 true: [
+                                //                     {tagType: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択", "ボーン"], options: {initValue: "すべて選択"}},
+                                //                 ],
+                                //                 false: [
+                                //                     {tagType: "if", formula: {source: "/currentMode", conditions: "==", value: "ベジェ編集"},
+                                //                         true: [
+                                //                             {tagType: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択", "ベジェ"], options: {initValue: "すべて選択"}},
+                                //                         ],
+                                //                         false: [
+                                //                             {tagType: "select", label: "tool", writeObject: (value) => {app.scene.state.setModeForSelected(value)}, sourceObject: ["すべて選択"], options: {initValue: "すべて選択"}},
+                                //                         ]
+                                //                     }
+                                //                 ]
+                                //             }
+                                //         ],
+                                //     }
+                                // ]},
                             ]},
-                            {type: "padding", size: "10px"},
-                            {type: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
-                                {type: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュウェイト編集"},
+                            {tagType: "padding", size: "10px"},
+                            {tagType: "path", sourceObject: "scene/state", updateEventTarget: {path: "scene/state/%currentMode"}, children: [
+                                {tagType: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュウェイト編集"},
                                 true: [
-                                    {type: "flexBox", interval: "10px", children: [
-                                        {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "heightCenter", children: [
-                                                {type: "select", label: "ベジェの種類", writeObject: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
-                                            ]}
-                                        ]},
-                                        {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "heightCenter", children: [
-                                                {type: "input", withObject: "areasConfig/weightPaintMetaData/paintSize", options: {type: "number", min: 0, max: 1000, step: 0.01}, custom: {visual: "1"}},
-                                            ]}
-                                        ]},
+                                    {tagType: "flexBox", interval: "10px", children: [
+                                        // {tagType: "flexBox", interval: "5px", name: "", children: [
+                                        //     {tagType: "heightCenter", children: [
+                                        //     ]}
+                                        // ]},
+                                        {tagType: "input", label: "値", value: "areasConfig/weightPaintMetaData/weightValue", type: "number", min: 0, max: 1, step: 0.01, custom: {visual: "1"}},
+                                        {tagType: "input", label: "範囲", value: "areasConfig/weightPaintMetaData/paintSize", type: "number", min: 0, max: 1000, step: 0.01, custom: {visual: "1"}},
+                                        {tagType: "select", label: "種類", writeObject: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
+                                        // {tagType: "flexBox", interval: "5px", name: "", children: [
+                                        //     {tagType: "heightCenter", children: [
+                                        //     ]}
+                                        // ]},
                                     ]},
                                 ], false: [
-                                    {type: "flexBox", interval: "10px", children: [
-                                        {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "heightCenter", children: [
-                                                {type: "select", label: "種類", writeObject: "areasConfig/proportionalEditType", sourceObject: "areasConfig/proportionalEditTypes", options: {initValue: "0"}},
+                                    {tagType: "flexBox", interval: "10px", children: [
+                                        {tagType: "flexBox", interval: "5px", name: "", children: [
+                                            {tagType: "heightCenter", children: [
+                                                {tagType: "select", label: "種類", writeObject: "areasConfig/proportionalEditType", sourceObject: "areasConfig/proportionalEditTypes", options: {initValue: "0"}},
                                             ]}
                                         ]},
-                                        {type: "flexBox", interval: "5px", name: "", children: [
-                                            {type: "heightCenter", children: [
-                                                {type: "input", withObject: "areasConfig/proportionalSize", options: {type: "number", min: 0}, custom: {visual: "1"}},
+                                        {tagType: "flexBox", interval: "5px", name: "", children: [
+                                            {tagType: "heightCenter", children: [
+                                                {tagType: "input", value: "areasConfig/proportionalSize", type: "number", min: 0, custom: {visual: "1"}},
                                             ]}
                                         ]},
                                     ]},
@@ -173,8 +180,8 @@ export class Area_Viewer {
                             ]},
                         ]}
                     ]},
-                    {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                        {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
+                    {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
+                        {tagType: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
                     ]},
                 ]}
             ]
@@ -223,11 +230,6 @@ export class Area_Viewer {
             }
             changeParameter(animatoinBlock.activeAnimation, "weight", 1);
         } else if (app.scene.state.currentMode == "ベジェ頂点アニメーション編集") {
-            const animatoinBlock = app.scene.state.activeObject.animationBlock;
-            for (const animation of animatoinBlock.list) {
-                changeParameter(animation, "weight", 0);
-            }
-            changeParameter(animatoinBlock.activeAnimation, "weight", 1);
         }
         this.renderer.rendering();
     }
@@ -275,16 +277,24 @@ export class Area_Viewer {
                         this.modalOperator.changeModals({"p": ParentPickModal});
                     }
                 }
-                if (inputManager.consumeKeys(["i"])) {
-                    const bones = app.scene.state.getSelectBones();
-                    bones.forEach(bone => {
-                        app.options.keyframeInsert(bone, app.scene.frame_current);
-                    })
+                if (state.currentMode == "ボーンアニメーション編集") {
+                    if (inputManager.consumeKeys(["i"])) {
+                        const bones = app.scene.state.getSelectBones;
+                        bones.forEach(bone => {
+                            app.options.keyframeInsert(bone, app.scene.frame_current);
+                        })
+                    }
+                    if (inputManager.consumeKeys(["x"])) {
+                        const bones = app.scene.state.getSelectBones;
+                        bones.forEach(bone => {
+                            bone.keyframeBlockManager.clearAnimatoin();
+                        })
+                    }
                 }
             } else if (state.activeObject.type == "ベジェモディファイア") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (state.currentMode == "オブジェクト") {
-                        if (state.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
+                        if (inputManager.consumeKeys(["a"])) {
                             state.setModeForSelected("ベジェ頂点アニメーション編集");
                             this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else if (inputManager.consumeKeys(["w"])) {
@@ -297,6 +307,20 @@ export class Area_Viewer {
                     } else {
                         state.setModeForSelected("オブジェクト");
                         this.modalOperator.changeModals({"p": ParentPickModal});
+                    }
+                }
+                if (state.currentMode == "ベジェ頂点アニメーション編集") {
+                    if (inputManager.consumeKeys(["i"])) {
+                        const vertices = app.scene.state.getSelectVertices;
+                        vertices.forEach(vertex => {
+                            app.options.keyframeInsert(vertex, app.scene.frame_current);
+                        })
+                    }
+                    if (inputManager.consumeKeys(["x"])) {
+                        const vertices = app.scene.state.getSelectVertices;
+                        vertices.forEach(vertex => {
+                            vertex.keyframeBlockManager.clearAnimatoin();
+                        })
                     }
                 }
             }
@@ -413,7 +437,7 @@ export class Renderer {
         // レンダリングに使う汎用group
         this.staticGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Fts"), [
             camera.cameraDataBuffer,
-            sampler
+            GPU.sampler
         ]);
     }
 
@@ -437,12 +461,12 @@ export class Renderer {
             return ;
         }
         const commandEncoder = device.createCommandEncoder();
-        for (const maskTexture of app.scene.maskTextures) {
+        for (const maskTexture of app.scene.objects.maskTextures) {
             if (maskTexture.renderingObjects.length > 0 && maskTexture.name != "base") {
                 const maskRenderPass = commandEncoder.beginRenderPass({
                     colorAttachments: [
                         {
-                            view: maskTexture.textureView,
+                            view: maskTexture.view,
                             clearValue: { r: 0, g: 0, b: 0, a: 0 },
                             loadOp: 'clear',
                             storeOp: 'store',
@@ -608,6 +632,11 @@ export class Renderer {
                 }
             }
         }
+        // if (true && app.scene.objects.maskTextures.length > 1) {
+        //     renderPass.setBindGroup(0, GPU.createGroup(GPU.getGroupLayout("Fts_Ft"), [GPU.sampler, app.scene.objects.maskTextures[1].view]));
+        //     renderPass.setPipeline(devMaskTexturePipeline);
+        //     renderPass.draw(4, 1, 0, 0);
+        // }
         // 処理の終了と送信
         renderPass.end();
         device.queue.submit([commandEncoder.finish()]);

@@ -102,12 +102,12 @@ export class ArmatureData extends RuntimeDataBase {
     }
 
     async getBoneWorldMatrix(/** @type {Bone} */bone) {
-        bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await GPU.getF32BufferPartsData(this.renderingBoneMatrix.buffer, bone.armature.runtimeOffsetData.boneOffset + bone.index, this.matrixBlockByteLength / 4));
+        bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await GPU.getF32BufferPartsData(this.renderingBoneMatrix.buffer, bone.armature.runtimeOffsetData.boneOffset + bone.localIndex, this.matrixBlockByteLength / 4));
         // bone.matrix = mathMat3x3.mat4x3ValuesToMat3x3(await this.renderingBoneMatrix.getObjectData(bone));
     }
 
     getSelectBones() {
-        return this.allBone.filter(bone => bone && bone.selectedBone);
+        return this.allBone.filter(bone => bone && bone.selected);
     }
 
     async getAnimationData(/** @type {Armature} */ armature, indexs) {
@@ -134,14 +134,14 @@ export class ArmatureData extends RuntimeDataBase {
         GPU.runComputeShader(verticesSelectionToBonesSelectionPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu"), [this.selectedBones.buffer,this.selectedVertices.buffer,armature.objectDataBuffer])], Math.ceil(Math.ceil(armature.MAX_BONES / 32) / 64));
         const resultVertices = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer,armature.runtimeOffsetData.boneOffset * 2,(armature.runtimeOffsetData.boneOffset + armature.boneNum) * 2);
         for (const bone of armature.allBone) {
-            bone.baseHead.selected = resultVertices[bone.index * 2];
-            bone.baseTail.selected = resultVertices[bone.index * 2 + 1];
+            bone.baseHead.selected = resultVertices[bone.localIndex * 2];
+            bone.baseTail.selected = resultVertices[bone.localIndex * 2 + 1];
         }
         const resultBone = await GPU.getSelectedFromBufferBit(this.selectedBones.buffer,armature.runtimeOffsetData.boneOffset,armature.runtimeOffsetData.boneOffset + armature.boneNum);
         for (const bone of armature.allBone) {
-            bone.selectedBone = resultBone[bone.index];
+            bone.selected = resultBone[bone.localIndex];
         }
-        managerForDOMs.update("選択物");
+        managerForDOMs.update("ボーン選択");
     }
 
     getSelectVerticesInBone() {
@@ -161,10 +161,10 @@ export class ArmatureData extends RuntimeDataBase {
         for (const bone of this.allBone) {
             if (bone) {
                 if (bone.baseHead.selected) {
-                    result.push((bone.index + bone.armature.runtimeOffsetData.boneOffset) * 2);
+                    result.push((bone.localIndex + bone.armature.runtimeOffsetData.boneOffset) * 2);
                 }
                 if (bone.baseTail.selected) {
-                    result.push((bone.index + bone.armature.runtimeOffsetData.boneOffset) * 2 + 1);
+                    result.push((bone.localIndex + bone.armature.runtimeOffsetData.boneOffset) * 2 + 1);
                 }
             }
         }
@@ -184,9 +184,9 @@ export class ArmatureData extends RuntimeDataBase {
         }
         const result = await GPU.getSelectedFromBufferBit(this.selectedBones.buffer,armature.runtimeOffsetData.boneOffset,armature.runtimeOffsetData.boneOffset + armature.boneNum);
         for (const bone of armature.allBone) {
-            bone.selectedBone = result[bone.index];
+            bone.selected = result[bone.localIndex];
         }
-        managerForDOMs.update("選択物");
+        managerForDOMs.update("ボーン選択");
     }
 
     updatePropagateData() {
@@ -202,13 +202,13 @@ export class ArmatureData extends RuntimeDataBase {
                     if (propagateMap.length <= depth) {
                         propagateMap.push([]);
                     }
-                    boneIndexsMap[depth].push(bone.index + armature.runtimeOffsetData.boneOffset);
+                    boneIndexsMap[depth].push(bone.localIndex + armature.runtimeOffsetData.boneOffset);
                     const parent = bone.parent;
                     if (parent) { // 親がいる場合
-                        propagateMap[depth].push(bone.index + armature.runtimeOffsetData.boneOffset, parent.index + armature.runtimeOffsetData.boneOffset);
-                        relationshipsKeep[bone.index + armature.runtimeOffsetData.boneOffset] = parent.index + armature.runtimeOffsetData.boneOffset;
+                        propagateMap[depth].push(bone.localIndex + armature.runtimeOffsetData.boneOffset, parent.localIndex + armature.runtimeOffsetData.boneOffset);
+                        relationshipsKeep[bone.localIndex + armature.runtimeOffsetData.boneOffset] = parent.localIndex + armature.runtimeOffsetData.boneOffset;
                     } else { // ルートボーンの場合
-                        relationshipsKeep[bone.index + armature.runtimeOffsetData.boneOffset] = bone.index + armature.runtimeOffsetData.boneOffset;
+                        relationshipsKeep[bone.localIndex + armature.runtimeOffsetData.boneOffset] = bone.localIndex + armature.runtimeOffsetData.boneOffset;
                     }
                     roop(bone.childrenBone, depth + 1);
                 }
@@ -239,15 +239,13 @@ export class ArmatureData extends RuntimeDataBase {
     async updateCPUDataFromGPUBuffer(/** @type {Armature} */armature) {
         const verticesArray = await this.baseVertices.getObjectData(armature);
         for (const bone of armature.allBone) {
-            bone.baseHead.setCoordinate(verticesArray[bone.index].slice(0,2));
-            bone.baseTail.setCoordinate(verticesArray[bone.index].slice(2,4));
+            bone.baseHead.setCoordinate(verticesArray[bone.localIndex].slice(0,2));
+            bone.baseTail.setCoordinate(verticesArray[bone.localIndex].slice(2,4));
         }
     }
 
     // ベースデータの更新
     updateBaseData(/** @type {Armature} */armature) {
-        armature.boneNum = armature.allBone.length;
-        armature.verticesNum = armature.boneNum * 2;
         const boneVerticesData = Array(armature.boneNum * this.vertexBlockByteLength / 4).fill(0);
         const colorsData = Array(armature.boneNum * this.colorBlockByteLength / 4).fill(0);
         const physicsAttachmentData = Array(armature.boneNum * this.physicsData.struct.length).fill(0);
@@ -255,14 +253,14 @@ export class ArmatureData extends RuntimeDataBase {
         const parentsData = Array(armature.boneNum).fill(0);
         for (const bone of armature.allBone) {
             if (bone.parent) {
-                parentsData[bone.index] = bone.parent.index;
+                parentsData[bone.localIndex] = bone.parent.localIndex;
             } else {
-                parentsData[bone.index] = bone.index;
+                parentsData[bone.localIndex] = bone.localIndex;
             }
-            arrayToSet(boneVerticesData, bone.baseHead.co.concat(bone.baseTail.co), bone.index, 4);
-            arrayToSet(colorsData, bone.color, bone.index, 4);
+            arrayToSet(boneVerticesData, bone.baseHead.co.concat(bone.baseTail.co), bone.localIndex, 4);
+            arrayToSet(colorsData, bone.color, bone.localIndex, 4);
             const physicsData = bone.attachments.list[0];
-            arrayToSet(physicsAttachmentData, [physicsData.x, physicsData.y, physicsData.rotate, physicsData.scaleX, physicsData.shearX, physicsData.inertia, physicsData.strength, physicsData.damping, 1 / physicsData.mass, physicsData.wind, physicsData.gravity, physicsData.mix, physicsData.limit, 0, 1, 0], bone.index, this.physicsData.struct.length);
+            arrayToSet(physicsAttachmentData, [physicsData.x, physicsData.y, physicsData.rotate, physicsData.scaleX, physicsData.shearX, physicsData.inertia, physicsData.strength, physicsData.damping, 1 / physicsData.mass, physicsData.wind, physicsData.gravity, physicsData.mix, physicsData.limit, 0, 1, 0], bone.localIndex, this.physicsData.struct.length);
         }
         armature.parentsBuffer = GPU.createStorageBuffer(parentsData.length * 4, parentsData, ["u32"]);
 
@@ -274,7 +272,7 @@ export class ArmatureData extends RuntimeDataBase {
             this.allBone[i] = null;
         }
         for (const bone of armature.allBone) {
-            this.allBone[armature.runtimeOffsetData.boneOffset + bone.index] = bone;
+            this.allBone[armature.runtimeOffsetData.boneOffset + bone.localIndex] = bone;
         }
 
         this.updateAllocationData(armature);

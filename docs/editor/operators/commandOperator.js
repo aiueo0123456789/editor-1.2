@@ -3,12 +3,17 @@ import { isFunction } from "../utils/utility.js";
 
 // undoとredoを実行
 class CommandStack {
-    constructor() {
+    constructor(/** @type {Operator} */ operator) {
+        this.operator = operator;
         this.history = [];
         this.redoStack = [];
     }
 
     undo() {
+        if (this.operator.commands.length) {
+            console.log("スタックの解消", [...this.operator.commands])
+            this.operator.execute();
+        }
         if (this.history.length > 0) {
             const commands = this.history.pop();
             for (const command of commands) {
@@ -23,7 +28,7 @@ class CommandStack {
     redo() {
         if (this.redoStack.length > 0) {
             const commands = this.redoStack.pop();
-            for (const command of commands) {
+            for (const command of commands.reverse()) {
                 console.log("redo",command);
                 if (isFunction(command.redo)) {
                     command.redo();
@@ -41,7 +46,7 @@ class CommandStack {
 export class Operator {
     constructor(app) {
         this.app = app;
-        this.stack = new CommandStack();
+        this.stack = new CommandStack(this);
         this.commands = [];
         this.errorLog = [];
     }
@@ -71,7 +76,6 @@ export class Operator {
         this.stack.history.push(commandsToStack);
         this.stack.redoStack.length = 0; // 新しい操作をしたらRedoはリセット
         managerForDOMs.update(this.stack.history);
-        console.log(this.stack)
     }
 }
 

@@ -9,7 +9,7 @@ export class DataBlock {
     }
 }
 
-export function removeObjectInHTMLElement(object, maxDepth = 10) {
+export function removeHTMLElemtentInObject(object, maxDepth = 10) {
     // 全てループしてメモリ解放
     const fn = (data, depth = 0) => {
         if (maxDepth <= depth) return ;

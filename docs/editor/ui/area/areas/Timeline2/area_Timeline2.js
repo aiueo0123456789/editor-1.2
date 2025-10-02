@@ -7,9 +7,9 @@ import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
 import { KeyDelete } from "../../../tools/KeyDelete.js";
-import { KeyResize } from "../../../tools/KeyResize.js";
-import { KeyRotate } from "../../../tools/KeyRotate.js";
-import { KeyTranslate } from "../../../tools/KeyTranslate.js";
+import { KeyframeResize } from "../../../tools/KeyframeResize.js";
+import { KeyframeRotate } from "../../../tools/KeyframeRotate.js";
+import { KeyframeTranslate } from "../../../tools/KeyframeTranslate.js";
 
 const targetValueToColor = {
     "x": "rgb(0, 0, 255)",
@@ -101,28 +101,13 @@ function update(object, groupID, others, DOMs) {
         o.context.arc(...p, radius, 0, Math.PI * 2);
         o.context.fill();
     }
-    const circleStroke = (p, radius, color, lineWidth) => {
-        o.context.strokeStyle = color;
-        o.context.lineWidth = lineWidth;
-        o.context.beginPath();
-        o.context.arc(...p, radius, 0, Math.PI * 2);
-        // object.context.fill();
-        o.context.stroke();
-    }
     // console.log(others.object.spaceData.getAllKeyframe)
-    let i = 0;
-    for (const objectData of o.spaceData.getAllObject) {
-        i ++;
-        for (const keyBlockData of objectData.keyframeBlockManager.blocks) {
-            for (const keyData of keyBlockData.keys) {
-                // 制御点と線
-                const getColor = (b) => {
-                    return b ? "rgb(255, 174, 0)" : "rgb(200, 200, 200)";
-                }
-                circle(o.worldToCanvas([keyData.point[0], i * -15]), 15, getColor(keyData.pointSelected));
-            }
-            i ++;
+    for (const keyData of o.spaceData.getAllKeyframe) {
+        // 制御点と線
+        const getColor = (b) => {
+            return b ? "rgb(255, 174, 0)" : "rgb(200, 200, 200)";
         }
+        circle(o.getKeyDisplayPosition(keyData), 15, getColor(keyData.point.selected));
     }
     circle(o.worldToCanvas(o.inputs.position), 20, "rgb(255, 0, 0)");
 }
@@ -146,37 +131,35 @@ export class Area_Timeline2 {
         this.struct = {
             inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene},
             DOM: [
-                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option",style: "height: 25px;", name: "情報", children: [
-                        {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto 1fr", children: [
-                            {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "auto auto auto 1fr", children: [
-                                {type: "input", label: "現在", name: "frame_current", withObject: "scene/frame_current", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "開始", name: "frame_start", withObject: "scene/frame_start", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "終了", name: "frame_end", withObject: "scene/frame_end", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "padding", size: "10px"},
+                {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {tagType: "option",style: "height: 25px;", name: "情報", children: [
+                        {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto 1fr", children: [
+                            {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "auto auto auto 1fr", children: [
+                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "padding", size: "10px"},
                             ]},
-
-                            {type: "boxs", children: [
-                                {type: "button", name: "skip", options: {type: "checkbox", look: "skipMinus"}, submitFunction: () => {
+                            {tagType: "boxs", children: [
+                                {tagType: "button", icon: "reverseSkip", submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_start);
                                 }},
-                                {type: "input", name: "isPlaying", withObject: "scene/isReversePlaying", options: {type: "checkbox", look: "isReversePlaying"}},
-                                {type: "input", name: "isPlaying", withObject: "scene/isPlaying", options: {type: "checkbox", look: "isPlaying"}},
-                                {type: "button", name: "skip", options: {type: "checkbox", look: "skipPlus"}, submitFunction: () => {
+                                {tagType: "input", name: "isPlaying", type: "checkbox", checked: "scene/isReversePlaying", look: {check: "stop", uncheck: "reverse"}},
+                                {tagType: "input", name: "isPlaying", type: "checkbox", checked: "scene/isPlaying", look: {check: "stop", uncheck: "playing"}},
+                                {tagType: "button", icon: "skip", submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_end);
                                 }},
                             ]},
-
-                            {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto auto auto", children: [
-                                {type: "padding", size: "10px"},
-                                {type: "input", label: "現在", name: "frame_current", withObject: "scene/frame_current", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "開始", name: "frame_start", withObject: "scene/frame_start", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "終了", name: "frame_end", withObject: "scene/frame_end", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                            {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto auto auto", children: [
+                                {tagType: "padding", size: "10px"},
+                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500, custom: {visual: "1"}},
                             ]}
                         ]},
                     ]},
-                    {type: "grid", axis: "c", child1: [
-                        {type: "outliner", name: "outliner", id: "overview",
+                    {tagType: "grid", axis: "c", child1: [
+                        {tagType: "outliner", name: "outliner", id: "overview",
                             updateEventTarget: "選択物",
                             options: {
                                 arrange: false,
@@ -194,32 +177,43 @@ export class Area_Timeline2 {
                                 },
                                 activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                             },
-                            withObject: () => {return app.scene.state.getSelectBones()},
-                            loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager/blocks"], "キーフレームブロックマネージャー": ["blocks"], others: ["animationBlock/list","keyframeBlockManager"]}},
+                            withObject: "scene/state/getSelcetInSelectedObject",
+                            updateEventTarget: ["頂点選択","ボーン選択"],
+                            loopTarget: {
+                                parameter: "type",
+                                loopTargets: {
+                                    "アーマチュア": ["allBone"],
+                                    "ボーン": ["keyframeBlockManager/blocks"],
+                                    "ベジェモディファイア": ["allPoint"],
+                                    "ポイント": ["basePoint/keyframeBlockManager/blocks", "baseLeftControlPoint/keyframeBlockManager/blocks", "baseRightControlPoint/keyframeBlockManager/blocks"],
+                                    "キーフレームブロックマネージャー": ["blocks"],
+                                    others: ["animationBlock/list","keyframeBlockManager/blocks"]
+                                }
+                            },
                             structures: [
-                                {type: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
+                                {tagType: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
                                     true: [
-                                        {type: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
-                                            {type: "icon-img", name: "icon", withObject: "/type"},
-                                            {type: "input", withObject: "/visible", options: {type: "checkbox", look: "eye-icon"}},
-                                            {type: "padding", size: "10px"},
-                                            {type: "dbInput", withObject: "/targetValue", options: {type: "text"}},
+                                        {tagType: "gridBox", id: {path: "/id"}, axis: "c", allocation: "auto auto 1fr 50%", children: [
+                                            {tagType: "icon", src: {path: "/type"}},
+                                            {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
+                                            {tagType: "padding", size: "10px"},
+                                            {tagType: "dbInput", value: "/targetValue", type: "text"},
                                         ]}
                                     ],
                                     false: [
-                                        {type: "if", formula: {source: "/type", conditions: "==", value: "ボーン"},
+                                        {tagType: "if", id: {path: "/id"}, formula: {source: "/type", conditions: "==", value: "ボーン"},
                                             true: [
-                                                {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {type: "icon-img", name: "icon", withObject: "/type"},
-                                                    {type: "padding", size: "10px"},
-                                                    {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                                {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                                                    {tagType: "icon", src: {path: "/type"}},
+                                                    {tagType: "padding", size: "10px"},
+                                                    {tagType: "dbInput", value: "/name", type: "text"},
                                                 ]}
                                             ],
                                             false: [
-                                                {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {type: "icon-img", name: "icon", withObject: "/type"},
-                                                    {type: "padding", size: "10px"},
-                                                    {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                                {tagType: "gridBox", id: {path: "/id"}, axis: "c", allocation: "auto 1fr 50%", children: [
+                                                    {tagType: "icon", src: {path: "/type"}},
+                                                    {tagType: "padding", size: "10px"},
+                                                    {tagType: "dbInput", value: "/name", type: "text"},
                                                 ]}
                                             ]
                                         }
@@ -228,8 +222,8 @@ export class Area_Timeline2 {
                             ]
                         },
                     ],child2: [
-                        {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
+                        {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
+                            {tagType: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
                         ]},
                     ]}
                 ]}
@@ -242,7 +236,7 @@ export class Area_Timeline2 {
         this.creatorForUI = area.creatorForUI;
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize, "x": KeyDelete});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyframeTranslate, "s": KeyframeResize, "x": KeyDelete});
 
         /** @type {OutlinerTag} */
         this.overview = this.creatorForUI.getDOMFromID("overview");
@@ -268,9 +262,17 @@ export class Area_Timeline2 {
         this.groupID = createID();
 
         managerForDOMs.set({o: "タイムライン-canvas", g: this.groupID}, {object: this}, update);
-        managerForDOMs.set({o: "選択物", g: this.groupID}, {object: this}, update);
+        managerForDOMs.set({o: "ボーン選択", g: this.groupID}, {object: this}, update);
+        managerForDOMs.set({o: "頂点選択", g: this.groupID}, {object: this}, update);
         managerForDOMs.set({o: app.scene, i: "frame_current", g: this.groupID}, {object: this}, update);
         managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+    }
+
+    getKeyDisplayPosition(keyframe) {
+        const overviewBoundingbox = this.overview.scrollableContainer.getBoundingClientRect();
+        const tag = this.creatorForUI.getDOMFromID(keyframe.keyframeBlock.id);
+        const boundingbox = tag.getBoundingClientRect();
+        return [this.worldToCanvas([keyframe.point.worldPosition[0], 0])[0], (boundingbox.top + boundingbox.height - overviewBoundingbox.top + 7.5) * this.pixelDensity];
     }
 
     clipToCanvas(p) {
@@ -321,59 +323,34 @@ export class Area_Timeline2 {
         const local = calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity);
         const world = this.canvasToWorld(local);
         this.inputs.position = world;
-        if (Math.abs(world[0] - app.scene.frame_current) < 1) {
-            this.frameBarDrag = true;
-            return ;
-        }
         let consumed = await this.modalOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
         if (!inputManager.keysDown["Shift"]) {
             for (const keyData of this.spaceData.getAllKeyframe) {
-                keyData.pointSelected = false;
-                keyData.rightHandleSelected = false;
-                keyData.leftHandleSelected = false;
+                keyData.point.selected = false;
             }
-            this.spaceData.selectVertices.length = 0;
         }
         if (inputManager.keysDown["c"]) {
             for (const keyData of this.spaceData.getAllKeyframe) {
-                if (vec2.distanceR(world, [keyData.point[0], this.spaceData.getAllKeyframeBlock.indexOf(keyData.keyframeBlock) * -5]) < 10 / this.zoom[0]) {
-                    if (!this.spaceData.selectVertices.includes(keyData.point)) {
-                        this.spaceData.selectVertices.push(keyData.point);
-                    }
-                    keyData.pointSelected = true;
-                    if (!this.spaceData.selectVertices.includes(keyData.wLeftHandle)) {
-                        this.spaceData.selectVertices.push(keyData.wLeftHandle);
-                    }
-                    keyData.leftHandleSelected = true;
-                    if (!this.spaceData.selectVertices.includes(keyData.wRightHandle)) {
-                        this.spaceData.selectVertices.push(keyData.wRightHandle);
-                    }
-                    keyData.rightHandleSelected = true;
+                if (vec2.distanceR(local, this.getKeyDisplayPosition(keyData)) < 15 + 20) {
+                    keyData.point.selected = true;
                 }
             }
         } else {
             let minDist = Infinity;
             let minKey = null;
             for (const keyData of this.spaceData.getAllKeyframe) {
-                let dist = vec2.distanceR(world, [keyData.point[0], this.spaceData.getAllKeyframeBlock.indexOf(keyData.keyframeBlock) * -5]);
+                let dist = vec2.distanceR(local, this.getKeyDisplayPosition(keyData));
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
                 }
             }
-            minKey.pointSelected = true;
-            if (!this.spaceData.selectVertices.includes(minKey.point)) {
-                this.spaceData.selectVertices.push(minKey.point);
-            }
-            minKey.leftHandleSelected = true;
-            if (!this.spaceData.selectVertices.includes(minKey.wLeftHandle)) {
-                this.spaceData.selectVertices.push(minKey.wLeftHandle);
-            }
-            minKey.rightHandleSelected = true;
-            if (!this.spaceData.selectVertices.includes(minKey.wRightHandle)) {
-                this.spaceData.selectVertices.push(minKey.wRightHandle);
-            }
+            minKey.point.selected = true;
+        }
+        if (Math.abs(world[0] - app.scene.frame_current) < 1) {
+            this.frameBarDrag = true;
+            return ;
         }
         managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
     }

@@ -1,5 +1,18 @@
+import { app } from "../../../main.js";
 import { vec2 } from "../mathVec.js";
 import { createID, managerForDOMs } from "../ui/util.js";
+import { isFunction } from "../utility.js";
+
+export class UnfixedReference {
+    constructor(id) {
+        this.id = id;
+        this.type = "未解決参照";
+    }
+
+    getObject() {
+        return app.scene.objects.getObjectFromID(id);
+    }
+}
 
 export class NameAndTypeAndID {
     constructor(name, type, id) {
@@ -21,9 +34,21 @@ export class ObjectBase extends NameAndTypeAndID{
 
         this.runtimeOffsetData = {};
 
-        this.parent = {type: "init", id: "init"};
+        this.parent = null;
+    }
 
-        this.children = [];
+    get children() {
+        return app.scene.objects.allObject.filter(object => {object.parent == this});
+    }
+
+    changeParent(parent) {
+        this.parent = parent;
+        if (!(parent instanceof UnfixedReference)) {
+            app.options.assignWeights(this);
+            if (isFunction(this.runtimeData.updateParent)) {
+                if (this.runtimeData) this.runtimeData.updateParent(this);
+            }
+        }
     }
 }
 

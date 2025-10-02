@@ -1,9 +1,9 @@
 export class ListTag {
-    constructor(this_,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,searchTarget,child,flag) {
         this.element;
         if (child.options.type == "min") {
             this.element = createMinList(t,child.label);
-            const listOutputData = this_.createListChildren(this.element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            const listOutputData = creatorForUI.createListChildren(this.element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
             if (child.appendEvent) {
                 if (isFunction(child.appendEvent)) {
                     this.element.appendButton.addEventListener("click", child.appendEvent);
@@ -25,15 +25,14 @@ export class ListTag {
             }
         } else if (child.options.type == "noScroll") {
             this.element = createTag(t, "ul");
-            this_.createListChildren(this.element, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            creatorForUI.createListChildren(this.element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         } else if (child.options.type == "row") {
             this.element = createTag(t, "ul", {class: "flexRow"});
-            this_.createListChildren(this.element, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            creatorForUI.createListChildren(this.element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         } else {
             this.element = createTag(t, "ul", {class: "scrollable"});
-            this_.createListChildren(this.element, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            creatorForUI.createListChildren(this.element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         }
-        // managerForDOMs.set({o: "", g: this_.groupID, f: flag}, element, null);
-        return this.element;
+        // managerForDOMs.set({o: "", g: creatorForUI.groupID, f: flag}, element, null);
     }
 }

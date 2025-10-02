@@ -65,8 +65,6 @@ export class GraphicMeshData extends RuntimeDataBase {
     }
 
     updateBaseData(/** @type {GraphicMesh} */graphicMesh) {
-        graphicMesh.verticesNum = graphicMesh.allVertices.length;
-        graphicMesh.meshesNum = graphicMesh.allMeshes.length;
         const verticesBases = [];
         const verticesUV = [];
         const verticesParentWeight = [];
@@ -147,7 +145,7 @@ export class GraphicMeshData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {GraphicMesh} */graphicMesh) {
-        if (graphicMesh.parent.isRoot || graphicMesh.parent.type == "init") {
+        if (!graphicMesh.parent || graphicMesh.parent.isRoot) {
             return new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, 0, 0, GPU.padding]);
         } else {
             return new Uint32Array([graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.animationOffset, graphicMesh.runtimeOffsetData.animationWeightOffset, graphicMesh.MAX_VERTICES, graphicMesh.MAX_ANIMATIONS, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.allocationOffset, GPU.padding]);
@@ -167,6 +165,12 @@ export class GraphicMeshData extends RuntimeDataBase {
         for (const object of this.order) {
         }
         let allocationData = this.getAllocationData(graphicMesh);
+        GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
+    }
+
+    updateParent(/** @type {GraphicMesh} */graphicMesh) {
+        let allocationData = this.getAllocationData(graphicMesh);
+        GPU.writeBuffer(this.allocations.buffer, allocationData, (graphicMesh.runtimeOffsetData.allocationOffset * 8) * 4);
         GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
     }
 

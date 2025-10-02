@@ -4,12 +4,15 @@
     border: solid rgb(63, 63, 63) 1px;
     height: 15px;
     align-items: center;     /* 縦方向中央 */
-    width: fit-content;
+    min-width: fit-content;
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: 1fr auto;
     overflow: hidden;
     padding-left: 3px;
     padding-right: 3px;
+}
+.custom-select p {
+    text-align: right;
 }
 .custom-select .downArrow {
     margin-left: 4px;
@@ -23,6 +26,8 @@
     left: 0;
     width: fit-content;
     height: fit-content;
+    max-height: 500px;
+    overflow-y: auto;
     background-color: var(--inputColor);
     z-index: 1000;
     /* gap: 5px; */

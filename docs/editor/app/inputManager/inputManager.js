@@ -17,7 +17,7 @@ export class InputManager {
         this.keysDown = {};
 
         // マウス
-        app.dom.addEventListener("mousedown", (e) => {
+        document.addEventListener("mousedown", (e) => {
             if (!(e.target instanceof HTMLCanvasElement)) return ;
             this.mouseButtonType = e.button;
             if (this.mouseButtonType == 0) {
@@ -32,7 +32,7 @@ export class InputManager {
                 }
             }
         })
-        app.dom.addEventListener("mouseup", (e) => {
+        document.addEventListener("mouseup", (e) => {
             if (!(e.target instanceof HTMLCanvasElement)) return ;
             if (this.mouseButtonType == 0) {
                 this.mousedown = false;
@@ -44,7 +44,7 @@ export class InputManager {
             }
             this.mouseButtonType = -1;
         })
-        app.dom.addEventListener("mousemove", (e) => {
+        document.addEventListener("mousemove", (e) => {
             if (!(e.target instanceof HTMLCanvasElement)) return ;
             if (this.mouseButtonType == 2) { // 右クリック
                 this.position[0] = e.clientX;
@@ -70,7 +70,7 @@ export class InputManager {
         })
 
         // ホイール操作
-        app.dom.addEventListener('wheel', (e) => {
+        document.addEventListener('wheel', (e) => {
             if (!(e.target instanceof HTMLCanvasElement)) return ;
             this.wheelDelta[0] = e.deltaX;
             this.wheelDelta[1] = e.deltaY;
@@ -83,7 +83,7 @@ export class InputManager {
         // キーイベント管理
         document.addEventListener("keydown", (e) => {
             const isCtrlOrCmd = e.ctrlKey || e.metaKey;
-            console.log(e.key,"down")
+            // console.log(e.key,"down")
             if (isCtrlOrCmd && e.key === 'z') {
                 if (e.shiftKey) {
                     app.operator.stack.redo();
@@ -100,7 +100,7 @@ export class InputManager {
                 if (e.key === "Tab" || e.key === "Shift" || e.key === "Meta") {
                     // デフォルト動作を無効化
                     e.preventDefault();
-                    console.log(e.key,"のデフォルト動作を無効化しました");
+                    // console.log(e.key,"のデフォルト動作を無効化しました");
                 }
                 if (app.activeArea.uiModel.keyInput) {
                     app.activeArea.uiModel.keyInput(this);
@@ -109,7 +109,7 @@ export class InputManager {
         });
         document.addEventListener("keyup",(eveet) => {
             this.keysDown[eveet.key] = false;
-            console.log(eveet.key,"up")
+            // console.log(eveet.key,"up")
         });
         document.addEventListener("contextmenu", (eveet) => {
             app.contextmenu.showContextmenu([eveet.clientX,eveet.clientY]);

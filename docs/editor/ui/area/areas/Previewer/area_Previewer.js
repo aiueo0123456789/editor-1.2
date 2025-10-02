@@ -1,9 +1,7 @@
 import { ConvertCoordinate } from '../../../../utils/convertCoordinate.js';
 import { resizeObserver } from '../../../../utils/ui/resizeObserver.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
-import { sampler } from '../../../../utils/GPUObject.js';
 import { loadFile } from '../../../../utils/utility.js';
-import { Camera } from '../../../../core/objects/camera.js';
 import { Particle } from '../../../../core/objects/particle.js';
 import { PreviewerSpaceData } from './area_PreviewerSpaceData.js';
 import { vec2 } from '../../../../utils/mathVec.js';
@@ -38,9 +36,9 @@ export class Area_Previewer {
         this.struct = {
             inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
-                {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; display: flex; justifyContent: center; alignItems: center; backgroundColor: rgb(55, 55, 55);", children: [
-                    // {type: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
-                    {type: "canvas", id: "renderingCanvas"},
+                {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; display: flex; justifyContent: center; alignItems: center; backgroundColor: rgb(55, 55, 55);", children: [
+                    // {tagType: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
+                    {tagType: "canvas", id: "renderingCanvas"},
                 ]},
             ]
         }
@@ -145,7 +143,7 @@ export class Renderer {
         // レンダリングに使う汎用group
         this.staticGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Fts"), [
             camera.cameraDataBuffer,
-            sampler
+            GPU.sampler
         ]);
     }
 
@@ -162,12 +160,12 @@ export class Renderer {
             return ;
         }
         const commandEncoder = device.createCommandEncoder();
-        for (const value of app.scene.maskTextures) {
+        for (const value of app.scene.objects.maskTextures) {
             if (value.renderingObjects.length > 0 && value.name != "base") {
                 const maskRenderPass = commandEncoder.beginRenderPass({
                     colorAttachments: [
                         {
-                            view: value.textureView,
+                            view: value.view,
                             clearValue: { r: 0, g: 0, b: 0, a: 1 },
                             loadOp: 'clear',
                             storeOp: 'store',

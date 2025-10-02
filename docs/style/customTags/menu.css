@@ -1,23 +1,32 @@
 .custom-menu {
+    min-width: fit-content;
+    min-height: fit-content;
     height: 20px;
-    align-items: center;     /* 縦方向中央 */
-    width: fit-content;
-    display: grid;
-    grid-template-columns: auto auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
     overflow: hidden;
-    padding-left: 3px;
-    padding-right: 3px;
 }
 .custom-menu-item {
     width: fit-content;
-    background-color: #181818;
     position: relative; /* 子要素の位置基準にする */
     overflow: visible; /* サブメニューが親の範囲外に表示されるようにする */
     padding: 2px;
 }
-.custom-menu-item button {
-    border-width: 0px;
-    width: 100%;
+.custom-menu-itemContainer {
+    background-color: #151515;
+    display: flex;
+    width: fit-content;
+    min-width: 50px;
+    height: 15px;
+}
+.custom-menu-itemContainer img {
+    width: 15px;
+    height: 15px;
+}
+.custom-menu-itemContainer div {
+    width: fit-content;
 }
 /* サブメニューのスタイル */
 .custom-menu-item-submenu {
@@ -27,20 +36,16 @@
     top: 0; /* 親の上端に揃える */
     white-space: nowrap; /* 長いテキストでもサブメニューの幅が変わらないようにする */
     z-index: 1000; /* サブメニューが他の要素より前に表示されるようにする */
-    background-color: #282828;
+    background-color: #151515;
 }
 
 .custom-menu-item:hover > .custom-menu-item-submenu {
     display: block;
 }
 
-.custom-menu-item:hover {
+.custom-menu-itemContainer:hover {
     background-color: rgb(85, 85, 85);
 }
-
-/* .custom-menu > *{
-    overflow-x: hidden;
-} */
 
 .custom-menu-items {
     border-top-left-radius: 0px;
@@ -52,16 +57,4 @@
     background-color: #151515;
     z-index: 1000;
     gap: 5px;
-    padding: 5px;
-}
-
-.custom-menu-items > * {
-    border-radius: 0px;
-    /* width: fit-content; */
-    width: 100%;
-    height: 15px;
-}
-
-.custom-menu-items > * > * {
-    width: 100%;
 }

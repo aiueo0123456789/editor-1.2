@@ -24,6 +24,7 @@ export class Area {
         this.main = document.createElement("div");
         this.main.classList.add("main");
         this.target.append(this.header, this.main);
+        this.uiModel = null;
 
         this.setType(type);
 

@@ -7,7 +7,7 @@ export class Area_Outliner {
         this.struct = {
             inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
             DOM: [
-                {type: "outliner", name: "outliner", options: {arrange: true, clickEventFn: (event, object) => {
+                {tagType: "outliner", name: "outliner", options: {arrange: true, clickEventFn: (event, object) => {
                         if (app.scene.state.currentMode == "オブジェクト") {
                             app.scene.state.setSelectedObject(object, app.input.keysDown["Ctrl"]);
                             app.scene.state.setActiveObject(object);
@@ -25,34 +25,34 @@ export class Area_Outliner {
                     },
                     activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "outliner/root", loopTarget: "children", structures: [
                         {
-                            type: "if",
+                            tagType: "if",
                             formula: {source: "/", conditions: "in", value: "name"},
                             true: [
                                 {
-                                    type: "if",
+                                    tagType: "if",
                                     formula: {source: "/", conditions: "in", value: "zIndex"},
                                     true: [
-                                        {type: "gridBox", axis: "c", allocation: "auto 50% 1fr auto 20%", children: [
-                                            {type: "icon-img", name: "icon", withObject: "/type"},
-                                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
-                                            {type: "padding", size: "10px"},
-                                            {type: "input", name: "visibleCheck", withObject: "/visible", options: {type: "checkbox", look: "eye-icon"}},
-                                            {type: "input", withObject: "/zIndex", options: {type: "number", min: 0, max: 100, step: 1}, custom: {visual: "1"}},
+                                        {tagType: "gridBox", axis: "c", allocation: "auto 50% 1fr auto 20%", children: [
+                                            {tagType: "icon", src: {path: "/type"}},
+                                            {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                                            {tagType: "padding", size: "10px"},
+                                            {tagType: "input", value: "/visible", type: "checkbox", look: {check: "display", uncheck: "hide"}},
+                                            {tagType: "input", value: "/zIndex", type: "number", min: 0, max: 100, step: 1, custom: {visual: "1"}},
                                         ]},
                                     ],
                                     false: [
-                                        {type: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
-                                            {type: "icon-img", name: "icon", withObject: "/type"},
-                                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
-                                            {type: "padding", size: "10px"},
+                                        {tagType: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
+                                            {tagType: "icon", src: {path: "/type"}},
+                                            {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                                            {tagType: "padding", size: "10px"},
                                         ]},
                                     ]
                                 }
                             ],
                             false: [
-                                {type: "gridBox", axis: "c", allocation: "50% 1fr", children: [
-                                    {type: "dbInput", withObject: "/type", options: {type: "text"}},
-                                    {type: "padding", size: "10px"},
+                                {tagType: "gridBox", axis: "c", allocation: "50% 1fr", children: [
+                                    {tagType: "dbInput", value: "/type", options: {tagType: "text"}},
+                                    {tagType: "padding", size: "10px"},
                                 ]},
                             ]
                         }

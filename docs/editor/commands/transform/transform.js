@@ -53,6 +53,12 @@ class TransformCommand {
             for (const bone of targets) {
                 this.originalBones.set(bone, {"x": bone.x, "y": bone.y, "sx": bone.sx, "sy": bone.sy, "r": bone.r});
             }
+        } else if (this.type == "ベジェ頂点アニメーション編集") {
+            this.targetVertices = [...targets];
+            this.originalVertices = new Map();
+            for (const vertex of targets) {
+                this.originalVertices.set(vertex, {"x": vertex.x, "y": vertex.y,});
+            }
         } else {
             const subjectIndex = [];
             this.selectIndexs = [];
@@ -65,7 +71,7 @@ class TransformCommand {
             } else if (type == "ボーン編集") {
                 source = app.scene.runtimeData.armatureData;
                 vertexLevel = Armature.VERTEX_LEVEL;
-            } else if (type == "ベジェ編集" || type == "ベジェ頂点アニメーション編集") {
+            } else if (type == "ベジェ編集") {
                 source = app.scene.runtimeData.bezierModifierData;
                 vertexLevel = BezierModifier.VERTEX_LEVEL;
             }
@@ -81,31 +87,6 @@ class TransformCommand {
                 }
                 for (const vertex of this.targetObject.allVertices) {
                     this.writeIndexs.push(vertex.localIndex + this.targetAnimation.worldIndex);
-                }
-                this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
-                this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
-                this.worldOriginalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットの頂点のワールド座標を取得
-                this.workNumX = Math.ceil(subjectIndex.length / 64);
-                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.worldOriginalBuffer, source.renderingVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
-                this.writeBuffer = source.animations.buffer;
-                this.targetBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4);
-                this.differentialBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4, undefined, ["f32"]); // 頂点の基準
-                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.differentialBuffer, source.baseVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
-                // GPU.consoleBufferData(this.differentialBuffer, ["f32","f32"], "base")
-                this.weightBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, undefined, ["f32"]);
-                this.originalBuffer = GPU.createStorageBuffer(subjectIndex.length * 2 * 4); // ターゲットのオリジナル状態を保持(undoで使用する値)
-                GPU.runComputeShader(createOriginalPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr"), [this.originalBuffer, source.renderingVertices.buffer, this.subjectIndexBuffer])], this.workNumX);
-            } else if (this.type == "ベジェ頂点アニメーション編集") {
-                this.targetAnimation = options.targetAnimation;
-                this.targetObject = this.targetAnimation.belongObject;
-                for (const vertex of targets) {
-                    this.selectIndexs.push(vertex.worldIndex);
-                }
-                for (let i = this.targetObject.runtimeOffsetData.pointOffset * vertexLevel; i < this.targetObject.verticesNum + (this.targetObject.runtimeOffsetData.pointOffset) * vertexLevel; i ++) {
-                    subjectIndex.push(i);
-                }
-                for (const vertex of this.targetObject.allVertices) {
-                    this.writeIndexs.push(vertex.getWorldAnimationIndex(this.targetAnimation));
                 }
                 this.writeIndexsBuffer = GPU.createStorageBuffer(this.writeIndexs.length * 4, this.writeIndexs, ["u32"]);
                 this.subjectIndexBuffer = GPU.createStorageBuffer(subjectIndex.length * 4, subjectIndex, ["u32"]);
@@ -231,6 +212,15 @@ class TransformCommand {
                     bone.r = this.value[0] + this.originalBones.get(bone).r;
                 });
             }
+        } else if (this.type == "ベジェ頂点アニメーション編集") {
+            console.log("変形ベジェ頂点アニメーション編集",pipeline)
+            if (pipeline == "Translate") {
+                this.targetVertices.forEach(vertex => {
+                    vertex.x = this.value[0] + this.originalVertices.get(vertex).x;
+                    vertex.y = this.value[1] + this.originalVertices.get(vertex).y;
+                    console.log("変形",vertex)
+                });
+            }
         } else {
             if (!this.workNumX) {
                 return ;
@@ -329,7 +319,7 @@ export class TranslateCommand extends TransformCommand {
         if (orientType == "ローカル") { // 親の行列を探す
         } else {
         }
-        if (this.type == "ボーンアニメーション編集") {
+        if (this.type == "ボーンアニメーション編集" || this.type == "ベジェ頂点アニメーション編集") {
             this.transform("Translate");
         } else {
             this.transform(verticesTranslatePipeline);

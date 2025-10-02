@@ -111,6 +111,7 @@ canvas {
 
 .section {
     width: 100%;
+    height: fit-content;
     /* border: 1px solid var(--sub2Color); */
     background-color: var(--subColor);
     display: flex;
@@ -132,9 +133,12 @@ canvas {
 .section-main {
     padding: 5px;
     width: 100%;
+    max-height: fit-content;
     display: flex;
     flex-flow: column;
+    overflow-y: hidden;
     gap: 5px;
+    transition: height 0.3s ease;
 }
 .minSection {
     width: 100%;

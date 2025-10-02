@@ -126,7 +126,6 @@ export class BoneDelete extends Base{
             }
             this.indexsMeta[index] = bone.armature.allBone.indexOf(bone);
             bone.armature.allBone.splice(this.indexsMeta[index], 1);
-            bone.armature.fixBoneIndex();
         });
         for (const armature of this.armatures) {
             app.scene.runtimeData.armatureData.updateBaseData(armature);

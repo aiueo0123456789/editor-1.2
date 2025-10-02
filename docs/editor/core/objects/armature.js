@@ -1,7 +1,7 @@
 import { Attachments } from "./attachments/attachments.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Children } from "../../utils/objects/children.js";
-import { ObjectBase, sharedDestroy } from "../../utils/objects/util.js";
+import { ObjectBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
 import { indexOfSplice } from "../../utils/utility.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
@@ -39,8 +39,6 @@ class Vertex {
 export class Bone {
     // constructor(armature, index = armature.allBone.length, parent = null, baseHead, baseTail, animations = {blocks: []}) {
     constructor(armature, data) {
-        if (!data.index) data.index = armature.allBone.length;
-        if (!data.name) data.name = "名称未設定" + data.index;
         this.type = "ボーン";
         this.name = data.name;
         /** @type {Armature} */
@@ -51,8 +49,7 @@ export class Bone {
         } else {
             armature.root.push(this);
         }
-        this.index = data.index;
-        armature.setBone(this);
+        armature.allBone.push(this);
         /** @type {Bone[]} */
         this.childrenBone = [];
         this.color = data.color ? data.color : [0,0,0,1];
@@ -60,7 +57,7 @@ export class Bone {
         this.baseHead = new Vertex(this, Object.assign({typeIndex: 0}, data.baseHead));
         this.baseTail = new Vertex(this, Object.assign({typeIndex: 1}, data.baseTail));
 
-        this.selectedBone = false;
+        this.selected = false;
 
         this.x = 0;
         this.y = 0;
@@ -79,11 +76,7 @@ export class Bone {
     }
 
     clearAnimatoin() {
-        this.x = 0;
-        this.y = 0;
-        this.sx = 0;
-        this.sy = 0;
-        this.r = 0;
+        this.keyframeBlockManager.clearAnimatoin();
     }
 
     get localIndex() {
@@ -115,7 +108,7 @@ export class Bone {
     getSaveData() {
         return {
             name: this.name,
-            index: this.index,
+            index: this.localIndex,
             parentIndex: this.parent ? this.parent.localIndex : -1,
             color: this.color,
             baseHead: this.baseHead.getSaveData(),
@@ -134,16 +127,12 @@ export class Armature extends ObjectBase {
         this.runtimeData = app.scene.runtimeData.armatureData;
 
         this.MAX_BONES = app.appConfig.MAX_BONES_PER_ARMATURE;
-        this.animationBufferOffset = 0;
-        this.weightBufferOffset = 0;
 
-        this.boneNum = 0;
         this.baseTransformIsLock = false;
 
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
-        // this.children = new Children();
         /** @type {Bone[]} */
         this.root = [];
         /** @type {Bone[]} */
@@ -154,8 +143,10 @@ export class Armature extends ObjectBase {
         this.init(data);
     }
 
-    clearAnimatoin() {
-        this.allBone.forEach(bone => bone.clearAnimatoin())
+    resolvePhase() {
+        if (this.parent instanceof UnfixedReference) {
+            this.changeParent(this.parent.getObject());
+        }
     }
 
     get MAX_VERTICES() {
@@ -170,6 +161,13 @@ export class Armature extends ObjectBase {
         return this.animationBufferOffset * Armature.VERTEX_LEVEL;
     }
 
+    get verticesNum() {
+        return this.allBone.length * 2;
+    }
+    get boneNum() {
+        return this.allBone.length;
+    }
+
     getBoneIndexFromBoneID(id) {
         for (const bone of this.allBone) {
             if (id = bone.id) {
@@ -180,13 +178,7 @@ export class Armature extends ObjectBase {
     }
 
     getSelectBones() {
-        return this.allBone.filter(bone => bone.selectedBone);
-    }
-
-    fixBoneIndex() {
-        for (let i = 0; i < this.allBone.length; i ++) {
-            this.allBone[i].index = i;
-        }
+        return this.allBone.filter(bone => bone.selected);
     }
 
     // ボーンを削除してindexを返す
@@ -196,22 +188,12 @@ export class Armature extends ObjectBase {
         }
         const index = this.allBone.indexOf(bone);
         this.allBone.splice(index, 1);
-        this.fixBoneIndex();
         return index;
-    }
-
-    // indexを指定してbone追加する
-    setBone(bone) {
-        if (bone.index > this.allBone.length) {
-            this.allBone.length = bone.index;
-        }
-        this.allBone[bone.index] = bone;
     }
 
     // boneを追加してindexを再計算する
     appendBone(bone) {
         this.allBone.push(bone);
-        this.fixBoneIndex();
     }
 
     // gc対象にしてメモリ解放
@@ -220,8 +202,7 @@ export class Armature extends ObjectBase {
     }
 
     init(data) {
-        this.verticesNum = data.boneNum * 2;
-        this.boneNum = data.boneNum;
+        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         this.propagateBuffers = [];
 
         const roopChildren = (children, parent = null, depth = 0) => {
@@ -249,6 +230,7 @@ export class Armature extends ObjectBase {
         return {
             name: this.name,
             id: this.id,
+            parent: this.parent ? this.parent.id : null,
             type: this.type,
             // bones: this.allBone.map(bone => bone.getSaveData()),
             bones: this.root.map(bone => bone.getSaveData()),

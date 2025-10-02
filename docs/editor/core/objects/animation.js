@@ -117,28 +117,6 @@ export class VerticesAnimation extends AnimationBase {
         super(name, belongObject);
         this.type = "頂点アニメーション";
     }
-
-    async getSaveData() {
-        return {
-            transformData: [...await GPU.getF32BufferData(this.s_verticesAnimationBuffer)],
-        }
-    }
-
-    setAnimationData(data) {
-        let trueData;
-        trueData = [];
-        for (const index in data.transformData) {
-            trueData.push(data.transformData[index])
-        }
-
-        this.isChange = true;
-    }
-
-    getWorldVerticesPositionBuffer() {
-        const resultBuffer = GPU.copyBufferToNewBuffer(this.belongObject.s_baseVerticesPositionBuffer);
-        // GPU.runComputeShader(adaptAllAnimationToVerticesPipeline, [GPU.createGroup(GPU.getGroupLayout("Csrw"), [{item: resultBuffer, type: "b"}]), GPU.createGroup(GPU.getGroupLayout("Csr_Cu"), [{item: this.s_verticesAnimationBuffer, type: 'b'}, {item: GPU.createUniformBuffer(4, [1], ["f32"]), type: 'b'}])], Math.ceil(this.belongObject.verticesNum / 64));
-        return resultBuffer;
-    }
 }
 
 export class BoneAnimation extends AnimationBase {

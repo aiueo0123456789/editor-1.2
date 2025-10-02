@@ -18,8 +18,8 @@ export class ToolsBarOperator {
             const modalsInstance = modals.map(modal => new modal());
             for (const modal of modalsInstance) {
                 this.creatorForUI.createFromChildren(this.domForSideBar,[
-                    {type: "div", children: [
-                        {type: "div", options: {textContent: modal.name}, style: "writingMode: vertical-rl;"},
+                    {tagType: "div", children: [
+                        {tagType: "div", options: {textContent: modal.name}, style: "writingMode: vertical-rl;"},
                     ], class: "sideBar-toolTitle"}
                 ], {});
             }

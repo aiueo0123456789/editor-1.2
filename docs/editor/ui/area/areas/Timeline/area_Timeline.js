@@ -6,9 +6,9 @@ import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
 import { KeyDelete } from "../../../tools/KeyDelete.js";
-import { KeyResize } from "../../../tools/KeyResize.js";
-import { KeyRotate } from "../../../tools/KeyRotate.js";
-import { KeyTranslate } from "../../../tools/KeyTranslate.js";
+import { KeyframeResize } from "../../../tools/KeyframeResize.js";
+import { KeyframeRotate } from "../../../tools/KeyframeRotate.js";
+import { KeyframeTranslate } from "../../../tools/KeyframeTranslate.js";
 
 const targetValueToColor = {
     "x": "rgb(0, 0, 255)",
@@ -117,40 +117,34 @@ function update(object, groupID, others, DOMs) {
         // object.context.fill();
         o.context.stroke();
     }
-    if (app.scene.state.activeObject) {
-        if (app.scene.state.activeObject.type == "アーマチュア") {
-            for (const bone of app.scene.state.activeObject.getSelectBones()) {
-                for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
-                    if (keyframeBlock.visible) {
-                        o.context.strokeStyle = targetValueToColor[keyframeBlock.targetValue];
-                        o.context.lineWidth = 10;
-                        let lastData = keyframeBlock.keys[0];
-                        for (const keyData of keyframeBlock.keys.slice(1)) {
-                            // ベジェ曲線を描く
-                            o.context.beginPath();
-                            o.context.moveTo(...o.worldToCanvas(lastData.point));
-                            o.context.bezierCurveTo(
-                                ...o.worldToCanvas(lastData.wRightHandle),
-                                ...o.worldToCanvas(keyData.wLeftHandle),
-                                ...o.worldToCanvas(keyData.point)
-                            );
-                            o.context.strokeStyle = o.strokeStyle;
-                            o.context.stroke();
-                            lastData = keyData;
-                        }
-                        for (const keyData of keyframeBlock.keys) {
-                            lastData = keyData;
-                            // 制御点と線
-                            const getColor = (b) => {
-                                // return b ? "rgb(255, 255, 255)" : "rgb(0,0,0)";
-                                return b ? "rgb(255, 255, 255)" : targetValueToColor[keyframeBlock.targetValue];
-                            }
-                            circle(o.worldToCanvas(keyData.point), 20, getColor(keyData.pointSelected));
-                            circleStroke(o.worldToCanvas(keyData.wLeftHandle), 15, getColor(keyData.leftHandleSelected), 7);
-                            circleStroke(o.worldToCanvas(keyData.wRightHandle), 15, getColor(keyData.rightHandleSelected), 7);
-                        }
-                    }
+    for (const keyframeBlock of o.spaceData.getAllKeyframeBlock) {
+        if (keyframeBlock.visible) {
+            o.context.strokeStyle = targetValueToColor[keyframeBlock.targetValue];
+            o.context.lineWidth = 10;
+            let lastData = keyframeBlock.keys[0];
+            for (const keyData of keyframeBlock.keys.slice(1)) {
+                // ベジェ曲線を描く
+                o.context.beginPath();
+                o.context.moveTo(...o.worldToCanvas(lastData.point.worldPosition));
+                o.context.bezierCurveTo(
+                    ...o.worldToCanvas(lastData.rightHandle.worldPosition),
+                    ...o.worldToCanvas(keyData.leftHandle.worldPosition),
+                    ...o.worldToCanvas(keyData.point.worldPosition)
+                );
+                o.context.strokeStyle = o.strokeStyle;
+                o.context.stroke();
+                lastData = keyData;
+            }
+            for (const keyData of keyframeBlock.keys) {
+                lastData = keyData;
+                // 制御点と線
+                const getColor = (b) => {
+                    // return b ? "rgb(255, 255, 255)" : "rgb(0,0,0)";
+                    return b ? "rgb(255, 255, 255)" : targetValueToColor[keyframeBlock.targetValue];
                 }
+                circle(o.worldToCanvas(keyData.point.worldPosition), 20, getColor(keyData.pointSelected));
+                circleStroke(o.worldToCanvas(keyData.leftHandle.worldPosition), 15, getColor(keyData.leftHandle.selected), 7);
+                circleStroke(o.worldToCanvas(keyData.rightHandle.worldPosition), 15, getColor(keyData.rightHandle.selected), 7);
             }
         }
     }
@@ -176,37 +170,37 @@ export class Area_Timeline {
         this.struct = {
             inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene},
             DOM: [
-                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option",style: "height: 25px;", name: "情報", children: [
-                        {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto 1fr", children: [
-                            {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "auto auto auto 1fr", children: [
-                                {type: "input", label: "現在", name: "frame_current", withObject: "scene/frame_current", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "開始", name: "frame_start", withObject: "scene/frame_start", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "終了", name: "frame_end", withObject: "scene/frame_end", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "padding", size: "10px"},
+                {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {tagType: "option",style: "height: 25px;", name: "情報", children: [
+                        {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto 1fr", children: [
+                            {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "auto auto auto 1fr", children: [
+                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "padding", size: "10px"},
                             ]},
 
-                            {type: "boxs", children: [
-                                {type: "button", name: "skip", options: {type: "checkbox", look: "skipMinus"}, submitFunction: () => {
+                            {tagType: "boxs", children: [
+                                {tagType: "button", icon: "reverseSkip", submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_start);
                                 }},
-                                {type: "input", name: "isPlaying", withObject: "scene/isReversePlaying", options: {type: "checkbox", look: "isReversePlaying"}},
-                                {type: "input", name: "isPlaying", withObject: "scene/isPlaying", options: {type: "checkbox", look: "isPlaying"}},
-                                {type: "button", name: "skip", options: {type: "checkbox", look: "skipPlus"}, submitFunction: () => {
+                                {tagType: "input", name: "isPlaying", type: "checkbox", checked: "scene/isReversePlaying", look: {check: "stop", uncheck: "reverse"}},
+                                {tagType: "input", name: "isPlaying", type: "checkbox", checked: "scene/isPlaying", look: {check: "stop", uncheck: "playing"}},
+                                {tagType: "button", icon: "skip", submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_end);
                                 }},
                             ]},
 
-                            {type: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto auto auto", children: [
-                                {type: "padding", size: "10px"},
-                                {type: "input", label: "現在", name: "frame_current", withObject: "scene/frame_current", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "開始", name: "frame_start", withObject: "scene/frame_start", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
-                                {type: "input", label: "終了", name: "frame_end", withObject: "scene/frame_end", options: {type: "number", max: 500, min: -500}, custom: {visual: "1"}},
+                            {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto auto auto", children: [
+                                {tagType: "padding", size: "10px"},
+                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500, custom: {visual: "1"}},
                             ]}
                         ]},
                     ]},
-                    {type: "grid", axis: "c", child1: [
-                        {type: "outliner", name: "outliner", id: "overview",
+                    {tagType: "grid", axis: "c", child1: [
+                        {tagType: "outliner", name: "outliner", id: "overview",
                             updateEventTarget: "選択物",
                             options: {
                                 arrange: false,
@@ -224,32 +218,43 @@ export class Area_Timeline {
                                 },
                                 activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                             },
-                            withObject: () => {return app.scene.state.getSelectBones()},
-                            loopTarget: {parameter: "type", loopTargets: {"アーマチュア": ["allBone"], "ボーン": ["keyframeBlockManager/blocks"], "キーフレームブロックマネージャー": ["blocks"], others: ["animationBlock/list","keyframeBlockManager"]}},
+                            withObject: "scene/state/getSelcetInSelectedObject",
+                            updateEventTarget: ["頂点選択","ボーン選択"],
+                            loopTarget: {
+                                parameter: "type",
+                                loopTargets: {
+                                    "アーマチュア": ["allBone"],
+                                    "ボーン": ["keyframeBlockManager/blocks"],
+                                    "ベジェモディファイア": ["allPoint"],
+                                    "ポイント": ["basePoint/keyframeBlockManager/blocks", "baseLeftControlPoint/keyframeBlockManager/blocks", "baseRightControlPoint/keyframeBlockManager/blocks"],
+                                    "キーフレームブロックマネージャー": ["blocks"],
+                                    others: ["animationBlock/list","keyframeBlockManager/blocks"]
+                                }
+                            },
                             structures: [
-                                {type: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
+                                {tagType: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
                                     true: [
-                                        {type: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
-                                            {type: "icon-img", name: "icon", withObject: "/type"},
-                                            {type: "input", withObject: "/visible", options: {type: "checkbox", look: "eye-icon"}},
-                                            {type: "padding", size: "10px"},
-                                            {type: "dbInput", withObject: "/targetValue", options: {type: "text"}},
+                                        {tagType: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
+                                            {tagType: "icon", src: {path: "/type"}},
+                                            {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
+                                            {tagType: "padding", size: "10px"},
+                                            {tagType: "dbInput", value: "/targetValue", options: {tagType: "text"}},
                                         ]}
                                     ],
                                     false: [
-                                        {type: "if", formula: {source: "/type", conditions: "==", value: "ボーン"},
+                                        {tagType: "if", formula: {source: "/type", conditions: "==", value: "ボーン"},
                                             true: [
-                                                {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {type: "icon-img", name: "icon", withObject: "/type"},
-                                                    {type: "padding", size: "10px"},
-                                                    {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                                {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                                                    {tagType: "icon", src: {path: "/type"}},
+                                                    {tagType: "padding", size: "10px"},
+                                                    {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
                                                 ]}
                                             ],
                                             false: [
-                                                {type: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {type: "icon-img", name: "icon", withObject: "/type"},
-                                                    {type: "padding", size: "10px"},
-                                                    {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                                                {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                                                    {tagType: "icon", src: {path: "/type"}},
+                                                    {tagType: "padding", size: "10px"},
+                                                    {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
                                                 ]}
                                             ]
                                         }
@@ -258,8 +263,8 @@ export class Area_Timeline {
                             ]
                         },
                     ],child2: [
-                        {type: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {type: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
+                        {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
+                            {tagType: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
                         ]},
                     ]}
                 ]}
@@ -272,7 +277,7 @@ export class Area_Timeline {
         this.creatorForUI = area.creatorForUI;
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyTranslate, "r": KeyRotate, "s": KeyResize, "x": KeyDelete});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyframeTranslate, "r": KeyframeRotate, "s": KeyframeResize, "x": KeyDelete});
 
         /** @type {HTMLElement} */
         this.canvas = this.creatorForUI.getDOMFromID("timelineCanvasForGrid");
@@ -365,22 +370,13 @@ export class Area_Timeline {
         }
         if (inputManager.keysDown["c"]) {
             for (const keyData of this.spaceData.getAllKeyframe) {
-                if (isPointInEllipse(world, keyData.point, vec2.divR([10,10],this.zoom))) {
-                    if (!this.spaceData.selectVertices.includes(keyData.point)) {
-                        this.spaceData.selectVertices.push(keyData.point);
-                    }
+                if (isPointInEllipse(world, keyData.point.worldPosition, vec2.divR([10,10],this.zoom))) {
                     keyData.pointSelected = true;
                 }
-                if (isPointInEllipse(world, keyData.wLeftHandle, vec2.divR([10,10],this.zoom))) {
-                    if (!this.spaceData.selectVertices.includes(keyData.wLeftHandle)) {
-                        this.spaceData.selectVertices.push(keyData.wLeftHandle);
-                    }
+                if (isPointInEllipse(world, keyData.leftHandle.worldPosition, vec2.divR([10,10],this.zoom))) {
                     keyData.leftHandleSelected = true;
                 }
-                if (isPointInEllipse(world, keyData.wRightHandle, vec2.divR([10,10],this.zoom))) {
-                    if (!this.spaceData.selectVertices.includes(keyData.wRightHandle)) {
-                        this.spaceData.selectVertices.push(keyData.wRightHandle);
-                    }
+                if (isPointInEllipse(world, keyData.rightHandle.worldPosition, vec2.divR([10,10],this.zoom))) {
                     keyData.rightHandleSelected = true;
                 }
             }
@@ -389,7 +385,7 @@ export class Area_Timeline {
             let minKey = null;
             let minPoint = null;
             for (const keyData of this.spaceData.getAllKeyframe) {
-                let dist = vec2.distanceR(world, keyData.point);
+                let dist = vec2.distanceR(world, keyData.point.worldPosition);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
@@ -410,8 +406,8 @@ export class Area_Timeline {
             }
             if (minPoint == "point") {
                 minKey.pointSelected = true;
-                if (!this.spaceData.selectVertices.includes(minKey.point)) {
-                    this.spaceData.selectVertices.push(minKey.point);
+                if (!this.spaceData.selectVertices.includes(minKey.point.worldPosition)) {
+                    this.spaceData.selectVertices.push(minKey.point.worldPosition);
                 }
             } else if (minPoint == "leftHandle") {
                 minKey.leftHandleSelected = true;

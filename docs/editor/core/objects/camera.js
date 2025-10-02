@@ -12,6 +12,7 @@ export class Camera {
         this.displayRange = [1024,1024];
         this.updateBuffer();
         managerForDOMs.set({o: this, i: "displayRange"}, null, () => {this.updateBuffer()});
+        managerForDOMs.update(this, "displayRange");
     }
 
     updateBuffer() {

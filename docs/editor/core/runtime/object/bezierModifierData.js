@@ -1,5 +1,6 @@
 import { Application } from "../../../app/app.js";
 import { objectToNumber } from "../../../app/scene/scene.js";
+import { managerForDOMs } from "../../../utils/ui/util.js";
 import { loadFile } from "../../../utils/utility.js";
 import { GPU } from "../../../utils/webGPU.js";
 import { BezierModifier } from "../../objects/bezierModifier.js";
@@ -19,10 +20,8 @@ export class BezierModifierData extends RuntimeDataBase {
         this.renderingVertices = new BufferManager(this, "renderingVertices", ["f32","f32","f32","f32","f32","f32"], "MAX_POINTS");
         // this.baseVertices = GPU.createBuffer(0, ["s"]);
         this.baseVertices = new BufferManager(this, "baseVertices", ["f32","f32","f32","f32","f32","f32"], "MAX_POINTS");
-        // this.animations = GPU.createBuffer(0, ["s"]);
-        this.animations = new BufferManager(this, "animations", ["f32","f32","f32","f32","f32","f32"], "MAX_ANIMATIONS * MAX_POINTS");
-        // this.animationWights = GPU.createBuffer(0, ["s"]);
-        this.animationWights = new BufferManager(this, "animationWights", ["f32"], "MAX_ANIMATIONS");
+        // this.runtimeAnimationData = GPU.createBuffer(0, ["s"]);
+        this.runtimeAnimationData = new BufferManager(this, "runtimeAnimationData", ["f32","f32", "f32","f32", "f32","f32"], "MAX_POINTS");
         // this.weightBlocks = GPU.createBuffer(0, ["s"]);
         this.weightBlocks = new BufferManager(this, "weightBlocks", ["u32","u32","u32","u32","f32","f32","f32","f32", "u32","u32","u32","u32","f32","f32","f32","f32", "u32","u32","u32","u32","f32","f32","f32","f32"], "MAX_POINTS");
         // this.allocation = GPU.createBuffer(0, ["s"]);
@@ -36,7 +35,8 @@ export class BezierModifierData extends RuntimeDataBase {
 
         this.myType = 2;
 
-        this.blockByteLength = 2 * 4 * 3; // データ一塊のバイト数: vec2<f32> * 3
+        this.vertexBlockByteLength = 2 * 4; // データ一塊のバイト数: vec2<f32> * 3
+        this.pointBlockByteLength = 2 * 4 * 3; // データ一塊のバイト数: vec2<f32> * 3
         this.weightBlockByteLength = (4 + 4) * 4 * 3;
 
         this.offsetCreate();
@@ -65,6 +65,7 @@ export class BezierModifierData extends RuntimeDataBase {
             point.baseLeftControlPoint.selected = resultBone[point.baseLeftControlPoint.localIndex];
             point.baseRightControlPoint.selected = resultBone[point.baseRightControlPoint.localIndex];
         }
+        managerForDOMs.update("頂点選択");
     }
 
     async getBaseVerticesFromObject(/** @type {BezierModifier} */bezierModifier) {
@@ -111,7 +112,7 @@ export class BezierModifierData extends RuntimeDataBase {
             verticesParentWeight.push(...point.baseRightControlPoint.parentWeight.indexs.concat(point.baseRightControlPoint.parentWeight.weights));
         }
         console.log(bezierModifier)
-        GPU.writeBuffer(this.baseVertices.buffer, new Float32Array(verticesBases), bezierModifier.runtimeOffsetData.pointOffset * this.blockByteLength);
+        GPU.writeBuffer(this.baseVertices.buffer, new Float32Array(verticesBases), bezierModifier.runtimeOffsetData.pointOffset * this.pointBlockByteLength);
         GPU.writeBuffer(this.weightBlocks.buffer, GPU.createBitData(verticesParentWeight, ["u32", "u32", "u32", "u32", "f32", "f32", "f32", "f32"]), bezierModifier.runtimeOffsetData.pointOffset * this.weightBlockByteLength);
         this.updateAllocationData(bezierModifier);
     }
@@ -124,15 +125,11 @@ export class BezierModifierData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {BezierModifier} */bezierModifier) {
-        if (bezierModifier.parent.isRoot || bezierModifier.parent.type == "init") {
+        if (!bezierModifier.parent || bezierModifier.parent.isRoot) {
             return new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, 0, 0, this.myType]);
         } else {
             return new Uint32Array([bezierModifier.runtimeOffsetData.pointOffset, bezierModifier.runtimeOffsetData.animationOffset, bezierModifier.runtimeOffsetData.animationWeightOffset, bezierModifier.MAX_POINTS, bezierModifier.MAX_ANIMATIONS, objectToNumber[bezierModifier.parent.type], bezierModifier.parent.runtimeOffsetData.allocationOffset, this.myType]);
         }
-    }
-
-    setAnimationData(/** @type {BezierModifier} */bezierModifier, animationData, animtaionIndex) {
-        GPU.writeBuffer(this.animations.buffer, new Float32Array(animationData), (bezierModifier.runtimeOffsetData.animationOffset + animtaionIndex) * this.blockByteLength);
     }
 
     updateParent(/** @type {BezierModifier} */bezierModifier) {
@@ -143,7 +140,7 @@ export class BezierModifierData extends RuntimeDataBase {
 
     setGroup() {
         this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr"), [this.renderingVertices.buffer, this.selectedVertices.buffer, this.weightBlocks.buffer]); // 表示用
-        this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr"), [this.renderingVertices.buffer, this.baseVertices.buffer, this.animations.buffer, this.animationWights.buffer, this.allocations.buffer]); // アニメーション用
+        this.animationApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingVertices.buffer, this.baseVertices.buffer, this.runtimeAnimationData.buffer, this.allocations.buffer]); // アニメーション用
         this.applyParentGroup = GPU.createGroup(GPU.getGroupLayout("Csr_Csr_Csr"), [this.renderingVertices.buffer, this.baseVertices.buffer, this.allocations.buffer]); // 子の変形用データ
         this.parentApplyGroup = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), [this.renderingVertices.buffer, this.baseVertices.buffer, this.allocations.buffer, this.weightBlocks.buffer]); // 親の変形を適応するた
     }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_2" data-name="レイヤー 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 385.61 429.85">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cacaca;
+      }
+    </style>
+  </defs>
+  <g id="playing">
+    <path class="cls-1" d="M360.45,171.35L75.47,6.82C41.93-12.55,0,11.66,0,50.39v329.07c0,38.73,41.93,62.94,75.47,43.57l284.98-164.54c33.54-19.37,33.54-67.78,0-87.15Z"/>
+  </g>
+</svg>

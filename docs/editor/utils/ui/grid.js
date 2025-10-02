@@ -17,7 +17,7 @@ const resizerWidth = 3;
 export class AutoGrid {
     constructor(id, t, axis, initWidthOrHeight) {
         this.id = id;
-        this.target = t;
+        this.t = t;
         this.container = document.createElement("div");
         this.container.id = id;
         this.child1 = document.createElement("div");
@@ -112,6 +112,10 @@ export class AutoGrid {
 
     getchildrenTag() {
         return ;
+    }
+
+    remove() {
+        this.container.remove();
     }
 }
 

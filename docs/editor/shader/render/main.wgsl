@@ -38,7 +38,8 @@ fn vmain(
     let fixIndex = objectData.vertexBufferOffset + index;
     output.position = vec4f((verticesPosition[fixIndex] - camera.position) * camera.zoom * camera.cvsSize, zIndex, 1.0);
     output.uv = verticesUV[fixIndex];
-    output.uvForMask = (output.position.xy * 0.5 + 0.5) * vec2<f32>(1.0, -1.0); // マスクはカメラに映る範囲しか表示しないので画面内のuvを求める
+    output.uvForMask = (output.position.xy * 0.5 + 0.5); // マスクはカメラに映る範囲しか表示しないので画面内のuvを求める
+    output.uvForMask.y = 1.0 - output.uvForMask.y;
     return output;
 }
 
@@ -62,10 +63,13 @@ fn fmain(
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
         discard ;
     }
-    let value = textureSample(maskTexture, mySampler, uvForMask).r;
-    let maskValue = select(1.0 - value, value, maskType == 0.0);
-    output.color = textureSample(myTexture, mySampler, uv) * maskValue;
+    var maskValue = textureSample(maskTexture, mySampler, uvForMask).r;
+    maskValue = select(1.0 - maskValue, maskValue, maskType == 0.0);
+    let c = textureSample(myTexture, mySampler, uv);
+    output.color = c;
+    output.color.a *= maskValue;
     output.color.a *= alpha;
+    // output.color = vec4<f32>(maskValue,0.0,0.0,1.0);
     if (output.color.a == 0.0) {
         discard ;
     }

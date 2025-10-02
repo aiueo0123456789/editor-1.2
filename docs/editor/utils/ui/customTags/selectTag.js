@@ -3,12 +3,12 @@ import { isFunction, isPlainObject, IsString } from "../../utility.js";
 import { createIcon, createTag, managerForDOMs, setClass } from "../util.js";
 
 export class SelectTag {
-    constructor(this_,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,searchTarget,child,flag) {
         this.customTag = true;
         this.element = createTag(t, "div");
         this.input = createTag(this.element, "input", {style: "display: none;"});
         if (!isFunction(child.writeObject)) {
-            this_.setWith(this.input, child.writeObject, searchTarget, flag);
+            creatorForUI.setWith(this.input, child.writeObject, searchTarget, flag);
         }
         this.element.classList.add("custom-select");
         let initValue = "選択されていません";
@@ -16,7 +16,7 @@ export class SelectTag {
         setClass(value, "nowrap")
         if (child.options.initValue) {
             if (child.options.initValue.path) {
-                initValue = this_.getParameter(searchTarget, child.options.initValue.path);
+                initValue = creatorForUI.getParameter(searchTarget, child.options.initValue.path);
             } else {
                 initValue = child.options.initValue;
             }
@@ -27,7 +27,7 @@ export class SelectTag {
         this.element.addEventListener("click", (e) => {
             let items;
             if (IsString(child.sourceObject)) {
-                items = this_.getParameter(searchTarget, child.sourceObject);
+                items = creatorForUI.getParameter(searchTarget, child.sourceObject);
             } else if (Array.isArray(child.sourceObject)) {
                 items = child.sourceObject;
             } else if (isFunction(child.sourceObject)) {
@@ -35,6 +35,7 @@ export class SelectTag {
             }
             const rect = this.element.getBoundingClientRect();
             const listContainer = app.ui.creatorForUI.getDOMFromID("custom-select-items");
+            listContainer.style.minWidth = `${rect.width}px`;
             listContainer.style.left = `${rect.left}px`;
             listContainer.style.top = `${rect.top + 15}px`;
             listContainer.replaceChildren();

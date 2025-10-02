@@ -2,7 +2,7 @@ import { app } from "../../../../main.js";
 import { managerForDOMs } from "../util.js";
 
 export class HasKeyframeCheck {
-    constructor(this_,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,searchTarget,child,flag) {
         this.checkbox = document.createElement("input");
         this.checkbox.type = "checkbox";
         this.checkbox.style.display = "none";
@@ -12,7 +12,7 @@ export class HasKeyframeCheck {
         span.classList.add("hasKeyframeCheck");
         this.element.append(this.checkbox,span);
 
-        const object = this_.getParameter(searchTarget, child.targetObject);
+        const object = creatorForUI.getParameter(searchTarget, child.targetObject);
         const update = () => {
             this.checkbox.checked = object.hasKeyFromFrame(app.scene.frame_current, 0.2);
         }
@@ -23,8 +23,8 @@ export class HasKeyframeCheck {
             }
         });
         update();
-        managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: this_.groupID}, null, update);
-        managerForDOMs.set({o: object, i: "keys", f: flag, g: this_.groupID}, null, update);
+        managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: creatorForUI.groupID}, null, update);
+        managerForDOMs.set({o: object, i: "keys", f: flag, g: creatorForUI.groupID}, null, update);
         t.append(this.element);
     }
 

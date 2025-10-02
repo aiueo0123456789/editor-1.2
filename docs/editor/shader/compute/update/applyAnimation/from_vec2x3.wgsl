@@ -9,15 +9,16 @@ struct Allocation {
     myType: u32,
 }
 
-struct VertexLevel {
-    a: array<vec2<f32>,3>
+struct Bezier {
+    p: vec2<f32>,
+    c1: vec2<f32>,
+    c2: vec2<f32>,
 }
 
-@group(0) @binding(0) var<storage, read_write> rendering: array<VertexLevel>; // 出力
-@group(0) @binding(1) var<storage, read> base: array<VertexLevel>; // 元
-@group(0) @binding(2) var<storage, read> animations: array<VertexLevel>; // アニメーション
-@group(0) @binding(3) var<storage, read> weights: array<f32>; // 重み
-@group(0) @binding(4) var<storage, read> allocationArray: array<Allocation>; // 配分
+@group(0) @binding(0) var<storage, read_write> rendering: array<Bezier>; // 出力
+@group(0) @binding(1) var<storage, read> base: array<Bezier>; // 元
+@group(0) @binding(2) var<storage, read> animations: array<Bezier>; // アニメーション
+@group(0) @binding(3) var<storage, read> allocationArray: array<Allocation>; // 配分
 
 fn isNaN(x: f32) -> bool {
     return x != x;
@@ -34,14 +35,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         return ;
     }
 
-    let animationBufferStartIndex = allocationArray[objectIndex].animationBufferOffset + vertexIndex;
-    for (var c = 0u; c < 3u; c ++) {
-        var add = vec2<f32>(0.0);
-        for (var animationIndex = 0u; animationIndex < allocationArray[objectIndex].MAX_ANIMATIONS; animationIndex ++) {
-            let animationData = animations[animationBufferStartIndex + animationIndex * allocationArray[objectIndex].MAX_NUM];
-            add += animationData.a[c] * weights[allocationArray[objectIndex].weightBufferOffset + animationIndex];
-        }
-        let fixVertexIndex = allocationArray[objectIndex].vertexBufferOffset + vertexIndex;
-        rendering[fixVertexIndex].a[c] = base[fixVertexIndex].a[c] + add;
-    }
+    let fixVertexIndex = allocationArray[objectIndex].vertexBufferOffset + vertexIndex;
+    rendering[fixVertexIndex].p = base[fixVertexIndex].p + animations[fixVertexIndex].p;
+    rendering[fixVertexIndex].c1 = base[fixVertexIndex].c1 + animations[fixVertexIndex].c1;
+    rendering[fixVertexIndex].c2 = base[fixVertexIndex].c2 + animations[fixVertexIndex].c2;
 }

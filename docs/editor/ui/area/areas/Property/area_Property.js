@@ -1,4 +1,5 @@
 import { app } from "../../../../../main.js";
+import { CreateObjectCommand, RemoveObjectCommand } from "../../../../commands/object/object.js";
 
 export class Area_Property {
     constructor(area) {
@@ -7,39 +8,39 @@ export class Area_Property {
         this.struct = {
             inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
             DOM: [
-                {type: "section", name: "アニメーション", children: [
-                    {type: "input", label: "開始", withObject: "scene/frame_start", options: {type: "number", min: 0, max: 500, step: 1}},
-                    {type: "input", label: "終了", withObject: "scene/frame_end", options: {type: "number", min: 0, max: 500, step: 1}},
-                    {type: "input", label: "再生速度", withObject: "scene/frame_speed", options: {type: "number", min: 0, max: 10, step: 0.1}},
+                {tagType: "section", name: "アニメーション", children: [
+                    {tagType: "input", label: "開始", value: "scene/frame_start", type: "number", min: 0, max: 500, step: 1},
+                    {tagType: "input", label: "終了", value: "scene/frame_end", type: "number", min: 0, max: 500, step: 1},
+                    {tagType: "input", label: "再生速度", value: "scene/frame_speed", type: "number", min: 0, max: 10, step: 0.1},
                 ]},
-                {type: "section", name: "マスク", children: [
-                    {type: "list", label: "マスク", appendEvent: () => {
-                        app.scene.appendMaskTexture("新規");
+                {tagType: "section", name: "マスク", children: [
+                    {tagType: "list", label: "マスク", appendEvent: () => {
+                        app.operator.appendCommand(new CreateObjectCommand({type: "マスクテクスチャ", name: "名称未設定"}));
+                        app.operator.execute();
                     }, deleteEvent: (masks) => {
-                        for (const mask of masks) {
-                            app.scene.deleteMaskTexture(mask);
-                        }
-                    }, withObject: "scene/maskTextures", options: {type: "min"}, liStruct:[
-                        {type: "gridBox", axis: "c", allocation: "50% 1fr", children: [
-                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
-                            {type: "padding", size: "10px"},
+                        app.operator.appendCommand(new RemoveObjectCommand(masks));
+                        app.operator.execute();
+                    }, withObject: "scene/objects/maskTextures", options: {type: "min"}, liStruct:[
+                        {tagType: "gridBox", axis: "c", allocation: "50% 1fr", children: [
+                            {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                            {tagType: "padding", size: "10px"},
                         ]},
                     ]}
                 ]},
-                {type: "section", name: "パラメーターコレクター", children: [
-                    {type: "list", appendEvent: () => {
+                {tagType: "section", name: "パラメーターコレクター", children: [
+                    {tagType: "list", appendEvent: () => {
                         // appendAnimationToObject(app.scene.state.activeObject, "新規");
                     }, deleteEvent: (animations) => {
                         for (const animation of animations) {
                             // deleteAnimationToObject(app.scene.state.activeObject, animation);
                         }
                     }, withObject: "scene/objects/parameterManagers", options: {}, liStruct:[
-                        {type: "nodeFromFunction", source: "/getNodeData"}
+                        {tagType: "nodeFromFunction", source: "/getNodeData"}
                     ]}
                 ]},
-                {type: "section", name: "カメラ", children: [
-                    {type: "input", label: "表示範囲x", withObject: "scene/objects/renderingCamera/displayRange/0", options: {type: "number", min: 1, max: 2048, step: 1}},
-                    {type: "input", label: "表示範囲y", withObject: "scene/objects/renderingCamera/displayRange/1", options: {type: "number", min: 1, max: 2048, step: 1}},
+                {tagType: "section", name: "カメラ", children: [
+                    {tagType: "input", label: "表示範囲x", value: "scene/objects/renderingCamera/displayRange/0", type: "number", min: 1, max: 2048, step: 1},
+                    {tagType: "input", label: "表示範囲y", value: "scene/objects/renderingCamera/displayRange/1", type: "number", min: 1, max: 2048, step: 1},
                 ]}
             ],
         };

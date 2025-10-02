@@ -5,7 +5,6 @@ export class TimelineSpaceData {
     constructor() {
         this.move = "select";
         this.selectKeys = [];
-        this.selectVertices = [];
         this.activeKey = null;
         this.sleectBlock = [];
         this.smooth = false;
@@ -36,17 +35,30 @@ export class TimelineSpaceData {
     }
 
     getSelectVerticesCenter() {
-        return vec2.averageR(this.selectVertices);
+        return vec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
+    }
+
+    get selectVertices() {
+        const result = [];
+        for (const keyframe of this.getAllKeyframe) {
+            if (keyframe.point.selected) {
+                result.push(keyframe.point);
+            }
+            if (keyframe.rightHandle.selected) {
+                result.push(keyframe.rightHandle);
+            }
+            if (keyframe.leftHandle.selected) {
+                result.push(keyframe.leftHandle);
+            }
+        }
+        return result;
     }
 
     get getAllKeyframeBlock() {
         const result = [];
-        if (!app.scene.state.activeObject) return result;
-        for (const bone of app.scene.state.activeObject.getSelectBones()) {
-            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
-                if (keyframeBlock.visible) {
-                    result.push(keyframeBlock);
-                }
+        for (const object of app.scene.state.getSelcetInSelectedObject) {
+            for (const keyframeBlock of object.keyframeBlockManager.blocks) {
+                result.push(keyframeBlock)
             }
         }
         return result;
@@ -54,16 +66,12 @@ export class TimelineSpaceData {
 
     get getAllKeyframe() {
         const result = [];
-        if (!app.scene.state.activeObject) return result;
-        if (app.scene.state.activeObject.type == "アーマチュア") {
-            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
-                if (keyframeBlock.visible) {
-                    for (const keyData of keyframeBlock.keys) {
-                        result.push(keyData);
-                    }
+        for (const object of app.scene.state.getSelcetInSelectedObject) {
+            for (const keyframeBlock of object.keyframeBlockManager.blocks) {
+                for (const keyframe of keyframeBlock.keys) {
+                    result.push(keyframe)
                 }
             }
-        } else {
         }
         return result;
     }
@@ -80,32 +88,12 @@ export class TimelineSpaceData {
         return result;
     }
 
-    getSelectVertices() {
-        const result = [];
-        for (const bone of app.scene.state.activeObject.getSelectBones()) {
-            for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
-                for (const keyData of keyframeBlock.keys) {
-                    if (keyData.pointSelected) {
-                        result.push(keyData.point);
-                    }
-                    if (keyData.leftHandleSelected) {
-                        result.push(keyData.wLeftHandle);
-                    }
-                    if (keyData.rightHandleSelected) {
-                        result.push(keyData.wRightHandle);
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
     getSelectedContainsKeys() {
         const result = [];
         for (const bone of app.scene.state.activeObject.getSelectBones()) {
             for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
                 for (const keyData of keyframeBlock.keys) {
-                    if (keyData.pointSelected || keyData.leftHandleSelected || keyData.rightHandleSelected) {
+                    if (keyData.point.selected || keyData.leftHandle.selected || keyData.rightHandle.selected) {
                         result.push(keyData);
                     }
                 }

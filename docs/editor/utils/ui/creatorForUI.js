@@ -1,9 +1,7 @@
 import { ChecksTag } from "./customTags.js";
-import { createButton, createChecks, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
-import { arrayToArrayCopy, changeParameter, hexToRgba, isFunction, isNumber, isPassByReference, isPlainObject, IsString, rgbToHex } from "../utility.js";
-import { KeyframeBlock } from "../../core/objects/keyframe.js";
-import { removeObjectInHTMLElement } from "./eventUpdator.js";
-import { ResizerForDOM } from "./resizer.js";
+import { createButton, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
+import { hexToRgba, isFunction, isPassByReference, isPlainObject, rgbToHex } from "../utility.js";
+import { removeHTMLElemtentInObject } from "./eventUpdator.js";
 import { app } from "../../../main.js";
 import { MenuTag } from "./customTags/menuTag.js";
 import { CodeEditorTag } from "./customTags/codeEditorTag.js";
@@ -11,9 +9,17 @@ import { SelectTag } from "./customTags/selectTag.js";
 import { ChangeParameterCommand } from "../../commands/utile/utile.js";
 import { createGrid } from "./grid.js";
 import { OutlinerTag } from "./customTags/outlinerTag.js";
-import { Checkbox } from "./customTags/checkboxTag.js";
+import { InputCheckboxTag } from "./customTags/inputCheckboxTag.js";
 import { MeterTag } from "./customTags/meterTag.js";
 import { HasKeyframeCheck } from "./customTags/hasKeyframeCheckTag.js";
+import { TextureTag } from "./customTags/textureTag.js";
+import { PathTag } from "./customTags/pathTag.js";
+import { BoxsTag } from "./customTags/boxsTag.js";
+import { InputTextTag } from "./customTags/inputTextTag.js";
+import { InputColorTag } from "./customTags/inputColorTag.js";
+import { InputFileTag } from "./customTags/inputFileTag.js";
+import { InputNumberTag } from "./customTags/inputNumberTag.js";
+import { ButtonTag } from "./customTags/buttonTag.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -56,178 +62,110 @@ export function createSelect(t, list = []) {
     return select;
 }
 
-function createCheckbox(t, type = "custom-checkbox", text = "") {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.style.display = "none";
-    const label = document.createElement("label");
-    // label.classList.add("box");
-    label.setAttribute("name", "checkbox");
-    const span = document.createElement("span");
-    if (type == "eye-icon") { // 表示/非表示
-        span.classList.add("eye-icon-container");
-        const eye = document.createElement("span");
-        eye.classList.add("eye-icon");
-        label.append(eye);
-        const pupil = document.createElement("span");
-        pupil.classList.add("eye-icon-pupil");
-        span.append(eye, pupil);
-    } else {
-        if (type == "button-checkbox") {
-            const textTag = document.createElement("p");
-            textTag.textContent = `${text}`;
-            textTag.classList.add("button-checkbox-text");
-            span.append(textTag);
-        }
-        span.classList.add(type);
-    }
-    label.append(checkbox,span);
-    t.append(label);
-    return checkbox;
-}
-
 export const tagCreater = {
     // 要素の作成
-    "boxs": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        let element = createTag(t, "div");
-        setClass(element, "boxs")
-        if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
-        }
-        return element;
+    "boxs": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new BoxsTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
     },
-    "codeEditor": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        return new CodeEditorTag(/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag);
+    "codeEditor": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new CodeEditorTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
     },
-    "text": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "text": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "p");
         setClass(element, "text")
         const update = () => {
-            element.textContent = this_.getParameter(searchTarget, child.withObject);
+            element.textContent = creatorForUI.getParameter(searchTarget, child.withObject);
         }
         update();
-        this_.setUpdateEventToParameter(searchTarget, child.withObject, update, flag);
+        creatorForUI.setUpdateEventToParameter(searchTarget, child.withObject, update, flag);
         return element;
     },
-    "heightCenter": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "heightCenter": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         setClass(element, "heightCenter");
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "title": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "title": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {textContent: child.text});
         return element;
     },
-    "div": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "div": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", child?.options);
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "input": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => { // 入力
+    "input": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => { // 入力
         let element;
-        if (!child.options) return ;
-        if (child.options.type == "text") {
-            element = createTag(t, "input", child.options);
-            this_.setWith(element, child.withObject, searchTarget, flag);
-        } else if (child.options.type == "file") {
-            element = createTag(t, "input", child.options);
-        } else if (child.options.type == "checkbox") {
-            element = new Checkbox(/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag);
-        } else if (child.options.type == "color") {
-            element = createTag(t, "input", child.options);
-            this_.setWith(element, child.withObject, searchTarget, flag);
+        if (child.type == "text") {
+            element = new InputTextTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
+        } else if (child.type == "file") {
+            element = new InputFileTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
+        } else if (child.type == "color") {
+            element = new InputColorTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
+        } else if (child.type == "checkbox") {
+            element = new InputCheckboxTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
         } else { // 数字型
-            if (child.custom?.visual) {
-                element = createTag(t, "input", {type: "number"});
-                this_.setWith(element, child.withObject, searchTarget, flag);
-            } else {
-                element = createTag(t, "div");
-                element.style.width = "100%";
-                element.style.display = "grid";
-                element.style.gridTemplateColumns = "1fr 50px";
-                /** @type {HTMLElement} */
-                const range = createRange(element, child.options);
-                range.style.gridColumn = "1/2";
-                range.style.borderTopRightRadius = "0px";
-                range.style.borderBottomRightRadius = "0px";
-                this_.setWith(range, child.withObject, searchTarget, flag);
-                /** @type {HTMLElement} */
-                const number = createTag(element, "input", {type: "number"});
-                number.style.gridColumn = "2/3";
-                number.style.borderTopLeftRadius = "0px";
-                number.style.borderBottomLeftRadius = "0px";
-                this_.setWith(number, child.withObject, searchTarget, flag);
-            }
+            element = new InputNumberTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
         }
         if (child.custom && "collision" in child.custom && !child.custom.collision) {
-            element.style.pointerEvents = "none";
+            element.element.style.pointerEvents = "none";
         }
         return element;
     },
-    "button": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        let element;
-        if (child.look) {
-            if (isPlainObject(child.look)) {
-                element = createTag(t, "button", {textContent: child.look.text});
-            } else {
-                const label = createTag(t, "label");
-                setClass(label, "box")
-                element = createTag(label, "button");
-                setClass(element, child.look)
-            }
-        } else {
-            if (child.icon) {
-                element = createButton(t, "グループ", child.label);
-            } else {
-                element = createTag(t, "button", child.options);
-            }
-        }
-        if (isFunction(child.submitFunction)) {
-            element.addEventListener("click", () => {
-                child.submitFunction();
-            })
-        }
+    "button": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new ButtonTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
     },
-    "buttons": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "buttons": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         createGroupButton(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
     },
-    "radios": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "radios": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         createRadios(t, [{icon: "グループ", label: "a"},{icon: "グループ", label: "b"},{icon: "グループ", label: "c"}]);
     },
-    "checks": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "checks": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         const a = (child.withObjects).map((data, index) => {
             return {icon: "グループ", label: data.text};
         });
         let element = new ChecksTag(t, a);
-        // this_.createListWith(checks.checks, child.withObjects, searchTarget, child.customIndex, flag);
+        // creatorForUI.createListWith(checks.checks, child.withObjects, searchTarget, child.customIndex, flag);
         child.withObjects.forEach((data, index) => {
-            this_.setWith(element.checks[index], data.path, searchTarget);
+            creatorForUI.setWith(element.checks[index], data.path, searchTarget);
         })
         return element;
     },
-    "select": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        return new SelectTag(/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag);
+    "select": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new SelectTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
     },
-    "menu": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "menu": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = new MenuTag(t, child.title, child.struct, child?.options);
         return element;
     },
-    "dbInput": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => { // ダブルクッリク入力
-        let element = createDoubleClickInput();
+    "dbInput": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => { // ダブルクッリク入力
+        let element = document.createElement("input");
+        element.type = "text";
+        element.classList.add("dblClickInput");
+        element.setAttribute('readonly', true);
+        element.addEventListener('dblclick', () => {
+            element.removeAttribute('readonly');
+            element.focus();
+        });
+
+        element.addEventListener('blur', () => {
+            element.setAttribute('readonly', true);
+        });
         t.append(element);
-        this_.setWith(element, child.withObject, searchTarget, flag);
+        creatorForUI.setWith(element, child.value, searchTarget, flag);
         return element;
     },
-    "list": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "list": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element;
         if (child.options.type == "min") {
             element = createMinList(t,child.name);
-            const listOutputData = this_.createListChildren(element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            const listOutputData = creatorForUI.createListChildren(element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
             if (child.appendEvent) {
                 if (isFunction(child.appendEvent)) {
                     element.appendButton.addEventListener("click", child.appendEvent);
@@ -249,25 +187,25 @@ export const tagCreater = {
             }
         } else if (child.options.type == "noScroll") {
             element = createTag(t, "ul");
-            this_.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         } else if (child.options.type == "row") {
             element = createTag(t, "ul", {class: "flexRow"});
-            this_.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         } else {
             element = createTag(t, "ul", {class: "scrollable"});
-            this_.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
+            creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         }
-        // managerForDOMs.set({o: "", g: this_.groupID, f: flag}, element, null);
+        // managerForDOMs.set({o: "", g: creatorForUI.groupID, f: flag}, element, null);
         return element;
     },
-    "container": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "container": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "ul");
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "section": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "section": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         const div = document.createElement("div");
         div.classList.add("section-main");
         let element;
@@ -277,39 +215,46 @@ export const tagCreater = {
             element = createSection(t,child.name,div);
         }
         if (child.children) {
-            this_.createFromChildren(div, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(div, child.children, searchTarget, flag);
         }
-        // managerForDOMs.set({o: "", g: this_.groupID, f: flag}, div, null);
+        // managerForDOMs.set({o: "", g: creatorForUI.groupID, f: flag}, div, null);
         return element;
     },
-    "option": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "option": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "ui_options"});
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "icon-img": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        // console.log(this_.getParameter(searchTarget, child.withObject));
-        let element = createIcon(t, this_.getParameter(searchTarget, child.withObject));
-        return element;
+    "icon": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        const container = createTag(t, "div");
+        container.classList.add("icon");
+        const img = createTag(container, "img");
+        let src = child.src;
+        if (src.path) {
+            src = creatorForUI.getParameter(searchTarget, src.path);
+        }
+        img.src = app.ui.getImgURLFromImgName(src);
+        return container;
     },
-    "flexBox": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "flexBox": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         element.style.display = "flex";
         element.style.gap = child.interval;
+        element.style.width = "fit-content";
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "grid": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "grid": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createGrid(t, child.axis);
-        this_.createFromChildren(element.child1, child.child1, searchTarget, flag);
-        this_.createFromChildren(element.child2, child.child2, searchTarget, flag);
+        creatorForUI.createFromChildren(element.child1, child.child1, searchTarget, flag);
+        creatorForUI.createFromChildren(element.child2, child.child2, searchTarget, flag);
         return element;
     },
-    "gridBox": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "gridBox": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         element.style.display = "grid";
         if (child.axis == "r") {
@@ -318,123 +263,88 @@ export const tagCreater = {
             element.style.gridTemplateColumns = child.allocation;
         }
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "padding": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "padding": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         element.style.width = child.size;
         return element;
     },
-    "separator": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "separator": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "span");
         element.classList.add("separator");
         element.style.width = child.size;
         return element;
     },
-    "outliner": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        return new OutlinerTag(this_, t, searchTarget, child, flag);
+    "outliner": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new OutlinerTag(creatorForUI, t, searchTarget, child, flag);
     },
-    "scrollable": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "scrollable": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "scrollable"});
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "box": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "box": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
         if (child.children) {
-            this_.createFromChildren(element, child.children, searchTarget, flag);
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
         return element;
     },
-    "canvas": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "canvas": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "canvas");
         return element;
     },
-    "path": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        const elementInsertIndex = t.children.length;
-        let children = [];
-        const myFlag = createID();
-        const childrenReset = () => {
-            managerForDOMs.deleteFlag(myFlag);
-            // 関連づけられていない小要素を削除
-            console.log("削除",child,[...children]);
-            for (const childTag of children) {
-                childTag?.remove();
-                removeObjectInHTMLElement(childTag);
-            }
-            children.length = 0;
-            const keep = createTag(null, "div");
-            if (child.children) {
-                const o = this_.getParameter(searchTarget, child.sourceObject, 2);
-                if (o) {
-                    if (isFunction(o)) {
-                        children = this_.createFromChildren(keep, child.children, o(), myFlag, true);
-                    } else if (o instanceof ParameterReference) {
-                        // console.warn("伝播できません", o)
-                        if ("errorChildren" in child) {
-                            children = this_.createFromChildren(keep, child.errorChildren, {}, myFlag, true);
-                        }
-                    } else {
-                        children = this_.createFromChildren(keep, child.children, o, myFlag, true);
-                    }
-                }
-            }
-            for (const childTag of Array.from(keep.children).reverse()) {
-                t.insertBefore(childTag,t.children[elementInsertIndex]);
-            }
-            keep.remove();
-        }
-        if (isPlainObject(child.updateEventTarget)) {
-            this_.setUpdateEventToParameter(searchTarget, child.updateEventTarget.path, childrenReset);
-        } else { // 文字列に対応
-            managerForDOMs.set({o: child.updateEventTarget, g: this_.groupID, f: flag},null,childrenReset);
-        }
-        childrenReset();
+    "path": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new PathTag(creatorForUI, t, searchTarget, child, flag);
     },
-    "if": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        // console.log(searchTarget, child, this_.getParameter(searchTarget,child.formula.source))
+    "if": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        // console.log(searchTarget, child, creatorForUI.getParameter(searchTarget,child.formula.source))
         let bool = false;
         if (child.formula.conditions == "==") {
-            bool = this_.getParameter(searchTarget,child.formula.source) == child.formula.value;
+            bool = creatorForUI.getParameter(searchTarget,child.formula.source) == child.formula.value;
         } else if (child.formula.conditions == ">") {
-            bool = this_.getParameter(searchTarget,child.formula.source) > child.formula.value;
+            bool = creatorForUI.getParameter(searchTarget,child.formula.source) > child.formula.value;
         } else if (child.formula.conditions == "<") {
-            bool = this_.getParameter(searchTarget,child.formula.source) < child.formula.value;
+            bool = creatorForUI.getParameter(searchTarget,child.formula.source) < child.formula.value;
         } else if (child.formula.conditions == "in") {
-            bool = child.formula.value in this_.getParameter(searchTarget,child.formula.source);
+            bool = child.formula.value in creatorForUI.getParameter(searchTarget,child.formula.source);
         }
         if (bool) {
             if (child.true) {
-                return this_.createFromChildren(t, child.true, searchTarget, flag, true);
+                return creatorForUI.createFromChildren(t, child.true, searchTarget, flag, true);
             }
         } else {
             if (child.false) {
-                return this_.createFromChildren(t, child.false, searchTarget, flag, true);
+                return creatorForUI.createFromChildren(t, child.false, searchTarget, flag, true);
             }
         }
     },
-    "hasKeyframeCheck": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        return new HasKeyframeCheck(this_, t, searchTarget, child, flag);
+    "hasKeyframeCheck": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new HasKeyframeCheck(creatorForUI, t, searchTarget, child, flag);
     },
-    "nodeFromFunction": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        const functionResult = this_.getParameter(searchTarget, child.source)();
-        return this_.createFromChildren(t, functionResult, searchTarget, flag);
+    "nodeFromFunction": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        const functionResult = creatorForUI.getParameter(searchTarget, child.source)();
+        return creatorForUI.createFromChildren(t, functionResult, searchTarget, flag);
     },
-    "html": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
+    "html": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         return createTag(t, child.tag);
     },
-    "meter": (/** @type {CreatorForUI} */ this_,t,searchTarget,child,flag) => {
-        const element = new MeterTag(this_, t, searchTarget, child, flag);
+    "meter": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        const element = new MeterTag(creatorForUI, t, searchTarget, child, flag);
+        return element;
+    },
+    "texture": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        const element = new TextureTag(creatorForUI, t, searchTarget, child, flag);
         return element;
     },
 }
 
-
-class ParameterReference {
+export class ParameterReference {
     constructor(object, parameter) {
         this.object = object;
         this.parameter = parameter;
@@ -540,6 +450,18 @@ export class CreatorForUI {
             }
         } catch {
             console.trace("値の取得", path, searchTarget, "でエラーが出ました");
+        }
+    }
+
+    removeReference(tagData) {
+        if (tagData.id) {
+            let id = "";
+            if (tagData.id.path) {
+                id = this.getParameter(searchTarget, tagData.id.path);
+            } else {
+                id = tagData.id;
+            }
+            this.domKeeper.delete(id);
         }
     }
 
@@ -813,7 +735,12 @@ export class CreatorForUI {
             /** @type {HTMLElement} */
             let element;
             // 要素の作成
-            element = tagCreater[child.type](this, t, searchTarget, child, flag);
+            try {
+                element = tagCreater[child.tagType](this, t, searchTarget, child, flag);
+            } catch (e) {
+                console.error(e)
+                console.log(child.tagType)
+            }
             if (element) {
                 if (child.style) {
                     setStyle(element, child.style);
@@ -829,7 +756,13 @@ export class CreatorForUI {
                     }
                 }
                 if (child.id) {
-                    this.domKeeper.set(child.id, element);
+                    let id = "";
+                    if (child.id.path) {
+                        id = this.getParameter(searchTarget, child.id.path);
+                    } else {
+                        id = child.id;
+                    }
+                    this.domKeeper.set(id, element);
                 }
                 if (child.label) {
                     if (element instanceof HTMLElement) {

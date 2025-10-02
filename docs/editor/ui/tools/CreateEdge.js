@@ -12,10 +12,10 @@ export class CreateEdgeTool {
         this.modal = {
             inputObject: {"value": this.values},
             DOM: [
-                {type: "div", class: "shelfe", children: [
-                    {type: "title", text: "CreateEdgeModal", class: "shelfeTitle"},
-                    {type: "input", label: "x", withObject: "value/0", options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
-                    {type: "input", label: "y", withObject: "value/1", options: {type: "number",min: -1000, max: 1000}, custom: {visual: "1"}},
+                {tagType: "div", class: "shelfe", children: [
+                    {tagType: "title", text: "CreateEdgeModal", class: "shelfeTitle"},
+                    {tagType: "input", label: "x", value: "value/0", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
+                    {tagType: "input", label: "y", value: "value/1", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
                 ]}
             ]
         };

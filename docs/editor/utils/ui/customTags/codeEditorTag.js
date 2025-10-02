@@ -42,9 +42,9 @@ function createUtil(t, name) {
 }
 
 export class CodeEditorTag {
-    constructor (this_,t,searchTarget,child,flag) {
+    constructor (creatorForUI,t,searchTarget,child,flag) {
         const builtInFunction = [{name: "noise", return: "f32"}, {name: "arrayLength", return: "u32"}, {name: "vec2f", return: "f32"}, {name: "vec3f", return: "f32"}, {name: "vec4f", return: "f32"}, {name: "fract", return: "f32"}, {name: "floor", return: "f32"}, {name: "mix", return: "f32"}, {name: "abs", return: "f32"}, {name: "dot", return: "f32"}];
-        this.sourceCode = this_.getParameter(searchTarget, child.source, 1);
+        this.sourceCode = creatorForUI.getParameter(searchTarget, child.source, 1);
         /** @type {HTMLElement} */
         this.container = createGrid(t, "c");
         // setStyle(this.container, "width: 100%; height: 100%; display: grid; gridTemplateColumns: auto 1fr; overflow: hidden; backgroundColor: rgb(52, 52, 52); fontSize: 100%;");
@@ -55,7 +55,7 @@ export class CodeEditorTag {
         /** @type {HTMLElement} */
         this.valuesGroup = createGroup(this.utilBar, "values");
         /** @type {HTMLElement} */
-        const rightContainerGrid = new AutoGrid("codeTagRightContainer" + this_.groupID, this.container.child2, "r", "1fr");
+        const rightContainerGrid = new AutoGrid("codeTagRightContainer" + creatorForUI.groupID, this.container.child2, "r", "1fr");
         // setStyle(this.rightContainer, "width: 100%; height: 100%; overflow: hidden;");
         /** @type {HTMLElement} */
         this.mainContainer = createTag(rightContainerGrid.child1, "div");
@@ -696,12 +696,11 @@ export class CodeEditorTag {
         }
         viewUpdate();
         debuglogUpdate();
-        managerForDOMs.set({o: this.sourceCode.object, i: this.sourceCode.parameter, g: this_.groupID, f: flag}, null, viewUpdate);
-        managerForDOMs.set({o: this.sourceCode.object, i: "result", g: this_.groupID, f: flag}, null, debuglogUpdate);
+        managerForDOMs.set({o: this.sourceCode.object, i: this.sourceCode.parameter, g: creatorForUI.groupID, f: flag}, null, viewUpdate);
+        managerForDOMs.set({o: this.sourceCode.object, i: "result", g: creatorForUI.groupID, f: flag}, null, debuglogUpdate);
     }
 
     remove() {
         this.container.remove();
-        this.container = null;
     }
 }

@@ -7,10 +7,10 @@ export class ArmaturePropertyModal {
         this.struct = {
             inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene, "values": this.values},
             DOM: [
-                {type: "div", class: "sideBar-shelfe", children: [
-                    {type: "section", name: "アーマチュア", children: [
-                        {type: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
-                            {type: "dbInput", withObject: "/name", options: {type: "text"}},
+                {tagType: "div", class: "sideBar-shelfe", children: [
+                    {tagType: "section", name: "アーマチュア", children: [
+                        {tagType: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
+                            {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
                         ]}
                     ]}
                 ]}

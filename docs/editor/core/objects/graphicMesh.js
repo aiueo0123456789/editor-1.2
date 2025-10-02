@@ -1,15 +1,17 @@
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
-import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
-import { arrayToArrayCopy, arrayToPush, indexOfSplice, waitUntilFrame } from "../../utils/utility.js";
+import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
+import { arrayToArrayCopy, arrayToPush, changeParameter, indexOfSplice, IsString, waitUntilFrame } from "../../utils/utility.js";
 import { vec2 } from "../../utils/mathVec.js";
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { app } from "../../../main.js";
 import { Texture } from "./texture.js";
+import { MaskTexture } from "./maskTexture.js";
 
 class Vertex {
     constructor(/** @type {GraphicMesh} */ graphicMesh, data) {
+        if (!data.parentWeight) data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
         this.type = "頂点";
         this.selected = false;
         this.graphicMesh = graphicMesh;
@@ -131,14 +133,14 @@ class Editor extends ObjectEditorBase {
         for (let i = 0; i < result.vertices.length; i ++) {
             this.graphicMesh.allVertices.push(new Vertex(this.graphicMesh, {base: result.vertices[i], uv: result.uv[i]}));
         }
-        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
+        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
         this.setBaseSilhouetteEdges(result.edges);
         this.createMesh();
         app.options.assignWeights(this.graphicMesh);
     }
 
     async createMesh() {
-        await waitUntilFrame(() => {return !app.scene.runtimeData.graphicMeshData.write});
+        await waitUntilFrame(() => {return !this.graphicMesh.runtimeData.write});
         const vertices = this.graphicMesh.allVertices.map(vertex => vertex.base);
         const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges.concat(this.baseSilhouetteEdges)), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
         // const meshData = createMeshFromTexture(vertices, this.baseEdges); // メッシュの作成とシルエットの外の三角形を削除
@@ -146,7 +148,7 @@ class Editor extends ObjectEditorBase {
         for (let i = 0; i < meshData.length; i ++) {
             new Mesh(this.graphicMesh,undefined, meshData[i]);
         }
-        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
+        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
         this.updateEdgeGPU();
     }
 
@@ -236,15 +238,6 @@ class Editor extends ObjectEditorBase {
         return vec2.addR(position, this.imageBBox.center);
     }
 
-    changeTexture(texture) {
-        this.graphicMesh.texture = texture;
-
-        this.imageBBox.setWidthAndHeight(texture.width, texture.height);
-
-        this.graphicMesh.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft_Ft_Fu"), [this.graphicMesh.objectDataBuffer, this.graphicMesh.zIndexBuffer, this.graphicMesh.texture.view, this.graphicMesh.maskTargetTexture.textureView, this.graphicMesh.maskTypeBuffer]);
-        this.graphicMesh.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.graphicMesh.objectDataBuffer, this.graphicMesh.texture.view]);
-    }
-
     createVertex(coordinate) {
         return new Vertex(this.graphicMesh, {base: coordinate, uv: this.calculatWorldPositionToUV(coordinate), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}});
     }
@@ -252,13 +245,13 @@ class Editor extends ObjectEditorBase {
     appendVertex(vertex) {
         this.graphicMesh.allVertices.push(vertex);
         this.createMesh();
-        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
+        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
     }
 
     deleteVertex(vertex) {
         indexOfSplice(this.graphicMesh.allVertices, vertex)
         this.createMesh();
-        app.scene.runtimeData.graphicMeshData.updateBaseData(this.graphicMesh);
+        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
     }
 }
 
@@ -271,9 +264,6 @@ export class GraphicMesh extends ObjectBase {
         this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
         this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
         this.MAX_MESHES = app.appConfig.MAX_MESHES_PER_GRAPHICMESH;
-        this.vertexBufferOffset = 0;
-        this.animationBufferOffset = 0;
-        this.weightBufferOffset = 0;
 
         this.baseTransformIsLock = false;
         this.visible = true;
@@ -282,6 +272,8 @@ export class GraphicMesh extends ObjectBase {
         this.delete = false;
 
         this.autoWeight = true;
+
+        this.editRock = false;
 
         // バッファの宣言
         this.modifierType = 0;
@@ -292,9 +284,6 @@ export class GraphicMesh extends ObjectBase {
         // その他
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
-        this.verticesNum = null;
-        this.meshesNum = null;
-
         /** @type {Vertex[]} */
         this.allVertices = [];
 
@@ -304,9 +293,11 @@ export class GraphicMesh extends ObjectBase {
         this.baseEdges = [];
         this.baseSilhouetteEdges = [];
 
-        this.renderingTargetTexture = null;
-        this.maskTargetTexture = null;
-        // this.changeMaskTexture(app.scene.searchMaskTextureFromName("base"));
+        /** @type {MaskTexture} */
+        this.renderingTarget = null;
+        /** @type {MaskTexture} */
+        this.clippingMask = null;
+        // this.changeClippingMask(app.scene.searchMaskTextureFromName("base"));
         this.maskTypeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         GPU.writeBuffer(this.maskTypeBuffer, new Float32Array([0])); // 0　マスク 反転マスク
 
@@ -322,20 +313,40 @@ export class GraphicMesh extends ObjectBase {
         })
     }
 
+    get hasAllData() {
+        return this.texture instanceof Texture && this.objectDataBuffer instanceof GPUBuffer && this.zIndexBuffer instanceof GPUBuffer && this.maskTypeBuffer instanceof GPUBuffer && this.maskTypeBuffer instanceof MaskTexture;
+    }
+
+    resolvePhase() {
+        if (this.parent instanceof UnfixedReference) {
+            this.changeParent(this.parent.getObject());
+        }
+        if (this.texture instanceof UnfixedReference) {
+            this.changeTexture(this.texture.getObject());
+        }
+        if (this.renderingTarget instanceof UnfixedReference) {
+            this.changeRenderingTarget(this.renderingTarget.getObject());
+        }
+        if (this.clippingMask instanceof UnfixedReference) {
+            this.changeClippingMask(this.clippingMask.getObject());
+        }
+    }
+
     get animationWorldOffset() {
         return this.animationBufferOffset * GraphicMesh.VERTEX_LEVEL;
+    }
+
+    get verticesNum() {
+        return this.allVertices.length;
+    }
+    get meshesNum() {
+        return this.allMeshes.length;
     }
 
     // gc対象にしてメモリ解放
     destroy() {
         sharedDestroy(this);
         this.delete = true;
-        if (this.maskTargetTexture) {
-            indexOfSplice(this.maskTargetTexture.useObjects, this);
-        }
-        if (this.renderingTargetTexture) {
-            indexOfSplice(this.renderingTargetTexture.renderingObjects, this);
-        }
         this.name = null;
         this.type = null;
         this.baseTransformIsLock = null;
@@ -347,26 +358,17 @@ export class GraphicMesh extends ObjectBase {
         // その他
         this.animationBlock = null;
 
-        this.verticesNum = null;
-        this.meshesNum = null;
-
         this.parent = "";
     }
 
     init(data) {
-        console.log(data)
+        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         this.zIndex = data.zIndex;
         GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
-        this.verticesNum = data.vertices.length;
-        this.meshesNum = data.meshes.length;
+        this.autoWeight = data.autoWeight ? data.autoWeight : true;
 
         for (const vertex of data.vertices) {
             this.allVertices.push(new Vertex(this, vertex));
-            for (const weight of vertex.parentWeight.weights) {
-                if (weight != 0) {
-                    this.autoWeight = false;
-                }
-            }
         }
         for (const mesh of data.meshes) {
             new Mesh(this, undefined, mesh.indexs);
@@ -374,20 +376,19 @@ export class GraphicMesh extends ObjectBase {
         if (data.animationKeyDatas) {
             data.animationKeyDatas.forEach((keyData,index) => {
                 const animationData = keyData.transformData.transformData;
-                app.scene.runtimeData.graphicMeshData.setAnimationData(this, animationData, index);
+                this.runtimeData.setAnimationData(this, animationData, index);
             })
             this.animationBlock.setSaveData(data.animationKeyDatas);
         }
+        this.changeTexture(app.scene.objects.getObjectFromID(data.texture));
 
-        this.texture = app.scene.objects.getObjectFromID(data.texture);
-
-        if (data.renderingTargetTexture) {
-            this.changeRenderingTarget(app.scene.searchMaskTextureFromName(data.renderingTargetTexture));
+        if (data.renderingTarget) {
+            this.changeRenderingTarget(app.scene.objects.getObjectFromID(data.renderingTarget));
         }
-        if (data.maskTargetTexture) {
-            this.changeMaskTexture(app.scene.searchMaskTextureFromName(data.maskTargetTexture));
+        if (data.clippingMask) {
+            this.changeClippingMask(app.scene.objects.getObjectFromID(data.clippingMask));
         } else {
-            this.changeMaskTexture(app.scene.searchMaskTextureFromName("base"));
+            this.changeClippingMask(app.scene.objects.getObjectFromID("baseMaskTexture"));
         }
 
         if (data.editor) {
@@ -398,32 +399,33 @@ export class GraphicMesh extends ObjectBase {
         this.setGroup();
     }
 
-    changeMaskTexture(target) {
-        if (this.maskTargetTexture) {
-            indexOfSplice(this.maskTargetTexture.useObjects, this);
-            managerForDOMs.deleteDataBlockFromObjectAndID(this.maskTargetTexture, "textureView", this.managerForDOMs_maskTargetTexture_textureView_dataBlock);
+    changeTexture(texture) {
+        if (this.texture instanceof Texture) this.texture.deleteReferenc(this);
+        changeParameter(this, "texture", texture);
+        this.texture.appendReferenc(this);
+        this.setGroup();
+    }
+
+    changeClippingMask(target) {
+        if (this.clippingMask) {
+            managerForDOMs.deleteDataBlockFromObjectAndID(this.clippingMask, "view", this.managerForDOMs_clippingMask_view_dataBlock);
         }
-        this.maskTargetTexture = target;
-        this.maskTargetTexture.useObjects.push(this);
+        this.clippingMask = target;
         const updateGroup = () => {
-            this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.zIndexBuffer, this.texture.view, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
-            console.log("renderGroup");
+            // this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.zIndexBuffer, this.texture.view, this.clippingMask.view, this.maskTypeBuffer]);
+            this.setGroup();
         }
         updateGroup();
-        this.managerForDOMs_maskTargetTexture_textureView_dataBlock = managerForDOMs.set({o: this.maskTargetTexture, i: "textureView"}, null, updateGroup);
+        this.managerForDOMs_clippingMask_view_dataBlock = managerForDOMs.set({o: this.clippingMask, i: "view"}, null, updateGroup);
     }
 
     changeRenderingTarget(target) {
-        if (this.renderingTargetTexture) {
-            indexOfSplice(this.renderingTargetTexture.renderingObjects, this);
-        }
-        this.renderingTargetTexture = target;
-        this.renderingTargetTexture.renderingObjects.push(this);
+        this.renderingTarget = target;
     }
 
     setGroup() {
-        if (!this.isInit) return ;
-        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.zIndexBuffer, this.texture.view, this.maskTargetTexture.textureView, this.maskTypeBuffer]);
+        if (!this.hasAllData) return ;
+        this.renderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vu_Ft_Ft_Fu"), [this.objectDataBuffer, this.zIndexBuffer, this.texture.view, this.clippingMask.view, this.maskTypeBuffer]);
         this.maskRenderGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Ft"), [this.objectDataBuffer, this.texture.view]);
     }
 
@@ -433,14 +435,17 @@ export class GraphicMesh extends ObjectBase {
             name: this.name,
             id: this.id,
             type: this.type,
+            parent: this.parent ? this.parent.id : null,
+            autoWeight: this.autoWeight,
             baseTransformIsLock: this.baseTransformIsLock,
             zIndex: this.zIndex,
             vertices: this.allVertices.map(vertex => vertex.getSaveData()),
             meshes: this.allMeshes.map(mesh => mesh.getSaveData()),
             animationKeyDatas: animationKeyDatas,
-            texture: await GPU.textureToBase64(this.texture),
-            renderingTargetTexture: this.renderingTargetTexture ? this.renderingTargetTexture.name : null,
-            maskTargetTexture: this.maskTargetTexture.name,
+            // texture: await GPU.textureToBase64(this.texture),
+            texture: this.texture.id,
+            renderingTarget: this.renderingTarget ? this.renderingTarget.id : null,
+            clippingMask: this.clippingMask.id,
             editor: this.editor.getSaveData(),
         };
     }

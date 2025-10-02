@@ -34,7 +34,7 @@ fn vmain(
     ) -> VertexOutput {
     var output: VertexOutput;
     let fixIndex = objectData.vertexBufferOffset + index;
-    output.position = vec4f((verticesPosition[fixIndex] - camera.position) * camera.zoom * camera.cvsSize, 0, 1.0);
+    output.position = vec4f((verticesPosition[fixIndex] - camera.position) * camera.zoom * camera.cvsSize, 0.0, 1.0);
     output.uv = verticesUV[fixIndex];
     return output;
 }

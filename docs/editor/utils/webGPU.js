@@ -17,7 +17,14 @@ class WebGPU {
         this.structures = new Map();
         this.groupLayouts = new Map();
 
+        this.sampler = this.createTextureSampler();
+        // this.isNotTexture = isNotTexture;
+
         this.padding = 0;
+    }
+
+    get isNotTexture() {
+        return isNotTexture;
     }
 
     alignTo4(n) {
@@ -110,9 +117,18 @@ class WebGPU {
     }
 
     // バッファの書き換え
-    writeBuffer(target, data, offset = 0) {
+    writeBuffer(buffer, data, offset = 0) {
         // console.trace("Calling writeBuffer");
-        device.queue.writeBuffer(target, offset ,data);
+        if (buffer instanceof GPUBuffer) {
+            try {
+                device.queue.writeBuffer(buffer, offset ,data);
+            } catch (e) {
+                console.warn("bufferの書き込み時", buffer, data, offset);
+                console.error(e);
+            }
+        } else {
+            console.warn("GPUBufferを渡してください", buffer);
+        }
     }
 
     // シェーダモデルの作成
@@ -266,11 +282,19 @@ class WebGPU {
 
     createTextureSampler() {
         return device.createSampler({
-            magFilter: 'linear',
-            minFilter: 'linear',
-            addressModeU: 'repeat',
-            addressModeV: 'repeat',
+            magFilter: "nearest",   // 拡大時: 最近傍
+            minFilter: "nearest",   // 縮小時: 最近傍
+            mipmapFilter: "nearest", // ミップマップ使用時も最近傍
+            addressModeU: "clamp-to-edge", // repeat でも可
+            addressModeV: "clamp-to-edge",
         });
+        // return device.createSampler({
+        //     magFilter: 'linear',
+        //     minFilter: 'linear',
+        //     mipmapFilter: "linear", // ミップマップ使用時の補間
+        //     addressModeU: 'repeat',
+        //     addressModeV: 'repeat',
+        // });
     }
 
     createDepthTexture2D(size) {
@@ -281,7 +305,7 @@ class WebGPU {
         });
     }
 
-    createTexture2D(size, textureFormat = format) {
+    createTexture2D(size, textureFormat = "rgba8unorm") {
         return device.createTexture({
             size: size,
             format: textureFormat,
@@ -290,7 +314,7 @@ class WebGPU {
         });
     }
 
-    createStorageTexture2D(size, textureFormat = format) {
+    createStorageTexture2D(size, textureFormat = "rgba8unorm") {
         return device.createTexture({
             size: size,
             format: textureFormat,
@@ -311,7 +335,7 @@ class WebGPU {
             throw new TypeError('Loaded image is not an instance of HTMLImageElement.');
         }
 
-        const resultTexture = this.createTexture2D([img.width,img.height,1],"rgba8unorm");
+        const resultTexture = this.createTexture2D([img.width,img.height],"rgba8unorm");
 
         device.queue.copyExternalImageToTexture(
             { source: img},
@@ -546,6 +570,7 @@ class WebGPU {
                 };
             }
             console.warn(`グループのリソースの振り分けに問題がありました。\n無効なtype[${type}]関連付けられたitem[${item}]`);
+            console.warn(items);
         }
 
         return device.createBindGroup({
@@ -1937,61 +1962,54 @@ class WebGPU {
         return r;
     }
 
-    async checkT(texture1, texture2) {
-        const t1 = await this.getTextureData(texture1);
-        const t2 = await this.getTextureData(texture2);
-
-        for (let i = 0; i < t1.length; i += 4) {
-            let c1 = [t1[i] * t1[i + 3], t1[i + 1] * t1[i + 3], t1[i + 2] * t1[i + 3]];
-            let c2 = [t2[i] * t2[i + 3], t2[i + 1] * t2[i + 3], t2[i + 2] * t2[i + 3]];
-
-            // for (let j = 0; j < 3; j ++) {
-            //     if (c1[j] != c2[j]) {
-            //         console.log(c1, c2, i)
-            //         console.log(t1.slice(i - 12, i + 12));
-            //         console.log(t2.slice(i - 12, i + 12));
-            //         return false;
-            //     }
-            // }
-            for (let j = 0; j < 3; j ++) {
-                if (c1[j] != 0) {
-                    console.log(c1, c2, i)
-                    return false;
-                }
-            }
-        }
-        return true;
+    rawToTexture(raw, meta) {
+        const texture = this.createTexture2D([meta.width, meta.height], meta.format);
+        device.queue.writeTexture(
+            { texture: texture },
+            raw,
+            { bytesPerRow: meta.width * 4 },
+            { width: meta.width, height: meta.height }
+        );
+        return texture;
     }
 
-    // async copyBase64ToTexture(texture, base64String) {
-    //     if (!base64String.startsWith("data:image/")) {
-    //         // プレフィックスを自動的に追加（例: PNG形式として処理）
-    //         base64String = "data:image/png;base64," + base64String;
-    //     }
-
-    //     // Base64文字列をImageBitmapに変換
-    //     const image = await createImageBitmap(await fetch(base64String).then(res => res.blob()));
-
-    //     // ImageBitmapのサイズがテクスチャに合うか確認
-    //     if (image.width !== texture.width || image.height !== texture.height) {
-    //         throw new Error("Image size does not match the texture size.");
-    //     }
-
-    //     // コマンドエンコーダを作成してデータをコピー
-    //     device.queue.copyExternalImageToTexture(
-    //         { source: image },
-    //         { texture: texture },
-    //         {
-    //             width: image.width,
-    //             height: image.height,
-    //             depthOrArrayLayers: 1,
-    //         }
-    //     );
-
-    //     base64String = null;
-    //     image.close();
-    // }
-
+    async textureToRaw(texture) {
+        const bytesPerPixel = 4; // RGBA8
+        const align = 256; // WebGPU の行ピッチは 256 バイトアライン
+        const paddedBytesPerRow = Math.ceil(texture.width * bytesPerPixel / align) * align;
+        const bufferSize = paddedBytesPerRow * texture.height;
+        // GPU バッファ作成
+        const gpuBuffer = device.createBuffer({
+            size: bufferSize,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+        // コマンドでコピー
+        const encoder = device.createCommandEncoder();
+        encoder.copyTextureToBuffer(
+            { texture },
+            {
+                buffer: gpuBuffer,
+                bytesPerRow: paddedBytesPerRow,
+                rowsPerImage: texture.height,
+            },
+            { width: texture.width, height: texture.height, depthOrArrayLayers: 1 }
+        );
+        device.queue.submit([encoder.finish()]);
+        // CPU 側に読み込み
+        await gpuBuffer.mapAsync(GPUMapMode.READ);
+        const copyArrayBuffer = gpuBuffer.getMappedRange();
+        const paddedData = new Uint8Array(copyArrayBuffer);
+        // パディングを除去して .raw 用に整形
+        const rawData = new Uint8Array(texture.width * texture.height * bytesPerPixel);
+        for (let y = 0; y < texture.height; y++) {
+            const srcStart = y * paddedBytesPerRow;
+            const srcEnd = srcStart + texture.width * bytesPerPixel;
+            const dstStart = y * texture.width * bytesPerPixel;
+            rawData.set(paddedData.subarray(srcStart, srcEnd), dstStart);
+        }
+        gpuBuffer.unmap();
+        return rawData; // これをそのまま .raw として保存
+    }
 
     async textureToBlob(texture) {
         // 1. バッファを作成 (RGBA8 1ピクセル = 4バイト)
@@ -2041,6 +2059,63 @@ class WebGPU {
         gpuBuffer.unmap();
         return blob;
     }
+
+    async textureToViewCanvas(texture, canvas) {
+        // 1. バッファを作成 (RGBA8 1ピクセル = 4バイト)
+        const bytesPerPixel = 4;
+        const align = 256; // WebGPU の行ピッチは 256 バイトアライン必須
+        const paddedBytesPerRow = Math.ceil(texture.width * bytesPerPixel / align) * align;
+        const bufferSize = paddedBytesPerRow * texture.height;
+        const gpuBuffer = device.createBuffer({
+            size: bufferSize,
+            usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        });
+        // 2. コマンドエンコーダーでコピー
+        const commandEncoder = device.createCommandEncoder();
+        commandEncoder.copyTextureToBuffer(
+            { texture: texture },
+            {
+                buffer: gpuBuffer,
+                bytesPerRow: paddedBytesPerRow,
+                rowsPerImage: texture.height,
+            },
+            { width: texture.width, height: texture.height, depthOrArrayLayers: 1 }
+        );
+        device.queue.submit([commandEncoder.finish()]);
+        // 3. CPU側に読み込む
+        await gpuBuffer.mapAsync(GPUMapMode.READ);
+        const copyArrayBuffer = gpuBuffer.getMappedRange();
+        const data = new Uint8Array(copyArrayBuffer);
+
+        // 4. paddingを取り除いて ImageData に変換
+        const imageDataArray = new Uint8ClampedArray(texture.width * texture.height * 4);
+        for (let y = 0; y < texture.height; y++) {
+            const srcStart = y * paddedBytesPerRow;
+            const srcEnd = srcStart + texture.width * bytesPerPixel;
+            const dstStart = y * texture.width * bytesPerPixel;
+            imageDataArray.set(data.subarray(srcStart, srcEnd), dstStart);
+        }
+        const imageData = new ImageData(imageDataArray, texture.width, texture.height);
+        // 5. Canvas に描画して Blob 化
+        canvas.width = texture.width;
+        canvas.height = texture.height;
+        const ctx = canvas.getContext("2d");
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    async blobToTexture(blob) {
+        // 1. Blob を ImageBitmap に変換
+        const imageBitmap = await createImageBitmap(blob);
+        // 2. テクスチャを作成
+        const texture = this.createTexture2D([imageBitmap.width, imageBitmap.height]);
+        // 3. ImageBitmap → テクスチャにコピー
+        device.queue.copyExternalImageToTexture(
+            { source: imageBitmap },
+            { texture: texture },
+            [imageBitmap.width, imageBitmap.height]
+        );
+        return texture;
+    }
 }
 
 export const userLang = navigator.language || navigator.userLanguage;
@@ -2068,33 +2143,8 @@ console.log("最大そのた:", limits);
 
 export const format = navigator.gpu.getPreferredCanvasFormat();
 
-const blendState = {
-    color: {
-        srcFactor: "src-alpha",
-        dstFactor: "one-minus-src-alpha",
-        operation: "add"
-    },
-    alpha: {
-        srcFactor: "one",
-        dstFactor: "one-minus-src-alpha",
-        operation: "add"
-    }
-};
-
-// {
-//     color: {
-//         srcFactor: 'src-alpha', // ソースのアルファ値
-//         dstFactor: 'one-minus-src-alpha', // 1 - ソースのアルファ値
-//         operation: 'add', // 加算
-//     },
-//     alpha: {
-//         srcFactor: 'src-alpha',
-//         dstFactor: 'one-minus-src-alpha',
-//         operation: 'add',
-//     }
-// }
-
 export const GPU = new WebGPU();
+const isNotTexture = await GPU.imageToTexture2D("config/画像データ/ui_icon/画像未設定.png");
 const transparentToWhitePipeline = GPU.createComputePipeline(
     [GPU.createGroupLayout([{useShaderTypes: ['c'], type: 'stw'},{useShaderTypes: ['c'], type: 't'}])],
     `
@@ -2161,12 +2211,3 @@ const copyForBytePipeline = GPU.createComputePipeline(
     }
     `
 );
-
-
-// console.log(
-//     GPU.decompression(GPU.compression([
-//         0,0,0,0,255,255,255,255,
-//         0,0,200,200,150,150,150,
-//         255,0,200,200,150,150,150,
-//     ]))
-// )

@@ -7,8 +7,8 @@ export class ParameterManager {
         this.name = data.name ? data.name : "名称未設定";
         this.id = data.id ? data.id : createID();
         this.parameters = [
-            {type: "number", label: "test", value: 0, targetValue: null},
-            {type: "text", label: "test2", value: "aaa", targetValue: null}
+            {tagType: "number", label: "test", value: 0, targetValue: null},
+            {tagType: "text", label: "test2", value: "aaa", targetValue: null}
         ];
         this.targets = [];
         managerForDOMs.set({o: this.parameters, id: "&all"}, null, () => {
@@ -23,10 +23,10 @@ export class ParameterManager {
     }
 
     getNodeData() {
-        const node = {type: "section", name: this.name, children: []};
+        const node = {tagType: "section", name: this.name, children: []};
         // for (const data of this.parameters) {
         this.parameters.forEach((data,index) => {
-            node.children.push({type: "input", label: data.label, withObject: `/parameters/${index}/value`, options: {type: data.type}});
+            node.children.push({tagType: "input", label: data.label, value: `/parameters/${index}/value`, type: data.type});
         })
         return [node];
     }

@@ -1,47 +1,66 @@
 /* モーダルの背景 */
-#loadingModal {
-    position: fixed;
-    top: 0;
-    left: 0;
+.loadingModalsContainer {
+    position: absolute;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+    background: rgba(0, 0, 0, 0.374);
     z-index: 100000;
+    pointer-events: none;
+    display: flex;
+    flex-flow: column;
+    gap: 20px;
+    justify-content: center; /* 水平方向の中央揃え */
+    align-items: center; /* 垂直方向の中央揃え */
+}
+.loadingModalContainer {
+    width: 500px;
+    height: 120px;
+    background: var(--subColor);
+    display: flex;
+    flex-flow: column;
+    gap: 10px;
 }
 
+.loadingModal-header {
+    display: flex;
+    align-items: center;
+    background: var(--baseColor);
+    width: 100%;
+    height: fit-content;
+    padding: 10px;
+}
 /* ゲージの枠 */
-.progress-container {
-    width: 80%;
-    max-width: 400px;
-    height: 20px;
-    background: #444;
-    overflow: hidden;
-    padding: 2px;
-    /* margin-top: 10px; */
+.loadingModal-processName {
 }
 
-/* ゲージ本体 */
-.progress-bar {
-    width: 0%;
+.loadingModal-main {
+    width: 100%;
     height: 100%;
-    background: linear-gradient(to right, #9acdfa, #394cfa);
+    padding: 10px;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+}
+
+.loadingModal-txt {
+}
+
+.loadingModal-percentageContainer {
+    position: relative;
+    height: 10px;
+}
+/* ゲージ本体 */
+.loadingModal-percentage {
+    position: absolute;
+    width: 0%;
+    height: 10px;
+    border-radius: 5px;
+    background: rgb(68, 133, 255);
     transition: width 0.3s ease;
 }
-
-/* 進行度の数値 */
-#progressText {
-    color: white;
-    font-size: 18px;
-    margin-top: 10px;
-}
-
-/* 進行度の数値 */
-#progressMessage {
-    color: white;
-    font-size: 18px;
-    margin-top: 10px;
+.loadingModal-percentageBack {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    border-radius: 5px;
+    background: rgb(75, 75, 75);
 }

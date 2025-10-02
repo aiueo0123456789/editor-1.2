@@ -10,8 +10,8 @@ export class ParentPickModal {
         this.modal = {
             inputObject: {"values": this.values},
             DOM: [
-                {type: "div", class: "shelfe", children: [
-                    {type: "title", text: "親要素の変更", class: "shelfeTitle"},
+                {tagType: "div", class: "shelfe", children: [
+                    {tagType: "title", text: "親要素の変更", class: "shelfeTitle"},
                 ]}
             ]
         };

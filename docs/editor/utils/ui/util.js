@@ -88,7 +88,7 @@ export function createMinList(target, listName, appendEvent, deleteEvent) {
     return {container: container, listContainer: listContainer, list: list, appendButton: appendButton, deleteButton: deleteButton};
 }
 
-export function createSection(target, sectionName, section, className = "section") {
+export function createSection(target, sectionName,/** @type {HTMLElement} */ section, className = "section") {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.style.display = "none";
@@ -112,9 +112,25 @@ export function createSection(target, sectionName, section, className = "section
 
     containerDiv.append(headerDiv, section);
 
+    let lastHeight = "fit-content";
     checkbox.addEventListener("change", () => {
-        // checkbox.checked = !checkbox.checked;
-        section.classList.toggle('hidden');
+        if (section.classList.contains('close')) {
+            // 開く
+            section.style.height = lastHeight;
+        } else {
+            // 閉じる
+            lastHeight = section.scrollHeight + "px";
+            section.style.height = lastHeight;
+            section.offsetHeight;
+            section.style.height = "0px";
+        }
+        section.classList.toggle('close');
+    });
+    section.addEventListener("transitionend", (e) => {
+        console.log("transition 終了:", e.propertyName);
+        if (!section.classList.contains('close')) {
+            section.style.height = "fit-content";
+        }
     });
 
     target.append(containerDiv);
@@ -325,20 +341,4 @@ export function setRangeStyle(target) {
     target.addEventListener("input", () => {
         updateRangeStyle(target);
     });
-}
-
-export function updateLoad(processName,percentage,processDetail = "") {
-    let progress = Math.min(percentage, 100); // 100% を超えないように制限
-    document.getElementById("progressMessage").innerText = processName;
-    // document.getElementById("progressMessage").textContent = text;
-    document.getElementById("progressBar").style.width = progress + "%";
-    document.getElementById("progressText").innerText = progress + "%";
-    if (progress >= 100) {
-        setTimeout(() => {
-            document.getElementById("loadingModal").classList.add("hidden");
-        }, 10); // 少し待ってからモーダルを消す
-    } else {
-        document.getElementById("loadingModal").classList.remove("hidden");
-    }
-    document.getElementById("progressMessage").offsetWidth; // 強制リフロー
 }

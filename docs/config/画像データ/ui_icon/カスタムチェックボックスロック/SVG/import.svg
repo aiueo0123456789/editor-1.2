@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_2" data-name="レイヤー 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 375.44 375.87">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #cacaca;
+      }
+    </style>
+  </defs>
+  <g id="import">
+    <rect class="cls-1" x="0" y="195.77" width="36.19" height="179.24" rx="12.73" ry="12.73"/>
+    <rect class="cls-1" x="171.45" y="184.33" width="36.19" height="345.15" transform="translate(546.45 167.36) rotate(90)"/>
+    <rect class="cls-1" x="339.24" y="196.63" width="36.19" height="179.24" rx="12.73" ry="12.73"/>
+    <rect class="cls-1" x="165.1" y="0" width="36.19" height="275.9" rx="12.73" ry="12.73" transform="translate(366.39 275.9) rotate(-180)"/>
+    <rect class="cls-1" x="116.08" y="135.05" width="36.19" height="175.07" rx="12.73" ry="12.73" transform="translate(386.45 285.1) rotate(135)"/>
+    <rect class="cls-1" x="214.11" y="135.05" width="36.19" height="175.07" rx="12.73" ry="12.73" transform="translate(239.02 544.18) rotate(-135)"/>
+  </g>
+</svg>

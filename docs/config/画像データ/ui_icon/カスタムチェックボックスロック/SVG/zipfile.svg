@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_レイヤー_2" data-name="レイヤー 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 311.02 431.93">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: KozGoPr6N-Regular-83pv-RKSJ-H, 'Kozuka Gothic Pr6N';
+        font-size: 74.49px;
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+
+      .cls-3 {
+        fill: #cacaca;
+      }
+    </style>
+  </defs>
+  <g id="zipfile">
+    <path class="cls-2" d="M289.47,431.93H21.55c-11.9,0-21.55-9.65-21.55-21.55V21.55C0,9.65,9.65,0,21.55,0h227.71l61.76,68.73v341.66c0,11.9-9.65,21.55-21.55,21.55Z"/>
+    <polygon class="cls-3" points="249.26 69.34 311.02 68.73 249.26 0 249.26 69.34"/>
+    <rect class="cls-3" x="68.99" y="208.02" width="173.04" height="7.95" rx="2.9" ry="2.9"/>
+    <rect class="cls-3" x="68.99" y="173.29" width="173.04" height="7.95" rx="2.9" ry="2.9"/>
+    <rect class="cls-3" x="68.99" y="138.55" width="173.04" height="7.95" rx="2.9" ry="2.9"/>
+    <rect class="cls-3" x="68.99" y="103.82" width="173.04" height="7.95" rx="2.9" ry="2.9"/>
+    <text class="cls-1" transform="translate(102.84 361.02)"><tspan x="0" y="0">ZIP</tspan></text>
+  </g>
+</svg>

@@ -2,11 +2,52 @@ import { createGrid } from "../../utils/ui/grid.js";
 import { createTag } from "../../utils/ui/util.js";
 import { Application } from "../app.js";
 
+export class SpacesStructure {
+    constructor(workSpaces,spaceName, struct) {
+        this.workSpaces = workSpaces;
+        this.spaceName = spaceName;
+        this.struct = struct;
+        this.areas = [];
+
+        this.spaceContainer = null;
+    }
+
+    init() {
+        const app = this.workSpaces.app;
+        const workSpacesDiv = app.ui.creatorForUI.getDOMFromID("workSpaces");
+        const looper = (data, t) => {
+            if (data.type == "grid") {
+                const grid = createGrid(t, data.axis);
+                looper(data.child1, grid.child1);
+                looper(data.child2, grid.child2);
+                return grid;
+            } else {
+                this.areas.push(app.ui.setAreaType(t,data.areaType));
+            }
+        }
+        this.spaceContainer = looper(this.struct, app.ui.creatorForUI.getDOMFromID("main"));
+        this.spaceContainer.container.classList.add("hidden");
+        const header = createTag(workSpacesDiv, "div", {textContent: this.spaceName});
+        header.addEventListener("click", () => {
+            for (const space of this.workSpaces.spaces) {
+                space.spaceContainer.container.classList.add("hidden");
+            }
+            this.spaceContainer.container.classList.remove("hidden");
+            this.workSpaces.activeWorkSpaces = this;
+        })
+    }
+
+    update() {
+        this.areas.forEach(area => {
+            area.update();
+        })
+    }
+}
 export class WorkSpaces {
     constructor(/** @type {Application} */ app) {
         this.app = app;
-        this.spacesInitData = {
-            "layout": {
+        this.spaces = [
+            new SpacesStructure(this, "layout", {
                 type: "grid",
                 axis: "c",
                 child1: {
@@ -41,8 +82,8 @@ export class WorkSpaces {
                         areaType: "Property"
                     }
                 }
-            },
-            "script": {
+            }),
+            new SpacesStructure(this, "script", {
                 type: "grid",
                 axis: "c",
                 child1: {
@@ -61,8 +102,8 @@ export class WorkSpaces {
                     type: "area",
                     areaType: "NodeEditor"
                 }
-            },
-            "animation": {
+            }),
+            new SpacesStructure(this, "animation", {
                 type: "grid",
                 axis: "c",
                 child1: {
@@ -89,8 +130,8 @@ export class WorkSpaces {
                         areaType: "Inspector"
                     }
                 }
-            },
-            "Previewer": {
+            }),
+            new SpacesStructure(this, "Previewer", {
                 type: "grid",
                 axis: "c",
                 child1: {
@@ -101,37 +142,17 @@ export class WorkSpaces {
                     type: "area",
                     areaType: "Property"
                 }
-            }
-        };
-        this.spacesMap = {};
-        this.spaces = [];
+            })
+        ];
+        this.activeWorkSpaces = null;
     }
 
     init() {
-        const workSpacesDiv = this.app.ui.creatorForUI.getDOMFromID("workSpaces");
         // 初期化
-        for (const spaceName in this.spacesInitData) {
-            const spaceInitData = this.spacesInitData[spaceName];
-            const looper = (data, t) => {
-                if (data.type == "grid") {
-                    const grid = createGrid(t, data.axis);
-                    looper(data.child1, grid.child1);
-                    looper(data.child2, grid.child2);
-                    return grid;
-                } else {
-                    this.app.ui.setAreaType(t,data.areaType);
-                }
-            }
-            const grid = looper(spaceInitData, this.app.ui.creatorForUI.getDOMFromID("main"));
-            grid.container.classList.add("hidden");
-            const header = createTag(workSpacesDiv, "div", {textContent: spaceName});
-            header.addEventListener("click", () => {
-                for (const space of this.spaces) {
-                    space.container.classList.add("hidden");
-                }
-                grid.container.classList.remove("hidden");
-            })
-            this.spaces.push(grid);
+        for (const space of this.spaces) {
+            space.init();
         }
+        this.activeWorkSpaces = this.spaces[0];
+        this.activeWorkSpaces.spaceContainer.container.classList.remove("hidden");
     }
 }

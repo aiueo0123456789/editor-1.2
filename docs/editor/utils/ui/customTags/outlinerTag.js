@@ -1,7 +1,7 @@
 import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
 import { createID, createTag, managerForDOMs } from "../util.js";
-import { Checkbox } from "./checkboxTag.js";
+import { InputCheckboxTag } from "./inputCheckboxTag.js";
 
 function isFilterIncluded(object, filter = "all") {
     if (filter == "all" || filter == "") {
@@ -19,10 +19,11 @@ function isFilterIncluded(object, filter = "all") {
 }
 
 export class OutlinerTag {
-    // constructor(this_, t, withObject, loopTarget, structures, searchTarget, options, flag) {
-        constructor(this_,t,searchTarget,child,flag) {
+    // constructor(creatorForUI, t, withObject, loopTarget, structures, searchTarget, options, flag) {
+        constructor(creatorForUI,t,searchTarget,child,flag) {
         const options = child.options;
-        const withObject = child.withObject;
+        const isSourceFunction = isFunction(child.withObject);
+        const source = child.withObject;
         const structures = child.structures;
         let loopTarget = child.loopTarget;
         let loopTargetIsPlainObject = false;
@@ -46,11 +47,11 @@ export class OutlinerTag {
 
         let result = {active: null, selects: []};
         if (options.selectSource) {
-            result.selects = this_.findSource(options.selectSource.object, this_.globalInputObject);
+            result.selects = creatorForUI.findSource(options.selectSource.object, creatorForUI.globalInputObject);
         }
         let activeSource = null;
         if (options.activeSource) {
-            activeSource = {object: this_.findSource(options.activeSource.object, this_.globalInputObject), parameter: options.activeSource.parameter};
+            activeSource = {object: creatorForUI.findSource(options.activeSource.object, creatorForUI.globalInputObject), parameter: options.activeSource.parameter};
         } else {
             activeSource = {object: result, parameter: "active"};
         }
@@ -61,7 +62,7 @@ export class OutlinerTag {
         let rangeEndIndex = 0;
         this.scrollable = createTag(this.scrollableContainer, "div", {class: "scrollable"});
         const array = [];
-        let rootObject = isFunction(withObject) ? withObject() : this_.getParameter(searchTarget, withObject);
+        let rootObject = isSourceFunction ? source() : creatorForUI.getParameter(searchTarget, source);
         const getAllObject = () => {
             const getLoopChildren = (children, resultObject = []) => {
                 let filterBool_ = false;
@@ -69,18 +70,11 @@ export class OutlinerTag {
                 const fn0 = (child) => {
                     let filterBool = true;
                     filterBool = isFilterIncluded(child, searchFilter);
-                    // if (filterData) {
-                    //     if (filterData.contains) {
-                    //         if (child[searchParameter] == searchFilter) {
-                    //             filterBool = true;
-                    //         }
-                    //     }
-                    // }
                     if (loopTargetIsPlainObject) {
                         const targetType = child[loopTarget.parameter];
                         const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
                         for (const l of loopTargets) {
-                            const nextChildren = this_.findSource(l, child);
+                            const nextChildren = creatorForUI.findSource(l, child);
                             if (nextChildren) { // 子要素がある場合ループする
                                 const fnResult = getLoopChildren(nextChildren, resultObject);
                                 if (fnResult.filter) {
@@ -90,7 +84,7 @@ export class OutlinerTag {
                         }
                     } else {
                         for (const l of loopTarget) {
-                            const nextChildren = this_.findSource(l, child);
+                            const nextChildren = creatorForUI.findSource(l, child);
                             if (nextChildren) { // 子要素がある場合ループする
                                 const fnResult = getLoopChildren(nextChildren, resultObject);
                                 if (fnResult.filter) {
@@ -116,19 +110,19 @@ export class OutlinerTag {
             return getLoopChildren(rootObject).result;
         }
         const outlinerUpdate = (o, gID, t) => {
-            if (isFunction(withObject)) rootObject = withObject();
+            rootObject = isSourceFunction ? source() : creatorForUI.getParameter(searchTarget, source);
             array.length = 0;
             const allObject = getAllObject();
             // 削除があった場合対応するDOMを削除
             for (const object of lastUpdateObjects) {
                 if (!allObject.includes(object)) {
                     this.objectDomMap.delete(object);
-                    managerForDOMs.deleteDOM(object, this_.groupID, outlinerID);
+                    managerForDOMs.deleteDOM(object, creatorForUI.groupID, outlinerID);
                 }
             }
             // 追加があった場合新規作成
             for (const object of allObject) {
-                // if (!managerForDOMs.getObjectAndGroupID(object, this_.groupID, outlinerID).length) {
+                // if (!managerForDOMs.getObjectAndGroupID(object, creatorForUI.groupID, outlinerID).length) {
                 if (!lastUpdateObjects.includes(object)) {
                     const container = createTag(null, "div", {style: "paddingLeft: 2px; height: fit-content; minHeight: auto;"});
                     container.addEventListener("click", (event) => {
@@ -156,17 +150,17 @@ export class OutlinerTag {
                     });
 
                     const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr; height: fit-content;"});
-                    const visibleCheck = new Checkbox(this,upContainer,{},{type: "checkbox", options: {look: "arrow"}},"defo");
+                    const visibleCheck = new InputCheckboxTag(this,upContainer,{}, {tagType: "input", type: "checkbox", look: {check: "down", uncheck: "right"}},"defo");
                     visibleCheck.checkbox.checked = true;
                     /** @type {HTMLElement} */
                     const myContainer = createTag(upContainer, "div");
                     const childrenContainer = createTag(container, "div", {style: "marginLeft: 10px; height: fit-content;"});
-                    this_.createFromChildren(myContainer, structures, object, flag);
+                    creatorForUI.createFromChildren(myContainer, structures, object, flag);
                     visibleCheck.checkbox.addEventListener("change", () => {
                         childrenContainer.classList.toggle("hidden");
                     })
                     this.objectDomMap.set(object, container);
-                    managerForDOMs.set({o: object, g: this_.groupID, i: outlinerID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
+                    managerForDOMs.set({o: object, g: creatorForUI.groupID, i: outlinerID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
                 }
             }
             lastUpdateObjects = [...allObject];
@@ -174,20 +168,20 @@ export class OutlinerTag {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {
                         try {
-                            const managerObject = managerForDOMs.getObjectAndGroupID(child, this_.groupID, outlinerID)[0].dom;
+                            const managerObject = managerForDOMs.getObjectAndGroupID(child, creatorForUI.groupID, outlinerID)[0].dom;
                             targetDOM.append(managerObject.container);
                             if (loopTargetIsPlainObject) {
                                 const targetType = child[loopTarget.parameter];
                                 const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
                                 for (const l of loopTargets) {
-                                    const nextChildren = this_.findSource(l, child);
+                                    const nextChildren = creatorForUI.findSource(l, child);
                                     if (nextChildren) { // 子要素がある場合ループする
                                         looper(nextChildren, managerObject.childrenContainer);
                                     }
                                 }
                             } else {
                                 for (const l of loopTarget) {
-                                    const nextChildren = this_.findSource(l, child);
+                                    const nextChildren = creatorForUI.findSource(l, child);
                                     if (nextChildren) { // 子要素がある場合ループする
                                         looper(nextChildren, managerObject.childrenContainer);
                                     }
@@ -212,7 +206,7 @@ export class OutlinerTag {
         // 選択表示の更新
         const listActive = (o, gID, t) => {
             console.log("ヒエラルキーアクティブ")
-            const createdTags = managerForDOMs.getGroupAndID(this_.groupID, outlinerID); // すでに作っている場合
+            const createdTags = managerForDOMs.getGroupAndID(creatorForUI.groupID, outlinerID); // すでに作っている場合
             createdTags.forEach((data, object) => {
                 const bool_ = activeSource.object[activeSource.parameter] == object;
                 if (bool_) {
@@ -228,14 +222,29 @@ export class OutlinerTag {
                 }
             })
         }
-        managerForDOMs.set({o: activeSource.object, g: this_.groupID, i: activeSource.parameter, f: flag}, t, listActive, null);
-        managerForDOMs.set({o: result.selects, g: this_.groupID, f: flag}, t, listActive, null);
-        if (child.updateEventTarget) {
-            managerForDOMs.set({o: child.updateEventTarget, g: this_.groupID, f: flag}, this.scrollable, outlinerUpdate);
-        } else {
-            managerForDOMs.set({o: rootObject, g: this_.groupID, f: flag}, this.scrollable, outlinerUpdate);
-            managerForDOMs.updateGroupInObject(rootObject, this_.groupID);
+        managerForDOMs.set({o: activeSource.object, g: creatorForUI.groupID, i: activeSource.parameter, f: flag}, t, listActive, null);
+        managerForDOMs.set({o: result.selects, g: creatorForUI.groupID, f: flag}, t, listActive, null);
+        const setUpdateEventTarget = (updateEventTarget) => {
+            if (updateEventTarget.path) {
+                creatorForUI.setUpdateEventToParameter(searchTarget, updateEventTarget.path, outlinerUpdate);
+            } else { // 文字列に対応
+                managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag},null,outlinerUpdate);
+            }
         }
+        if (child.updateEventTarget) {
+            if (Array.isArray(child.updateEventTarget)) {
+                for (const updateEventTarget of child.updateEventTarget) {
+                    setUpdateEventTarget(updateEventTarget);
+                }
+            } else {
+                setUpdateEventTarget(child.updateEventTarget);
+            }
+        } else {
+            if (!isSourceFunction) {
+                managerForDOMs.set({o: creatorForUI.getParameter(searchTarget, source), g: creatorForUI.groupID, f: flag},null,outlinerUpdate);
+            }
+        }
+        outlinerUpdate();
     }
 
     getDomFromObject(object) {

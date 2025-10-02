@@ -19,12 +19,20 @@ struct Option {
     add: u32,
 }
 
+struct Camera {
+    position: vec2<f32>,
+    cvsSize: vec2<f32>,
+    zoom: f32,
+    padding: f32,
+}
+
 @group(0) @binding(0) var<storage, read_write> result: atomic<u32>;
 @group(0) @binding(1) var<storage, read> modifierVertices: array<Bezier>; // モディファイアの頂点位置
 @group(0) @binding(2) var<uniform> allocation: Allocation; // 配分情報
-@group(0) @binding(3) var<uniform> optionData: Option; // オプション
-@group(0) @binding(4) var<uniform> point: vec2<f32>; // 距離を計算する座標
-const size = 5.0;
+@group(0) @binding(3) var<uniform> camera: Camera;
+@group(0) @binding(4) var<uniform> optionData: Option; // オプション
+@group(0) @binding(5) var<uniform> point: vec2<f32>; // 距離を計算する座標
+const size = 3.0;
 
 // 内積
 fn dot(a: vec2<f32>, b: vec2<f32>) -> f32 {
@@ -152,7 +160,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let bezierIndex = global_id.x + allocation.vertexBufferOffset;
     let controlPoints = array<vec2<f32>, 4>(modifierVertices[bezierIndex].p, modifierVertices[bezierIndex].c2, modifierVertices[bezierIndex + 1].c1, modifierVertices[bezierIndex + 1].p); // ベジェ曲線の制御点
-    if (neighbor_bezier(controlPoints, point, 0, 1).y < size) {
+    if (neighbor_bezier(controlPoints, point, 0, 1).y < size / camera.zoom) {
         atomicStore(&result, 1);
     }
 }

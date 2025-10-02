@@ -1,20 +1,27 @@
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
-import { ObjectBase, ObjectEditorBase, sharedDestroy } from "../../utils/objects/util.js";
+import { ObjectBase, ObjectEditorBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
 import { vec2 } from "../../utils/mathVec.js";
 import { app } from "../../../main.js";
+import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 
 class Vertex {
     constructor(/** @type {Point} */point,data) {
+        if (!data.parentWeight) data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
+        this.type = "頂点";
         this.point = point;
         this.co = data.co;
         this.typeIndex = data.typeIndex;
         this.selected = false;
         this.parentWeight = data.parentWeight;
+
+        this.x = 0;
+        this.y = 0;
+        this.keyframeBlockManager = new KeyframeBlockManager(this, ["x","y"], data.animations);
     }
 
-    getWorldAnimationIndex(animation) {
-        return (animation.index * this.point.bezierModifier.MAX_POINTS + this.point.bezierModifier.runtimeOffsetData.animationOffset) * 3 + this.localIndex;
+    get name() {
+        return `${this.point.name}->${this.typeIndex}`;
     }
 
     get worldIndex() {
@@ -28,7 +35,8 @@ class Vertex {
     getSaveData() {
         return {
             co: this.co,
-            parentWeight: this.parentWeight
+            parentWeight: this.parentWeight,
+            animations: this.keyframeBlockManager.getSaveData(),
         }
     }
 }
@@ -36,8 +44,10 @@ class Vertex {
 class Point {
     constructor(/** @type {BezierModifier} */ bezierModifier, data) {
         this.bezierModifier = bezierModifier;
+        this.type = "ポイント";
 
-        this.index = data.index ? data.index : bezierModifier.allPoint.length;
+        this.name = data.name ? data.name : `名称未設定${data.index}`;
+
         this.basePoint = new Vertex(this,Object.assign({typeIndex: 0},data.point));
         this.baseLeftControlPoint = new Vertex(this,Object.assign({typeIndex: 1},data.leftControlPoint));
         this.baseRightControlPoint = new Vertex(this,Object.assign({typeIndex: 2},data.rightControlPoint));
@@ -53,7 +63,8 @@ class Point {
 
     getSaveData() {
         return {
-            index: this.index,
+            name: this.name,
+            index: this.localIndex,
             point: this.basePoint.getSaveData(),
             leftControlPoint: this.baseLeftControlPoint.getSaveData(),
             rightControlPoint: this.baseRightControlPoint.getSaveData(),
@@ -97,9 +108,6 @@ export class BezierModifier extends ObjectBase {
 
         this.MAX_POINTS = app.appConfig.MAX_POINTS_PER_BEZIERMODIFIER;
         this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_BEZIERMODIFIER;
-        this.vertexBufferOffset = 0;
-        this.animationBufferOffset = 0;
-        this.weightBufferOffset = 0;
 
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
@@ -115,7 +123,6 @@ export class BezierModifier extends ObjectBase {
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
         this.individualGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.objectDataBuffer]);
 
-        // this.children = new Children();
         this.editor = new Editor(this);
 
         this.mode = "オブジェクト";
@@ -148,33 +155,30 @@ export class BezierModifier extends ObjectBase {
     // gc対象にしてメモリ解放
     destroy() {
         sharedDestroy(this);
-        this.children = null;
+    }
+
+    resolvePhase() {
+        if (this.parent instanceof UnfixedReference) {
+            this.changeParent(this.parent.getObject());
+        }
     }
 
     init(data) {
-        console.log(data)
+        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         for (const point of data.points) {
             this.allPoint.push(new Point(this, point));
         }
-        data.animationKeyDatas.forEach((keyData,index) => {
-            const animationData = keyData.transformData.transformData;
-            app.scene.runtimeData.bezierModifierData.setAnimationData(this, animationData, index);
-        })
-
-        this.animationBlock.setSaveData(data.animationKeyDatas);
-
         this.isInit = true;
         this.isChange = true;
     }
 
     async getSaveData() {
-        const animationKeyDatas = await this.animationBlock.getSaveData();
         return {
             name: this.name,
             id: this.id,
+            parent: this.parent ? this.parent.id : null,
             type: this.type,
             points: this.allPoint.map(point => point.getSaveData()),
-            animationKeyDatas: animationKeyDatas,
         };
     }
 }

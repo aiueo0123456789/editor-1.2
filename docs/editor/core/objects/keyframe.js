@@ -1,18 +1,17 @@
 import { vec2 } from "../../utils/mathVec.js";
 import { changeParameter } from "../../utils/utility.js";
-import { managerForDOMs } from "../../utils/ui/util.js";
-import { app } from "../../../main.js";
+import { createID, managerForDOMs } from "../../utils/ui/util.js";
 
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す
-    if (currentFrame <= keyA.point[0]) return keyA.point[1];
-    if (currentFrame >= keyB.point[0]) return keyB.point[1];
+    if (currentFrame <= keyA.point.worldPosition[0]) return keyA.point.worldPosition[1];
+    if (currentFrame >= keyB.point.worldPosition[0]) return keyB.point.worldPosition[1];
     // ベジェ曲線の制御点を設定
-    const p0 = keyA.point;
-    const p1 = keyA.wRightHandle;
-    const p2 = keyB.wLeftHandle;
-    const p3 = keyB.point;
+    const p0 = keyA.point.worldPosition;
+    const p1 = keyA.rightHandle.worldPosition;
+    const p2 = keyB.leftHandle.worldPosition;
+    const p3 = keyB.point.worldPosition;
     // 特定のx座標（フレーム）に対応するtの値を数値的に求める
     // 二分法を使用して解を求める
     let tLow = 0;
@@ -53,8 +52,30 @@ function cubic_bezier(t, p0, p1, p2, p3) {
     ];
 }
 
+class Handle {
+    constructor(keyframe, basePoint, data) {
+        this.keyframe = keyframe; // 基準
+        /** @type {Point} */
+        this.basePoint = basePoint; // 基準
+        this.localPosition = data.localPosition;
+        this.selected = false;
+    }
+
+    get worldPosition() {
+        return vec2.addR(this.basePoint.worldPosition, this.localPosition);
+    }
+}
+
+class Point {
+    constructor(keyframe, data) {
+        this.keyframe = keyframe; // 基準
+        this.worldPosition = data.worldPosition;
+        this.selected = false;
+    }
+}
+
 class Keyframe {
-    constructor(keyframeBlock, frame, value) {
+    constructor(keyframeBlock, data) {
         this.type = "キーフレーム"
         this.keyframeBlock = keyframeBlock;
         this.selected = false;
@@ -62,50 +83,29 @@ class Keyframe {
         this.leftHandleSelected = false;
         this.rightHandleSelected = false;
 
-        this.leftHandle = [-3,0];
-        this.rightHandle = [3,0];
-        this.point = [frame, value];
-        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
-        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
-    }
-
-    setSaveData(data) {
-        this.point = [...data.point];
-        this.leftHandle = [...data.leftHandle];
-        this.rightHandle= [...data.rightHandle];
-        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
-        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
+        this.point = new Point(this, data.point);
+        this.rightHandle = new Handle(this, this.point, data.rightHandle);
+        this.leftHandle = new Handle(this, this.point, data.leftHandle);
     }
 
     setFrame(frame) {
-        this.point[0] = frame;
-        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
-        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
+        this.point.worldPosition[0] = frame;
     }
 
     setValue(value) {
-        this.point[1] = value;
-        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
-        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
+        this.point.worldPosition[1] = value;
     }
 
     setFrameAndValue(frame,value) {
-        this.point[0] = frame;
-        this.point[1] = value;
-        this.wLeftHandle = vec2.addR(this.point, this.leftHandle);
-        this.wRightHandle = vec2.addR(this.point, this.rightHandle);
-    }
-
-    updateWorldToLocal() {
-        this.leftHandle = vec2.subR(this.wLeftHandle, this.point);
-        this.rightHandle = vec2.subR(this.wRightHandle, this.point);
+        this.point.worldPosition[0] = frame;
+        this.point.worldPosition[1] = value;
     }
 
     getSaveData() {
         return {
-            point: this.point,
-            leftHandle: this.leftHandle,
-            rightHandle: this.rightHandle,
+            point: {worldPosition: this.point.worldPosition},
+            leftHandle: {localPosition: this.leftHandle.localPosition},
+            rightHandle: {localPosition: this.rightHandle.localPosition},
         };
     }
 }
@@ -113,18 +113,19 @@ class Keyframe {
 export class KeyframeBlock {
     constructor(object, targetValue, data = {keys: []}) {
         this.type = "キーフレームブロック";
+        this.id = createID();
         this.targetObject = object;
         this.targetValue = targetValue;
         this.visible = true;
         this.keys = [];
-        app.scene.objects.keyframeBlocks.push(this);
     }
 
     insert(frame, value) {
         let insertIndex = this.keys.length;
+        console.log(this.keys, frame,value)
         for (let i = 0; i < this.keys.length; i ++) {
-            if (frame == this.keys[i].point[0]) {
-                this.keys[i].point[1] = value;
+            if (frame == this.keys[i].point[0]) { // 同じフレームにキーがある場合削除して同じ位置に追加
+                this.keys.splice(i, 1, new Keyframe(this, frame, value));
                 return ;
             } else if (frame < this.keys[i].point[0]) {
                 insertIndex = i;
@@ -144,8 +145,7 @@ export class KeyframeBlock {
 
     setKeyframe(data) {
         for (const key of data) {
-            const keyframe =  new Keyframe(this);
-            keyframe.setSaveData(key);
+            const keyframe =  new Keyframe(this, key);
             this.keys.push(keyframe);
         }
         managerForDOMs.update("タイムライン-canvas");
@@ -153,14 +153,14 @@ export class KeyframeBlock {
 
     getKeyFromFrame(frame, threshold = 0.5) {
         for (const key of this.keys) {
-            if (Math.abs(key.point[0] - frame) < threshold) return key;
+            if (Math.abs(key.point.worldPosition[0] - frame) < threshold) return key;
         }
         return null;
     }
 
     hasKeyFromFrame(frame, threshold = 0.5) {
         for (const key of this.keys) {
-            if (Math.abs(key.point[0] - frame) < threshold) return true;
+            if (Math.abs(key.point.worldPosition[0] - frame) < threshold) return true;
         }
         return false;
     }
@@ -172,7 +172,7 @@ export class KeyframeBlock {
         for (const key of this.keys) {
             leftKey = rightKey;
             rightKey = key;
-            if (frame < key.point[0]) {
+            if (frame < key.point.worldPosition[0]) {
                 break ;
             }
         }

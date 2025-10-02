@@ -1,7 +1,5 @@
 import { FaileIOManager } from "./faileIOManager/faileIOManager.js";
 import { Scene } from "./scene/scene.js";
-import { AutoGrid } from "../utils/ui/grid.js";
-import { createID } from "../utils/ui/util.js";
 import { Operator } from "../operators/commandOperator.js";
 import { Area_Viewer } from "../ui/area/areas/Viewer/area_Viewer.js";
 import { Area_Outliner } from "../ui/area/areas/Outliner/area_Outliner.js";
@@ -10,13 +8,12 @@ import { Area_Timeline } from "../ui/area/areas/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "../ui/area/areas/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "../ui/area/areas/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./inputManager/inputManager.js";
-import { changeParameter, indexOfSplice, loadFile } from "../utils/utility.js";
+import { changeParameter, loadFile } from "../utils/utility.js";
 import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
 import { OutlinerSpaceData } from "../ui/area/areas/Outliner/area_OutlinerSpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
 import { GPU } from "../utils/webGPU.js";
-import { CreateObjectCommand, DeleteObjectCommand } from "../commands/object/object.js";
-import { Area } from "../ui/area/Area.js";
+import { CreateObjectCommand, RemoveObjectCommand } from "../commands/object/object.js";
 import { CreateEdgeTool } from "../ui/tools/CreateEdge.js";
 import { NodeEditorSpaceData } from "../ui/area/areas/NodeEditor/area_NodeEditorSpaceData.js";
 import { Area_NodeEditor } from "../ui/area/areas/nodeEditor/area_NodeEditor.js";
@@ -150,8 +147,8 @@ class AppOptions {
                 "normal": {
                     type: "ベジェモディファイア",
                     points: [
-                        {point: {co: [-100,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, leftControlPoint: {co: [-150,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, rightControlPoint: {co: [-50,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}},
-                        {point: {co: [100,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, leftControlPoint: {co: [50,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}, rightControlPoint: {co: [150,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}}},
+                        {point: {co: [-100,0]}, leftControlPoint: {co: [-150,0]}, rightControlPoint: {co: [-50,0]}},
+                        {point: {co: [100,0]}, leftControlPoint: {co: [50,0]}, rightControlPoint: {co: [150,0]}},
                     ],
                     animationKeyDatas: [],
                 }
@@ -165,17 +162,17 @@ class AppOptions {
                         max: [100, 100]
                     },
                     vertices: [
-                        {base: [0,0], uv: [0,1], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
-                        {base: [100,0], uv: [1,1], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
-                        {base: [100,100], uv: [1,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
-                        {base: [0,100], uv: [0,0], parentWeight: {indexs: [0,0,0,0], weights: [0,0,0,0]}},
+                        {base: [0,0], uv: [0,1]},
+                        {base: [100,0], uv: [1,1]},
+                        {base: [100,100], uv: [1,0]},
+                        {base: [0,100], uv: [0,0]},
                     ],
                     meshes: [
                         {indexs: [0,1,2]},
                         {indexs: [2,3,0]},
                     ],
-                    renderingTargetTexture: null,
-                    maskTargetTexture: "base",
+                    renderingTarget: null,
+                    clippingMask: "base",
                     editor: {
                         baseSilhouetteEdges: [[0,1],[1,2],[2,3],[3,0]],
                         baseEdges: [[0,1],[1,2],[2,3],[3,0]],
@@ -211,15 +208,14 @@ class AppOptions {
     }
 
     keyframeInsert(object, frame) {
-        const datas = object.keyframeBlockManager.blocksMap;
-        for (const data in datas) {
+        for (const data in object.keyframeBlockManager.blocksMap) {
             object.keyframeBlockManager.blocksMap[data].insert(frame, object[data]);
         }
     }
 
     // 自動ウェイトペイント
     async assignWeights(object) {
-        if (object.parent.isRoot) return ;
+        if (!object.parent) return ;
         let parentVerticesBuffer;
         let parentAllocationBuffer;
         if (object.parent.type == "アーマチュア") {
@@ -346,7 +342,7 @@ class AppConfig {
                     }},
                     {label: "削除", children: [
                         {label: "選択物", eventFn: () => {
-                            const command = new DeleteObjectCommand(this.app.scene.state.selectedObject);
+                            const command = new RemoveObjectCommand(this.app.scene.state.selectedObject);
                             this.app.operator.appendCommand(command);
                             this.app.operator.execute();
                         }},
@@ -386,13 +382,15 @@ class AppPerformance {
     }
 
     update() {
-        changeParameter(this, "domCount", this.app.dom.querySelectorAll("*").length);
-        changeParameter(this, "jsHeapMByteSizeLimit", performance.memory.jsHeapSizeLimit / 1024 / 1024);
-        changeParameter(this, "jsHeapByteSizeLimit", performance.memory.jsHeapSizeLimit);
-        changeParameter(this, "totalJSHeapMByteSize", performance.memory.totalJSHeapSize / 1024 / 1024);
-        changeParameter(this, "totalJSHeapByteSize", performance.memory.totalJSHeapSize);
-        changeParameter(this, "usedJSHeapMByteSize", performance.memory.usedJSHeapSize / 1024 / 1024);
-        changeParameter(this, "usedJSHeapByteSize", performance.memory.usedJSHeapSize);
+        if (performance.memory) {
+            changeParameter(this, "domCount", this.app.dom.querySelectorAll("*").length);
+            changeParameter(this, "jsHeapMByteSizeLimit", performance.memory.jsHeapSizeLimit / 1024 / 1024);
+            changeParameter(this, "jsHeapByteSizeLimit", performance.memory.jsHeapSizeLimit);
+            changeParameter(this, "totalJSHeapMByteSize", performance.memory.totalJSHeapSize / 1024 / 1024);
+            changeParameter(this, "totalJSHeapByteSize", performance.memory.totalJSHeapSize);
+            changeParameter(this, "usedJSHeapMByteSize", performance.memory.usedJSHeapSize / 1024 / 1024);
+            changeParameter(this, "usedJSHeapByteSize", performance.memory.usedJSHeapSize);
+        }
     }
 }
 
@@ -406,8 +404,6 @@ export class Application { // 全てをまとめる
         this.scene = new Scene(this);
         this.appConfig.stContextmenuItems();
 
-        this.areas = [];
-        this.areaMap = new Map();
         this.activeArea = null;
         this.workSpaces = new WorkSpaces(this);
         this.fileIO = new FaileIOManager(this);
@@ -416,15 +412,39 @@ export class Application { // 全てをまとめる
 
         this.contextmenu = new ContextmenuOperator(this);
 
+        this.isUpdateStop = false;
+        this.updateStopKeyword = "";
+    }
+
+    updateStop(keyword) {
+        if (this.isUpdateStop) {
+            if (this.updateStopKeyword == keyword) {
+                console.warn("すでに別のプロセスによって処理は止められています。")
+            } else {
+                console.warn("すでに処理は止められています。")
+            }
+        }
+        this.isUpdateStop = true;
+        this.updateStopKeyword = keyword;
+    }
+    updateStopCancel(keyword) {
+        if (this.updateStopKeyword == keyword) {
+            this.isUpdateStop = false;
+            this.updateStopKeyword = "";
+        } else {
+            console.warn("キーワードが違うため処理は再開されません。")
+            console.trace()
+        }
     }
 
     init() {
         this.scene.init();
         this.workSpaces.init();
-        console.log(this)
+        console.log(this);
     }
 
     update() {
+        if (this.isUpdateStop) return ;
         // パフォーマンスの更新
         this.appPerformance.update();
         // 表示順番の再計算
@@ -433,10 +453,8 @@ export class Application { // 全てをまとめる
         // 単位: 秒
         this.scene.frameUpdate(1 / 60);
         this.scene.update();
-        // ビューの更新
-        this.areas.forEach((area) => {
-            area.update();
-        });
+        // エリアの更新
+        this.workSpaces.activeWorkSpaces.update();
     }
 }
 

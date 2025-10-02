@@ -10,16 +10,16 @@ export class Area_NodeEditor {
         this.struct = {
             inputObject: {"areaConifg": this.areaConfig, "outliner": app.scene.outliner, "scene": app.scene},
             DOM: [
-                {type: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
-                    {type: "option", name: "情報", children: [
-                        {type: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
-                            {type: "select", label: "tool", writeObject: (value) => {
+                {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
+                    {tagType: "option", name: "情報", children: [
+                        {tagType: "gridBox", axis: "c", allocation: "auto 1fr auto", children: [
+                            {tagType: "select", label: "tool", writeObject: (value) => {
                                 console.log("書き換え")
                                 changeParameter(this.areaConfig, "sourceCode", app.scene.objects.getObjectFromID(value));
                             }, sourceObject: () => {
                                 return app.scene.objects.scripts.map(script => {return {name: script.name, id: script.id}});
                             }, options: {initValue: ""}},
-                            {type: "button", options: {textContent: "追加"}, submitFunction: () => {
+                            {tagType: "button", textContent: "追加", submitFunction: () => {
                                 app.operator.appendCommand(new CreateObjectCommand({
                                     type: "スクリプト",
                                     name: "名称未設定",
@@ -29,8 +29,8 @@ export class Area_NodeEditor {
                             }},
                         ]}
                     ]},
-                    {type: "path", sourceObject: "areaConifg/sourceCode", updateEventTarget: {path: "areaConifg/sourceCode"}, children: [
-                        {type: "codeEditor", source: "/text"}
+                    {tagType: "path", sourceObject: "areaConifg/sourceCode", updateEventTarget: {path: "areaConifg/sourceCode"}, children: [
+                        {tagType: "codeEditor", source: "/text"}
                     ]}
                 ]}
             ],
