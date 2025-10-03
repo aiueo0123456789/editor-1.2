@@ -1,5 +1,6 @@
 import { Application } from "../../../app/app.js";
 import { objectToNumber } from "../../../app/scene/scene.js";
+import { managerForDOMs } from "../../../utils/ui/util.js";
 import { loadFile } from "../../../utils/utility.js";
 import { GPU } from "../../../utils/webGPU.js";
 import { GraphicMesh } from "../../objects/graphicMesh.js";
@@ -69,7 +70,7 @@ export class GraphicMeshData extends RuntimeDataBase {
         const verticesUV = [];
         const verticesParentWeight = [];
         for (const vertex of graphicMesh.allVertices) {
-            verticesBases.push(...vertex.base);
+            verticesBases.push(...vertex.co);
             verticesUV.push(...vertex.uv);
             verticesParentWeight.push(...vertex.parentWeight.indexs.concat(vertex.parentWeight.weights));
         }
@@ -86,17 +87,26 @@ export class GraphicMeshData extends RuntimeDataBase {
 
     async updateCPUDataFromGPUBuffer(/** @type {GraphicMesh} */graphicMesh, updateContent = {vertex: {base: true, uv: true, weight: true}, mesh: true}) {
         this.write = true;
-        const baseArray = updateContent.vertex.base ? await this.baseVertices.getObjectData(graphicMesh) : [];
-        const uvArray = updateContent.vertex.uv ? await this.uv.getObjectData(graphicMesh) : [];
-        const weightBlockArray = updateContent.vertex.weight ? await this.weightBlocks.getObjectData(graphicMesh) : [];
+        let coArray = [];
+        if (updateContent.vertex.base) {
+            coArray = await this.baseVertices.getObjectData(graphicMesh);
+        }
+        let uvArray = [];
+        if (updateContent.vertex.uv) {
+            uvArray = await this.uv.getObjectData(graphicMesh);
+        }
+        let weightBlockArray = [];
+        if (updateContent.vertex.weight) {
+            weightBlockArray = await this.weightBlocks.getObjectData(graphicMesh);
+        }
         for (const vertex of graphicMesh.allVertices) {
-            if (vertex.base != baseArray[vertex.localIndex] || vertex.uv == uvArray[vertex.localIndex]) {
+            if (vertex.co != coArray[vertex.localIndex] || vertex.uv == uvArray[vertex.localIndex]) {
                 vertex.updated = true;
             } else {
                 vertex.updated = false;
             }
             if (updateContent.vertex.base) {
-                vertex.base = baseArray[vertex.localIndex];
+                vertex.co = coArray[vertex.localIndex];
             }
             if (updateContent.vertex.uv) {
                 vertex.uv = uvArray[vertex.localIndex];
@@ -126,11 +136,15 @@ export class GraphicMeshData extends RuntimeDataBase {
             const atomicBuffer = GPU.createStorageBuffer((1 + 1) * 4);
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu_Csrw"), [this.selectedVertices.buffer, this.renderingVertices.buffer, graphicMesh.objectDataBuffer, optionBuffer, circleBuffer, atomicBuffer]);
             GPU.runComputeShader(selectOnlyVerticesPipeline, [group], Math.ceil(Math.ceil(graphicMesh.MAX_VERTICES / 32) / 64));
+            const index = (await GPU.getU32BufferData(atomicBuffer, (1 + 1) * 4))[1];
+            this.app.scene.state.activeVertex = graphicMesh.allVertices[index - graphicMesh.runtimeOffsetData.vertexOffset];
+            console.log(index - graphicMesh.runtimeOffsetData.vertexOffset);
         }
         const resultSelected = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer, graphicMesh.runtimeOffsetData.vertexOffset, graphicMesh.runtimeOffsetData.vertexOffset + graphicMesh.verticesNum);
         for (const vertex of graphicMesh.allVertices) {
             vertex.selected = resultSelected[vertex.localIndex];
         }
+        managerForDOMs.update("頂点選択");
         // GPU.consoleBufferData(this.selectedVertices, ["u32"], "当たり判定", {start: Math.ceil(armature.runtimeOffsetData.vertexOffset * 2 / 32), num: Math.ceil((armature.MAX_BONES) * 2 / 32)});
         // GPU.consoleBufferData(this.selectedVertices, ["bit"], "当たり判定bool", {start: Math.ceil(armature.runtimeOffsetData.vertexOffset * 2 / 32), num: Math.ceil((armature.MAX_BONES) * 2 / 32)});
     }

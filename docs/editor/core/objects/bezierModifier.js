@@ -8,7 +8,7 @@ import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 class Vertex {
     constructor(/** @type {Point} */point,data) {
         if (!data.parentWeight) data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
-        this.type = "頂点";
+        this.type = "ベジェ頂点";
         this.point = point;
         this.co = data.co;
         this.typeIndex = data.typeIndex;
@@ -44,7 +44,7 @@ class Vertex {
 class Point {
     constructor(/** @type {BezierModifier} */ bezierModifier, data) {
         this.bezierModifier = bezierModifier;
-        this.type = "ポイント";
+        this.type = "ベジェポイント";
 
         this.name = data.name ? data.name : `名称未設定${data.index}`;
 

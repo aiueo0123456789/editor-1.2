@@ -3,40 +3,40 @@ import { GPU } from "../../utils/webGPU.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 
 export class AnimationBlock {
-    constructor(belongObject,useClass) {
-        this.list = [];
-        this.belongObject = belongObject;
-        this.useClass = useClass;
+    constructor(user,animationClass) {
+        this.animations = [];
+        this.user = user;
+        this.animationClass = animationClass;
 
         this.activeAnimationIndex = 0;
     }
 
     get activeAnimation() {
-        if (!this.list.length) return null;
-        return this.list[this.activeAnimationIndex];
+        if (!this.animations.length) return null;
+        return this.animations[this.activeAnimationIndex];
     }
 
     destroy() {
-        for (const animation of this.list) {
+        for (const animation of this.animations) {
             animation.destroy();
         }
-        this.list.length = 0;
-        this.belongObject = null;
-        this.useClass = null;
+        this.animations.length = 0;
+        this.user = null;
+        this.animationClass = null;
     }
 
     updateAnimationsIndex() {
-        for (let i = 0; i < this.list.length; i ++) {
-            this.list[i].index = i;
+        for (let i = 0; i < this.animations.length; i ++) {
+            this.animations[i].index = i;
         }
     }
 
     appendAnimation(name = "名称未設定") {
-        if (this.list.length < this.belongObject.MAX_ANIMATIONS) {
-            const animation = new this.useClass(name, this.belongObject);
-            this.list.push(animation);
-            managerForDOMs.update(this.list);
-            managerForDOMs.update(this.list.animationBlock);
+        if (this.animations.length < this.user.MAX_ANIMATIONS) {
+            const animation = new this.animationClass(name, this.user);
+            this.animations.push(animation);
+            managerForDOMs.update(this.animations);
+            managerForDOMs.update(this.animations.animationBlock);
             return animation;
         } else {
             return null;
@@ -44,17 +44,17 @@ export class AnimationBlock {
     }
 
     deleteAnimation(animation) {
-        let index = this.list.indexOf(animation);
+        let index = this.animations.indexOf(animation);
         if (index != -1) {
             animation.destroy();
-            this.list.splice(index,1);
+            this.animations.splice(index,1);
         }
-        managerForDOMs.update(this.list);
-        managerForDOMs.update(this.list.animationBlock);
+        managerForDOMs.update(this.animations);
+        managerForDOMs.update(this.animations.animationBlock);
     }
 
     searchAnimation(animationName) {
-        for (const animation of this.list) {
+        for (const animation of this.animations) {
             if (animation.name == animationName) return animation;
         }
         return null;
@@ -63,16 +63,16 @@ export class AnimationBlock {
     setSaveData(data) {
         for (const keyData of data) {
             const animationData = keyData.transformData;
-            const animation = new this.useClass(keyData.name, this.belongObject);
+            const animation = new this.animationClass(keyData.name, this.user);
             animation.setAnimationData(animationData);
-            this.list.push(animation);
+            this.animations.push(animation);
         }
     }
 
     async getSaveData() {
         const animationsSaveData = [];
         await Promise.all(
-            this.list.map(async (animation) => {
+            this.animations.map(async (animation) => {
                 animationsSaveData.push({name : animation.name,transformData: await animation.getSaveData()});
             })
         );
@@ -81,66 +81,40 @@ export class AnimationBlock {
 }
 
 class AnimationBase {
-    constructor(name, belongObject) {
+    constructor(name, user) {
         this.id = createID();
         this.name = name;
         this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
 
         this.weight = 0;
 
-        this.belongObject = belongObject;
+        this.user = user;
         this.belongAnimationCollector = null;
     }
 
     get index() {
-        return this.belongObject.animationBlock.list.indexOf(this);
+        return this.user.animationBlock.animations.indexOf(this);
     }
 
     get worldIndex() {
-        return this.belongObject.runtimeOffsetData.animationOffset + this.belongObject.MAX_VERTICES * this.index;
+        return this.user.runtimeOffsetData.animationOffset + this.user.MAX_VERTICES * this.index;
     }
 
     get worldWeightIndex() {
-        return this.belongObject.runtimeOffsetData.animationWeightOffset + this.index;
+        return this.user.runtimeOffsetData.animationWeightOffset + this.index;
     }
 
     // gc対象にしてメモリ解放
     destroy() {
         this.weight = 0;
         this.belongAnimationCollector = null;
-        this.belongObject = null;
+        this.user = null;
     }
 }
 
 export class VerticesAnimation extends AnimationBase {
-    constructor(name, belongObject) {
-        super(name, belongObject);
+    constructor(name, user) {
+        super(name, user);
         this.type = "頂点アニメーション";
-    }
-}
-
-export class BoneAnimation extends AnimationBase {
-    constructor(name, belongObject) {
-        super(name, belongObject);
-        this.type = "ボーンアニメーション";
-    }
-
-    async getSaveData() {
-        return {
-            transformData: [...await GPU.getF32BufferData(this.s_verticesAnimationBuffer)],
-        }
-    }
-
-    setAnimationData(data) {
-        let trueData;
-        trueData = [];
-        for (const index in data.transformData) {
-            trueData.push(data.transformData[index]);
-        }
-        this.s_verticesAnimationBuffer = GPU.createStorageBuffer(trueData.length * 4, trueData, ["f32","f32"]);
-    }
-
-    getWorldVerticesMatrixBuffer() {
-        return GPU.copyBufferToNewBuffer(this.belongObject.boneMatrixBuffer);
     }
 }

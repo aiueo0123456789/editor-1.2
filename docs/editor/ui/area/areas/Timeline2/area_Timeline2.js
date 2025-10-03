@@ -178,7 +178,7 @@ export class Area_Timeline2 {
                                 activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                             },
                             withObject: "scene/state/getSelcetInSelectedObject",
-                            updateEventTarget: ["頂点選択","ボーン選択"],
+                            updateEventTarget: ["頂点選択","ボーン選択","オブジェクト選択"],
                             loopTarget: {
                                 parameter: "type",
                                 loopTargets: {
@@ -187,7 +187,7 @@ export class Area_Timeline2 {
                                     "ベジェモディファイア": ["allPoint"],
                                     "ポイント": ["basePoint/keyframeBlockManager/blocks", "baseLeftControlPoint/keyframeBlockManager/blocks", "baseRightControlPoint/keyframeBlockManager/blocks"],
                                     "キーフレームブロックマネージャー": ["blocks"],
-                                    others: ["animationBlock/list","keyframeBlockManager/blocks"]
+                                    others: ["animationBlock/animations","keyframeBlockManager/blocks"]
                                 }
                             },
                             structures: [

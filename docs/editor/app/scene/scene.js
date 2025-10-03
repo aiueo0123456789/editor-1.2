@@ -150,7 +150,7 @@ class Objects {
     }
 
     get rootObjects() {
-        return this.allObject.filter(object => object.parent == null);
+        return this.allObject.filter(object => {return "parent" in object && object.parent == null});
     }
 
     // 参照されていないオブジェクトの削除
@@ -527,7 +527,7 @@ export class Scene {
             particle.update();
         }
         for (const graphicMesh of this.objects.graphicMeshs) {
-            graphicMesh.animationBlock.list.forEach(animation => {
+            graphicMesh.animationBlock.animations.forEach(animation => {
                 GPU.writeBuffer(this.runtimeData.graphicMeshData.animationWights.buffer, new Float32Array([animation.weight]), animation.worldWeightIndex * 4);
             });
         }
@@ -711,6 +711,8 @@ class State {
         this.currentMode = "オブジェクト";
         this.activeObject = null; // 注目されているオブジェクト
         this.selectedObject = []; // 選択されているオブジェクト
+        this.activeVertex = null;
+        this.activeBone = null;
     }
 
     selectAll() {
@@ -730,6 +732,7 @@ class State {
         }
         console.log(object)
         object.selected = true;
+        managerForDOMs.update("オブジェクト選択");
     }
 
     setActiveObject(object) {

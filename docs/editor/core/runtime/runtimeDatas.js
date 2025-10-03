@@ -6,6 +6,7 @@ import { ParticleData } from "./object/particle.js";
 
 export class RuntimeDatas {
     constructor(/** @type {Application} */ app) {
+        /** @type {Application} */
         this.app = app;
         this.graphicMeshData = new GraphicMeshData(app);
         this.armatureData = new ArmatureData(app);

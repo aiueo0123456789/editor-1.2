@@ -42,6 +42,7 @@ export class ObjectBase extends NameAndTypeAndID{
     }
 
     changeParent(parent) {
+        managerForDOMs.update("changeParent");
         this.parent = parent;
         if (!(parent instanceof UnfixedReference)) {
             app.options.assignWeights(this);
@@ -60,7 +61,7 @@ export class ObjectEditorBase {
 }
 
 export function searchAnimation(object, animationName) {
-    for (const animation of object.animationBlock.list) {
+    for (const animation of object.animationBlock.animations) {
         if (animation.name == animationName) return animation;
     }
     return null;

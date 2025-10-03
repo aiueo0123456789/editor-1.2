@@ -12,10 +12,10 @@ import { MaskTexture } from "./maskTexture.js";
 class Vertex {
     constructor(/** @type {GraphicMesh} */ graphicMesh, data) {
         if (!data.parentWeight) data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
-        this.type = "頂点";
+        this.type = "グラフィックメッシュ頂点";
         this.selected = false;
         this.graphicMesh = graphicMesh;
-        this.base = [...data.base];
+        this.co = [...data.co];
         this.uv = [...data.uv];
         this.parentWeight = data.parentWeight;
         this.updated = true;
@@ -32,7 +32,7 @@ class Vertex {
     getSaveData() {
         return {
             index: this.localIndex,
-            base: this.base,
+            co: this.co,
             uv: this.uv,
             parentWeight: this.parentWeight,
         };
@@ -141,7 +141,7 @@ class Editor extends ObjectEditorBase {
 
     async createMesh() {
         await waitUntilFrame(() => {return !this.graphicMesh.runtimeData.write});
-        const vertices = this.graphicMesh.allVertices.map(vertex => vertex.base);
+        const vertices = this.graphicMesh.allVertices.map(vertex => vertex.co);
         const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges.concat(this.baseSilhouetteEdges)), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
         // const meshData = createMeshFromTexture(vertices, this.baseEdges); // メッシュの作成とシルエットの外の三角形を削除
         this.graphicMesh.allMeshes.length = 0;
@@ -314,12 +314,13 @@ export class GraphicMesh extends ObjectBase {
     }
 
     get hasAllData() {
-        return this.texture instanceof Texture && this.objectDataBuffer instanceof GPUBuffer && this.zIndexBuffer instanceof GPUBuffer && this.maskTypeBuffer instanceof GPUBuffer && this.maskTypeBuffer instanceof MaskTexture;
+        return this.texture instanceof Texture && this.objectDataBuffer instanceof GPUBuffer && this.zIndexBuffer instanceof GPUBuffer && this.maskTypeBuffer instanceof GPUBuffer && this.clippingMask instanceof MaskTexture;
     }
 
     resolvePhase() {
         if (this.parent instanceof UnfixedReference) {
             this.changeParent(this.parent.getObject());
+            this.setGroup();
         }
         if (this.texture instanceof UnfixedReference) {
             this.changeTexture(this.texture.getObject());

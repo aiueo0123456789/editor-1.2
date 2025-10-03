@@ -70,7 +70,6 @@ export class Bone {
         this.matrix = new Float32Array(4 * 3);
 
         managerForDOMs.set({o: this, i: "color"}, null, () => {
-            console.log(this.color);
             app.scene.runtimeData.armatureData.updateBaseData(this.armature);
         });
     }

@@ -228,7 +228,7 @@ export class Area_Timeline {
                                     "ベジェモディファイア": ["allPoint"],
                                     "ポイント": ["basePoint/keyframeBlockManager/blocks", "baseLeftControlPoint/keyframeBlockManager/blocks", "baseRightControlPoint/keyframeBlockManager/blocks"],
                                     "キーフレームブロックマネージャー": ["blocks"],
-                                    others: ["animationBlock/list","keyframeBlockManager/blocks"]
+                                    others: ["animationBlock/animations","keyframeBlockManager/blocks"]
                                 }
                             },
                             structures: [

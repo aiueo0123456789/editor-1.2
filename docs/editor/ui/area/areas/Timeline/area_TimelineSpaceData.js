@@ -1,4 +1,5 @@
 import { app } from "../../../../../main.js";
+import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
 import { vec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {
@@ -56,9 +57,18 @@ export class TimelineSpaceData {
 
     get getAllKeyframeBlock() {
         const result = [];
-        for (const object of app.scene.state.getSelcetInSelectedObject) {
-            for (const keyframeBlock of object.keyframeBlockManager.blocks) {
-                result.push(keyframeBlock)
+        for (const object of app.scene.state.getSelcetInSelectedObject) { // ボーンやベジェ頂点など
+            if ("keyframeBlockManager" in object) { // keyframeBlockManagerを持つものだけ
+                for (const keyframeBlock of object.keyframeBlockManager.blocks) {
+                    result.push(keyframeBlock)
+                }
+            }
+        }
+        for (const /** @type {GraphicMesh} */ object of app.scene.state.selectedObject) { // グラフィックメッシュなど
+            if ("animationBlock" in object) {
+                for (const keyframeBlock of object.animationBlock.animations) {
+                    result.push(keyframeBlock)
+                }
             }
         }
         return result;
@@ -66,11 +76,9 @@ export class TimelineSpaceData {
 
     get getAllKeyframe() {
         const result = [];
-        for (const object of app.scene.state.getSelcetInSelectedObject) {
-            for (const keyframeBlock of object.keyframeBlockManager.blocks) {
-                for (const keyframe of keyframeBlock.keys) {
-                    result.push(keyframe)
-                }
+        for (const keyframeBlock of this.getAllKeyframeBlock) {
+            for (const keyframe of keyframeBlock.keys) {
+                result.push(keyframe)
             }
         }
         return result;

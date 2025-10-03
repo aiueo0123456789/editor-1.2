@@ -1,9 +1,11 @@
+import { Application } from "../../app/app.js";
 import { objectInit } from "../../utils/utility.js";
 import { BufferManager } from "./bufferManager.js";
 
 // そのうち動的ストレージバッファ（dynamic storage buffer）を使うかも
 export class RuntimeDataBase {
     constructor(/** @type {Application} */ app, offsetNameConverter) {
+        /** @type {Application} */
         this.app = app;
         this.order = [];
         this.offsetAndFormulas = {};

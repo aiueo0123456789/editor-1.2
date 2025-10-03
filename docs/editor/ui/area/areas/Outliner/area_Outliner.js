@@ -23,7 +23,7 @@ export class Area_Outliner {
                             app.scene.state.setActiveObject(array[endIndex]);
                         }
                     },
-                    activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "outliner/root", loopTarget: "children", structures: [
+                    activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}}, withObject: "scene/objects/rootObjects", updateEventTarget: "changeParent", loopTarget: "children", structures: [
                         {
                             tagType: "if",
                             formula: {source: "/", conditions: "in", value: "name"},

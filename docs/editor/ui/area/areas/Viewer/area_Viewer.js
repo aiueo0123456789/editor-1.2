@@ -8,15 +8,15 @@ import { ParentPickModal } from '../../../tools/ParentPick.js';
 import { DeleteTool } from '../../../tools/Delete.js';
 import { WeightPaintModal } from '../../../tools/WeightPaintTool.js';
 import { ToolsBarOperator } from '../../../../operators/toolsBarOperator.js';
-import { BonePropertyModal } from './toolBar/bone.js';
-import { ArmaturePropertyModal } from './toolBar/armature.js';
+import { BonePropertyModal } from './toolBar/armature/bone.js';
+import { ArmaturePropertyModal } from './toolBar/armature/armature.js';
 import { EdgeJoinTool } from '../../../tools/EdgeJoin.js';
 import { AppendVertex } from '../../../tools/appendVertex.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
 import { boolTo0or1, calculateLocalMousePosition, changeParameter, loadFile } from '../../../../utils/utility.js';
 import { vec2 } from '../../../../utils/mathVec.js';
 import { Camera } from '../../../../core/objects/camera.js';
-import { BoneAttachmentsModal } from './toolBar/Attachments.js';
+import { BoneAttachmentsModal } from './toolBar/armature/attachments.js';
 import { InputManager } from '../../../../app/inputManager/inputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 import { ModalOperator } from '../../../../operators/modalOperator.js';
@@ -25,6 +25,7 @@ import { Particle } from '../../../../core/objects/particle.js';
 import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
 import { AppendPoint } from '../../../tools/AppendPoint.js';
 import { app } from '../../../../../main.js';
+import { VertexPropertyModal } from './toolBar/bezierModifier/vertex.js';
 
 const devMaskTexturePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft")], await loadFile("./editor/shader/render/devMaskTexture.wgsl"), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");
@@ -189,7 +190,7 @@ export class Area_Viewer {
 
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer"), [ArmaturePropertyModal,BonePropertyModal,BoneAttachmentsModal]);
+        this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer"), [ArmaturePropertyModal,BonePropertyModal,BoneAttachmentsModal,VertexPropertyModal]);
         this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "p": ParentPickModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
@@ -218,14 +219,14 @@ export class Area_Viewer {
     async update() {
         if (app.scene.state.currentMode == "メッシュ編集") {
             const animatoinBlock = app.scene.state.activeObject.animationBlock;
-            for (const animation of animatoinBlock.list) {
+            for (const animation of animatoinBlock.animations) {
                 changeParameter(animation, "weight", 0);
             }
         } else if (app.scene.state.currentMode == "ボーン編集") {
             app.scene.state.selectedObject.forEach(object => object.clearAnimatoin());
         } else if (app.scene.state.currentMode == "メッシュ頂点アニメーション編集") {
             const animatoinBlock = app.scene.state.activeObject.animationBlock;
-            for (const animation of animatoinBlock.list) {
+            for (const animation of animatoinBlock.animations) {
                 changeParameter(animation, "weight", 0);
             }
             changeParameter(animatoinBlock.activeAnimation, "weight", 1);

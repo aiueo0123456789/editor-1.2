@@ -78,7 +78,7 @@ class TransformCommand {
             console.log(source,vertexLevel)
             if (this.type == "メッシュ頂点アニメーション編集") {
                 this.targetAnimation = options.targetAnimation;
-                this.targetObject = this.targetAnimation.belongObject;
+                this.targetObject = this.targetAnimation.user;
                 for (const vertex of targets) {
                     this.selectIndexs.push(vertex.worldIndex);
                 }

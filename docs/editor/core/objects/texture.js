@@ -1,7 +1,8 @@
-import { ObjectBase } from "../../utils/objects/util.js";
+
+import { NameAndTypeAndID } from "../../utils/objects/util.js";
 import { GPU } from "../../utils/webGPU.js";
 
-export class Texture extends ObjectBase {
+export class Texture extends NameAndTypeAndID {
     constructor(data) {
         super(data.name, "テクスチャ", data.id);
         /** @type {GPUTexture} */

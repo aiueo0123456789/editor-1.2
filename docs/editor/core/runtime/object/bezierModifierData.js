@@ -58,6 +58,8 @@ export class BezierModifierData extends RuntimeDataBase {
             const atomicBuffer = GPU.createStorageBuffer((1 + 1) * 4);
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu_Csrw"), [this.selectedVertices.buffer, this.renderingVertices.buffer, bezierModifier.objectDataBuffer, optionBuffer, circleBuffer, atomicBuffer]);
             GPU.runComputeShader(selectOnlyVerticesPipeline, [group], Math.ceil(Math.ceil(bezierModifier.MAX_POINTS * 3 / 32) / 64));
+            const index = (await GPU.getU32BufferData(atomicBuffer, (1 + 1) * 4))[1];
+            this.app.scene.state.activeVertex = bezierModifier.allVertices[index - bezierModifier.runtimeOffsetData.pointOffset * 3];
         }
         const resultBone = await GPU.getSelectedFromBufferBit(this.selectedVertices.buffer, bezierModifier.runtimeOffsetData.pointOffset * 3, (bezierModifier.runtimeOffsetData.pointOffset + bezierModifier.pointNum) * 3);
         for (const point of bezierModifier.allPoint) {

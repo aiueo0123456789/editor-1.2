@@ -112,7 +112,7 @@ export class Area_Inspector {
                                     for (const animation of animations) {
                                         deleteAnimationToObject(app.scene.state.activeObject, animation);
                                     }
-                                }, withObject: "/animationBlock/list", options: {type: "min", selectSource: {
+                                }, withObject: "/animationBlock/animations", options: {type: "min", selectSource: {
                                     function: (index, object) => {
                                     },
                                     getFunction: (object) => {
@@ -122,7 +122,7 @@ export class Area_Inspector {
                                         changeParameter(app.scene.state.activeObject.animationBlock, "activeAnimationIndex", index);
                                     },
                                     getFunction: (object) => {
-                                        return object.belongObject.animationBlock.activeAnimation == object;
+                                        return object.user.animationBlock.activeAnimation == object;
                                     }
                                 }}, liStruct:[
                                     {tagType: "gridBox", axis: "c", allocation: "50% 1fr 50px 20px", children: [
