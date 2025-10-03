@@ -55,13 +55,11 @@ export class TimelineSpaceData {
         return result;
     }
 
-    get getAllKeyframeBlock() {
+    get getAllObject() {
         const result = [];
         for (const object of app.scene.state.getSelcetInSelectedObject) { // ボーンやベジェ頂点など
             if ("keyframeBlockManager" in object) { // keyframeBlockManagerを持つものだけ
-                for (const keyframeBlock of object.keyframeBlockManager.blocks) {
-                    result.push(keyframeBlock)
-                }
+                result.push(object)
             }
         }
         for (const /** @type {GraphicMesh} */ object of app.scene.state.selectedObject) { // グラフィックメッシュなど
@@ -74,24 +72,30 @@ export class TimelineSpaceData {
         return result;
     }
 
+    get getAllKeyframeBlockManager() {
+        const result = [];
+        for (const object of this.getAllObject) { // ボーンやベジェ頂点など
+            result.push(object.keyframeBlockManager)
+        }
+        return result;
+    }
+
+    get getAllKeyframeBlock() {
+        const result = [];
+        for (const keyframeBlockManager of this.getAllKeyframeBlockManager) {
+            for (const keyframeBlock of keyframeBlockManager.blocks) {
+                result.push(keyframeBlock);
+            }
+        }
+        return result;
+    }
+
     get getAllKeyframe() {
         const result = [];
         for (const keyframeBlock of this.getAllKeyframeBlock) {
             for (const keyframe of keyframeBlock.keys) {
                 result.push(keyframe)
             }
-        }
-        return result;
-    }
-
-    get getAllObject() {
-        const result = [];
-        if (!app.scene.state.activeObject) return result;
-        if (app.scene.state.activeObject.type == "アーマチュア") {
-            for (const bone of app.scene.state.activeObject.getSelectBones()) {
-                result.push(bone);
-            }
-        } else {
         }
         return result;
     }

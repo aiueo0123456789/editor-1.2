@@ -72,7 +72,7 @@ export class OutlinerTag {
                     filterBool = isFilterIncluded(child, searchFilter);
                     if (loopTargetIsPlainObject) {
                         const targetType = child[loopTarget.parameter];
-                        const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
+                        const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"] ? loopTarget.loopTargets["others"] : [];
                         for (const l of loopTargets) {
                             const nextChildren = creatorForUI.findSource(l, child);
                             if (nextChildren) { // 子要素がある場合ループする

@@ -25,7 +25,7 @@ import { Particle } from '../../../../core/objects/particle.js';
 import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
 import { AppendPoint } from '../../../tools/AppendPoint.js';
 import { app } from '../../../../../main.js';
-import { VertexPropertyModal } from './toolBar/bezierModifier/vertex.js';
+import { VertexPropertyModal } from './toolBar/bezier/vertex.js';
 
 const devMaskTexturePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft")], await loadFile("./editor/shader/render/devMaskTexture.wgsl"), [], "2d", "s");
 const renderGridPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts")], await fetch('./editor/shader/render/grid.wgsl').then(x => x.text()), [], "2d", "s");

@@ -129,7 +129,7 @@ export class Area_Timeline2 {
         this.frameBarDrag = false;
 
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene},
+            inputObject: {"spaceData": this.spaceData, "areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene},
             DOM: [
                 {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {tagType: "option",style: "height: 25px;", name: "情報", children: [
@@ -177,17 +177,13 @@ export class Area_Timeline2 {
                                 },
                                 activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
                             },
-                            withObject: "scene/state/getSelcetInSelectedObject",
+                            withObject: "spaceData/getAllObject",
                             updateEventTarget: ["頂点選択","ボーン選択","オブジェクト選択"],
                             loopTarget: {
                                 parameter: "type",
                                 loopTargets: {
-                                    "アーマチュア": ["allBone"],
-                                    "ボーン": ["keyframeBlockManager/blocks"],
-                                    "ベジェモディファイア": ["allPoint"],
-                                    "ポイント": ["basePoint/keyframeBlockManager/blocks", "baseLeftControlPoint/keyframeBlockManager/blocks", "baseRightControlPoint/keyframeBlockManager/blocks"],
-                                    "キーフレームブロックマネージャー": ["blocks"],
-                                    others: ["animationBlock/animations","keyframeBlockManager/blocks"]
+                                    // "キーフレームブロックマネージャー": ["blocks"],
+                                    others: ["keyframeBlockManager/blocks"],
                                 }
                             },
                             structures: [

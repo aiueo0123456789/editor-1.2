@@ -730,7 +730,7 @@ class State {
         if (!this.isSelect(object)) { // 選択されていない
             this.selectedObject.push(object);
         }
-        console.log(object)
+        console.log("オブジェクト選択",object)
         object.selected = true;
         managerForDOMs.update("オブジェクト選択");
     }
