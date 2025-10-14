@@ -26,12 +26,12 @@ export class WeightPaintCommand {
             this.targetBuffer = app.scene.runtimeData.graphicMeshData.weightBlocks.buffer;
             this.verticesPositionBuffer = app.scene.runtimeData.graphicMeshData.renderingVertices.buffer;
             this.runtimeObject = app.scene.runtimeData.graphicMeshData;
-            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer, target.runtimeOffsetData.vertexOffset * app.scene.runtimeData.graphicMeshData.weightBlockByteLength, target.verticesNum * app.scene.runtimeData.graphicMeshData.weightBlockByteLength);
+            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer, target.runtimeOffsetData.start.vertexOffset * app.scene.runtimeData.graphicMeshData.weightBlockByteLength, target.verticesNum * app.scene.runtimeData.graphicMeshData.weightBlockByteLength);
         } else if (target.type == "ベジェモディファイア") {
             this.targetBuffer = app.scene.runtimeData.bezierModifierData.weightBlocks.buffer;
             this.verticesPositionBuffer = app.scene.runtimeData.bezierModifierData.renderingVertices.buffer;
             this.runtimeObject = app.scene.runtimeData.bezierModifierData;
-            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer, target.runtimeOffsetData.pointOffset * app.scene.runtimeData.bezierModifierData.weightBlockByteLength, target.pointNum * app.scene.runtimeData.bezierModifierData.weightBlockByteLength);
+            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer, target.runtimeOffsetData.start.pointOffset * app.scene.runtimeData.bezierModifierData.weightBlockByteLength, target.pointNum * app.scene.runtimeData.bezierModifierData.weightBlockByteLength);
             groupNum = 3;
         }
         this.maxWeightBuffer = GPU.createStorageBuffer(target.verticesNum * 4, undefined, ["f32"]);
@@ -44,18 +44,15 @@ export class WeightPaintCommand {
         console.log("ペイント")
         GPU.writeBuffer(this.pointBuffer, new Float32Array(point));
         GPU.runComputeShader(weightPaintPipeline, [this.group], this.workNum);
-        this.runtimeObject.updateCPUDataFromGPUBuffer(this.target, {vertex: {weight: true}});
         // GPU.consoleBufferData(this.targetBuffer, ["u32","u32","u32","u32","f32","f32","f32","f32"]);
     }
 
     execute() {
         GPU.runComputeShader(weightPaintPipeline, [this.group], this.workNum);
-        this.runtimeObject.updateCPUDataFromGPUBuffer(this.target, {vertex: {weight: true}});
     }
 
     undo() {
         this.target.isChange = true;
         GPU.copyBuffer(this.originalBuffer, this.targetBuffer);
-        this.runtimeObject.updateCPUDataFromGPUBuffer(this.target, {vertex: {weight: true}});
     }
 }

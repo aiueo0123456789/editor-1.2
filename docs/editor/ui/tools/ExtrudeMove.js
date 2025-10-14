@@ -6,24 +6,34 @@ import { BoneExtrudeMoveCommand } from "../../commands/bone/bone.js";
 export class ExtrudeMove {
     constructor(operator) {
         this.operator = operator;
-        this.targets = app.scene.runtimeData.armatureData.getSelectVerticesInBone();
-        this.command = new BoneExtrudeMoveCommand(this.targets);
         this.values = [0,0];
         this.sumMovement = [0,0];
+        this.modal = {
+            inputObject: {"value": this.values},
+            DOM: [
+                {tagType: "div", class: "shelfe", children: [
+                    {tagType: "title", text: "ExtrudeMove", class: "shelfeTitle"},
+                    {tagType: "input", label: "x", value: "value/0", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                    {tagType: "input", label: "y", value: "value/1", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                ]}
+            ]
+        };
+        this.activateKey = "e";
 
         const update = () => {
-            this.command.update(this.values);
+            this.command.extrudeMove(this.values);
         }
 
-        managerForDOMs.set({o: this.values}, null, update)
+        managerForDOMs.set({o: this.values}, update)
     }
 
     execute() {
-        app.operator.appendCommand(this.command);
         app.operator.execute();
     }
 
     init() {
+        this.command = new BoneExtrudeMoveCommand();
+        app.operator.appendCommand(this.command);
     }
 
     mousemove(/** @type {InputManager} */inputManager) {
@@ -39,7 +49,7 @@ export class ExtrudeMove {
             this.values[0] = this.sumMovement[0];
             this.values[1] = this.sumMovement[1];
         }
-        managerForDOMs.update(this.values);
+        managerForDOMs.update({o: this.values});
         return true;
     }
 

@@ -1,14 +1,16 @@
 import { app } from "../../../../main.js";
 import { isFunction, isPlainObject, IsString } from "../../utility.js";
-import { createIcon, createTag, managerForDOMs, setClass } from "../util.js";
+import { CustomTag } from "../customTags.js";
+import { createIcon, createTag, managerForDOMs, removeHTMLElementInObject, setClass } from "../util.js";
 
-export class SelectTag {
+export class SelectTag extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
+        super();
         this.customTag = true;
         this.element = createTag(t, "div");
         this.input = createTag(this.element, "input", {style: "display: none;"});
-        if (!isFunction(child.writeObject)) {
-            creatorForUI.setWith(this.input, child.writeObject, searchTarget, flag);
+        if (!isFunction(child.value)) {
+            creatorForUI.setWith(this.input, child.value, searchTarget, flag, child.useCommand);
         }
         this.element.classList.add("custom-select");
         let initValue = "選択されていません";
@@ -46,8 +48,8 @@ export class SelectTag {
                 document.removeEventListener("click", removeFn); // ドキュメントからイベントリスナーを削除
             }
             function submit(value) {
-                if (isFunction(child.writeObject)) {
-                    child.writeObject(value);
+                if (isFunction(child.value)) {
+                    child.value(value);
                 }
                 removeFn();
             }
@@ -82,9 +84,5 @@ export class SelectTag {
             document.addEventListener("click", removeFn); // セレクト以外がクリックされたら(ドキュメント)非表示
             e.stopPropagation();
         })
-    }
-
-    remove() {
-        this.element.remove();
     }
 }

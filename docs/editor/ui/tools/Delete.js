@@ -13,10 +13,10 @@ export class DeleteTool {
     }
 
     init() {
-        if (app.scene.state.activeObject.type == "アーマチュア") {
-            this.command = new BoneDelete(app.scene.state.getSelectBones);
+        if (app.context.activeObject.type == "アーマチュア") {
+            this.command = new BoneDelete(app.context.getSelectBones);
         } else {
-            this.command = new DeleteVerticesCommand(app.scene.state.getSelectVertices);
+            this.command = new DeleteVerticesCommand(app.context.getSelectVertices);
         }
         return {complete: true};
     }

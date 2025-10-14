@@ -1,4 +1,4 @@
-import { vec2 } from "../../../mathVec.js";
+import { mathVec2 } from "../../../mathVec.js";
 import { modClamp } from "../../../utility.js";
 import { device, GPU } from "../../../webGPU.js";
 import { cdt } from "./cdt.js";
@@ -64,7 +64,7 @@ export function cutSilhouetteOutTriangle(vertices, meshes, edges) {
 
     const result = [];
     for (const mesh of meshes) {
-        const centerPoint = vec2.averageR([vertices[mesh[0]],vertices[mesh[1]],vertices[mesh[2]]]);
+        const centerPoint = mathVec2.averageR([vertices[mesh[0]],vertices[mesh[1]],vertices[mesh[2]]]);
         if (isPointInsidePolygon(centerPoint)) {
             result.push(mesh);
         }
@@ -136,22 +136,22 @@ function fixSelfIntersectingPolygon(vertices) {
 // export async function createEdgeFromTexture(texture, pixelDensity, padding, simplEpsilon = Math.max(texture.width, texture.height) / 50, option = "center") {
 export async function createEdgeFromTexture(texture, pixelDensity, padding, simplEpsilon = 5.0, option = "center") {
     const imageSize = [texture.width, texture.height];
-    const imageBufferSize = vec2.addR(imageSize, [1,1]);
-    const validImageSize = vec2.reverseScaleR(imageSize, pixelDensity);
+    const imageBufferSize = mathVec2.addR(imageSize, [1,1]);
+    const validImageSize = mathVec2.reverseScaleR(imageSize, pixelDensity);
     const createUVAndFixVertices = (data) => {
         const newData = {vertices: [], uv: []};
         if (option == "center") {
             newData.vertices = data.map(x => {
-                return vec2.subR(x, vec2.scaleR(validImageSize, 0.5));
+                return mathVec2.subR(x, mathVec2.scaleR(validImageSize, 0.5));
             });
         } else if (option == "bottomLeft") {
             newData.vertices = data.map(x => {
-                const validPosition = vec2.mulR(vec2.mulR(x, [1 / imageSize[0], 1 / imageSize[1]]), validImageSize);
+                const validPosition = mathVec2.mulR(mathVec2.mulR(x, [1 / imageSize[0], 1 / imageSize[1]]), validImageSize);
                 return [validPosition[0], validImageSize[1] - validPosition[1]];
             });
         }
         newData.uv = data.map(x => {
-            const a = vec2.mulR(x, [1 / validImageSize[0], 1 / validImageSize[1]]);
+            const a = mathVec2.mulR(x, [1 / validImageSize[0], 1 / validImageSize[1]]);
             return [a[0], 1 - a[1]];
         });
         return newData;
@@ -184,7 +184,7 @@ export async function createEdgeFromTexture(texture, pixelDensity, padding, simp
             }
             // 終点を追加
             const lastPoint = simplifiedPoints[simplifiedPoints.length - 1];
-            if (!vec2.same(result[result.length - 1],lastPoint)) {
+            if (!mathVec2.same(result[result.length - 1],lastPoint)) {
                 result.push(lastPoint);
             }
 
@@ -344,7 +344,7 @@ export async function createEdgeFromTexture(texture, pixelDensity, padding, simp
     collectedLines = connectLines(collectedLines); // 重複頂点を接続
 
     collectedLines = collectedLines.map((x) => {
-        return simplifyPolygon(x, simplEpsilon, vec2.max(imageBufferSize) / 3);
+        return simplifyPolygon(x, simplEpsilon, mathVec2.max(imageBufferSize) / 3);
     });
 
     let maxLenghtLine = [];
@@ -370,9 +370,9 @@ export async function createEdgeFromTexture(texture, pixelDensity, padding, simp
             const vertices = data.map((vert, i) => {
                 const left = data[modClamp(i - 1, data.length)];
                 const right = data[(i + 1) % data.length];
-                let vec = vec2.normalizeR(vec2.addR(vec2.subAndnormalizeR(right, vert),vec2.subAndnormalizeR(vert, left)));
+                let vec = mathVec2.normalizeR(mathVec2.addR(mathVec2.subAndnormalizeR(right, vert),mathVec2.subAndnormalizeR(vert, left)));
                 vec = [-vec[1], vec[0]];
-                return vec2.addR(vert,vec2.scaleR(vec, padding));
+                return mathVec2.addR(vert,mathVec2.scaleR(vec, padding));
             });
             const cnEdges = [...Array(vertices.length)].map((_, i) => [i + verticesNumOffset,(i + 1) % vertices.length + verticesNumOffset]);
             const fixVertices = createUVAndFixVertices(vertices);

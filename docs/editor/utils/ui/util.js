@@ -1,8 +1,9 @@
 import { ResizerForDOM } from "./resizer.js";
 import { TranslaterForDOM } from "./tranlater.js";
-import { DOMsManager } from "./eventUpdator.js";
+import { updateManager } from "./updateManager.js";
+import { isPlainObject } from "../utility.js";
 
-export const managerForDOMs = new DOMsManager();
+export const managerForDOMs = new updateManager();
 
 export function createID() {
     var S="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -17,7 +18,7 @@ export function createTag(target, type, option = {}) {
     }
     for (const key in option) {
         if (key == "class") {
-            element.classList.add(...option[key].split(" ").filter(Boolean));
+            setClass(element, option[key]);
         } else if (key == "style") {
             setStyle(element, option[key]);
         } else {
@@ -79,7 +80,9 @@ export function createMinList(target, listName, appendEvent, deleteEvent) {
     listContainer.style.height = "200px";
     new ResizerForDOM(listContainer, "h", 100, 600);
     const list = document.createElement("div");
-    list.classList.add("scrollable","gap-2px");
+    list.classList.add("scrollable");
+    list.style.padding = "2px";
+    list.style.gap = "2px";
     listContainer.append(list);
 
     container.append(listContainer, actionButtons)
@@ -132,9 +135,7 @@ export function createSection(target, sectionName,/** @type {HTMLElement} */ sec
             section.style.height = "fit-content";
         }
     });
-
     target.append(containerDiv);
-
     return containerDiv;
 }
 
@@ -341,4 +342,25 @@ export function setRangeStyle(target) {
     target.addEventListener("input", () => {
         updateRangeStyle(target);
     });
+}
+
+export function removeHTMLElementInObject(object, maxDepth = 10) {
+    // 全てループしてメモリ解放
+    const fn = (data, depth = 0) => {
+        if (maxDepth <= depth) return ;
+        if (data instanceof HTMLElement) { // HTMLElementなら削除
+            data.remove();
+        } else if (data?.customTag) { // カスタムタグなら削除
+            data.remove();
+        } else if (isPlainObject(data)) { // 連想配列なら中身をループ
+            for (const key in data) {
+                fn(data[key], depth + 1);
+            }
+        } else if (Array.isArray(data)) { // 配列なら中身をループ
+            for (const value of data) {
+                fn(value, depth + 1);
+            }
+        }
+    }
+    fn(object);
 }

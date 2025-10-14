@@ -1,11 +1,11 @@
-import { vec2 } from "../../utils/mathVec.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 
 class KeyframeTransformCommand {
     constructor(targets) {
-        this.value = vec2.create();
+        this.value = mathVec2.create();
         this.targets = [...targets];
-        this.center = vec2.create();
+        this.center = mathVec2.create();
         this.original = targets.map(point => [...point.worldPosition]);
     }
 
@@ -16,21 +16,21 @@ class KeyframeTransformCommand {
     transform(type) {
         if (type == "tlanslate") {
             for (let i = 0; i < this.targets.length; i ++) {
-                vec2.add(this.targets[i].worldPosition, this.original[i], this.value);
+                mathVec2.add(this.targets[i].worldPosition, this.original[i], this.value);
             }
         } else if (type == "resize") {
             for (const vertex of this.targets) {
-                vec2.add(vertex,vertex,this.value);
+                mathVec2.add(vertex,vertex,this.value);
             }
         }
-        managerForDOMs.update("タイムライン-canvas");
+        managerForDOMs.update({o: "タイムライン-canvas"});
     }
 
     undo() {
         for (let i = 0; i < this.targets.length; i ++) {
-            vec2.set(this.targets[i].worldPosition, this.original[i]);
+            mathVec2.set(this.targets[i].worldPosition, this.original[i]);
         }
-        managerForDOMs.update("タイムライン-canvas");
+        managerForDOMs.update({o: "タイムライン-canvas"});
     }
 }
 

@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { vec2 } from "../mathVec.js";
+import { mathVec2 } from "../mathVec.js";
 import { createID, managerForDOMs } from "../ui/util.js";
 import { isFunction } from "../utility.js";
 
@@ -32,7 +32,10 @@ export class ObjectBase extends NameAndTypeAndID{
 
         this.mode = "オブジェクト";
 
-        this.runtimeOffsetData = {};
+        this.runtimeOffsetData = {
+            start: {},
+            end: {},
+        };
 
         this.parent = null;
     }
@@ -42,7 +45,7 @@ export class ObjectBase extends NameAndTypeAndID{
     }
 
     changeParent(parent) {
-        managerForDOMs.update("changeParent");
+        managerForDOMs.update({o: "親変更"});
         this.parent = parent;
         if (!(parent instanceof UnfixedReference)) {
             app.options.assignWeights(this);
@@ -80,7 +83,7 @@ export function deleteAnimationToObject(object, animation) {
 }
 
 export function sharedDestroy(object) {
-    managerForDOMs.deleteObject(object);
+    managerForDOMs.delete({o: object});
     object.animationBlock.destroy();
     object.editor.destroy();
     object.animationBlock = null;
@@ -100,8 +103,8 @@ export class BoundingBox {
         if (data.min && data.max) {
             this.min = data.min;
             this.max = data.max;
-            vec2.reverseScale(this.center, vec2.addR(this.min,this.max), 2);
-            [this.width,this.height] = vec2.subR(this.max,this.min);
+            mathVec2.reverseScale(this.center, mathVec2.addR(this.min,this.max), 2);
+            [this.width,this.height] = mathVec2.subR(this.max,this.min);
         }
     }
 
@@ -109,8 +112,8 @@ export class BoundingBox {
         this.width = width;
         this.height = height;
 
-        let radius = vec2.reverseScaleR([width,height], 2);
-        this.min = vec2.subR(this.center, radius);
-        this.max = vec2.addR(this.center, radius);
+        let radius = mathVec2.reverseScaleR([width,height], 2);
+        this.min = mathVec2.subR(this.center, radius);
+        this.max = mathVec2.addR(this.center, radius);
     }
 }

@@ -31,7 +31,7 @@ export class AnimationCollector extends NameAndTypeAndID {
 
     setWeight(weight) {
         changeParameter(this, "weight", weight);
-        managerForDOMs.update(this, "ウェイト");
+        managerForDOMs.update({o: this, i: "ウェイト"});
     }
 
     update() {

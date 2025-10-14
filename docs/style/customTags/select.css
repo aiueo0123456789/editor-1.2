@@ -12,7 +12,8 @@
     padding-right: 3px;
 }
 .custom-select p {
-    text-align: right;
+    /* text-align: right; */
+    text-align: left;
 }
 .custom-select .downArrow {
     margin-left: 4px;

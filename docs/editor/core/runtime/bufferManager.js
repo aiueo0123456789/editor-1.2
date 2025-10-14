@@ -5,7 +5,6 @@ export class BufferManager {
     constructor(runtimeData, bufferName, struct, calculateFormula) {
         this.runtimeData = runtimeData;
         this.bufferName = bufferName;
-        // this.buffer = GPU.createBuffer(0, ["s"]);
         this.buffer = GPU.createBuffer(0, ["v","s"]);
         this.struct = struct;
         this.structByteSize = GPU.getStructByteSize(struct);
@@ -16,7 +15,7 @@ export class BufferManager {
     }
 
     async getObjectData(object) {
-        const offset = object.runtimeOffsetData[this.sourceOffsetType];
+        const offset = object.runtimeOffsetData.start[this.sourceOffsetType];
         const readNum = this.getObjectUseSize(object);
         return await GPU.getStructDataFromGPUBuffer(this.buffer, this.struct, offset, readNum);
     }
@@ -67,7 +66,7 @@ export class BufferManager {
     }
 
     delete(object) {
-        const offset = object.runtimeOffsetData[this.sourceOffsetType];
+        const offset = object.runtimeOffsetData.start[this.sourceOffsetType];
         const readNum = this.getObjectUseSize(object);
         this.buffer = GPU.deleteStructDataFromGPUBuffer(this.buffer, offset, readNum, this.struct);
     }
@@ -80,5 +79,18 @@ export class BufferManager {
     insert(object, offset) {
         const byte = this.getObjectUseSize(object) * this.structByteSize;
         this.buffer = GPU.insertEmptyToBuffer(this.buffer, offset, byte);
+    }
+
+    update(deleteOffset1, deleteOffset2, insertOffset1, insertOffset2, data) {
+        const beforeBuffer = GPU.copyBufferToNewBuffer(this.buffer, 0, this.structByteSize * deleteOffset1);
+        const afterBuffer = GPU.copyBufferToNewBuffer(this.buffer, this.structByteSize * deleteOffset2, this.buffer.size - this.structByteSize * deleteOffset2);
+        let newDataBuffer;
+        if (data) {
+            const newData = GPU.createBitData(data, this.struct);
+            newDataBuffer = GPU.createBuffer((insertOffset2 - insertOffset1) * this.structByteSize, this.buffer.usage, newData);
+        } else {
+            newDataBuffer = GPU.createBuffer((insertOffset2 - insertOffset1) * this.structByteSize, this.buffer.usage);
+        }
+        this.buffer = GPU.concatBuffer(GPU.concatBuffer(beforeBuffer, newDataBuffer), afterBuffer);
     }
 }

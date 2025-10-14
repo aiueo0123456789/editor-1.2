@@ -1,7 +1,7 @@
 struct MeshAllocation {
     vertexBufferOffset: u32,
     meshBufferOffset: u32,
-    MAX_MESHES: u32,
+    meshesNum: u32,
     padding: u32,
 }
 
@@ -46,7 +46,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         atomicStore(&result, 0);
     }
     workgroupBarrier();
-    if (allocation.MAX_MESHES <= global_id.x) {
+    if (allocation.meshesNum <= global_id.x) {
         return;
     }
 

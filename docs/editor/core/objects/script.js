@@ -21,7 +21,7 @@ export class Script {
             }
         };
         pipelineForUpdate();
-        managerForDOMs.set({o: this, i: "text"}, null, pipelineForUpdate);
+        managerForDOMs.set({o: this, i: "text"}, pipelineForUpdate);
     }
 
     getSaveData() {

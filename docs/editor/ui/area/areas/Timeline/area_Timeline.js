@@ -1,7 +1,7 @@
 import { app } from "../../../../../main.js";
 import { InputManager } from "../../../../app/inputManager/inputManager.js";
 import { ModalOperator } from "../../../../operators/modalOperator.js";
-import { vec2 } from "../../../../utils/mathVec.js";
+import { mathVec2 } from "../../../../utils/mathVec.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
@@ -49,7 +49,7 @@ function update(object, groupID, others, DOMs) {
 
     const gridRender = (gap, offset, width, color, string = false) => {
         const leftDown = o.canvasToWorld([0,o.canvasSize[1]]);
-        const decimalOffset = vec2.modR(vec2.subR([0,0],leftDown), gap);
+        const decimalOffset = mathVec2.modR(mathVec2.subR([0,0],leftDown), gap);
         for (let x = 0; x < o.canvas.width / o.zoom[0]; x += gap[0]) {
             const wx = o.worldToCanvas([x + leftDown[0] + decimalOffset[0] + offset[0],0])[0];
             line([wx, o.canvas.height], [wx,0], width, color);
@@ -93,7 +93,7 @@ function update(object, groupID, others, DOMs) {
     }
 
     const gap = [getGridStep(o.zoom[0]),getGridStep(o.zoom[1])];
-    const bigGap = vec2.scaleR(gap, 5);
+    const bigGap = mathVec2.scaleR(gap, 5);
 
     gridRender(gap, [0,0], 4, "rgb(72, 72, 72)");
     gridRender(bigGap, [0,0], 5, "rgb(18, 18, 18)", true);
@@ -168,7 +168,7 @@ export class Area_Timeline {
         this.frameBarDrag = false;
 
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene},
+            inputObject: {"context": app.context, "areasConifg": app.appConfig.areasConfig, "scene": app.scene},
             DOM: [
                 {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "r", allocation: "auto 1fr", children: [
                     {tagType: "option",style: "height: 25px;", name: "情報", children: [
@@ -180,7 +180,7 @@ export class Area_Timeline {
                                 {tagType: "padding", size: "10px"},
                             ]},
 
-                            {tagType: "boxs", children: [
+                            {tagType: "box", class: "boxs", children: [
                                 {tagType: "button", icon: "reverseSkip", submitFunction: () => {
                                     changeParameter(app.scene, "frame_current", app.scene.frame_start);
                                 }},
@@ -205,20 +205,20 @@ export class Area_Timeline {
                             options: {
                                 arrange: false,
                                 clickEventFn: (event, object) => {
-                                    // app.scene.state.setSelectedObject(object, app.input.keysDown["Ctrl"]);
-                                    // app.scene.state.setActiveObject(object);
+                                    // app.context.setSelectedObject(object, app.input.keysDown["Ctrl"]);
+                                    // app.context.setActiveObject(object);
                                     event.stopPropagation();
                                 }, rangeSelectEventFn: (event, array, startIndex, endIndex) => {
                                     // let minIndex = Math.min(startIndex, endIndex);
                                     // let maxIndex = Math.max(startIndex, endIndex);
                                     // for (let i = minIndex; i < maxIndex; i ++) {
-                                    //     app.scene.state.setSelectedObject(array[i], true);
+                                    //     app.context.setSelectedObject(array[i], true);
                                     // }
-                                    // app.scene.state.setActiveObject(array[endIndex]);
+                                    // app.context.setActiveObject(array[endIndex]);
                                 },
-                                activeSource: {object: "scene/state", parameter: "activeObject"}, selectSource: {object: "scene/state/selectedObject"}
+                                activeSource: {object: "context", parameter: "activeObject"}, selectSource: {object: "context/selectedObjects"}
                             },
-                            withObject: "scene/state/getSelcetInSelectedObject",
+                            withObject: "context/getSelcetInSelectedObject",
                             updateEventTarget: ["頂点選択","ボーン選択"],
                             loopTarget: {
                                 parameter: "type",
@@ -238,7 +238,7 @@ export class Area_Timeline {
                                             {tagType: "icon", src: {path: "/type"}},
                                             {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
                                             {tagType: "padding", size: "10px"},
-                                            {tagType: "dbInput", value: "/targetValue", options: {tagType: "text"}},
+                                            {tagType: "dblClickInput", value: "/targetValue", options: {tagType: "text"}},
                                         ]}
                                     ],
                                     false: [
@@ -247,14 +247,14 @@ export class Area_Timeline {
                                                 {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
                                                     {tagType: "icon", src: {path: "/type"}},
                                                     {tagType: "padding", size: "10px"},
-                                                    {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                                                    {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
                                                 ]}
                                             ],
                                             false: [
                                                 {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
                                                     {tagType: "icon", src: {path: "/type"}},
                                                     {tagType: "padding", size: "10px"},
-                                                    {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                                                    {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
                                                 ]}
                                             ]
                                         }
@@ -277,7 +277,7 @@ export class Area_Timeline {
         this.creatorForUI = area.creatorForUI;
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {"g": KeyframeTranslate, "r": KeyframeRotate, "s": KeyframeResize, "x": KeyDelete});
+        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, {"g": KeyframeTranslate, "r": KeyframeRotate, "s": KeyframeResize, "x": KeyDelete});
 
         /** @type {HTMLElement} */
         this.canvas = this.creatorForUI.getDOMFromID("timelineCanvasForGrid");
@@ -300,36 +300,37 @@ export class Area_Timeline {
 
         this.groupID = createID();
 
-        managerForDOMs.set({o: "タイムライン-canvas", g: this.groupID}, {object: this}, update);
-        managerForDOMs.set({o: "選択物", g: this.groupID}, {object: this}, update);
-        managerForDOMs.set({o: app.scene, i: "frame_current", g: this.groupID}, {object: this}, update);
-        managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+        managerForDOMs.set({o: "タイムライン-canvas", g: this.groupID}, update, {object: this});
+        managerForDOMs.set({o: "ボーン選択", g: this.groupID}, update, {object: this});
+        managerForDOMs.set({o: "頂点選択", g: this.groupID}, update, {object: this});
+        managerForDOMs.set({o: app.scene, i: "frame_current", g: this.groupID}, update, {object: this});
+        managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
     }
 
     clipToCanvas(p) {
-        return vec2.mulR([p[0] / 2 + 0.5, 1 - (p[1] / 2 + 0.5)], this.canvasSize); // -1 ~ 1を0 ~ 1にしてyを0 ~ 1から1 ~ 0にしてcanvasSizeをかける
+        return mathVec2.mulR([p[0] / 2 + 0.5, 1 - (p[1] / 2 + 0.5)], this.canvasSize); // -1 ~ 1を0 ~ 1にしてyを0 ~ 1から1 ~ 0にしてcanvasSizeをかける
     }
 
     worldToCamera(p) {
-        return vec2.mulR(vec2.subR(p, this.camera), vec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
+        return mathVec2.mulR(mathVec2.subR(p, this.camera), mathVec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
     }
 
     cameraToWorld(p) {
-        return vec2.addR(vec2.divR(p, vec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
+        return mathVec2.addR(mathVec2.divR(p, mathVec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
     }
 
     worldToClip(p) {
-        return vec2.divR(this.worldToCamera(p), vec2.reverseScaleR(this.canvasSize, 2)); // worldToCamera(p) / (canvasSize / 2)
+        return mathVec2.divR(this.worldToCamera(p), mathVec2.reverseScaleR(this.canvasSize, 2)); // worldToCamera(p) / (canvasSize / 2)
     }
 
     clipToWorld(p) {
-        return this.cameraToWorld(vec2.mulR(p, vec2.reverseScaleR(this.canvasSize, 2))); // cameraToWorld(y * (canvasSize / 2)) = p
+        return this.cameraToWorld(mathVec2.mulR(p, mathVec2.reverseScaleR(this.canvasSize, 2))); // cameraToWorld(y * (canvasSize / 2)) = p
     }
 
     canvasToClip(p) {
-        const a = vec2.divR(p,this.canvasSize);
+        const a = mathVec2.divR(p,this.canvasSize);
         a[1] = 1 - a[1];
-        return vec2.subR(vec2.scaleR(a, 2), [1,1]); // canvasで割ってyを1 ~ 0から 0 ~ 1にして-1 ~ 1
+        return mathVec2.subR(mathVec2.scaleR(a, 2), [1,1]); // canvasで割ってyを1 ~ 0から 0 ~ 1にして-1 ~ 1
     }
 
     canvasToWorld(p) {
@@ -370,13 +371,13 @@ export class Area_Timeline {
         }
         if (inputManager.keysDown["c"]) {
             for (const keyData of this.spaceData.getAllKeyframe) {
-                if (isPointInEllipse(world, keyData.point.worldPosition, vec2.divR([10,10],this.zoom))) {
+                if (isPointInEllipse(world, keyData.point.worldPosition, mathVec2.divR([10,10],this.zoom))) {
                     keyData.pointSelected = true;
                 }
-                if (isPointInEllipse(world, keyData.leftHandle.worldPosition, vec2.divR([10,10],this.zoom))) {
+                if (isPointInEllipse(world, keyData.leftHandle.worldPosition, mathVec2.divR([10,10],this.zoom))) {
                     keyData.leftHandleSelected = true;
                 }
-                if (isPointInEllipse(world, keyData.rightHandle.worldPosition, vec2.divR([10,10],this.zoom))) {
+                if (isPointInEllipse(world, keyData.rightHandle.worldPosition, mathVec2.divR([10,10],this.zoom))) {
                     keyData.rightHandleSelected = true;
                 }
             }
@@ -385,19 +386,19 @@ export class Area_Timeline {
             let minKey = null;
             let minPoint = null;
             for (const keyData of this.spaceData.getAllKeyframe) {
-                let dist = vec2.distanceR(world, keyData.point.worldPosition);
+                let dist = mathVec2.distanceR(world, keyData.point.worldPosition);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
                     minPoint = "point";
                 }
-                dist = vec2.distanceR(world, keyData.wLeftHandle);
+                dist = mathVec2.distanceR(world, keyData.wLeftHandle);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
                     minPoint = "leftHandle";
                 }
-                dist = vec2.distanceR(world, keyData.wRightHandle);
+                dist = mathVec2.distanceR(world, keyData.wRightHandle);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
@@ -421,24 +422,24 @@ export class Area_Timeline {
                 }
             }
         }
-        managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+        managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
     }
     async mousemove(inputManager) {
-        const local = vec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.position), this.pixelDensity);
+        const local = mathVec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.position), this.pixelDensity);
         const world = this.canvasToWorld(local);
         this.inputs.lastPosition = [...this.inputs.position];
-        vec2.sub(this.inputs.movement, world, this.inputs.position);
+        mathVec2.sub(this.inputs.movement, world, this.inputs.position);
         this.inputs.position = world;
 
         if (this.frameBarDrag) {
             app.scene.frame_current += this.inputs.movement[0];
-            managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+            managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
             document.body.style.cursor = "col-resize";
             return ;
         }
 
         let consumed = await this.modalOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
-        managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+        managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
         if (consumed) return ;
     }
     mouseup(inputManager) {
@@ -458,6 +459,6 @@ export class Area_Timeline {
             this.camera[0] += inputManager.wheelDelta[0] / this.zoom[0];
             this.camera[1] -= inputManager.wheelDelta[1] / this.zoom[1];
         }
-        managerForDOMs.updateGroupInObject("タイムライン-canvas", this.groupID);
+        managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
     }
 }

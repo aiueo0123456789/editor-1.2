@@ -1,4 +1,4 @@
-import { createID } from "./util.js";
+import { createID, removeHTMLElementInObject } from "./util.js";
 
 export const connectingString = "><-/*+><";
 
@@ -114,9 +114,7 @@ export class AutoGrid {
         return ;
     }
 
-    remove() {
-        this.container.remove();
-    }
+    
 }
 
 export function createGrid(t, axis) {

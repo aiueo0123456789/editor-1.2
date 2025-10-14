@@ -5,7 +5,7 @@ import { managerForDOMs } from "../../utils/ui/util.js";
 export class CreateEdgeTool {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
-        this.command = new CreateEdgeFromeTextureCommand(app.scene.state.selectedObject);
+        this.command = new CreateEdgeFromeTextureCommand(app.context.selectedObjects);
         this.values = [
             1,10, // スライド量
         ];
@@ -25,7 +25,7 @@ export class CreateEdgeTool {
             this.command.update(this.values[0],this.values[1]);
         }
 
-        managerForDOMs.set({o: this.values, i: "&all"}, null, update);
+        managerForDOMs.set({o: this.values, i: "&all"}, update);
         update();
     }
 

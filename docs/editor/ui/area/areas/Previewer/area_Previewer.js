@@ -4,7 +4,7 @@ import { device, format, GPU } from "../../../../utils/webGPU.js";
 import { loadFile } from '../../../../utils/utility.js';
 import { Particle } from '../../../../core/objects/particle.js';
 import { PreviewerSpaceData } from './area_PreviewerSpaceData.js';
-import { vec2 } from '../../../../utils/mathVec.js';
+import { mathVec2 } from '../../../../utils/mathVec.js';
 import { managerForDOMs } from '../../../../utils/ui/util.js';
 import { app } from '../../../../../main.js';
 
@@ -34,7 +34,7 @@ export class Area_Previewer {
         this.areasConfig = app.appConfig.areasConfig["Previewer"];
 
         this.struct = {
-            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
+            inputObject: {"scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
                 {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; display: flex; justifyContent: center; alignItems: center; backgroundColor: rgb(55, 55, 55);", children: [
                     // {tagType: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
@@ -45,7 +45,7 @@ export class Area_Previewer {
 
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.box = this.creatorForUI.getDOMFromID("canvasContainer");
+        this.box = this.creatorForUI.getDOMFromID("canvasContainer").element;
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
 
@@ -101,8 +101,8 @@ export class Area_Previewer {
             this.renderer.resizeCVS();
         }
 
-        managerForDOMs.set({o: app.scene.objects.renderingCamera, i: "displayRange"}, null, updateDisplayRange);
-        managerForDOMs.set({o: app.scene.objects.renderingCamera.displayRange, i: "&all"}, null, updateDisplayRange);
+        managerForDOMs.set({o: app.scene.objects.renderingCamera, i: "displayRange"}, updateDisplayRange);
+        managerForDOMs.set({o: app.scene.objects.renderingCamera.displayRange, i: "&all"}, updateDisplayRange);
         resizeObserver.push(area.main, updateDisplayRange);
     }
 
@@ -115,7 +115,7 @@ export class Area_Previewer {
             this.camera.zoom += inputManager.wheelDelta[1] / 200;
             this.camera.zoom = Math.max(Math.min(this.camera.zoom,this.camera.zoomMax),this.camera.zoomMin);
         } else {
-            this.camera.position = vec2.addR(this.camera.position, vec2.scaleR([inputManager.wheelDelta[0], -inputManager.wheelDelta[1]], 1 / this.camera.zoom));
+            this.camera.position = mathVec2.addR(this.camera.position, mathVec2.scaleR([inputManager.wheelDelta[0], -inputManager.wheelDelta[1]], 1 / this.camera.zoom));
         }
         this.camera.updateBuffer();
     }
@@ -178,7 +178,7 @@ export class Renderer {
                 maskRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 for (const graphicMesh of value.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
-                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
                 // 処理の終了と送信
@@ -210,7 +210,7 @@ export class Renderer {
                 if (graphicMesh.isInit && graphicMesh.visible) {
                     renderPass.setBindGroup(2, graphicMesh.renderGroup);
                     renderPass.setBindGroup(3, alphaBuffers["1"]);
-                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
             }
@@ -219,7 +219,7 @@ export class Renderer {
             //         renderPass.setBindGroup(2, graphicMesh.renderGroup);
             //         // renderPass.setBindGroup(3, alphaBuffers["0.5"]);
             //         renderPass.setBindGroup(3, alphaBuffers["1"]);
-            //         renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+            //         renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
             //         renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
             //     }
             // }

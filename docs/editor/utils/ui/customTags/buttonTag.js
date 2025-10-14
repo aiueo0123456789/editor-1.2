@@ -1,10 +1,12 @@
 import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
 import { CreatorForUI } from "../creatorForUI.js";
-import { createTag } from "../util.js";
+import { CustomTag } from "../customTags.js";
+import { createTag, removeHTMLElementInObject } from "../util.js";
 
-export class ButtonTag {
+export class ButtonTag extends CustomTag {
     constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+        super();
         /** @type {HTMLElement} */
         this.element = createTag(t, "div");
         this.element.classList.add("button");
@@ -23,9 +25,5 @@ export class ButtonTag {
                 child.submitFunction();
             })
         }
-    }
-
-    remove() {
-        this.element.remove();
     }
 }

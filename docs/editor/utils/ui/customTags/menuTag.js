@@ -1,9 +1,11 @@
 import { app } from "../../../../main.js";
 import { isFunction, looper } from "../../utility.js";
-import { createTag, setClass } from "../util.js";
+import { CustomTag } from "../customTags.js";
+import { createTag, removeHTMLElementInObject, setClass } from "../util.js";
 
-export class MenuTag {
+export class MenuTag extends CustomTag {
     constructor(t, title, struct, options = {}) {
+        super();
         this.customTag = true;
         // console.log("セレクトの生成", t, list);
         this.element = createTag(t, "div");
@@ -60,9 +62,5 @@ export class MenuTag {
             document.addEventListener("click", removeFn); // セレクト以外がクリックされたら(ドキュメント)非表示
             e.stopPropagation();
         })
-    }
-
-    remove() {
-        this.element.remove();
     }
 }

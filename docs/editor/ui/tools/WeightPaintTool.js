@@ -9,7 +9,7 @@ export class WeightPaintModal {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
         console.log(app.appConfig.areasConfig["Viewer"].weightPaintMetaData)
-        this.command = new WeightPaintCommand(app.scene.state.activeObject, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.boneIndex, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue, 1, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.paintSize, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.bezierType);
+        this.command = new WeightPaintCommand(app.context.activeObject, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.boneIndex, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue, 1, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.paintSize, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.bezierType);
         this.values = [
             0,0, // スライド量
         ];
@@ -28,8 +28,8 @@ export class WeightPaintModal {
         const update = () => {
             this.command.update([this.values[0],this.values[1]]);
         }
-        managerForDOMs.set({o: this.values, g: "_", i: "0"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "1"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "0"}, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "1"}, update, null);
     }
 
     async init(type) {
@@ -38,7 +38,7 @@ export class WeightPaintModal {
     mousemove(/** @type {InputManager} */inputManager) {
         this.values[0] = inputManager.position[0];
         this.values[1] = inputManager.position[1];
-        managerForDOMs.update(this.values);
+        managerForDOMs.update({o: this.values});
         return true;
     }
 

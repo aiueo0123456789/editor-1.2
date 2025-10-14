@@ -1,5 +1,5 @@
 import { isFunction } from "../utility.js";
-import { createIcon, createTag, setClass } from "./util.js";
+import { createIcon, createTag, managerForDOMs, removeHTMLElementInObject, setClass } from "./util.js";
 
 export class ChecksTag {
     constructor(target, list, options = {}) {
@@ -34,8 +34,32 @@ export class ChecksTag {
             }
         })
     }
+}
+
+export class CustomTag {
+    constructor() {
+        this.customTag = true;
+        this.isRemoved = false;
+        this.dataBlocks = [];
+    }
 
     remove() {
-        this.element.remove();
+        if (this.isRemoved) {
+            console.warn("すでに削除済みです")
+        }
+        for (const key in this) {
+            if (this[key] instanceof HTMLElement) {
+                this[key].remove();
+                this[key] = null;
+            }
+        }
+        for (const dataBlock of this.dataBlocks) {
+            managerForDOMs.deleteDataBlock(dataBlock);
+        }
+        this.children?.forEach(tag => {
+            if (isFunction(tag.remove)) tag.remove()
+        });
+        this.isRemoved = true;
     }
+
 }

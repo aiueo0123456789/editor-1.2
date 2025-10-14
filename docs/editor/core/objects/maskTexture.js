@@ -33,7 +33,7 @@ export class MaskTexture {
                 changeParameter(this, "texture", GPU.createTexture2D(app.scene.objects.renderingCamera.displayRange,"r8unorm"));
                 changeParameter(this, "view", this.texture.createView());
             }
-            managerForDOMs.set({o: app.scene.objects.renderingCamera, i: "displayRange"}, null, updateTextureSize);
+            managerForDOMs.set({o: app.scene.objects.renderingCamera, i: "displayRange"}, updateTextureSize);
             updateTextureSize();
         }
     }

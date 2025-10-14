@@ -1,8 +1,10 @@
 import { app } from "../../../../main.js";
-import { managerForDOMs } from "../util.js";
+import { CustomTag } from "../customTags.js";
+import { managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
-export class HasKeyframeCheck {
+export class HasKeyframeCheck extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
+        super();
         this.checkbox = document.createElement("input");
         this.checkbox.type = "checkbox";
         this.checkbox.style.display = "none";
@@ -23,12 +25,7 @@ export class HasKeyframeCheck {
             }
         });
         update();
-        managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: creatorForUI.groupID}, null, update);
-        managerForDOMs.set({o: object, i: "keys", f: flag, g: creatorForUI.groupID}, null, update);
+        this.dataBlocks = [managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: creatorForUI.groupID}, update), managerForDOMs.set({o: object, i: "keys", f: flag, g: creatorForUI.groupID}, update)];
         t.append(this.element);
-    }
-
-    remove() {
-        this.element.remove();
     }
 }

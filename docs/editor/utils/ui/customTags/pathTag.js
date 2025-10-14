@@ -1,38 +1,40 @@
 import { isFunction } from "../../utility.js";
 import { CreatorForUI, ParameterReference } from "../creatorForUI.js";
-import { removeHTMLElemtentInObject } from "../eventUpdator.js";
-import { createID, createTag, managerForDOMs } from "../util.js";
+import { CustomTag } from "../customTags.js";
+import { createID, createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
-export class PathTag {
+export class PathTag extends CustomTag {
     constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+        super();
         const elementInsertIndex = t.children.length;
-        let children = [];
+        this.children = [];
         const myFlag = createID();
         this.isRemoved = false;
         const childrenReset = () => {
-            if (this.isRemoved) {
-                console.warn("削除されたパスタグが要素を作成しようとしています")
-            }
-            managerForDOMs.deleteFlag(myFlag);
+            // managerForDOMs.delete({f: myFlag});
+            console.log(child);
+            console.log([...this.children]);
             // 関連づけられていない小要素を削除
-            for (const childTag of children) {
-                childTag?.remove();
-                removeHTMLElemtentInObject(childTag);
+            for (const childTag of this.children) {
+                if (isFunction(childTag.remove)) {
+                    childTag.remove();
+                }
+                removeHTMLElementInObject(childTag);
             }
-            children.length = 0;
+            this.children.length = 0;
             const keep = createTag(null, "div");
             if (child.children) {
                 const o = creatorForUI.getParameter(searchTarget, child.sourceObject, 2);
                 if (o) {
                     if (isFunction(o)) {
-                        children = creatorForUI.createFromChildren(keep, child.children, o(), myFlag, true);
+                        this.children = creatorForUI.createFromChildren(keep, child.children, o(), myFlag);
                     } else if (o instanceof ParameterReference) {
                         // console.warn("伝播できません", o)
                         if ("errorChildren" in child) {
-                            children = creatorForUI.createFromChildren(keep, child.errorChildren, {}, myFlag, true);
+                            this.children = creatorForUI.createFromChildren(keep, child.errorChildren, {}, myFlag);
                         }
                     } else {
-                        children = creatorForUI.createFromChildren(keep, child.children, o, myFlag, true);
+                        this.children = creatorForUI.createFromChildren(keep, child.children, o, myFlag);
                     }
                 }
                 // console.log();
@@ -44,9 +46,9 @@ export class PathTag {
         }
         const setUpdateEventTarget = (updateEventTarget) => {
             if (updateEventTarget.path) {
-                creatorForUI.setUpdateEventToParameter(searchTarget, updateEventTarget.path, childrenReset);
+                creatorForUI.setUpdateEventByPath(searchTarget, updateEventTarget.path, childrenReset, flag);
             } else { // 文字列に対応
-                managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag},null,childrenReset);
+                managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag},childrenReset);
             }
         }
         if (Array.isArray(child.updateEventTarget)) {
@@ -57,10 +59,5 @@ export class PathTag {
             setUpdateEventTarget(child.updateEventTarget);
         }
         childrenReset();
-    }
-
-    remove() {
-        console.log("パスタグが削除されました")
-        this.isRemoved = true;
     }
 }

@@ -1,6 +1,7 @@
 import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
-import { createID, createTag, managerForDOMs } from "../util.js";
+import { CustomTag } from "../customTags.js";
+import { createID, createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 import { InputCheckboxTag } from "./inputCheckboxTag.js";
 
 function isFilterIncluded(object, filter = "all") {
@@ -18,9 +19,9 @@ function isFilterIncluded(object, filter = "all") {
     }
 }
 
-export class OutlinerTag {
-    // constructor(creatorForUI, t, withObject, loopTarget, structures, searchTarget, options, flag) {
-        constructor(creatorForUI,t,searchTarget,child,flag) {
+export class OutlinerTag extends CustomTag {
+    constructor(creatorForUI,t,searchTarget,child,flag) {
+        super();
         const options = child.options;
         const isSourceFunction = isFunction(child.withObject);
         const source = child.withObject;
@@ -36,14 +37,14 @@ export class OutlinerTag {
         let searchFilter = "";
         let searchParameter = "type";
 
-        this.container = createTag(t, "div", {style: "display: grid; width: 100%; height: 100%; gridTemplateRows: auto auto 1fr; backgroundColor: var(--subColor);"});
-        const seachBox = createTag(this.container, "div", {class: "searchBox"});
-        const input = createTag(seachBox, "input", {style: "fontSize: 120%",value: ""});
+        this.element = createTag(t, "div", {style: "display: grid; width: 100%; height: 100%; gridTemplateRows: auto auto 1fr; backgroundColor: var(--subColor);"});
+        const searchBox = createTag(this.element, "div", {class: "searchBox"});
+        const input = createTag(searchBox, "input", {style: "fontSize: 120%",value: ""});
         input.addEventListener("input", () => {
             searchFilter = input.value;
             outlinerUpdate();
         })
-        this.scrollableContainer = createTag(this.container, "div", {style: "width: 100%; height: 100%;"});
+        this.scrollableContainer = createTag(this.element, "div", {style: "width: 100%; height: 100%;"});
 
         let result = {active: null, selects: []};
         if (options.selectSource) {
@@ -109,7 +110,7 @@ export class OutlinerTag {
             }
             return getLoopChildren(rootObject).result;
         }
-        const outlinerUpdate = (o, gID, t) => {
+        const outlinerUpdate = () => {
             rootObject = isSourceFunction ? source() : creatorForUI.getParameter(searchTarget, source);
             array.length = 0;
             const allObject = getAllObject();
@@ -117,12 +118,11 @@ export class OutlinerTag {
             for (const object of lastUpdateObjects) {
                 if (!allObject.includes(object)) {
                     this.objectDomMap.delete(object);
-                    managerForDOMs.deleteDOM(object, creatorForUI.groupID, outlinerID);
+                    managerForDOMs.delete({o: object, g: creatorForUI.groupID, i: outlinerID});
                 }
             }
             // 追加があった場合新規作成
             for (const object of allObject) {
-                // if (!managerForDOMs.getObjectAndGroupID(object, creatorForUI.groupID, outlinerID).length) {
                 if (!lastUpdateObjects.includes(object)) {
                     const container = createTag(null, "div", {style: "paddingLeft: 2px; height: fit-content; minHeight: auto;"});
                     container.addEventListener("click", (event) => {
@@ -144,7 +144,6 @@ export class OutlinerTag {
                                 result.selects.push(object);
                                 console.log(result,activeSource);
                                 event.stopPropagation();
-                                // managerForDOMs.update(list, "選択情報");
                             }
                         }
                     });
@@ -160,7 +159,7 @@ export class OutlinerTag {
                         childrenContainer.classList.toggle("hidden");
                     })
                     this.objectDomMap.set(object, container);
-                    managerForDOMs.set({o: object, g: creatorForUI.groupID, i: outlinerID, f: flag}, {container, myContainer, childrenContainer}, null, null); // セット
+                    managerForDOMs.set({o: object, g: creatorForUI.groupID, i: outlinerID, f: flag}, null, {container, myContainer, childrenContainer}); // セット
                 }
             }
             lastUpdateObjects = [...allObject];
@@ -168,7 +167,7 @@ export class OutlinerTag {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {
                         try {
-                            const managerObject = managerForDOMs.getObjectAndGroupID(child, creatorForUI.groupID, outlinerID)[0].dom;
+                            const managerObject = managerForDOMs.get({o: child, g: creatorForUI.groupID, i: outlinerID})[0].others;
                             targetDOM.append(managerObject.container);
                             if (loopTargetIsPlainObject) {
                                 const targetType = child[loopTarget.parameter];
@@ -206,29 +205,30 @@ export class OutlinerTag {
         // 選択表示の更新
         const listActive = (o, gID, t) => {
             console.log("ヒエラルキーアクティブ")
-            const createdTags = managerForDOMs.getGroupAndID(creatorForUI.groupID, outlinerID); // すでに作っている場合
+            const createdTags = managerForDOMs.get({g: creatorForUI.groupID, i: outlinerID}); // すでに作っている場合
             createdTags.forEach((data, object) => {
                 const bool_ = activeSource.object[activeSource.parameter] == object;
                 if (bool_) {
-                    data.dom.myContainer.classList.add("activeColor");
+                    data.others.myContainer.classList.add("activeColor");
                 } else {
-                    data.dom.myContainer.classList.remove("activeColor");
+                    data.others.myContainer.classList.remove("activeColor");
                     const bool__ = result.selects.includes(object);
                     if (bool__) {
-                        data.dom.myContainer.classList.add("activeColor2");
+                        data.others.myContainer.classList.add("activeColor2");
                     } else {
-                        data.dom.myContainer.classList.remove("activeColor2");
+                        data.others.myContainer.classList.remove("activeColor2");
                     }
                 }
             })
         }
-        managerForDOMs.set({o: activeSource.object, g: creatorForUI.groupID, i: activeSource.parameter, f: flag}, t, listActive, null);
-        managerForDOMs.set({o: result.selects, g: creatorForUI.groupID, f: flag}, t, listActive, null);
+        managerForDOMs.set({o: activeSource.object, g: creatorForUI.groupID, i: activeSource.parameter, f: flag}, listActive);
+        managerForDOMs.set({o: result.selects, g: creatorForUI.groupID, f: flag}, listActive);
+        console.log("ヒエラルキー更新対象", child.updateEventTarget)
         const setUpdateEventTarget = (updateEventTarget) => {
             if (updateEventTarget.path) {
-                creatorForUI.setUpdateEventToParameter(searchTarget, updateEventTarget.path, outlinerUpdate);
+                creatorForUI.setUpdateEventByPath(searchTarget, updateEventTarget.path, outlinerUpdate, flag);
             } else { // 文字列に対応
-                managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag},null,outlinerUpdate);
+                managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag}, outlinerUpdate);
             }
         }
         if (child.updateEventTarget) {
@@ -241,7 +241,7 @@ export class OutlinerTag {
             }
         } else {
             if (!isSourceFunction) {
-                managerForDOMs.set({o: creatorForUI.getParameter(searchTarget, source), g: creatorForUI.groupID, f: flag},null,outlinerUpdate);
+                managerForDOMs.set({o: creatorForUI.getParameter(searchTarget, source), g: creatorForUI.groupID, f: flag}, outlinerUpdate);
             }
         }
         outlinerUpdate();
@@ -249,10 +249,5 @@ export class OutlinerTag {
 
     getDomFromObject(object) {
         return this.objectDomMap.get(object);
-    }
-
-    remove() {
-        this.scrollable.remove();
-        this.container.remove();
     }
 }

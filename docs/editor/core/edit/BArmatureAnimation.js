@@ -1,0 +1,175 @@
+import { app } from "../../../main.js";
+import { mathMat3x3 } from "../../utils/mathMat.js";
+import { createArrayAndFillN, roundUp } from "../../utils/utility.js";
+import { GPU } from "../../utils/webGPU.js";
+import { Armature } from "../objects/armature.js";
+
+class Bone {
+    constructor(data) {
+        this.name = data.name;
+        /** @type {Bone} */
+        this.parent = data.parent;
+
+        this.selected = false;
+        this.physics = data.physics;
+
+        this.color = data.color;
+
+        this.bone = {x: 0, y: 0, sx:0, sy: 0, r: 0, l: 0};
+        this.animation = {x: 0, y: 0, sx:0, sy: 0, r: 0, l: 0};
+    }
+
+    get matrix() {
+        return ;
+    }
+
+    get worldMatrix() {
+        return mathMat3x3.multiplyMat3x3(this.parent.worldMatrix, this.matrix);
+    }
+}
+
+export class BArmatureAnimation {
+    constructor() {
+        /** @type {Armature} */
+        this.object = null;
+        /** @type {Bone[]} */
+        this.bones = [];
+        this.meshRenderingGroup = null;
+    }
+
+    get id() {
+        return this.object.id;
+    }
+
+    get verticesSelectData() {
+        return this.vertices.map(vertex => vertex.selected);
+    }
+
+    get vertices() {
+        return this.bones.map(bone => [bone.headVertex, bone.tailVertex]).flat();
+    }
+
+    getBoneIndex(bone) {
+        return this.bones.indexOf(bone);
+    }
+
+    getBoneChildren(parent) {
+        return this.bones.filter(bone => bone.parent == parent);
+    }
+
+    getVertexIndexByVertex(vertex) {
+        return this.vertices.indexOf(vertex);
+    }
+
+    selectedClear() {
+        this.vertices.forEach(vertex => {
+            vertex.selected = false
+            GPU.writeBuffer(this.vertexSelectedBuffer, GPU.createBitData([0], ["u32"]), this.getVertexIndexByVertex(vertex) * 4);
+        });
+        // this.updateGPUData();
+    }
+
+    select(/** @type {Array} */ indexs) {
+        indexs.forEach(index => {
+            this.vertices[index].selected = true;
+            GPU.writeBuffer(this.vertexSelectedBuffer, GPU.createBitData([1], ["u32"]), index * 4);
+        });
+        // this.updateGPUData();
+    }
+
+    get selectedVertices() {
+        return this.vertices.filter(vert => vert.selected);
+    }
+
+    get verticesNum() {
+        return this.vertices.length;
+    }
+
+    get bonesNum() {
+        return this.bones.length;
+    }
+
+    get verticesCoordinates() {
+        return this.vertices.map(vertex => vertex.co);
+    }
+    get selectedVerticesCoordinates() {
+        return this.selectedVertices.map(vertex => vertex.co);
+    }
+
+    updateGPUData() {
+        this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.co).flat(), ["f32", "f32"]);
+        // this.relatedBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.co).flat(), ["f32", "f32"]);
+        this.vertexSelectedBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 4, 4), this.vertices.map(vertex => vertex.selected ? 1 : 0), ["u32"]);
+        this.bonesSelectedBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4, 4), this.bones.map(bone => bone.selected ? 1 : 0), ["u32"]);
+        this.boneColorsBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.color).flat(), ["f32", "f32", "f32", "f32"]);
+        this.r = GPU.createStorageBuffer(roundUp(this.bones.length * 4, 4), this.bones.map(bone => 1), ["u32"]);
+        this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr"), [this.verticesBuffer, this.boneColorsBuffer, this.vertexSelectedBuffer, this.bonesSelectedBuffer, this.r]);
+    }
+
+    get root() {
+        return this.bones.filter(bone => bone.parent == null);
+    }
+
+    async fromArmature(object) {
+        console.log(object)
+        const armatureData = app.scene.runtimeData.armatureData;
+        this.object = object;
+        const [coordinate, colors, physics] = await Promise.all([
+            armatureData.baseVertices.getObjectData(object),
+            armatureData.colors.getObjectData(object),
+            armatureData.physicsData.getObjectData(object),
+        ]);
+        const createBones = (children, parent) => {
+            for (const childData of children) {
+                const boneIndex = childData.index;
+                const bone = new Bone({name: "a" + boneIndex, parent: parent, headVertex: {co: coordinate[boneIndex].slice(0,2)}, tailVertex: {co: coordinate[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
+                this.bones[boneIndex] = bone;
+                createBones(childData.children, bone);
+            }
+        }
+        createBones(object.root, null);
+        console.log(this)
+        this.updateGPUData();
+    }
+
+    toRutime() {
+        this.object.allVertices.length = 0;
+        this.object.allPhysics.length = 0;
+        this.object.allBone.length = 0;
+        this.object.allBoneWorldMatrix.length = 0;
+        this.object.allColors.length = 0;
+        this.object.root.length = 0;
+        for (const bone of this.bones) {
+            const parent = bone.parent;
+            const boneData = Armature.getBoneData(bone.headVertex.co, bone.tailVertex.co, parent?.headVertex?.co, parent?.tailVertex?.co);
+            this.object.allVertices.push(...bone.headVertex.co);
+            this.object.allVertices.push(...bone.tailVertex.co);
+            this.object.allPhysics.push(...bone.physics,
+                0, 1, 0,
+
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0,
+                0,
+                0,
+                0,
+            );
+            this.object.allBone.push(...boneData.bone);
+            this.object.allBoneWorldMatrix.push(...boneData.worldMatrix.flat());
+            this.object.allColors.push(...bone.color);
+        }
+        const createRoot = (bones, parent) => {
+            for (const bone of bones) {
+                const boneData = {index: this.getBoneIndex(bone), parentIndex: this.getBoneIndex(bone.parent), children: []};
+                parent.push(boneData);
+                createRoot(this.getBoneChildren(bone), boneData.children);
+            }
+        }
+        createRoot(this.root, this.object.root);
+        const armatureData = app.scene.runtimeData.armatureData;
+        armatureData.update(this.object);
+    }
+}

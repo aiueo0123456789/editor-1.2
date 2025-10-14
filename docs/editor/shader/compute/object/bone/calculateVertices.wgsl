@@ -22,9 +22,18 @@ struct Allocation {
 }
 
 @group(0) @binding(0) var<storage, read_write> vertices: array<BoneVertices>; // 出力
-@group(0) @binding(1) var<storage, read> boneMatrix: array<mat3x3<f32>>; // ボーンの行列
+@group(0) @binding(1) var<storage, read> boneMatrixs: array<f32>; // ボーンの行列
 @group(0) @binding(2) var<storage, read> boneData: array<Bone>; // ボーンのデータ
 @group(0) @binding(3) var<storage, read> allocationArray: array<Allocation>; // 配分
+
+fn getMatrix(index: u32) -> mat3x3<f32> {
+    let fixIndex = index * 9u;
+    return mat3x3<f32>(
+        vec3<f32>(boneMatrixs[fixIndex], boneMatrixs[fixIndex + 1], boneMatrixs[fixIndex + 2]),
+        vec3<f32>(boneMatrixs[fixIndex + 3], boneMatrixs[fixIndex + 4], boneMatrixs[fixIndex + 5]),
+        vec3<f32>(boneMatrixs[fixIndex + 6], boneMatrixs[fixIndex + 7], boneMatrixs[fixIndex + 8]),
+    );
+}
 
 @compute @workgroup_size(8, 8)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
@@ -40,7 +49,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let arrayIndex = allocationArray[objectIndex].vertexBufferOffset + boneIndex;
 
     // 頂点データを取得
-    let matrix = boneMatrix[arrayIndex];
+    let matrix = getMatrix(arrayIndex);
     var output: BoneVertices;
     output.h = matrix[2].xy;
     output.t = matrix[2].xy + vec2<f32>(matrix[0][0], matrix[0][1]) * boneData[arrayIndex].length;

@@ -5,31 +5,17 @@ struct Camera {
     padding: f32,
 }
 
-struct MeshAllocation {
-    vertexBufferOffset: u32,
-    meshBufferOffset: u32,
-    MAX_MESHES: u32,
-    padding: u32,
-}
-
-struct WeightBlock {
-    indexs: vec4<u32>,
-    weights: vec4<f32>,
-}
-
-struct Edge {
-    i0: u32,
-    i1: u32,
-}
-
 @group(0) @binding(0) var<uniform> camera: Camera;
-@group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
-@group(1) @binding(1) var<storage, read> meshLoops: array<u32>;
-@group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
-@group(1) @binding(3) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
-@group(2) @binding(0) var<uniform> objectData: MeshAllocation; // 配分
-@group(2) @binding(1) var<storage, read> baseSilhouetteEdges: array<Edge>; // シルエットの辺
-@group(2) @binding(2) var<storage, read> baseEdges: array<Edge>; // 辺
+@group(1) @binding(0) var<storage, read> verticesCoordinates: array<vec2<f32>>;
+@group(1) @binding(1) var<storage, read> verticesUVs: array<vec2<f32>>;
+@group(1) @binding(2) var<storage, read> silhouetteEdges: array<vec2<u32>>; // シルエットの辺
+@group(1) @binding(3) var<storage, read> edges: array<vec2<u32>>; // 辺
+@group(1) @binding(4) var<storage, read> meshLoops: array<u32>;
+@group(1) @binding(5) var<storage, read> vertexSelected: array<u32>;
+@group(1) @binding(6) var<storage, read> silhouetteEdgeSelectedBuffer: array<u32>;
+@group(1) @binding(7) var<storage, read> edgeSelected: array<u32>;
+@group(1) @binding(8) var<storage, read> meshSelected: array<u32>;
+@group(1) @binding(9) var<uniform> zIndex: f32;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>, // クリッピング座標系での頂点位置
@@ -37,7 +23,7 @@ struct VertexOutput {
 }
 
 fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
+    return ((vertexSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 fn getBoolFromIndex(index: u32) -> bool {
@@ -56,25 +42,19 @@ fn vmain(
     @builtin(instance_index) instanceIndex: u32, // インスタンスのインデックス
     @builtin(vertex_index) vertexIndex: u32
     ) -> VertexOutput {
-    // 頂点データを取得
-    // let index = instanceIndex * 2u;
-    let indexs = getMeshLoop(instanceIndex + objectData.meshBufferOffset) + objectData.vertexBufferOffset;
-
+    let indexs = getMeshLoop(instanceIndex);
     var position1 = vec2<f32>(0.0);
     var position2 = vec2<f32>(0.0);
     var b = false;
     if (vertexIndex / 4u == 0u) {
-        position1 = verticesPosition[indexs.x];
-        position2 = verticesPosition[indexs.y];
-        b = getBoolFromIndex(indexs.x) && getBoolFromIndex(indexs.x);
+        position1 = verticesCoordinates[indexs.x];
+        position2 = verticesCoordinates[indexs.y];
     } else if (vertexIndex / 4u == 1u) {
-        position1 = verticesPosition[indexs.y];
-        position2 = verticesPosition[indexs.z];
-        b = getBoolFromIndex(indexs.y) && getBoolFromIndex(indexs.z);
+        position1 = verticesCoordinates[indexs.y];
+        position2 = verticesCoordinates[indexs.z];
     } else {
-        position1 = verticesPosition[indexs.z];
-        position2 = verticesPosition[indexs.x];
-        b = getBoolFromIndex(indexs.z) && getBoolFromIndex(indexs.x);
+        position1 = verticesCoordinates[indexs.z];
+        position2 = verticesCoordinates[indexs.x];
     }
     let sub = position2 - position1;
     let normal = normalize(vec2<f32>(-sub.y, sub.x)); // 仮の法線
@@ -99,6 +79,7 @@ fn vmain(
 }
 
 @group(0) @binding(1) var mySampler: sampler;
+@group(1) @binding(10) var myTexture: texture_2d<f32>;
 
 struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)

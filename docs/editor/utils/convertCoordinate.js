@@ -1,4 +1,4 @@
-import { vec2 } from "./mathVec.js";
+import { mathVec2 } from "./mathVec.js";
 
 export class ConvertCoordinate {
     constructor(cvs, camera) {
@@ -8,10 +8,10 @@ export class ConvertCoordinate {
 
     // キャンバス座標からワールド座標
     screenPosFromGPUPos(pos) {
-        const clip = vec2.subR(vec2.scaleR(vec2.divR(pos, [this.cvs.offsetWidth, this.cvs.offsetHeight]), 2), [1,1]);
-        const a = vec2.divR(clip, [1 / this.cvs.offsetWidth, 1 / this.cvs.offsetHeight]);
-        vec2.reverseScale(a,a,this.camera.zoom);
-        vec2.add(a, a, this.camera.position);
+        const clip = mathVec2.subR(mathVec2.scaleR(mathVec2.divR(pos, [this.cvs.offsetWidth, this.cvs.offsetHeight]), 2), [1,1]);
+        const a = mathVec2.divR(clip, [1 / this.cvs.offsetWidth, 1 / this.cvs.offsetHeight]);
+        mathVec2.reverseScale(a,a,this.camera.zoom);
+        mathVec2.add(a, a, this.camera.position);
         return a;
     }
 

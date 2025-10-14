@@ -17,7 +17,7 @@ export class AppendVertex {
     }
 
     async init(input) {
-        this.command = new AppendVertexCommand(app.scene.state.activeObject, input.position);
+        this.command = new AppendVertexCommand(app.context.activeObject, input.position);
         return {complete: true};
     }
 }

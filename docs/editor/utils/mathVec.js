@@ -154,6 +154,11 @@ class Vec2 {
         return angularVelocityMagnitude;
     }
 
+
+    getAngle(p1, p2) {
+        return Math.atan2(p2[1] - p1[1], p2[0] - p1[0]);
+    }
+
     rotate2D(point, angle) {
         let sinTheta = Math.sin(angle);
         let cosTheta = Math.cos(angle);
@@ -163,11 +168,12 @@ class Vec2 {
     }
 
     averageR(pointArray) {
-        const result = vec2.create();
+        const result = mathVec2.create();
+        console.log([...pointArray]);
         for (const point of pointArray) {
-            vec2.add(result, result, point);
+            mathVec2.add(result, result, point);
         }
-        vec2.reverseScale(result, result, pointArray.length);
+        mathVec2.reverseScale(result, result, pointArray.length);
         return result;
     }
 
@@ -189,4 +195,4 @@ class Vec2 {
     }
 }
 
-export const vec2 = new Vec2();
+export const mathVec2 = new Vec2();

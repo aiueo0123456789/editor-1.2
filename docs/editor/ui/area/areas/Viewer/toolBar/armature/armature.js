@@ -5,12 +5,12 @@ export class ArmaturePropertyModal {
         this.name = "アーマチュア";
         this.values = [0,0,0,0];
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene, "values": this.values},
+            inputObject: {"context": app.context, "areasConifg": app.appConfig.areasConfig, "scene": app.scene, "values": this.values},
             DOM: [
                 {tagType: "div", class: "sideBar-shelfe", children: [
                     {tagType: "section", name: "アーマチュア", children: [
-                        {tagType: "path", sourceObject: "scene/state/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
-                            {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                        {tagType: "path", sourceObject: "context/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
+                            {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
                         ]}
                     ]}
                 ]}

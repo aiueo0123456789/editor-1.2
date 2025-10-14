@@ -1,7 +1,7 @@
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { ObjectBase, ObjectEditorBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
-import { vec2 } from "../../utils/mathVec.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { app } from "../../../main.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 
@@ -58,7 +58,7 @@ class Point {
     }
 
     get worldIndex() {
-        return this.bezierModifier.runtimeOffsetData.pointOffset + this.bezierModifier.allPoint.indexOf(this);
+        return this.bezierModifier.runtimeOffsetData.start.pointOffset + this.bezierModifier.allPoint.indexOf(this);
     }
 
     getSaveData() {
@@ -84,7 +84,7 @@ class Editor extends ObjectEditorBase {
     }
 
     createPoint(coordinate) {
-        return new Point(this.bezierModifier, {point: {co: coordinate, parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}, leftControlPoint: {co: vec2.addR(coordinate, [0, -10]), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}, rightControlPoint: {co: vec2.addR(coordinate, [0, 10]), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}});
+        return new Point(this.bezierModifier, {point: {co: coordinate, parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}, leftControlPoint: {co: mathVec2.addR(coordinate, [0, -10]), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}, rightControlPoint: {co: mathVec2.addR(coordinate, [0, 10]), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}}});
     }
 
     appendPoint(point) {
@@ -106,12 +106,8 @@ export class BezierModifier extends ObjectBase {
         super(data.name, "ベジェモディファイア", data.id);
         this.runtimeData = app.scene.runtimeData.bezierModifierData;
 
-        this.MAX_POINTS = app.appConfig.MAX_POINTS_PER_BEZIERMODIFIER;
-        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_BEZIERMODIFIER;
-
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
-        this.pointNum = 0;
         this.baseTransformIsLock = false;
 
         this.autoWeight = true;
@@ -134,8 +130,8 @@ export class BezierModifier extends ObjectBase {
         return this.pointNum * 3;
     }
 
-    get MAX_VERTICES() {
-        return this.MAX_POINTS * 3;
+    get pointNum() {
+        return this.allPoint.length;
     }
 
     get allVertices() {

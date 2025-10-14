@@ -20,7 +20,6 @@ export class FaileIOManager {
                 this.app.scene.objects.createObjectAndSetUp(data);
             }
             for (const data of file.data.graphicMeshs) {
-                this.app.scene.outliner.append(this.app.scene.objects.createObjectAndSetUp(data), this.app.scene.outliner.objects);
             }
         } else {
             changeParameter(this.app.appConfig, "projectName", file.name.split(".")[0]);
@@ -84,10 +83,9 @@ export class FaileIOManager {
             changeParameter(this.app.scene, "frame_speed", json.scene.frame_speed);
             changeParameter(this.app.scene, "frame_start", json.scene.frame_start);
             changeParameter(this.app.scene, "frame_end", json.scene.frame_end);
-            // this.app.scene.outliner.set(json.scene.outliner);
             this.app.ui.updateLoadingModal(loadingModalID, 100, "完了");
         }
-        managerForDOMs.allUpdate();
+        // managerForDOMs.allUpdate();
         this.app.ui.removeLodingModal(loadingModalID);
         this.app.updateStopCancel("load");
     }

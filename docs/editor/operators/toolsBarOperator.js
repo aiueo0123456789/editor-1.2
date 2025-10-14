@@ -33,8 +33,8 @@ export class ToolsBarOperator {
             }
         }
         this.id = createID();
-        managerForDOMs.set({o: modals, g: this.id}, null, modalsUpdate);
-        managerForDOMs.updateGroupInObject(modals, this.id);
+        managerForDOMs.set({o: modals, g: this.id}, modalsUpdate);
+        managerForDOMs.update({o: modals, g: this.id});
         this.nowModal = null;
     }
 }

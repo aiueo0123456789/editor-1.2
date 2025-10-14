@@ -1,7 +1,6 @@
 import { ChecksTag } from "./customTags.js";
 import { createButton, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
-import { hexToRgba, isFunction, isPassByReference, isPlainObject, rgbToHex } from "../utility.js";
-import { removeHTMLElemtentInObject } from "./eventUpdator.js";
+import { changeParameter, hexToRgba, isFunction, isPassByReference, isPlainObject, rgbToHex } from "../utility.js";
 import { app } from "../../../main.js";
 import { MenuTag } from "./customTags/menuTag.js";
 import { CodeEditorTag } from "./customTags/codeEditorTag.js";
@@ -14,12 +13,16 @@ import { MeterTag } from "./customTags/meterTag.js";
 import { HasKeyframeCheck } from "./customTags/hasKeyframeCheckTag.js";
 import { TextureTag } from "./customTags/textureTag.js";
 import { PathTag } from "./customTags/pathTag.js";
-import { BoxsTag } from "./customTags/boxsTag.js";
+import { BoxTag } from "./customTags/boxTag.js";
 import { InputTextTag } from "./customTags/inputTextTag.js";
 import { InputColorTag } from "./customTags/inputColorTag.js";
 import { InputFileTag } from "./customTags/inputFileTag.js";
 import { InputNumberTag } from "./customTags/inputNumberTag.js";
 import { ButtonTag } from "./customTags/buttonTag.js";
+import { SectionTag } from "./customTags/sectionTag.js";
+import { LabelTag } from "./customTags/labelTag.js";
+import { GridBoxTag } from "./customTags/gridBoxTag.js";
+import { DblClickInput } from "./customTags/dblclickInput.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -64,8 +67,8 @@ export function createSelect(t, list = []) {
 
 export const tagCreater = {
     // 要素の作成
-    "boxs": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        return new BoxsTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
+    "box": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new BoxTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
     },
     "codeEditor": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         return new CodeEditorTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
@@ -77,7 +80,7 @@ export const tagCreater = {
             element.textContent = creatorForUI.getParameter(searchTarget, child.withObject);
         }
         update();
-        creatorForUI.setUpdateEventToParameter(searchTarget, child.withObject, update, flag);
+        creatorForUI.setUpdateEventByPath(searchTarget, child.withObject, update, flag);
         return element;
     },
     "heightCenter": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
@@ -144,22 +147,8 @@ export const tagCreater = {
         let element = new MenuTag(t, child.title, child.struct, child?.options);
         return element;
     },
-    "dbInput": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => { // ダブルクッリク入力
-        let element = document.createElement("input");
-        element.type = "text";
-        element.classList.add("dblClickInput");
-        element.setAttribute('readonly', true);
-        element.addEventListener('dblclick', () => {
-            element.removeAttribute('readonly');
-            element.focus();
-        });
-
-        element.addEventListener('blur', () => {
-            element.setAttribute('readonly', true);
-        });
-        t.append(element);
-        creatorForUI.setWith(element, child.value, searchTarget, flag);
-        return element;
+    "dblClickInput": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => { // ダブルクッリク入力
+        return new DblClickInput(creatorForUI,t,searchTarget,child,flag);
     },
     "list": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element;
@@ -195,7 +184,6 @@ export const tagCreater = {
             element = createTag(t, "ul", {class: "scrollable"});
             creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
         }
-        // managerForDOMs.set({o: "", g: creatorForUI.groupID, f: flag}, element, null);
         return element;
     },
     "container": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
@@ -206,19 +194,7 @@ export const tagCreater = {
         return element;
     },
     "section": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        const div = document.createElement("div");
-        div.classList.add("section-main");
-        let element;
-        if (child.options?.min) {
-            element = createSection(t,child.name,div, "minSection");
-        } else {
-            element = createSection(t,child.name,div);
-        }
-        if (child.children) {
-            creatorForUI.createFromChildren(div, child.children, searchTarget, flag);
-        }
-        // managerForDOMs.set({o: "", g: creatorForUI.groupID, f: flag}, div, null);
-        return element;
+        return new SectionTag(creatorForUI,t,searchTarget,child,flag);
     },
     "option": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "ui_options"});
@@ -255,17 +231,7 @@ export const tagCreater = {
         return element;
     },
     "gridBox": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        let element = createTag(t, "div");
-        element.style.display = "grid";
-        if (child.axis == "r") {
-            element.style.gridTemplateRows = child.allocation;
-        } else {
-            element.style.gridTemplateColumns = child.allocation;
-        }
-        if (child.children) {
-            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
-        }
-        return element;
+        return new GridBoxTag(creatorForUI, t, searchTarget, child, flag);
     },
     "padding": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div");
@@ -283,13 +249,6 @@ export const tagCreater = {
     },
     "scrollable": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "scrollable"});
-        if (child.children) {
-            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
-        }
-        return element;
-    },
-    "box": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        let element = createTag(t, "div");
         if (child.children) {
             creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
         }
@@ -316,11 +275,11 @@ export const tagCreater = {
         }
         if (bool) {
             if (child.true) {
-                return creatorForUI.createFromChildren(t, child.true, searchTarget, flag, true);
+                return creatorForUI.createFromChildren(t, child.true, searchTarget, flag);
             }
         } else {
             if (child.false) {
-                return creatorForUI.createFromChildren(t, child.false, searchTarget, flag, true);
+                return creatorForUI.createFromChildren(t, child.false, searchTarget, flag);
             }
         }
     },
@@ -367,7 +326,7 @@ export class CreatorForUI {
         this.domKeeper = new Map();
     }
 
-    setUpdateEventToParameter(searchTarget, path, event, flag) {
+    setUpdateEventByPath(searchTarget, path, event, flag) {
         const template = flag ? {g: this.groupID, f: flag} : {g: this.groupID};
         try {
             // pathをもとに参照
@@ -377,7 +336,7 @@ export class CreatorForUI {
                 searchTarget = this.globalInputObject;
             }
             if (path == "") {
-                managerForDOMs.set(Object.assign(template,{o: searchTarget}), null, event);
+                managerForDOMs.set(Object.assign(template,{o: searchTarget}), event);
             }
             const pathRoot = path.split("/");
             const root = pathRoot.slice(0, -1);
@@ -396,13 +355,13 @@ export class CreatorForUI {
                 }
             }
             if (lastIsParameter) {
-                managerForDOMs.set(Object.assign(template,{o: object, i: lastRoot}), null, event);
+                return managerForDOMs.set(Object.assign(template,{o: object, i: lastRoot}), event);
             } else {
                 const final = object[lastRoot];
                 if (isPassByReference(final)) {
-                    managerForDOMs.set(Object.assign(template,{o: final}), null, event);
+                    return managerForDOMs.set(Object.assign(template,{o: final}), event);
                 } else {
-                    managerForDOMs.set(Object.assign(template,{o: object, i: lastRoot}), null, event);
+                    return managerForDOMs.set(Object.assign(template,{o: object, i: lastRoot}), event);
                 }
             }
         } catch {
@@ -507,76 +466,77 @@ export class CreatorForUI {
     }
 
     // オブジェクトのパラメータと値を関連付ける
-    setWith(/** @type {HTMLElement} */t, withObject, searchTarget, flag) {
-        if (isPlainObject(withObject)) {
-            console.warn("構文が古いです", withObject);
-            console.trace();
-        } else {
-            let source = this.getParameter(searchTarget, withObject, 1);
-            if (!source) { // 取得できなかったら切り上げ
-                console.warn("UIとパラメータの連携ができませんでした", withObject, searchTarget);
-                if (t.type == "number" || t.type == "range") { // 数字型
-                    t.value = 0.5;
-                } else if (t.type == "color") {
-                    t.value = rgbToHex(0,0,0,1);
-                } else {
-                    t.value = "エラー";
-                }
-                return ;
-            }
-            // 値を関連づけ
-            let updateDOMsValue = null;
-            if (t.type == "checkbox") {
-                updateDOMsValue = () => {
-                    t.checked = source.value;
-                };
-            } else if (t.type == "range") {
-                updateDOMsValue = () => {
-                    t.value = source.value;
-                    updateRangeStyle(t);
-                };
+    setWith(/** @type {HTMLElement} */t, withObject, searchTarget, flag, useCommand = true) {
+        let source = this.getParameter(searchTarget, withObject, 1);
+        if (!source) { // 取得できなかったら切り上げ
+            console.warn("UIとパラメータの連携ができませんでした", withObject, searchTarget);
+            if (t.type == "number" || t.type == "range") { // 数字型
+                t.value = 0.5;
             } else if (t.type == "color") {
-                updateDOMsValue = () => {
-                    t.value = rgbToHex(...source.value);
-                };
+                t.value = rgbToHex(0,0,0,1);
             } else {
-                updateDOMsValue = () => {
-                    if (!isFocus(t)) {
-                        t.value = source.value;
-                    }
-                };
+                t.value = "エラー";
             }
-            updateDOMsValue();
-            this.setUpdateEventToParameter(searchTarget, withObject, updateDOMsValue, flag);
-            let command;
-            // イベントを作成
-            // t.addEventListener("change", () => {
-            t.addEventListener("input", () => {
-                let newValue;
-                if (t.type == "number" || t.type == "range") { // 数字型
-                    newValue = Number(t.value);
-                } else if (t.type == "checkbox") {
-                    newValue = t.checked;
-                } else if (t.type == "color") {
-                    const valueColor = hexToRgba(t.value, 1);
-                    newValue = valueColor;
-                } else if (t.tagName === "SELECT") {
-                    newValue = t.value;
-                } else {
-                    newValue = t.value;
+            return ;
+        }
+        // 値を関連づけ
+        let updateDOMsValue = null;
+        if (t.type == "checkbox") {
+            updateDOMsValue = () => {
+                t.checked = source.value;
+            };
+        } else if (t.type == "range") {
+            updateDOMsValue = () => {
+                t.value = source.value;
+                updateRangeStyle(t);
+            };
+        } else if (t.type == "color") {
+            updateDOMsValue = () => {
+                t.value = rgbToHex(...source.value);
+            };
+        } else {
+            updateDOMsValue = () => {
+                if (!isFocus(t)) {
+                    t.value = source.value;
                 }
+            };
+        }
+        let command;
+        // イベントを作成
+        // t.addEventListener("change", () => {
+        t.addEventListener("input", () => {
+            let newValue;
+            if (t.type == "number" || t.type == "range") { // 数字型
+                newValue = Number(t.value);
+            } else if (t.type == "checkbox") {
+                newValue = t.checked;
+            } else if (t.type == "color") {
+                const valueColor = hexToRgba(t.value, 1);
+                newValue = valueColor;
+            } else if (t.tagName === "SELECT") {
+                newValue = t.value;
+            } else {
+                newValue = t.value;
+            }
+            if (useCommand) {
                 if (command) {
                     command.update(newValue);
                 } else {
                     command = new ChangeParameterCommand(source.object, source.parameter, newValue);
                 }
-            });
+            } else {
+                changeParameter(source.object, source.parameter, newValue);
+            }
+        });
+        if (useCommand) {
             t.addEventListener("change", () => {
                 app.operator.appendCommand(command);
                 app.operator.execute();
                 command = null;
             })
         }
+        updateDOMsValue();
+        return this.setUpdateEventByPath(searchTarget, withObject, updateDOMsValue, flag);
     }
 
     setWithParameter(/** @type {HTMLElement} */t, withObject, searchTarget, flag, parameter) {
@@ -591,7 +551,7 @@ export class CreatorForUI {
             t[parameter] = source.value;
         };
         updateDOMsValue();
-        this.setUpdateEventToParameter(searchTarget, withObject, updateDOMsValue, flag);
+        this.setUpdateEventByPath(searchTarget, withObject, updateDOMsValue, flag);
         // let command;
         // // イベントを作成
         // t.addEventListener("input", () => {
@@ -652,19 +612,20 @@ export class CreatorForUI {
         let lastUpdateObjects = [];
         if (Array.isArray(list)) {
             // 内容の更新
-            const listUpdate = (o, gID, dom) => {
+            const listUpdate = () => {
                 // 消された要素を削除
                 for (const object of lastUpdateObjects) {
                     if (!list.includes(object)) {
-                        managerForDOMs.deleteDOM(object, this.groupID, listID);
+                        const data = managerForDOMs.get({o: object, g: this.groupID, i: listID});
+                        data[0].others.li.remove();
+                        managerForDOMs.delete({o: object, g: this.groupID, i: listID});
                     }
                 }
                 for (const object of list) {
                     if (!lastUpdateObjects.includes(object)) { // ない場合新規作成
-                        const li = document.createElement("div");
+                        const li = createTag(t, "div");
                         li.style.minHeight = "fit-content";
                         li.style.height = "fit-content";
-                        t.append(li);
                         li.addEventListener("click", () => {
                             if (isFunction(activeSource)) { // 関数の場合
                                 activeSource(list.indexOf(object),object);
@@ -681,30 +642,31 @@ export class CreatorForUI {
                                 }
                                 console.log(result,activeSource);
                             }
-                            managerForDOMs.update(list, listID + "選択情報");
+                            managerForDOMs.update({o: list, i: "@listTag" + listID + "選択情報"});
                         });
                         this.createFromChildren(li, liStruct, object, flag); // 子要素に伝播
-                        managerForDOMs.set({o: object, g: this.groupID, i: listID, f: flag}, li, null, null); // セット
+                        managerForDOMs.set({o: object, g: this.groupID, i: listID, f: flag}, null, {li: li}); // セット
                     }
                 }
                 lastUpdateObjects = [...list];
             }
 
             // 選択表示の更新
-            const listActive = (o, gID, t) => {
+            const listActive = () => {
                 console.log("アクティブ")
-                const createdTags = managerForDOMs.getGroupAndID(this.groupID, listID); // すでに作っている場合
+                const createdTags = managerForDOMs.get({g: this.groupID, i: listID}); // すでに作っている場合
                 createdTags.forEach((data, object) => {
                     let bool_ = false;
+                    const li = data.others.li;
                     if (getActiveDataFunction) {
                         bool_ = getActiveDataFunction(object);
                     } else {
                         bool_ = activeSource.value == object;
                     }
                     if (bool_) {
-                        data.dom.classList.add("activeColor");
+                        li.classList.add("activeColor");
                     } else {
-                        data.dom.classList.remove("activeColor");
+                        li.classList.remove("activeColor");
                         let bool__ = false;
                         if (getSelectsDataFunction) {
                             getSelectsDataFunction(object);
@@ -712,23 +674,23 @@ export class CreatorForUI {
                             bool__ = result.selects.includes(object);
                         }
                         if (bool__) {
-                            data.dom.classList.add("activeColor2");
+                            li.classList.add("activeColor2");
                         } else {
-                            data.dom.classList.remove("activeColor2");
+                            li.classList.remove("activeColor2");
                         }
                     }
                 })
             }
-            managerForDOMs.set({o: list, g: this.groupID, i: "_All" + listID, f: flag}, t, listUpdate, null);
-            managerForDOMs.set({o: list, g: this.groupID, i: listID + "選択情報", f: flag}, t, listActive, null);
-            managerForDOMs.update(list, "_All" + listID);
+            managerForDOMs.set({o: list, g: this.groupID, i: "@listTag" + listID, f: flag}, listUpdate);
+            managerForDOMs.set({o: list, g: this.groupID, i: "@listTag" + listID + "選択情報", f: flag}, listActive);
+            managerForDOMs.update({o: list, i: "@listTag" + listID});
         } else if (isPlainObject(list)) {
         }
         return result;
     }
 
     // 構造の配列をもとにDOMの構築
-    createFromChildren(/** @type {HTMLElement} */t, struct, searchTarget, flag = "defo", getChildren = false) {
+    createFromChildren(/** @type {HTMLElement} */t, struct, searchTarget, flag = "defo") {
         // const myChildrenTag = [...childrenTag];
         const myChildrenTag = [];
         for (const child of struct) {
@@ -741,51 +703,47 @@ export class CreatorForUI {
                 console.error(e)
                 console.log(child.tagType)
             }
-            if (element) {
-                if (child.style) {
-                    setStyle(element, child.style);
-                }
-                if (child.class) {
-                    setClass(element, child.class);
-                }
-                if (child.event) {
-                    for (const eventName in child.event) {
-                        element.addEventListener(eventName, () => {
-                            child.event[eventName](searchTarget, element);
-                        })
+            try {
+                if (element) {
+                    const setTarget = element instanceof HTMLElement ? element : element.element;
+                    if (child.style) {
+                        setStyle(setTarget, child.style);
                     }
-                }
-                if (child.id) {
-                    let id = "";
-                    if (child.id.path) {
-                        id = this.getParameter(searchTarget, child.id.path);
-                    } else {
-                        id = child.id;
+                    if (child.class) {
+                        setClass(setTarget, child.class);
                     }
-                    this.domKeeper.set(id, element);
-                }
-                if (child.label) {
-                    if (element instanceof HTMLElement) {
-                        element = setLabel(t, child.label, element);
-                    } else {
-                        element = setLabel(t, child.label, element.element);
+                    if (child.event) {
+                        for (const eventName in child.event) {
+                            setTarget.addEventListener(eventName, () => {
+                                child.event[eventName](searchTarget, element);
+                            })
+                        }
                     }
-                }
-                if (child.labelIn) {
-                    if (element instanceof HTMLElement) {
+                    if (child.id) {
+                        let id = "";
+                        if (child.id.path) {
+                            id = this.getParameter(searchTarget, child.id.path);
+                        } else {
+                            id = child.id;
+                        }
+                        this.domKeeper.set(id, element);
+                    }
+                    if (child.label) element = new LabelTag(setTarget, child.label);
+                    if (child.labelIn) {
                         const label = createTag(t, "label");
                         const span = createTag(label, "span");
                         span.textContent = child.labelIn;
-                        label.append(element);
+                        label.append(setTarget);
                     }
                 }
-                if (getChildren) {
-                    if (Array.isArray(element)) {
-                        myChildrenTag.push(...element);
-                    } else if (element) {
-                        myChildrenTag.push(element);
-                    }
-                }
+            } catch (e) {
+                console.error(e)
+                console.error("属性の付与に失敗しました", child)
+            }
+            if (Array.isArray(element)) {
+                myChildrenTag.push(...element);
+            } else {
+                myChildrenTag.push(element);
             }
         }
         return myChildrenTag;
@@ -838,7 +796,7 @@ export class CreatorForUI {
         this.globalInputObject = {};
         this.lists.clear();
         this.domKeeper.clear();
-        managerForDOMs.deleteGroup(this.groupID);
+        managerForDOMs.delete({g: this.groupID});
     }
 }
 

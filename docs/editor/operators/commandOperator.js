@@ -21,7 +21,7 @@ class CommandStack {
                 command.undo();
             }
             this.redoStack.push(commands);
-            managerForDOMs.update(this.history);
+            managerForDOMs.update({o: this.history});
         }
     }
 
@@ -37,7 +37,7 @@ class CommandStack {
                 }
             }
             this.history.push(commands);
-            managerForDOMs.update(this.history);
+            managerForDOMs.update({o: this.history});
         }
     }
 }
@@ -58,7 +58,7 @@ export class Operator {
 
     appendErrorLog(log) {
         this.errorLog.push({text: log});
-        managerForDOMs.update(this.errorLog);
+        managerForDOMs.update({o: this.errorLog});
     }
 
     execute() {
@@ -75,7 +75,7 @@ export class Operator {
         }
         this.stack.history.push(commandsToStack);
         this.stack.redoStack.length = 0; // 新しい操作をしたらRedoはリセット
-        managerForDOMs.update(this.stack.history);
+        managerForDOMs.update({o: this.stack.history});
     }
 }
 

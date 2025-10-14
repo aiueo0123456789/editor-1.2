@@ -1,5 +1,5 @@
 import { isLowerCase, isPlainObject } from "./utility.js";
-import { vec2 } from "./mathVec.js";
+import { mathVec2 } from "./mathVec.js";
 
 export function IsString(value) {
     return typeof value === "string" || value instanceof String;
@@ -123,8 +123,8 @@ class WebGPU {
             try {
                 device.queue.writeBuffer(buffer, offset ,data);
             } catch (e) {
-                console.warn("bufferの書き込み時", buffer, data, offset);
-                console.error(e);
+                // console.warn("bufferの書き込み時", buffer, data, offset);
+                // console.error(e);
             }
         } else {
             console.warn("GPUBufferを渡してください", buffer);
@@ -187,19 +187,23 @@ class WebGPU {
         return new Uint8Array(buffer);
     }
 
+    concatBuffer(bufferA,bufferB) {
+        const resultBuffer = this.createBuffer(bufferA.size + bufferB.size, bufferA.usage);
+        GPU.copyBuffer(bufferA, resultBuffer, 0, 0, bufferA.size);
+        GPU.copyBuffer(bufferB, resultBuffer, 0, bufferA.size, bufferB.size);
+        return resultBuffer;
+    }
+
     // ユニフォームバッファの作成
     createUniformBuffer(size, data = undefined, struct = ["f32"]) {
         if (size == 0) {
             return new EmptyGPUBuffer(GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
         } else if (data) {
-            const buffer = this.createBuffer(
+            return this.createBuffer(
                 size,
                 GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
-                true,
+                this.createBitData(data, struct),
             );
-            new Uint8Array(buffer.getMappedRange()).set(this.createBitData(data, struct));
-            buffer.unmap();
-            return buffer;
         } else {
             return this.createBuffer(
                 size,
@@ -213,14 +217,11 @@ class WebGPU {
         if (size == 0) {
             return new EmptyGPUBuffer(GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
         } else if (data) {
-            const buffer = this.createBuffer(
+            return this.createBuffer(
                 size,
                 GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
-                true,
+                this.createBitData(data, struct),
             );
-            new Uint8Array(buffer.getMappedRange()).set(this.createBitData(data, struct));
-            buffer.unmap();
-            return buffer;
         } else {
             return this.createBuffer(
                 size,
@@ -234,14 +235,11 @@ class WebGPU {
         if (size == 0) {
             return new EmptyGPUBuffer(GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST);
         } else if (data) {
-            const buffer = this.createBuffer(
+            return this.createBuffer(
                 size,
                 GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
-                true,
+                this.createBitData(data, struct),
             );
-            new Uint8Array(buffer.getMappedRange()).set(this.createBitData(data, struct));
-            buffer.unmap();
-            return buffer;
         } else {
             return this.createBuffer(
                 size,
@@ -250,7 +248,7 @@ class WebGPU {
         }
     }
 
-    createBuffer(size,usage,mappedAtCreation = false) {
+    createBuffer(size,usage,data = undefined) {
         size = this.alignTo4(size);
         if (Array.isArray(usage)) {
             const usageArray = usage;
@@ -267,11 +265,16 @@ class WebGPU {
                 usage |= element;
             }
         }
-        return device.createBuffer({
+        const buffer = device.createBuffer({
             size: size,
             usage: usage,
-            mappedAtCreation: mappedAtCreation,
+            mappedAtCreation: data ? true : false,
         });
+        if (data) {
+            new Uint8Array(buffer.getMappedRange()).set(data);
+            buffer.unmap();
+        }
+        return buffer;
     }
 
     setNaNToBuffer(buffer) {
@@ -1073,7 +1076,7 @@ class WebGPU {
     }
 
     copyBufferToNewBuffer(resource, offset = 0, copyBytlen = resource.size) {
-        const newBuffer = this.createStorageBuffer(copyBytlen, undefined, ["f32"]);
+        const newBuffer = this.createBuffer(copyBytlen, resource.usage);
         const copyCommandEncoder = device.createCommandEncoder();
 
         copyCommandEncoder.copyBufferToBuffer(
@@ -1148,7 +1151,7 @@ class WebGPU {
         object.BBox.width = [mappedRange[2], mappedRange[3]];
         object.BBox.width = mappedRange[2] - mappedRange[0];
         object.BBox.height = mappedRange[3] - mappedRange[1];
-        object.BBox.center = vec2.reverseScaleR(vec2.addR(object.BBox.min,object.BBox.max), 2);
+        object.BBox.center = mathVec2.reverseScaleR(mathVec2.addR(object.BBox.min,object.BBox.max), 2);
         readBuffer.unmap();
     }
 

@@ -10,24 +10,12 @@ struct BoneVertices {
     t: vec2<f32>,
 }
 
-struct Allocation {
-    vertexBufferOffset: u32,
-    animationBufferOffset: u32,
-    weightBufferOffset: u32,
-    MAX_VERTICES: u32,
-    MAX_ANIMATIONS: u32,
-    parentType: u32, // 親がなければ0
-    parentIndex: u32, // 親がなければ0
-    myType: u32,
-}
-
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
-@group(1) @binding(2) var<storage, read> relationships: array<u32>;
-@group(1) @binding(3) var<storage, read> verticesSelected: array<u32>;
-@group(1) @binding(4) var<storage, read> bonesSelected: array<u32>;
-@group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
+@group(1) @binding(2) var<storage, read> vertexSelected: array<u32>;
+@group(1) @binding(3) var<storage, read> boneSelected: array<u32>;
+@group(1) @binding(4) var<storage, read> relationships: array<u32>;
 
 const size = 0.05;
 
@@ -52,14 +40,6 @@ const pointData = array<vec2<f32>, 6>(
     vec2<f32>( 1.0,  1.0), // 右上
 );
 
-fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
-}
-
-fn getBoolFromIndex(index: u32) -> bool {
-    return getBoolFromBit(index / 32u, index % 32u);
-}
-
 // バーテックスシェーダー
 @vertex
 fn vmain(
@@ -67,7 +47,7 @@ fn vmain(
     @builtin(vertex_index) vertexIndex: u32
 ) -> VertexOutput {
     let point = pointData[vertexIndex % 6u];  // 12頂点の中から選択
-    let index = armatureAllocation.vertexBufferOffset + instanceIndex;
+    let index = instanceIndex;
     let bone = verticesPosition[index];
     let p = select(bone.h, bone.t, (vertexIndex % 12) / 6 == 1);
     let lenght = distance(bone.h, bone.t);
@@ -79,7 +59,7 @@ fn vmain(
     output.uv = point;
     output.kind = select(0.0, 1.0, (vertexIndex % 12) / 6 == 1);
     output.boneIndex = index;
-    output.color = select(boneColors[index], vec4<f32>(1.0,0.5,0.0,1.0), getBoolFromIndex(fixIndex));
+    output.color = select(boneColors[index], vec4<f32>(1.0,0.5,0.0,1.0), vertexSelected[fixIndex] == 1u);
     return output;
 }
 

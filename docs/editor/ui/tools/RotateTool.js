@@ -2,7 +2,7 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { RotateCommand } from "../../commands/transform/transform.js";
-import { vec2 } from "../../utils/mathVec.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class RotateModal {
@@ -33,34 +33,33 @@ export class RotateModal {
             if (!this.command) return ;
             this.command.update(this.values[0], "ローカル", this.values[1], this.values[2]);
         }
-        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, update, null);
     }
 
     async init() {
-        this.type = app.scene.state.currentMode;
+        this.type = app.context.currentMode;
         try {
             if (this.type == "メッシュ編集") {
-                this.command = new RotateCommand(this.type,app.scene.state.selectVertices);
+                this.command = new RotateCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
             } else if (this.type == "メッシュ頂点アニメーション編集") {
-                this.command = new RotateCommand(this.type, app.scene.state.selectVertices, {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+                this.command = new RotateCommand(this.type, app.context.selectVertices, {targetAnimation: app.context.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
             } else if (this.type == "ボーン編集") {
-                this.command = new RotateCommand(this.type,app.scene.state.selectVertices);
+                this.command = new RotateCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
             } else if (this.type == "ベジェ編集") {
-                this.command = new RotateCommand(this.type,app.scene.state.selectVertices);
+                this.command = new RotateCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
             } else if (this.type == "ベジェ頂点アニメーション編集") {
-                this.command = new RotateCommand(this.type, app.scene.state.selectVertices);
+                this.command = new RotateCommand(this.type, app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
             } else if (this.type == "ボーンアニメーション編集") {
-                this.command = new RotateCommand(this.type,app.scene.state.getSelectBones);
+                this.command = new RotateCommand(this.type,app.context.getSelectBones);
                 this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
             }
             this.command.setCenterPoint(this.center);
             app.operator.appendCommand(this.command);
-            managerForDOMs.update(this.values);
         } catch (error) {
             console.error(error)
             return {complete: true};
@@ -71,11 +70,11 @@ export class RotateModal {
         // console.log(inputManager)
         if (this.type == "ボーンアニメーション編集") {
             console.log(this.type)
-            this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
+            this.values[0] += mathVec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         } else {
-            this.values[0] += vec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
+            this.values[0] += mathVec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
         }
-        managerForDOMs.update(this.values);
+        managerForDOMs.update({o: this.values});
         return true;
     }
 

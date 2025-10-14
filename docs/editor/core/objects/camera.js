@@ -1,4 +1,4 @@
-import { vec2 } from "../../utils/mathVec.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { device, GPU } from "../../utils/webGPU.js";
 
@@ -11,8 +11,8 @@ export class Camera {
         this.cameraDataBuffer = GPU.createUniformBuffer((2 + 2 + 1 + 1) * 4, undefined, ["f32", "f32", "f32", "f32", "f32", "f32"]);
         this.displayRange = [1024,1024];
         this.updateBuffer();
-        managerForDOMs.set({o: this, i: "displayRange"}, null, () => {this.updateBuffer()});
-        managerForDOMs.update(this, "displayRange");
+        managerForDOMs.set({o: this, i: "displayRange"}, () => {this.updateBuffer()});
+        managerForDOMs.update({o: this, i: "displayRange"});
     }
 
     updateBuffer() {
@@ -22,6 +22,6 @@ export class Camera {
 
     updateCanvasSize(cvsSize) {
         this.displayRange = [...cvsSize];
-        managerForDOMs.update(this, "displayRange");
+        managerForDOMs.update({o: this, i: "displayRange"});
     }
 }

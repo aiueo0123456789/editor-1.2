@@ -1,7 +1,7 @@
 struct MeshAllocation {
     vertexBufferOffset: u32,
     meshBufferOffset: u32,
-    MAX_MESHES: u32,
+    meshesNum: u32,
     padding: u32,
 }
 
@@ -52,7 +52,7 @@ fn getMeshLoop(index: u32) -> vec3<u32> {
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    if (allocation.MAX_MESHES <= global_id.x) {
+    if (allocation.meshesNum <= global_id.x) {
         return;
     }
 
@@ -62,7 +62,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let arrayIndex: u32 = arrayStartIndex + global_id.x; // selectedのarrayIndex
     var meshIndex = meshIndexStart + global_id.x * 32;
     for (var bitIndex = 0u; bitIndex < 32u; bitIndex ++) { // selectedのbitIndex
-        if (allocation.meshBufferOffset <= meshIndex && meshIndex < allocation.meshBufferOffset + allocation.MAX_MESHES) { // チェック対象かの確認
+        if (allocation.meshBufferOffset <= meshIndex && meshIndex < allocation.meshBufferOffset + allocation.meshesNum) { // チェック対象かの確認
             let indexs = getMeshLoop(meshIndex) + allocation.vertexBufferOffset;
             if (hitTestPointTriangle(vertices[indexs.x],vertices[indexs.y],vertices[indexs.z])) {
                 setBit(arrayIndex, bitIndex);

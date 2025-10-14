@@ -22,6 +22,7 @@ import { PreviewerSpaceData } from "../ui/area/areas/Previewer/area_PreviewerSpa
 import { WorkSpaces } from "./workSpaces/workSpaces.js";
 import { Area_Timeline2 } from "../ui/area/areas/Timeline2/area_Timeline2.js";
 import { UI } from "./ui/ui.js";
+import { Context } from "./context/context.js";
 
 const allLanguageData = await loadFile("./config/language/language.json");
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
@@ -246,7 +247,6 @@ class AppOptions {
         } else {
             GPU.runComputeShader(calculateParentWeightForBezier, [group], Math.ceil(object.verticesNum / 64));
         }
-        runtimeObject.updateCPUDataFromGPUBuffer(object, {vertex: {weight: true}});
     }
 }
 
@@ -277,7 +277,7 @@ class AppConfig {
 
         this.MAX_GRAPHICMESH = 200; // グラフィックメッシュの最大数
         this.MAX_VERTICES_PER_GRAPHICMESH = 1000; // グラフィックメッシュあたりの最大頂点数
-        this.MAX_MESHES_PER_GRAPHICMESH = 2000; // グラフィックメッシュあたりの最大頂メッシュ数
+        this.meshesNum_PER_GRAPHICMESH = 2000; // グラフィックメッシュあたりの最大頂メッシュ数
         this.MAX_ANIMATIONS_PER_GRAPHICMESH = 10; // グラフィックメッシュあたりの最大アニメーション数
 
         this.MAX_BONEMODIFIER = 32; // アーマチュアの最大数
@@ -342,7 +342,7 @@ class AppConfig {
                     }},
                     {label: "削除", children: [
                         {label: "選択物", eventFn: () => {
-                            const command = new RemoveObjectCommand(this.app.scene.state.selectedObject);
+                            const command = new RemoveObjectCommand(this.app.context.selectedObjects);
                             this.app.operator.appendCommand(command);
                             this.app.operator.execute();
                         }},
@@ -379,17 +379,22 @@ class AppPerformance {
         this.usedJSHeapByteSize = 0; // 使用中のメモリ(B)
 
         this.domCount = 0;
+
+        this.lastGetTime = Date.now();
     }
 
     update() {
         if (performance.memory) {
-            changeParameter(this, "domCount", this.app.dom.querySelectorAll("*").length);
-            changeParameter(this, "jsHeapMByteSizeLimit", performance.memory.jsHeapSizeLimit / 1024 / 1024);
-            changeParameter(this, "jsHeapByteSizeLimit", performance.memory.jsHeapSizeLimit);
-            changeParameter(this, "totalJSHeapMByteSize", performance.memory.totalJSHeapSize / 1024 / 1024);
-            changeParameter(this, "totalJSHeapByteSize", performance.memory.totalJSHeapSize);
-            changeParameter(this, "usedJSHeapMByteSize", performance.memory.usedJSHeapSize / 1024 / 1024);
-            changeParameter(this, "usedJSHeapByteSize", performance.memory.usedJSHeapSize);
+            if (500 < Date.now() - this.lastGetTime) { // 0.5秒に一回
+                this.lastGetTime = Date.now();
+                changeParameter(this, "domCount", this.app.dom.querySelectorAll("*").length);
+                changeParameter(this, "jsHeapMByteSizeLimit", performance.memory.jsHeapSizeLimit / 1024 / 1024);
+                changeParameter(this, "jsHeapByteSizeLimit", performance.memory.jsHeapSizeLimit);
+                changeParameter(this, "totalJSHeapMByteSize", performance.memory.totalJSHeapSize / 1024 / 1024);
+                changeParameter(this, "totalJSHeapByteSize", performance.memory.totalJSHeapSize);
+                changeParameter(this, "usedJSHeapMByteSize", performance.memory.usedJSHeapSize / 1024 / 1024);
+                changeParameter(this, "usedJSHeapByteSize", performance.memory.usedJSHeapSize);
+            }
         }
     }
 }
@@ -402,6 +407,7 @@ export class Application { // 全てをまとめる
         this.options = new AppOptions(this);
         this.ui = new UI(this);
         this.scene = new Scene(this);
+        this.context = new Context(this);
         this.appConfig.stContextmenuItems();
 
         this.activeArea = null;

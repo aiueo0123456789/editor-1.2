@@ -1,6 +1,6 @@
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
-    @location(0) texCoord: vec2<f32>,
+    @location(0) uvForMask: vec2<f32>,
 };
 
 const pointData = array<vec4<f32>, 4>(
@@ -17,7 +17,8 @@ fn vmain(
     var output: VertexOutput;
     let point = pointData[vertexIndex];
     output.position = vec4<f32>(point.xy, 0.0, 1.0);
-    output.texCoord = point.zw;
+    output.uvForMask = point.zw;
+    output.uvForMask.y = 1.0 - output.uvForMask.y;
     return output;
 }
 
@@ -25,9 +26,8 @@ fn vmain(
 @group(0) @binding(1) var maskTexture: texture_2d<f32>;
 
 @fragment
-fn fmain(@location(0) texCoord: vec2<f32>) -> @location(0) vec4<f32> {
-    let uv = texCoord;
-    let color = vec4<f32>(1.0, 0.0, 0.0, textureSample(maskTexture, mySampler, uv).r * 0.5);
+fn fmain(@location(0) uvForMask: vec2<f32>) -> @location(0) vec4<f32> {
+    let color = vec4<f32>(1.0, 0.0, 0.0, textureSample(maskTexture, mySampler, uvForMask).r * 0.5);
 
     return color;
 }

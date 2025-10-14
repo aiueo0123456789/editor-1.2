@@ -1,6 +1,5 @@
 import { app } from "../../../../../main.js";
 import { managerForDOMs } from "../../../../utils/ui/util.js";
-import { Bone } from "../../armature.js";
 
 export class PhysicsAttachmentData {
     constructor(data) {
@@ -21,7 +20,7 @@ export class PhysicsAttachmentData {
         this.mix = data.mix;
         this.limit = data.limit;
 
-        managerForDOMs.set({o: this, i: "&all"}, null, () => {
+        managerForDOMs.set({o: this, i: "&all"}, () => {
             app.scene.runtimeData.armatureData.updateBaseData(this.bone.armature);
         });
     }

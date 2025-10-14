@@ -1,3 +1,4 @@
+import { ModalOperator } from "../../../../operators/modalOperator.js";
 import { managerForDOMs } from "../../../../utils/ui/util.js";
 import { GPU } from "../../../../utils/webGPU.js";
 
@@ -14,9 +15,11 @@ export class ViewerSpaceData {
         this.useTool = "select";
         this.smooth = false;
 
-        this.proportionalEditType = 0;
-        this.proportionalEditTypes = [0,1,2,3];
-        this.proportionalSize = 100;
+        this.proportionalMetaData = {
+            use: false,
+            type: "リニア",
+            size: 100,
+        }
 
         this.weightPaintMetaData = {
             boneIndex: 0,
@@ -24,6 +27,10 @@ export class ViewerSpaceData {
             weightValue: 1,
             paintSize: 100,
         }
+
+        this.areas = [];
+
+        // this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {});
 
         this.weightBezierType = 0;
         this.weightEditBoneIndexBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
@@ -36,8 +43,8 @@ export class ViewerSpaceData {
         const weightValueUpdate = () => {
         }
 
-        managerForDOMs.set({o: this.weightPaintMetaData, i: "weightValue"}, null, weightValueUpdate);
-        managerForDOMs.set({o: this.weightPaintMetaData, i: "boneIndex"}, null, weightIndexUpdate);
+        managerForDOMs.set({o: this.weightPaintMetaData, i: "weightValue"}, weightValueUpdate);
+        managerForDOMs.set({o: this.weightPaintMetaData, i: "boneIndex"}, weightIndexUpdate);
     }
 
     createModeSelectList() {

@@ -30,10 +30,10 @@ export class KeyframeTranslate {
         const update = () => {
             this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
         }
-        managerForDOMs.set({o: this.values, g: "_", i: "0"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "1"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "2"}, null, update, null);
-        managerForDOMs.set({o: this.values, g: "_", i: "3"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "0"}, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "1"}, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "2"}, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "3"}, update, null);
     }
 
     async init() {
@@ -50,7 +50,7 @@ export class KeyframeTranslate {
     mousemove(/** @type {InputManager} */inputManager) {
         this.values[0] += inputManager.movement[0];
         this.values[1] += inputManager.movement[1];
-        managerForDOMs.update(this.values);
+        managerForDOMs.update({o: this.values});
         return true;
     }
 

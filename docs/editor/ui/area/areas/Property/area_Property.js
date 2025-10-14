@@ -6,7 +6,7 @@ export class Area_Property {
         this.dom = area.main;
 
         this.struct = {
-            inputObject: {"outliner": app.scene.outliner, "scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
+            inputObject: {"scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
             DOM: [
                 {tagType: "section", name: "アニメーション", children: [
                     {tagType: "input", label: "開始", value: "scene/frame_start", type: "number", min: 0, max: 500, step: 1},
@@ -22,17 +22,17 @@ export class Area_Property {
                         app.operator.execute();
                     }, withObject: "scene/objects/maskTextures", options: {type: "min"}, liStruct:[
                         {tagType: "gridBox", axis: "c", allocation: "50% 1fr", children: [
-                            {tagType: "dbInput", value: "/name", options: {tagType: "text"}},
+                            {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
                             {tagType: "padding", size: "10px"},
                         ]},
                     ]}
                 ]},
                 {tagType: "section", name: "パラメーターコレクター", children: [
                     {tagType: "list", appendEvent: () => {
-                        // appendAnimationToObject(app.scene.state.activeObject, "新規");
+                        // appendAnimationToObject(app.context.activeObject, "新規");
                     }, deleteEvent: (animations) => {
                         for (const animation of animations) {
-                            // deleteAnimationToObject(app.scene.state.activeObject, animation);
+                            // deleteAnimationToObject(app.context.activeObject, animation);
                         }
                     }, withObject: "scene/objects/parameterManagers", options: {}, liStruct:[
                         {tagType: "nodeFromFunction", source: "/getNodeData"}
@@ -47,14 +47,5 @@ export class Area_Property {
 
         this.creatorForUI = area.creatorForUI;
         this.creatorForUI.create(area.main, this.struct);
-
-        this.update();
-    }
-
-    update() {
-        for (const object of app.scene.outliner.root) {
-            const div = document.createElement("div");
-            div.textContent = object.name;
-        }
     }
 }

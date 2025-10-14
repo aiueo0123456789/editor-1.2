@@ -11,7 +11,7 @@ export class ParameterManager {
             {tagType: "text", label: "test2", value: "aaa", targetValue: null}
         ];
         this.targets = [];
-        managerForDOMs.set({o: this.parameters, id: "&all"}, null, () => {
+        managerForDOMs.set({o: this.parameters, id: "&all"}, () => {
             for (const data of this.parameters) {
                 for (const object of this.targets) {
                     if (data.targetValue in object) {

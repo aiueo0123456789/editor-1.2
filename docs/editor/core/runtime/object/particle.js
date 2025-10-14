@@ -23,50 +23,24 @@ export class ParticleData extends RuntimeDataBase {
         this.offsetCreate();
     }
 
-    async updateCPUDataFromGPUBuffer(/** @type {Particle} */particle, updateContent = {vertex: {weight: true, base: true}}) {
-        this.write = true;
-        const baseArray = updateContent.vertex.base ? await GPU.getVerticesDataFromGPUBuffer(this.baseVertices.buffer, particle.runtimeOffsetData.pointOffset * 3, particle.verticesNum) : [];
-        const weightBlockArray = updateContent.vertex.weight ? await GPU.getStructDataFromGPUBuffer(this.weightBlocks.buffer, ["u32","u32","u32","u32","f32","f32","f32","f32"], particle.runtimeOffsetData.pointOffset * 3, particle.verticesNum) : [];
-        for (const point of particle.allPoint) {
-            for (let i = 0; i < 3; i ++) {
-                let vertex;
-                if (i == 0) {
-                    vertex = point.basePoint;
-                } else if (i == 1) {
-                    vertex = point.baseLeftControlPoint;
-                } else {
-                    vertex = point.baseRightControlPoint;
-                }
-                if (updateContent.vertex.base) {
-                    vertex.co = baseArray[point.index * 3 + i];
-                }
-                if (updateContent.vertex.weight) {
-                    vertex.parentWeight.indexs = weightBlockArray[point.index * 3 + i].slice(0,4);
-                    vertex.parentWeight.weights = weightBlockArray[point.index * 3 + i].slice(4,8);
-                }
-            }
-        }
-        this.write = false;
-    }
-
     updateBaseData(/** @type {Particle} */particle) {
         this.updateAllocationData(particle);
     }
 
     spawn(/** @type {Particle} */particle, /** @type {ParticleParameter} */ spawnObject) {
-        GPU.writeBuffer(this.renderingParticles.buffer, new Float32Array([...spawnObject.position, ...spawnObject.scale, spawnObject.angle, spawnObject.zIndex]), (particle.runtimeOffsetData.particleOffset + spawnObject.index) * this.renderingParticles.structByteSize);
-        GPU.writeBuffer(this.renderingUpdateDatas.buffer, new Float32Array([...spawnObject.velocity, ...spawnObject.scaleVelocity, spawnObject.angleVelocity, spawnObject.zIndexVelocity]), (particle.runtimeOffsetData.particleOffset + spawnObject.index) * this.renderingUpdateDatas.structByteSize);
+        GPU.writeBuffer(this.renderingParticles.buffer, new Float32Array([...spawnObject.position, ...spawnObject.scale, spawnObject.angle, spawnObject.zIndex]), (particle.runtimeOffsetData.start.particleOffset + spawnObject.index) * this.renderingParticles.structByteSize);
+        GPU.writeBuffer(this.renderingUpdateDatas.buffer, new Float32Array([...spawnObject.velocity, ...spawnObject.scaleVelocity, spawnObject.angleVelocity, spawnObject.zIndexVelocity]), (particle.runtimeOffsetData.start.particleOffset + spawnObject.index) * this.renderingUpdateDatas.structByteSize);
     }
 
     updateAllocationData(/** @type {Particle} */particle) {
         // 頂点オフセット, アニメーションオフセット, ウェイトオフセット, 頂点数, 最大アニメーション数, 親の型, 親のインデックス, パディング
         let allocationData = this.getAllocationData(particle);
-        GPU.writeBuffer(this.allocations.buffer, allocationData, (particle.runtimeOffsetData.allocationOffset * 8) * 4);
+        GPU.writeBuffer(this.allocations.buffer, allocationData, (particle.runtimeOffsetData.start.allocationOffset * 8) * 4);
         GPU.writeBuffer(particle.objectDataBuffer, allocationData);
     }
 
     getAllocationData(/** @type {Particle} */particle) {
-        return new Uint32Array([particle.runtimeOffsetData.particleOffset, particle.MAX_PARTICLES, 0, 0, 0, 0, 0, 0]);
+        return new Uint32Array([particle.runtimeOffsetData.start.particleOffset, particle.MAX_PARTICLES, 0, 0, 0, 0, 0, 0]);
     }
 
     setGroup() {

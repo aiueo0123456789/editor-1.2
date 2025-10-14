@@ -1,111 +1,61 @@
 import { app } from "../../../main.js";
-import { Bone } from "../../core/objects/armature.js";
-import { vec2 } from "../../utils/mathVec.js";
+import { BArmature } from "../../core/edit/BArmature.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { indexOfSplice, removeDuplicates } from "../../utils/utility.js";
 
 class Base {
     constructor(targets) {
-        /** @type {Bone[]} */
         this.targets = [...targets];
         this.armatures = removeDuplicates(targets.map(bone => bone.armature));
     }
 }
 
-export class BoneExtrudeMoveCommand extends Base {
-    constructor(targets) {
-        super(targets);
-        /** @type {Bone[]} */
-        this.createBones = [];
-        targets.forEach(parentBone => {
-            if (parentBone.baseHead.selected) {
-                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseHead.co}, baseTail: {co: [0,0]}, attachments: {
-                    type: "アタッチメント",
-                    list: [
-                        {
-                            type: "物理アタッチメント",
-                            x: 0,
-                            y: 0,
-                            rotate: 0,
-                            shearX: 0,
-                            scaleX: 0,
-                            inertia: 0,
-                            strength: 0,
-                            damping: 0,
-                            mass: 0,
-                            wind: 0,
-                            gravity: 0,
-                            mix: 0,
-                            limit: 0,
-                        }
-                    ]
-                }}));
-            }
-            if (parentBone.baseTail.selected) {
-                this.createBones.push(new Bone(parentBone.armature, {parent: parentBone, baseHead: {co: parentBone.baseTail.co}, baseTail: {co: [0,0]}, attachments: {
-                    type: "アタッチメント",
-                    list: [
-                        {
-                            type: "物理アタッチメント",
-                            x: 0,
-                            y: 0,
-                            rotate: 0,
-                            shearX: 0,
-                            scaleX: 0,
-                            inertia: 0,
-                            strength: 0,
-                            damping: 0,
-                            mass: 0,
-                            wind: 0,
-                            gravity: 0,
-                            mix: 0,
-                            limit: 0,
-                        }
-                    ]
-                }}));
-            }
-        });
+export class BoneExtrudeMoveCommand {
+    constructor() {
+        this.editObjects = app.scene.editData.allEditObjects;
         this.value = [0,0];
-        this.update([0,0]);
+        if (this.editObjects[0] instanceof BArmature) {
+            this.isBArmature = true;
+            this.createBonesIneditObject = {};
+            for (const editObject of this.editObjects) {
+                const bones = [];
+                this.createBonesIneditObject[editObject.id] = bones;
+                editObject.selectedVerticesCoordinates.forEach(co => {
+                    const bone = BArmature.createBone(co, co);
+                    editObject.bones.push(bone);
+                    bones.push({bone: bone, baseCo: co});
+                });
+            }
+        }
     }
 
-    update(value) {
+    extrudeMove(value) {
         this.value = [...value];
-        this.createBones.forEach(bone => {
-            vec2.add(bone.baseTail.co,bone.baseHead.co,this.value);
+        this.editObjects.forEach(editObject => {
+            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => mathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
+            editObject.updateGPUData();
         });
-        for (const armature of this.armatures) {
-            app.scene.runtimeData.armatureData.updateBaseData(armature);
-        }
     }
 
     execute() {
-        for (const armature of this.armatures) {
-            app.scene.runtimeData.armatureData.updateBaseData(armature);
-        }
+        this.editObjects.forEach(editObject => {
+            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => mathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
+            editObject.updateGPUData();
+        });
     }
 
     redo() {
-        this.createBones.forEach(bone => {
-            if (bone.parent) {
-                bone.parent.childrenBone.push(bone);
-            }
-            bone.armature.allBone.push(bone);
+        this.editObjects.forEach(editObject => {
+            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => editObject.bones.push(boneAndBaseCo.bone));
+            editObject.updateGPUData();
         });
-        for (const armature of this.armatures) {
-            app.scene.runtimeData.armatureData.updateBaseData(armature);
-        }
     }
 
     undo() {
-        this.createBones.forEach(bone => {
-            if (bone.parent) {
-                indexOfSplice(bone.parent.childrenBone, bone);
-            }
-            indexOfSplice(bone.armature.allBone, bone);
+        this.editObjects.forEach(editObject => {
+            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => indexOfSplice(editObject.bones, boneAndBaseCo.bone));
+            editObject.updateGPUData();
         });
-        for (const armature of this.armatures) {
-            app.scene.runtimeData.armatureData.updateBaseData(armature);
-        }
     }
 }
 

@@ -32,15 +32,11 @@ export class AnimationBlock {
     }
 
     appendAnimation(name = "名称未設定") {
-        if (this.animations.length < this.user.MAX_ANIMATIONS) {
-            const animation = new this.animationClass(name, this.user);
-            this.animations.push(animation);
-            managerForDOMs.update(this.animations);
-            managerForDOMs.update(this.animations.animationBlock);
-            return animation;
-        } else {
-            return null;
-        }
+        const animation = new this.animationClass(name, this.user);
+        this.animations.push(animation);
+        managerForDOMs.update({o: this.animations});
+        managerForDOMs.update({o: this.animations.animationBlock});
+        return animation;
     }
 
     deleteAnimation(animation) {
@@ -49,8 +45,8 @@ export class AnimationBlock {
             animation.destroy();
             this.animations.splice(index,1);
         }
-        managerForDOMs.update(this.animations);
-        managerForDOMs.update(this.animations.animationBlock);
+        managerForDOMs.update({o: this.animations});
+        managerForDOMs.update({o: this.animations.animationBlock});
     }
 
     searchAnimation(animationName) {
@@ -97,11 +93,11 @@ class AnimationBase {
     }
 
     get worldIndex() {
-        return this.user.runtimeOffsetData.animationOffset + this.user.MAX_VERTICES * this.index;
+        return this.user.runtimeOffsetData.start.animationOffset + this.user.verticesNum * this.index;
     }
 
     get worldWeightIndex() {
-        return this.user.runtimeOffsetData.animationWeightOffset + this.index;
+        return this.user.runtimeOffsetData.start.animationWeightOffset + this.index;
     }
 
     // gc対象にしてメモリ解放

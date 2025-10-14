@@ -25,11 +25,9 @@ export class RuntimeDatas {
 
     append(runtimeData, object) {
         runtimeData.append(object);
-        runtimeData.setOffset(object);
     }
 
     delete(runtimeData, object) {
         runtimeData.delete(object);
-        runtimeData.setAllObjectOffset();
     }
 }

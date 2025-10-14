@@ -1,7 +1,10 @@
 import { GPU } from "../../webGPU.js";
+import { CustomTag } from "../customTags.js";
+import { removeHTMLElementInObject } from "../util.js";
 
-export class TextureTag {
+export class TextureTag extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
+        super();
         this.canvas = document.createElement("canvas");
         this.texture = creatorForUI.getParameter(searchTarget, child.sourceTexture);
         this.canvas.style.width = "100%";
@@ -16,9 +19,5 @@ export class TextureTag {
         this.element.style.aspectRatio = 1 / 1;
         this.element.append(this.canvas);
         t.append(this.element);
-    }
-
-    remove() {
-        this.element.remove();
     }
 }

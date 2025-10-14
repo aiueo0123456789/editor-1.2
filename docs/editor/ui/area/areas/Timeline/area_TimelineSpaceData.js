@@ -1,6 +1,6 @@
 import { app } from "../../../../../main.js";
 import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
-import { vec2 } from "../../../../utils/mathVec.js";
+import { mathVec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {
     constructor() {
@@ -36,7 +36,7 @@ export class TimelineSpaceData {
     }
 
     getSelectVerticesCenter() {
-        return vec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
+        return mathVec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
     }
 
     get selectVertices() {
@@ -57,12 +57,12 @@ export class TimelineSpaceData {
 
     get getAllObject() {
         const result = [];
-        for (const object of app.scene.state.getSelcetInSelectedObject) { // ボーンやベジェ頂点など
+        for (const object of app.context.getSelcetInSelectedObject) { // ボーンやベジェ頂点など
             if ("keyframeBlockManager" in object) { // keyframeBlockManagerを持つものだけ
                 result.push(object)
             }
         }
-        for (const /** @type {GraphicMesh} */ object of app.scene.state.selectedObject) { // グラフィックメッシュなど
+        for (const /** @type {GraphicMesh} */ object of app.context.selectedObjects) { // グラフィックメッシュなど
             if ("animationBlock" in object) {
                 for (const keyframeBlock of object.animationBlock.animations) {
                     result.push(keyframeBlock)
@@ -102,7 +102,7 @@ export class TimelineSpaceData {
 
     getSelectedContainsKeys() {
         const result = [];
-        for (const bone of app.scene.state.activeObject.getSelectBones()) {
+        for (const bone of app.context.activeObject.getSelectBones()) {
             for (const keyframeBlock of bone.keyframeBlockManager.blocks) {
                 for (const keyData of keyframeBlock.keys) {
                     if (keyData.point.selected || keyData.leftHandle.selected || keyData.rightHandle.selected) {

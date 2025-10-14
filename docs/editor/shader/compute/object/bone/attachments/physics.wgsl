@@ -14,7 +14,7 @@ struct PhysicsAttachmentData {
     inertia: f32, // 慣性
     strength: f32, // 復元率
     damping: f32, // 減衰率
-    massInverse: f32, // 質量の逆数
+    mass: f32, // 質量の逆数
     wind: f32, // 風
     gravity: f32, // 重力
     mix: f32, // どれだけ適応するか
@@ -51,10 +51,32 @@ mat3x3(
     worldX, worldY, 1
 )
 */
-@group(0) @binding(0) var<storage, read_write> boneMatrixs: array<mat3x3<f32>>; // 出力
+@group(0) @binding(0) var<storage, read_write> boneMatrixs: array<f32>; // 出力
 @group(0) @binding(1) var<storage, read_write> baseBone: array<Bone>; // ローカルベースボーン
 @group(0) @binding(2) var<storage, read_write> physicsAttachmentDatas: array<PhysicsAttachmentData>; // 物理アタッチメント
 @group(1) @binding(0) var<storage, read> boneIndexs: array<u32>; // 適応するboneのindex
+
+fn getMatrix(index: u32) -> mat3x3<f32> {
+    let fixIndex = index * 9u;
+    return mat3x3<f32>(
+        vec3<f32>(boneMatrixs[fixIndex], boneMatrixs[fixIndex + 1], boneMatrixs[fixIndex + 2]),
+        vec3<f32>(boneMatrixs[fixIndex + 3], boneMatrixs[fixIndex + 4], boneMatrixs[fixIndex + 5]),
+        vec3<f32>(boneMatrixs[fixIndex + 6], boneMatrixs[fixIndex + 7], boneMatrixs[fixIndex + 8]),
+    );
+}
+
+fn setMatrix(index: u32, m: mat3x3<f32>) {
+    let fixIndex = index * 9u;
+    boneMatrixs[fixIndex] = m[0][0];
+    boneMatrixs[fixIndex + 1] = m[0][1];
+    boneMatrixs[fixIndex + 2] = m[0][2];
+    boneMatrixs[fixIndex + 3] = m[1][0];
+    boneMatrixs[fixIndex + 4] = m[1][1];
+    boneMatrixs[fixIndex + 5] = m[1][2];
+    boneMatrixs[fixIndex + 6] = m[2][0];
+    boneMatrixs[fixIndex + 7] = m[2][1];
+    boneMatrixs[fixIndex + 8] = m[2][2];
+}
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
@@ -72,19 +94,20 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     // attachmentData.translate = vec2<f32>(0.0,0.0);
     // attachmentData.mix = 1.0;
     // attachmentData.strength = 100.0;
-    // attachmentData.massInverse = 1.0 / 1000.0;
+    // attachmentData.mass = 1000.0;
     // attachmentData.limit = 100.0;
     let mix = attachmentData.mix;
     if (mix == 0.0) {
         return;
     }
 
+    let massInverse = 1.0 / attachmentData.mass;
     let x = attachmentData.translate.x > 0.0;
     let y = attachmentData.translate.y > 0.0;
     let rotateOrShearX = attachmentData.rotate > 0.0 || attachmentData.shearX > 0.0;
     let scaleX = attachmentData.scaleX > 0.0;
     let l = baseBone[boneIndex].length;
-    var boneMatrix = boneMatrixs[boneIndex];
+    var boneMatrix = getMatrix(boneIndex);
 
     let b = boneMatrix[2].xy;
     let i = attachmentData.inertia;
@@ -123,7 +146,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             }
             // 重力や風
             damping = pow(attachmentData.damping, 60.0 * delta);
-            let m = attachmentData.massInverse * delta;
+            let m = massInverse * delta;
             let e = attachmentData.strength;
             let w = attachmentData.wind * f;
             let g = attachmentData.gravity * f;
@@ -186,7 +209,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             if (damping == -1.0) {
                 damping = pow(attachmentData.damping, 60.0 * delta);
             }
-            let m = attachmentData.massInverse * delta;
+            let m = massInverse * delta;
             let e = attachmentData.strength;
             let w = attachmentData.wind;
             let g = -attachmentData.gravity;
@@ -259,5 +282,5 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
 
     physicsAttachmentDatas[boneIndex] = attachmentData;
-    boneMatrixs[boneIndex] = boneMatrix;
+    setMatrix(boneIndex, boneMatrix);
 }

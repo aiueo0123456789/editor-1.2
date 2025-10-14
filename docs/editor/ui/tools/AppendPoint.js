@@ -18,7 +18,7 @@ export class AppendPoint {
     }
 
     async init(input) {
-        this.command = new AppendPointCommand(app.scene.state.activeObject, input.position);
+        this.command = new AppendPointCommand(app.context.activeObject, input.position);
         return {complete: true};
     }
 }

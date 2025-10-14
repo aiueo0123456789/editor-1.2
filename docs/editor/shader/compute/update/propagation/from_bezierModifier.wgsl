@@ -66,9 +66,28 @@ fn rotate2D(point: vec2<f32>, angle: f32) -> vec2<f32> {
 }
 
 // アーマチュア
-@group(2) @binding(0) var<storage, read> boneMatrix: array<mat3x3<f32>>; // ボーンの行列
-@group(2) @binding(1) var<storage, read> baseBoneMatrix: array<mat3x3<f32>>; // ベースボーンの行列
+@group(2) @binding(0) var<storage, read> poseBoneMatrixArray: array<f32>; // ボーンの行列
+@group(2) @binding(1) var<storage, read> baseBoneMatrixArray: array<f32>; // ベースボーンの行列
 @group(2) @binding(2) var<storage, read> boneAllocationArray: array<Allocation>; // ボーンのメモリ配分
+
+fn getPoseMatrix(index: u32) -> mat3x3<f32> {
+    let fixIndex = index * 9u;
+    return mat3x3<f32>(
+        vec3<f32>(poseBoneMatrixArray[fixIndex], poseBoneMatrixArray[fixIndex + 1], poseBoneMatrixArray[fixIndex + 2]),
+        vec3<f32>(poseBoneMatrixArray[fixIndex + 3], poseBoneMatrixArray[fixIndex + 4], poseBoneMatrixArray[fixIndex + 5]),
+        vec3<f32>(poseBoneMatrixArray[fixIndex + 6], poseBoneMatrixArray[fixIndex + 7], poseBoneMatrixArray[fixIndex + 8]),
+    );
+}
+
+fn getBaseMatrix(index: u32) -> mat3x3<f32> {
+    let fixIndex = index * 9u;
+    return mat3x3<f32>(
+        vec3<f32>(baseBoneMatrixArray[fixIndex], baseBoneMatrixArray[fixIndex + 1], baseBoneMatrixArray[fixIndex + 2]),
+        vec3<f32>(baseBoneMatrixArray[fixIndex + 3], baseBoneMatrixArray[fixIndex + 4], baseBoneMatrixArray[fixIndex + 5]),
+        vec3<f32>(baseBoneMatrixArray[fixIndex + 6], baseBoneMatrixArray[fixIndex + 7], baseBoneMatrixArray[fixIndex + 8]),
+    );
+}
+
 fn inverseMat3x3(matrix: mat3x3<f32>) -> mat3x3<f32> {
     var inv: mat3x3<f32>;
     let a = matrix[0][0];
@@ -147,7 +166,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             let weight = weights[i];
             if (0.0 < weight) {
                 let boneIndex = indexs[i] + boneAllocationArray[allocation.parentIndex].vertexBufferOffset;
-                newPosition += weight * (boneMatrix[boneIndex] * inverseMat3x3(baseBoneMatrix[boneIndex]) * position).xy;
+                newPosition += weight * (getPoseMatrix(boneIndex) * inverseMat3x3(getBaseMatrix(boneIndex)) * position).xy;
             }
         }
     } else if (allocation.parentType == 0) { // 親なし

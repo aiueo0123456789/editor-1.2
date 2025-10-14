@@ -2,7 +2,7 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { ResizeCommand } from "../../commands/transform/transform.js";
-import { vec2 } from "../../utils/mathVec.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { ModalOperator } from "../../operators/modalOperator.js";
 
 export class ResizeModal {
@@ -33,35 +33,34 @@ export class ResizeModal {
         const update = () => {
             this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
         }
-        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, null, update, null);
+        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, update, null);
     }
 
     async init(/** @type {InputManager} */inputManager) {
         this.startPosition = [...inputManager.position];
-        this.type = app.scene.state.currentMode;
+        this.type = app.context.currentMode;
         try {
             if (this.type == "メッシュ編集") {
-                this.command = new ResizeCommand(this.type,app.scene.state.selectVertices);
+                this.command = new ResizeCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
             } else if (this.type == "メッシュ頂点アニメーション編集") {
-                this.command = new ResizeCommand(this.type, app.scene.state.getSelselectVerticesectVertices, {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
+                this.command = new ResizeCommand(this.type, app.context.getSelselectVerticesectVertices, {targetAnimation: app.context.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
             } else if (this.type == "ボーン編集") {
-                this.command = new ResizeCommand(this.type,app.scene.state.selectVertices);
+                this.command = new ResizeCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
             } else if (this.type == "ベジェ編集") {
-                this.command = new ResizeCommand(this.type,app.scene.state.selectVertices);
+                this.command = new ResizeCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
             } else if (this.type == "ベジェ頂点アニメーション編集") {
-                this.command = new ResizeCommand(this.type, app.scene.state.selectVertices);
+                this.command = new ResizeCommand(this.type, app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
             } else if (this.type == "ボーンアニメーション編集") {
-                this.command = new ResizeCommand(this.type,app.scene.state.getSelectBones);
+                this.command = new ResizeCommand(this.type,app.context.getSelectBones);
                 this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
             }
             this.command.setCenterPoint(this.center);
             app.operator.appendCommand(this.command);
-            managerForDOMs.update(this.values);
         } catch (error) {
             console.error(error)
             return {complete: true};
@@ -71,8 +70,8 @@ export class ResizeModal {
     mousemove(/** @type {InputManager} */inputManager) {
         // this.values[0] += inputManager.position[0];
         // this.values[1] += inputManager.position[1];
-        vec2.div(this.values, vec2.subR(inputManager.position, this.center), vec2.subR(this.startPosition, this.center));
-        managerForDOMs.update(this.values);
+        mathVec2.div(this.values, mathVec2.subR(inputManager.position, this.center), mathVec2.subR(this.startPosition, this.center));
+        managerForDOMs.update({o: this.values});
         return true;
     }
 

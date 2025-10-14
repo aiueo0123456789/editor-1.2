@@ -1,60 +1,13 @@
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
 import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
-import { arrayToArrayCopy, arrayToPush, changeParameter, indexOfSplice, IsString, waitUntilFrame } from "../../utils/utility.js";
-import { vec2 } from "../../utils/mathVec.js";
+import { arrayToArrayCopy, arrayToPush, changeParameter, indexOfSplice, IsString, range, waitUntilFrame } from "../../utils/utility.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { app } from "../../../main.js";
 import { Texture } from "./texture.js";
 import { MaskTexture } from "./maskTexture.js";
-
-class Vertex {
-    constructor(/** @type {GraphicMesh} */ graphicMesh, data) {
-        if (!data.parentWeight) data.parentWeight = {indexs: [0,0,0,0], weights: [1,0,0,0]};
-        this.type = "グラフィックメッシュ頂点";
-        this.selected = false;
-        this.graphicMesh = graphicMesh;
-        this.co = [...data.co];
-        this.uv = [...data.uv];
-        this.parentWeight = data.parentWeight;
-        this.updated = true;
-    }
-
-    get localIndex() {
-        return this.graphicMesh.allVertices.indexOf(this);
-    }
-
-    get worldIndex() {
-        return this.graphicMesh.runtimeOffsetData.vertexOffset + this.localIndex;
-    }
-
-    getSaveData() {
-        return {
-            index: this.localIndex,
-            co: this.co,
-            uv: this.uv,
-            parentWeight: this.parentWeight,
-        };
-    }
-}
-
-class Mesh {
-    constructor(/** @type {GraphicMesh} */ graphicMesh, index = graphicMesh.allMeshes.length, indexs) {
-        this.type == "メッシュ"
-        this.graphicMesh = graphicMesh;
-        this.index = index;
-        this.indexs = [...indexs];
-        graphicMesh.allMeshes.push(this);
-    }
-
-    getSaveData() {
-        return {
-            index: this.index,
-            indexs: this.indexs,
-        };
-    }
-}
 
 class Editor extends ObjectEditorBase {
     constructor(graphicMesh) {
@@ -84,8 +37,8 @@ class Editor extends ObjectEditorBase {
             this.graphicMesh.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.graphicMesh.objectMeshData, this.baseSilhouetteEdgesBuffer,  this.baseEdgesBuffer]);
         }
 
-        managerForDOMs.set({o: this.baseEdges, i: "&all"}, null, this.updateEdgeGPU);
-        managerForDOMs.set({o: this.baseSilhouetteEdges, i: "&all"}, null, this.updateEdgeGPU);
+        managerForDOMs.set({o: this.baseEdges, i: "&all"}, this.updateEdgeGPU);
+        managerForDOMs.set({o: this.baseSilhouetteEdges, i: "&all"}, this.updateEdgeGPU);
     }
 
     get baseEdgesNum() {
@@ -173,8 +126,6 @@ class Editor extends ObjectEditorBase {
                 }
             }
         }
-        managerForDOMs.update(this.baseSilhouetteEdges);
-        // managerForDOMs.update(this.baseEdges);
     }
 
     hasEdge(edge) {
@@ -206,7 +157,6 @@ class Editor extends ObjectEditorBase {
             }
         }
         this.createMesh();
-        managerForDOMs.update(this.baseEdges);
     }
 
     // 頂点たちからUV
@@ -219,12 +169,12 @@ class Editor extends ObjectEditorBase {
     }
     // ローカルポジションからUV
     calculatLocalPositionToUV(position) {
-        const a = vec2.mulR(vec2.addR(position, [this.imageBBox.width / 2, this.imageBBox.height / 2]), [1 / this.imageBBox.width, 1 / this.imageBBox.height]);
+        const a = mathVec2.mulR(mathVec2.addR(position, [this.imageBBox.width / 2, this.imageBBox.height / 2]), [1 / this.imageBBox.width, 1 / this.imageBBox.height]);
         return [a[0], 1 - a[1]];
     }
     // ワールドポジションからUV
     calculatWorldPositionToUV(position) {
-        const a = vec2.mulR(vec2.subR(position, this.imageBBox.min), [1 / this.imageBBox.width, 1 / this.imageBBox.height]);
+        const a = mathVec2.mulR(mathVec2.subR(position, this.imageBBox.min), [1 / this.imageBBox.width, 1 / this.imageBBox.height]);
         return [a[0], 1 - a[1]];
     }
 
@@ -235,7 +185,7 @@ class Editor extends ObjectEditorBase {
     // ローカルポジションからワールドポジション
     calculateLocalPositionToWorldPosition(position) {
         // return vec2.addR(position, this.BBox.center);
-        return vec2.addR(position, this.imageBBox.center);
+        return mathVec2.addR(position, this.imageBBox.center);
     }
 
     createVertex(coordinate) {
@@ -261,10 +211,6 @@ export class GraphicMesh extends ObjectBase {
         super(data.name, "グラフィックメッシュ", data.id);
         this.runtimeData = app.scene.runtimeData.graphicMeshData;
 
-        this.MAX_VERTICES = app.appConfig.MAX_VERTICES_PER_GRAPHICMESH;
-        this.MAX_ANIMATIONS = app.appConfig.MAX_ANIMATIONS_PER_GRAPHICMESH;
-        this.MAX_MESHES = app.appConfig.MAX_MESHES_PER_GRAPHICMESH;
-
         this.baseTransformIsLock = false;
         this.visible = true;
         this.zIndex = 0;
@@ -284,10 +230,9 @@ export class GraphicMesh extends ObjectBase {
         // その他
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
-        /** @type {Vertex[]} */
         this.allVertices = [];
-
-        /** @type {Mesh[]} */
+        this.allUVs = [];
+        this.allWeightBlocks = [];
         this.allMeshes = [];
 
         this.baseEdges = [];
@@ -308,7 +253,7 @@ export class GraphicMesh extends ObjectBase {
         this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.objectMeshData, this.editor.baseSilhouetteEdgesBuffer, this.editor.baseEdgesBuffer]);
         this.init(data);
 
-        managerForDOMs.set({o: this, i: "zIndex"}, null, () => {
+        managerForDOMs.set({o: this, i: "zIndex"}, () => {
             GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
         })
     }
@@ -333,15 +278,23 @@ export class GraphicMesh extends ObjectBase {
         }
     }
 
+    // 頂点のworldIndexs
+    get VWs() {
+        return range(this.runtimeOffsetData.start.vertexOffset, this.runtimeOffsetData.end.vertexOffset);
+    }
+
     get animationWorldOffset() {
         return this.animationBufferOffset * GraphicMesh.VERTEX_LEVEL;
     }
 
     get verticesNum() {
-        return this.allVertices.length;
+        return this.allVertices.length / 2;
     }
     get meshesNum() {
-        return this.allMeshes.length;
+        return this.allMeshes.length / 3;
+    }
+    get animationsNum() {
+        return this.animationBlock.animations.length;
     }
 
     // gc対象にしてメモリ解放
@@ -369,10 +322,13 @@ export class GraphicMesh extends ObjectBase {
         this.autoWeight = data.autoWeight ? data.autoWeight : true;
 
         for (const vertex of data.vertices) {
-            this.allVertices.push(new Vertex(this, vertex));
+            this.allVertices.push(...vertex.co);
+            this.allUVs.push(...vertex.uv);
+            this.allWeightBlocks.push(...vertex.parentWeight.indexs);
+            this.allWeightBlocks.push(...vertex.parentWeight.weights);
         }
         for (const mesh of data.meshes) {
-            new Mesh(this, undefined, mesh.indexs);
+            this.allMeshes.push(...mesh.indexs);
         }
         if (data.animationKeyDatas) {
             data.animationKeyDatas.forEach((keyData,index) => {
@@ -409,7 +365,8 @@ export class GraphicMesh extends ObjectBase {
 
     changeClippingMask(target) {
         if (this.clippingMask) {
-            managerForDOMs.deleteDataBlockFromObjectAndID(this.clippingMask, "view", this.managerForDOMs_clippingMask_view_dataBlock);
+            // managerForDOMs.deleteData(this.clippingMask, "view", this.managerForDOMs_clippingMask_view_dataBlock);
+            managerForDOMs.deleteDataBlock(this.managerForDOMs_clippingMask_view_dataBlock);
         }
         this.clippingMask = target;
         const updateGroup = () => {
@@ -417,7 +374,7 @@ export class GraphicMesh extends ObjectBase {
             this.setGroup();
         }
         updateGroup();
-        this.managerForDOMs_clippingMask_view_dataBlock = managerForDOMs.set({o: this.clippingMask, i: "view"}, null, updateGroup);
+        this.managerForDOMs_clippingMask_view_dataBlock = managerForDOMs.set({o: this.clippingMask, i: "view"}, updateGroup);
     }
 
     changeRenderingTarget(target) {

@@ -10,8 +10,9 @@ export class TranslateModal {
         this.command = null;
         this.values = [
             0,0, // スライド量
-            app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
-            app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
+            app.appConfig.areasConfig["Viewer"].proportionalMetaData.use, // useProportionalEdit
+            app.appConfig.areasConfig["Viewer"].proportionalMetaData.type, // proportionalType
+            app.appConfig.areasConfig["Viewer"].proportionalMetaData.size // proportionalSize
         ];
         this.sumMovement = [0,0];
         this.modal = {
@@ -19,10 +20,11 @@ export class TranslateModal {
             DOM: [
                 {tagType: "div", class: "shelfe", children: [
                     {tagType: "title", text: "TranslateModal", class: "shelfeTitle"},
-                    {tagType: "input", label: "x", value: "value/0", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
-                    {tagType: "input", label: "y", value: "value/1", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
-                    {tagType: "input", label: "スムーズ", value: "value/2", type: "number",min: 0, max: 2},
-                    {tagType: "input", label: "半径", value: "value/3", type: "number",min: 0, max: 10000},
+                    {tagType: "input", label: "x", value: "value/0", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                    {tagType: "input", label: "y", value: "value/1", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                    {tagType: "input", label: "プロポーショナル編集", type: "checkbox", checked: "value/2", look: {check: "check", uncheck: "uncheck"}, useCommand: false},
+                    {tagType: "select", label: "種類", value: "value/3", sourceObject: ["リニア", "逆二乗", "一定"], options: {initValue: {path: "value/4"}}, useCommand: false},
+                    {tagType: "input", label: "半径", value: "value/4", type: "number", min: 0, max: 10000, useCommand: false},
                 ]}
             ]
         };
@@ -31,38 +33,18 @@ export class TranslateModal {
 
         const update = () => {
             if (!this.command) return ;
-            this.command.update([this.values[0],this.values[1]], "ローカル", this.values[2], this.values[3]);
+            this.command.transform([this.values[0],this.values[1]], this.values[2], this.values[3], this.values[4]);
         }
-        managerForDOMs.set({o: this.values, g: "_", i: "&all"}, null, update, null);
+        managerForDOMs.set({o: this.values, i: "&all"}, update, null);
     }
 
-    async init() {
-        this.type = app.scene.state.currentMode;
+    init() {
+        this.type = app.context.currentMode;
         try {
-            if (this.type == "メッシュ編集") {
-                this.command = new TranslateCommand(this.type,app.scene.state.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (this.type == "メッシュ頂点アニメーション編集") {
-                this.command = new TranslateCommand(this.type, app.scene.state.selectVertices, {targetAnimation: app.scene.state.activeObject.animationBlock.activeAnimation});
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (this.type == "ボーン編集") {
-                this.command = new TranslateCommand(this.type,app.scene.state.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
-            } else if (this.type == "ベジェ編集") {
-                this.command = new TranslateCommand(this.type,app.scene.state.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (this.type == "ベジェ頂点アニメーション編集") {
-                this.command = new TranslateCommand(this.type, app.scene.state.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (this.type == "ボーンアニメーション編集") {
-                this.command = new TranslateCommand(this.type,app.scene.state.getSelectBones);
-                this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
-            }
-            this.command.setCenterPoint(this.center);
+            this.command = new TranslateCommand();
             app.operator.appendCommand(this.command);
-            managerForDOMs.update(this.values);
         } catch (error) {
-            console.error(error)
+            console.error(error);
             return {complete: true};
         }
     }
@@ -80,7 +62,7 @@ export class TranslateModal {
             this.values[0] = this.sumMovement[0];
             this.values[1] = this.sumMovement[1];
         }
-        managerForDOMs.update(this.values);
+        managerForDOMs.update({o: this.values});
         return true;
     }
 

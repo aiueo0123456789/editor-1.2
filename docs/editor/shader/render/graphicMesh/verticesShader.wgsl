@@ -5,40 +5,21 @@ struct Camera {
     padding: f32,
 }
 
-struct Allocation {
-    vertexBufferOffset: u32,
-    animationBufferOffset: u32,
-    weightBufferOffset: u32,
-    MAX_VERTICES: u32,
-    MAX_ANIMATIONS: u32,
-    parentType: u32, // 親がなければ0
-    parentIndex: u32, // 親がなければ0
-    myType: u32,
-}
-
-struct MeshLoop {
-    indexs: vec4<f32>,
-}
-
-struct WeightBlock {
-    indexs: vec4<u32>,
-    weights: vec4<f32>,
-}
-
 @group(0) @binding(0) var<uniform> camera: Camera;
-@group(1) @binding(0) var<storage, read> verticesPosition: array<vec2<f32>>;
-@group(1) @binding(1) var<storage, read> meshLoops: array<MeshLoop>;
-@group(1) @binding(2) var<storage, read> verticesSelected: array<u32>;
-@group(1) @binding(3) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
-@group(2) @binding(0) var<uniform> objectData: Allocation;
+@group(1) @binding(0) var<storage, read> verticesCoordinates: array<vec2<f32>>;
+@group(1) @binding(1) var<storage, read> verticesUVs: array<vec2<f32>>;
+@group(1) @binding(2) var<storage, read> silhouetteEdges: array<vec2<u32>>; // シルエットの辺
+@group(1) @binding(3) var<storage, read> edges: array<vec2<u32>>; // 辺
+@group(1) @binding(4) var<storage, read> meshLoops: array<u32>;
+@group(1) @binding(5) var<storage, read> vertexSelected: array<u32>;
+@group(1) @binding(6) var<storage, read> silhouetteEdgeSelectedBuffer: array<u32>;
+@group(1) @binding(7) var<storage, read> edgeSelected: array<u32>;
+@group(1) @binding(8) var<storage, read> meshSelected: array<u32>;
+@group(1) @binding(9) var<uniform> zIndex: f32;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>, // クリッピング座標系での頂点位置
     @location(0) color: vec4<f32>,
-}
-
-fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
 }
 
 const size = 5.0;
@@ -57,17 +38,15 @@ fn vmain(
     @builtin(vertex_index) vertexIndex: u32
     ) -> VertexOutput {
     var output: VertexOutput;
-    let fixIndex = objectData.vertexBufferOffset + instanceIndex;
-    let verticesSelectedArrayIndex = fixIndex / 32u;
-    let flagBitIndex = fixIndex % 32u;
 
     let point = pointData[vertexIndex % 4u];
-    output.position = vec4f(((verticesPosition[fixIndex] - camera.position) * camera.zoom + point.xy * size) * camera.cvsSize, 0, 1.0);
-    output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), getBoolFromBit(verticesSelectedArrayIndex, flagBitIndex));
+    output.position = vec4f(((verticesCoordinates[instanceIndex] - camera.position) * camera.zoom + point.xy * size) * camera.cvsSize, 0, 1.0);
+    output.color = select(vec4f(0,0,0,1), vec4f(1,0,0,1), vertexSelected[instanceIndex] == 1u);
     return output;
 }
 
 @group(0) @binding(1) var mySampler: sampler;
+@group(1) @binding(10) var myTexture: texture_2d<f32>;
 
 struct FragmentOutput {
     @location(0) color: vec4<f32>,   // カラーバッファ (通常は0番目の出力)

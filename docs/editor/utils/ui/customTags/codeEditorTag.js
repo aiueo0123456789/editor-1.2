@@ -2,8 +2,9 @@ import { app } from "../../../../main.js";
 import { TextEditor_textSplice } from "../../../commands/textEditor/textEditorCommand.js";
 import { isNumber } from "../../utility.js";
 import { tagCreater } from "../creatorForUI.js";
+import { CustomTag } from "../customTags.js";
 import { AutoGrid, createGrid } from "../grid.js";
-import { createIcon, createTag, managerForDOMs, setClass, setLabel, setStyle } from "../util.js";
+import { createIcon, createTag, managerForDOMs, removeHTMLElementInObject, setClass, setLabel, setStyle } from "../util.js";
 
 function createGroup(t, name) {
     const container = createTag(t, "div");
@@ -41,8 +42,9 @@ function createUtil(t, name) {
     return inner;
 }
 
-export class CodeEditorTag {
+export class CodeEditorTag extends CustomTag {
     constructor (creatorForUI,t,searchTarget,child,flag) {
+        super();
         const builtInFunction = [{name: "noise", return: "f32"}, {name: "arrayLength", return: "u32"}, {name: "vec2f", return: "f32"}, {name: "vec3f", return: "f32"}, {name: "vec4f", return: "f32"}, {name: "fract", return: "f32"}, {name: "floor", return: "f32"}, {name: "mix", return: "f32"}, {name: "abs", return: "f32"}, {name: "dot", return: "f32"}];
         this.sourceCode = creatorForUI.getParameter(searchTarget, child.source, 1);
         /** @type {HTMLElement} */
@@ -696,11 +698,7 @@ export class CodeEditorTag {
         }
         viewUpdate();
         debuglogUpdate();
-        managerForDOMs.set({o: this.sourceCode.object, i: this.sourceCode.parameter, g: creatorForUI.groupID, f: flag}, null, viewUpdate);
-        managerForDOMs.set({o: this.sourceCode.object, i: "result", g: creatorForUI.groupID, f: flag}, null, debuglogUpdate);
-    }
-
-    remove() {
-        this.container.remove();
+        managerForDOMs.set({o: this.sourceCode.object, i: this.sourceCode.parameter, g: creatorForUI.groupID, f: flag}, viewUpdate);
+        managerForDOMs.set({o: this.sourceCode.object, i: "result", g: creatorForUI.groupID, f: flag}, debuglogUpdate);
     }
 }

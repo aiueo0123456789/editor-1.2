@@ -1,9 +1,12 @@
 import { app } from "../../../../main.js";
+import { CustomTag } from "../customTags.js";
+import { managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
 const hadClass = {};
 
-export class InputCheckboxTag {
+export class InputCheckboxTag extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
+        super();
         this.checkbox = document.createElement("input");
         this.checkbox.type = "checkbox";
         this.checkbox.style.display = "none";
@@ -28,13 +31,9 @@ export class InputCheckboxTag {
         const icon = document.createElement("span");
         icon.classList.add(className)
         if (child.checked) {
-            creatorForUI.setWith(this.checkbox, child.checked, searchTarget, flag);
+            this.dataBlocks = [creatorForUI.setWith(this.checkbox, child.checked, searchTarget, flag, child.useCommand)];
         }
         this.element.append(this.checkbox,icon);
         t.append(this.element);
-    }
-
-    remove() {
-        this.element.remove();
     }
 }

@@ -5,19 +5,19 @@ export class BoneAttachmentsModal {
         this.name = "ボーンアタッチメント";
         this.values = [0,0,0,0];
         this.struct = {
-            inputObject: {"areasConifg": app.appConfig.areasConfig, "outliner": app.scene.outliner, "scene": app.scene, "values": this.values},
+            inputObject: {"areasConifg": app.appConfig.areasConfig, "scene": app.scene, "values": this.values},
             DOM: [
                 {tagType: "div", class: "sideBar-shelfe", children: [
                     {tagType: "section", name: "ボーンアタッチメント", children: [
                         {tagType: "path", sourceObject: "scene/runtimeData/armatureData/getSelectBones", updateEventTarget: "ボーン選択", children: [
-                            {tagType: "select", label: "", writeObject: null, sourceObject: ["物理"], options: {initValue: "アタッチメントの追加", writeObject: (value) => {
-                                app.scene.state.getSelectBones[0].attachments.append(value);
+                            {tagType: "select", label: "", value: null, sourceObject: ["物理"], options: {initValue: "アタッチメントの追加", value: (value) => {
+                                app.context.getSelectBones[0].attachments.append(value);
                             }}},
                             {tagType: "list", appendEvent: () => {
-                                // appendAnimationToObject(app.scene.state.activeObject, "新規");
+                                // appendAnimationToObject(app.context.activeObject, "新規");
                             }, deleteEvent: (animations) => {
                                 for (const animation of animations) {
-                                    // deleteAnimationToObject(app.scene.state.activeObject, animation);
+                                    // deleteAnimationToObject(app.context.activeObject, animation);
                                 }
                             }, withObject: "/0/attachments/list", options: {}, liStruct:[
                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "物理アタッチメント"},

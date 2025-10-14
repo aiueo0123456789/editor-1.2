@@ -1,0 +1,55 @@
+import { app } from "../../../main.js";
+import { mathVec2 } from "../../utils/mathVec.js";
+
+export class SelectOnlyVertexCommand {
+    constructor(point,multiple) {
+        this.multiple = multiple;
+        this.targetObjects = app.context.selectedObjects;
+        this.editObjects = this.targetObjects.map(object => app.scene.editData.getEditObjectByObject(object)); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
+        let minDis = Infinity;
+        let minIndex = 0;
+        let minObjectID = 0;
+        this.originalSelectData = {};
+        this.editObjects.forEach(editObject => {
+            const objectID = editObject.id;
+            this.originalSelectData[objectID] = editObject.verticesSelectData;
+            const vertices = editObject.verticesCoordinates;
+            for (const vertex of vertices) {
+                const dist = mathVec2.distanceR(vertex, point);
+                if (dist < minDis) {
+                    minDis = dist;
+                    minIndex = vertices.indexOf(vertex);
+                    minObjectID = objectID;
+                }
+            }
+        })
+        this.selectData = {};
+        this.selectData[minObjectID] = [minIndex];
+    }
+
+    execute() {
+        this.editObjects.forEach(editObject => {
+            const objectID = editObject.id;
+            if (this.multiple) {
+                editObject.selectedClear();
+            }
+            if (this.selectData[objectID]) {
+                editObject.select(this.selectData[objectID]);
+            }
+        })
+    }
+
+    undo() {
+        this.editObjects.forEach(editObject => {
+            const objectID = editObject.id;
+            editObject.selectedClear();
+            const originalIndexs = [];
+            this.originalSelectData[objectID].forEach((bool, index) => {
+                if (bool) {
+                    originalIndexs.push(index);
+                }
+            })
+            editObject.select(originalIndexs);
+        })
+    }
+}

@@ -1,4 +1,4 @@
-import { vec2 } from "../../utils/mathVec.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { changeParameter } from "../../utils/utility.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
 
@@ -62,7 +62,7 @@ class Handle {
     }
 
     get worldPosition() {
-        return vec2.addR(this.basePoint.worldPosition, this.localPosition);
+        return mathVec2.addR(this.basePoint.worldPosition, this.localPosition);
     }
 }
 
@@ -133,14 +133,13 @@ export class KeyframeBlock {
             }
         }
         this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
-        managerForDOMs.update(this);
-        managerForDOMs.update(this, "keys");
-        // managerForDOMs.update("タイムライン-canvas");
+        managerForDOMs.update({o: this});
+        managerForDOMs.update({o: this, i: "keys"});
     }
 
     deleteKeyframe(key) {
         this.keys.splice(this.keys.indexOf(key),1);
-        managerForDOMs.update(this);
+        managerForDOMs.update({o: this});
     }
 
     setKeyframe(data) {
@@ -148,7 +147,7 @@ export class KeyframeBlock {
             const keyframe =  new Keyframe(this, key);
             this.keys.push(keyframe);
         }
-        managerForDOMs.update("タイムライン-canvas");
+        managerForDOMs.update({o: "タイムライン-canvas"});
     }
 
     getKeyFromFrame(frame, threshold = 0.5) {

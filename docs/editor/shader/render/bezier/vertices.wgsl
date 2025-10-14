@@ -11,27 +11,9 @@ struct Bezier {
     c2: vec2<f32>,
 }
 
-struct Allocation {
-    vertexBufferOffset: u32,
-    animationBufferOffset: u32,
-    weightBufferOffset: u32,
-    MAX_VERTICES: u32,
-    MAX_ANIMATIONS: u32,
-    parentType: u32, // 親がなければ0
-    parentIndex: u32, // 親がなければ0
-    myType: u32,
-}
-
-struct WeightBlock {
-    indexs: vec4<u32>,
-    weights: vec4<f32>,
-}
-
 @group(0) @binding(0) var<uniform> camera: Camera;
-@group(1) @binding(0) var<storage, read> verticesPosition: array<Bezier>;
-@group(1) @binding(1) var<storage, read> verticesSelected: array<u32>;
-@group(1) @binding(2) var<storage, read> weightBlocks: array<WeightBlock>; // indexと重みのデータ
-@group(2) @binding(0) var<uniform> bezierModifierAllocation: Allocation; // 配分情報
+@group(1) @binding(0) var<storage, read> verticesPosition: array<array<vec2<f32>, 3>>;
+@group(1) @binding(1) var<storage, read> verticesSelected: array<u32>; // array<vec3<u32>>だとpaddingが入る
 
 const size = 10.0;
 
@@ -40,14 +22,6 @@ struct VertexOutput {
     @location(0) uv: vec2<f32>,
     @location(1) kind: f32,
     @location(2) color: vec4<f32>,
-}
-
-fn getBoolFromBit(arrayIndex: u32, bitIndex: u32) -> bool {
-    return ((verticesSelected[arrayIndex] >> bitIndex) & 1u) == 1u;
-}
-
-fn getBoolFromIndex(index: u32) -> bool {
-    return getBoolFromBit(index / 32u, index % 32u);
 }
 
 fn worldPosToClipPos(position: vec2<f32>) -> vec4<f32> {
@@ -69,16 +43,16 @@ fn vmain(
     @builtin(instance_index) instanceIndex: u32,
     @builtin(vertex_index) vertexIndex: u32
 ) -> VertexOutput {
-    let index = bezierModifierAllocation.vertexBufferOffset + instanceIndex;
-    let point = pointData[vertexIndex % 6u];  // 12頂点の中から選択
+    let index = instanceIndex;
+    let point = pointData[vertexIndex % 6u]; // 12頂点の中から選択
     let bezier = verticesPosition[index];
     let vertexType = (vertexIndex % 18) / 6;
-    let p = select(select(bezier.c1, bezier.c2, vertexType == 2), bezier.p, vertexType == 0);
+    let p = bezier[vertexType];
     var output: VertexOutput;
     output.position = worldPosToClipPos(p + (point * size) / camera.zoom);
     output.uv = point;
     output.kind = select(1.0, 0.0, vertexType == 0);
-    output.color = select(vec4<f32>(0.0,1.0,0.0,1.0), vec4<f32>(1.0,0.0,0.0,1.0), getBoolFromIndex(index * 3u + (vertexIndex % 18) / 6));
+    output.color = select(vec4<f32>(0.0,1.0,0.0,1.0), vec4<f32>(1.0,0.0,0.0,1.0), verticesSelected[index * 3u + vertexType] == 1u);
     return output;
 }
 

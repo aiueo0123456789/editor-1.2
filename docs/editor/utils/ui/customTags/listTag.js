@@ -1,5 +1,8 @@
-export class ListTag {
+import { CustomTag } from "../customTags";
+
+export class ListTag extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
+        super();
         this.element;
         if (child.options.type == "min") {
             this.element = createMinList(t,child.label);

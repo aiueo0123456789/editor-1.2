@@ -31,8 +31,8 @@ export class ParentPickModal {
 
     async mousedown(/** @type {InputManager} */inputManager) {
         console.log("親変更")
-        const parent = await app.scene.selectedForObject(inputManager.position, {types: ["アーマチュア", "ベジェモディファイア"]});
-        this.command = new ChangeParentCommand(app.scene.state.selectedObject, parent[0]);
+        const parent = await app.scene.rayCast(inputManager.position, {types: ["アーマチュア", "ベジェモディファイア"]});
+        this.command = new ChangeParentCommand(app.context.selectedObjects, parent[0]);
         return {complete: true};
     }
 }
