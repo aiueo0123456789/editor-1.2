@@ -16,7 +16,7 @@ export class AnimationCollector extends NameAndTypeAndID {
         this.weight = 0;
         this.containedAnimations = [];
         this.isChange = false;
-        this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
+        this.keyframeBlockManager = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロックマネージャー", object: this, parameters: ["weight"]});
         this.editor = new Editor();
 
         this.init(data);

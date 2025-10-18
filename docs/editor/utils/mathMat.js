@@ -4,8 +4,8 @@ class MathMat3x3 {
 
     createMatrix() {
         return [
-            [0,0,0],
-            [0,0,0],
+            [1,0,0],
+            [0,1,0],
             [0,0,1],
         ];
     }
@@ -48,9 +48,9 @@ class MathMat3x3 {
     }
 
     invertMatrix3x3AndRemoveTranslation(m) {
-        const a = m[0], b = m[1], c = m[2];
-        const d = m[3], e = m[4], f = m[5];
-        const g = m[6], h = m[7], i = m[8];
+        const a = m[0][0], b = m[0][1], c = m[0][2];
+        const d = m[1][0], e = m[1][1], f = m[1][2];
+        const g = m[2][0], h = m[2][1], i = m[2][2];
         // 行列式の計算
         const det = a * (e * i - f * h) -
                     b * (d * i - f * g) +
@@ -61,15 +61,9 @@ class MathMat3x3 {
         }
         const invDet = 1.0 / det;
         return [
-            (e * i - f * h) * invDet,   // [0][0]
-            -(b * i - c * h) * invDet,  // [0][1] 符号修正
-            (b * f - c * e) * invDet,   // [0][2]
-            -(d * i - f * g) * invDet,  // [1][0] 符号修正
-            (a * i - c * g) * invDet,   // [1][1]
-            -(a * f - c * d) * invDet,  // [1][2] 符号修正
-            0,
-            0,
-            1
+            [(e * i - f * h) * invDet,-(b * i - c * h) * invDet,(b * f - c * e) * invDet],
+            [-(d * i - f * g) * invDet,(a * i - c * g) * invDet,-(a * f - c * d) * invDet],
+            [0,0,1],
         ];
     }
     invertMatrix3x3(m) {
@@ -86,21 +80,9 @@ class MathMat3x3 {
         }
         const invDet = 1.0 / det;
         return [
-            [
-                (e * i - f * h) * invDet,
-                -(b * i - c * h) * invDet,
-                (b * f - c * e) * invDet
-            ],
-            [
-                -(d * i - f * g) * invDet,
-                (a * i - c * g) * invDet,
-                -(a * f - c * d) * invDet
-            ],
-            [
-                (d * h - e * g) * invDet,
-                -(a * h - b * g) * invDet,
-                (a * e - b * d) * invDet
-            ]
+            [(e * i - f * h) * invDet,-(b * i - c * h) * invDet,(b * f - c * e) * invDet],
+            [-(d * i - f * g) * invDet,(a * i - c * g) * invDet,-(a * f - c * d) * invDet],
+            [(d * h - e * g) * invDet,-(a * h - b * g) * invDet,(a * e - b * d) * invDet]
         ];
     }
 
@@ -126,8 +108,8 @@ class MathMat3x3 {
         //  m2 m5 m8
         // ] の順になっていると考える
         return [
-          m[0] * x + m[3] * y + m[6],  // result.x
-          m[1] * x + m[4] * y + m[7]   // result.y
+          m[0][0] * x + m[1][0] * y + m[2][0],  // result.x
+          m[0][1] * x + m[1][1] * y + m[2][1]   // result.y
         ];
     }
 }

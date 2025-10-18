@@ -1,3 +1,4 @@
+import { app } from "../../../main.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
 import { GPU } from "../../utils/webGPU.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
@@ -80,7 +81,7 @@ class AnimationBase {
     constructor(name, user) {
         this.id = createID();
         this.name = name;
-        this.keyframeBlockManager = new KeyframeBlockManager(this, ["weight"]);
+        this.keyframeBlockManager = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロックマネージャー", object: this, parameters: ["weight"]});
 
         this.weight = 0;
 

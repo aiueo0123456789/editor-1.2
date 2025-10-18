@@ -24,7 +24,7 @@ struct Allocation {
 @group(0) @binding(0) var<uniform> camera: Camera;
 @group(1) @binding(0) var<storage, read> verticesPosition: array<BoneVertices>;
 @group(1) @binding(1) var<storage, read> boneColors: array<vec4<f32>>;
-@group(2) @binding(0) var<uniform> armatureAllocation: Allocation; // 配分情報
+@group(1) @binding(2) var<storage, read> boneSelected: array<u32>;
 
 const size = 0.04;
 const ratio = 0.1;
@@ -45,7 +45,7 @@ fn vmain(
     @builtin(vertex_index) vertexIndex: u32
     ) -> VertexOutput {
     // 頂点データを取得
-    let index = instanceIndex + armatureAllocation.vertexBufferOffset;
+    let index = instanceIndex;
     let position1 = verticesPosition[index].h;
     let position2 = verticesPosition[index].t;
     let sub = position2 - position1;
@@ -71,7 +71,7 @@ fn vmain(
 
     let fixIndex = index * 2u;
     // output.color = select(boneColors[index], vec4<f32>(1.0,0.5,0.0,1.0), getBoolFromIndex(fixIndex) && getBoolFromIndex(fixIndex + 1u));
-    output.color = boneColors[index];
+    output.color = select(boneColors[index], vec4<f32>(1.0,0.5,0.0,1.0), boneSelected[index] == 1u);
     return output;
 }
 
@@ -85,6 +85,7 @@ fn fmain(
 ) -> FragmentOutput {
     var output: FragmentOutput;
     output.color = color;
+    // output.color.a = 0.1;
     // output.color = vec4<f32>(0,1,0,1);
     return output;
 }

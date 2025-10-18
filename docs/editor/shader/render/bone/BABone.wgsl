@@ -59,17 +59,13 @@ fn vmain(
 
     let k = (normal * size * length(sub));
     if (vIndex == 0u) {
-        offset = sectionPosition - k;
-    } else if (vIndex == 1u) {
-        offset = sectionPosition + k;
-    } else if (vIndex == 2u) {
-        offset = position2;
-    } else if (vIndex == 3u) {
-        offset = sectionPosition - k;
-    } else if (vIndex == 4u) {
-        offset = sectionPosition + k;
-    } else if (vIndex == 5u) {
         offset = position1;
+    } else if (vIndex == 1u) {
+        offset = sectionPosition - k;
+    } else if (vIndex == 2u) {
+        offset = sectionPosition + k;
+    } else if (vIndex == 3u) {
+        offset = position2;
     }
 
     var output: VertexOutput;

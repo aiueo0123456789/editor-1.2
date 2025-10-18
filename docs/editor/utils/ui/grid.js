@@ -113,10 +113,8 @@ export class AutoGrid {
     getchildrenTag() {
         return ;
     }
-
-    
 }
 
-export function createGrid(t, axis) {
-    return new AutoGrid(createID(), t, axis, "1fr");
+export function createGrid(t, axis, ratio = "1fr") {
+    return new AutoGrid(createID(), t, axis, ratio);
 }

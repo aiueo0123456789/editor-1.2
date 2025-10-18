@@ -17,7 +17,7 @@ export class SpacesStructure {
         const workSpacesDiv = app.ui.creatorForUI.getDOMFromID("workSpaces");
         const looper = (data, t) => {
             if (data.type == "grid") {
-                const grid = createGrid(t, data.axis);
+                const grid = createGrid(t, data.axis, data.ratio);
                 looper(data.child1, grid.child1);
                 looper(data.child2, grid.child2);
                 return grid;
@@ -50,12 +50,15 @@ export class WorkSpaces {
             new SpacesStructure(this, "layout", {
                 type: "grid",
                 axis: "c",
+                ratio: "70",
                 child1: {
                     type: "grid",
                     axis: "r",
+                    ratio: "70",
                     child1: {
                         type: "grid",
                         axis: "c",
+                        ratio: "30",
                         child1: {
                             type: "area",
                             areaType: "Inspector"
@@ -73,6 +76,7 @@ export class WorkSpaces {
                 child2: {
                     type: "grid",
                     axis: "r",
+                    ratio: "40",
                     child1: {
                         type: "area",
                         areaType: "Outliner"

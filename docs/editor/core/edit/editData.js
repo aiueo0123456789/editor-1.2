@@ -1,6 +1,8 @@
 import { Application } from "../../app/app.js";
 import { BArmature } from "./BArmature.js";
+import { BArmatureAnimation } from "./BArmatureAnimation.js";
 import { BBezier } from "./BBezier.js";
+import { BKeyframeBlockManager } from "./BKeyframeBlockManager.js";
 import { BMesh } from "./BMesh.js";
 
 export class EditDatas {
@@ -8,6 +10,8 @@ export class EditDatas {
         /** @type {Application} */
         this.app = app;
         this.editObjects = new Map();
+        /** @type {BKeyframeBlockManager} */
+        this.bkeyframeBlockManagers = [];
     }
 
     getEditObjectByObject(object) {
@@ -19,6 +23,19 @@ export class EditDatas {
 
     appendEditObject(object, editObject) {
         this.editObjects.set(object.id, editObject);
+    }
+
+    appendBKeyframeBlockManager(bkeyframeBlockManager) {
+        this.bkeyframeBlockManagers.push(bkeyframeBlockManager);
+        return bkeyframeBlockManager;
+    }
+
+    createBKeyframeBlockManager(object, parameters, blocks = null) {
+        return new BKeyframeBlockManager({object: object, parameters: parameters, blocks: blocks});
+    }
+
+    createAndAppendBKeyframeBlockManager(object, parameters, blocks = null) {
+        return this.appendBKeyframeBlockManager(this.createBKeyframeBlockManager(object, parameters, blocks));
     }
 
     createEditObject(object, mode) {
@@ -33,6 +50,10 @@ export class EditDatas {
                 const ba = new BArmature();
                 ba.fromArmature(object);
                 return ba;
+            } else if (mode == "ボーンアニメーション編集") {
+                const baa = new BArmatureAnimation();
+                baa.fromArmature(object);
+                return baa;
             }
         } else if (object.type == "ベジェモディファイア") {
             if (mode == "ベジェ編集") {

@@ -6,6 +6,10 @@ class Vec2 {
         return new Float32Array(2);
     }
 
+    mixR(a,b,raito) {
+        return this.addR(this.scaleR(a,1-raito), this.scaleR(b,raito));
+    }
+
     random(range) {
         return this.scaleR(this.subR(this.scaleR([Math.random(),Math.random()],2),[1,1]), range);
     }

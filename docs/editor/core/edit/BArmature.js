@@ -145,7 +145,7 @@ export class BArmature {
         this.object.allAnimations.length = 0;
         for (const bone of this.bones) {
             const parent = bone.parent;
-            const boneData = Armature.getBoneData(bone.headVertex.co, bone.tailVertex.co, parent?.headVertex?.co, parent?.tailVertex?.co);
+            const boneData = Armature.getLocalBoneDataByVertices(bone.headVertex.co, bone.tailVertex.co, parent?.headVertex?.co, parent?.tailVertex?.co);
             this.object.allVertices.push(...bone.headVertex.co);
             this.object.allVertices.push(...bone.tailVertex.co);
             this.object.allPhysics.push(...bone.physics,
@@ -164,7 +164,7 @@ export class BArmature {
             this.object.allBone.push(...boneData.bone);
             this.object.allBoneWorldMatrix.push(...boneData.worldMatrix.flat());
             this.object.allColors.push(...bone.color);
-            this.allAnimations.push(0,0,0,0,0,0); // x y sx sy r l
+            this.object.allAnimations.push(0,0,0,0,0,0); // x y sx sy r l
         }
         const createRoot = (bones, parent) => {
             for (const bone of bones) {

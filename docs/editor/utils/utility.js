@@ -1,6 +1,12 @@
 import { managerForDOMs } from "./ui/util.js";
 import { mathVec2 } from "./mathVec.js";
 
+export function clearPlainObject(plainObject) {
+    for (const key in plainObject) {
+        delete plainObject[key];
+    }
+}
+
 export function isPlainObject(obj) {
     return obj instanceof Object && Object.getPrototypeOf(obj) === Object.prototype;
 }

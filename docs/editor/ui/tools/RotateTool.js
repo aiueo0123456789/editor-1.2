@@ -10,28 +10,30 @@ export class RotateModal {
         this.operator = operator;
         this.command = null;
         this.values = [
-            0, // 回転量
-            app.appConfig.areasConfig["Viewer"].proportionalEditType, // proportionalEditType
-            app.appConfig.areasConfig["Viewer"].proportionalSize // proportionalSize
+            0,0, // 回転量, dummy
+            app.appConfig.areasConfig["Viewer"].proportionalMetaData.use, // useProportionalEdit
+            app.appConfig.areasConfig["Viewer"].proportionalMetaData.type, // proportionalType
+            app.appConfig.areasConfig["Viewer"].proportionalMetaData.size // proportionalSize
         ];
+        this.sumMovement = [0,0];
         this.modal = {
             inputObject: {"value": this.values},
             DOM: [
                 {tagType: "div", class: "shelfe", children: [
                     {tagType: "title", text: "TranslateModal", class: "shelfeTitle"},
-                    {tagType: "input", label: "回転量", value: "value/0", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
-                    {tagType: "input", label: "スムーズ", value: "value/2", type: "number",min: 0, max: 2},
-                    {tagType: "input", label: "半径", value: "value/3", type: "number",min: 0, max: 10000},
+                    {tagType: "input", label: "回転量", value: "value/0", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                    {tagType: "input", label: "プロポーショナル編集", type: "checkbox", checked: "value/2", look: {check: "check", uncheck: "uncheck"}, useCommand: false},
+                    {tagType: "select", label: "種類", value: "value/3", sourceObject: ["リニア", "逆二乗", "一定"], options: {initValue: {path: "value/4"}}, useCommand: false},
+                    {tagType: "input", label: "半径", value: "value/4", type: "number", min: 0, max: 10000, useCommand: false},
                 ]}
             ]
         };
         this.activateKey = "r";
-        this.center = [0,0];
         this.type = "";
 
         const update = () => {
             if (!this.command) return ;
-            this.command.update(this.values[0], "ローカル", this.values[1], this.values[2]);
+            this.command.transform([this.values[0],this.values[1]], this.values[2], this.values[3], this.values[4]);
         }
         managerForDOMs.set({o: this.values, g: "_", i: "&all"}, update, null);
     }
@@ -39,41 +41,17 @@ export class RotateModal {
     async init() {
         this.type = app.context.currentMode;
         try {
-            if (this.type == "メッシュ編集") {
-                this.command = new RotateCommand(this.type,app.context.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (this.type == "メッシュ頂点アニメーション編集") {
-                this.command = new RotateCommand(this.type, app.context.selectVertices, {targetAnimation: app.context.activeObject.animationBlock.activeAnimation});
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (this.type == "ボーン編集") {
-                this.command = new RotateCommand(this.type,app.context.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedVertices.buffer);
-            } else if (this.type == "ベジェ編集") {
-                this.command = new RotateCommand(this.type,app.context.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (this.type == "ベジェ頂点アニメーション編集") {
-                this.command = new RotateCommand(this.type, app.context.selectVertices);
-                this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.bezierModifierData.renderingVertices.buffer, app.scene.runtimeData.bezierModifierData.selectedVertices.buffer);
-            } else if (this.type == "ボーンアニメーション編集") {
-                this.command = new RotateCommand(this.type,app.context.getSelectBones);
-                this.center = await app.scene.getSelectBonesCenter(app.scene.runtimeData.armatureData.renderingVertices.buffer, app.scene.runtimeData.armatureData.selectedBones.buffer);
-            }
-            this.command.setCenterPoint(this.center);
+            this.command = new RotateCommand();
             app.operator.appendCommand(this.command);
         } catch (error) {
-            console.error(error)
+            console.error(error);
             return {complete: true};
         }
     }
 
     async mousemove(/** @type {InputManager} */inputManager) {
         // console.log(inputManager)
-        if (this.type == "ボーンアニメーション編集") {
-            console.log(this.type)
-            this.values[0] += mathVec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
-        } else {
-            this.values[0] += mathVec2.getAngularVelocity(this.center,inputManager.lastPosition,inputManager.movement);
-        }
+        this.values[0] += mathVec2.getAngularVelocity(this.command.pivotPoint, inputManager.lastPosition, inputManager.movement);
         managerForDOMs.update({o: this.values});
         return true;
     }

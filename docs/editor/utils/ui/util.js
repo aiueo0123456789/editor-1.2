@@ -68,7 +68,8 @@ export function createMinList(target, listName, appendEvent, deleteEvent) {
     const listNameTag = document.createElement("p");
     listNameTag.textContent = listName;
     const container = document.createElement("div");
-    container.classList.add("flex-gap10px");
+    container.classList.add("flex");
+    container.style.gap = "10px";
 
     const actionButtons = document.createElement("div");
     actionButtons.style.width = "20px";

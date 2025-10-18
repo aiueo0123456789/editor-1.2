@@ -1,6 +1,7 @@
 import { mathVec2 } from "../../utils/mathVec.js";
 import { changeParameter } from "../../utils/utility.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
+import { app } from "../../../main.js";
 
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
@@ -74,18 +75,17 @@ class Point {
     }
 }
 
-class Keyframe {
-    constructor(keyframeBlock, data) {
+export class Keyframe {
+    constructor(data) {
         this.type = "キーフレーム"
-        this.keyframeBlock = keyframeBlock;
         this.selected = false;
-        this.pointSelected = false;
-        this.leftHandleSelected = false;
-        this.rightHandleSelected = false;
-
         this.point = new Point(this, data.point);
         this.rightHandle = new Handle(this, this.point, data.rightHandle);
         this.leftHandle = new Handle(this, this.point, data.leftHandle);
+    }
+
+    get keyframeBlock() {
+        return app.scene.objects.keyframeBlocks.filter(keyframeBlock => keyframeBlock.keys.includes(this))[0];
     }
 
     setFrame(frame) {
@@ -111,33 +111,38 @@ class Keyframe {
 }
 
 export class KeyframeBlock {
-    constructor(object, targetValue, data = {keys: []}) {
+    static createKeyframe(frame, value) {
+        return new Keyframe(
+            {
+                point: {worldPosition: [frame, value]},
+                leftHandle: {localPosition: [-1, 0]},
+                rightHandle: {localPosition: [1, 0]}
+            }
+        );
+    }
+    constructor(data = {keys: []}) {
         this.type = "キーフレームブロック";
         this.id = createID();
-        this.targetObject = object;
-        this.targetValue = targetValue;
         this.visible = true;
+        /** @type {Keyframe[]} */
         this.keys = [];
+        this.value = 0;
     }
 
-    insert(frame, value) {
+    addKeyframe(/** @type {Keyframe} */ key) {
         let insertIndex = this.keys.length;
-        console.log(this.keys, frame,value)
         for (let i = 0; i < this.keys.length; i ++) {
-            if (frame == this.keys[i].point[0]) { // 同じフレームにキーがある場合削除して同じ位置に追加
-                this.keys.splice(i, 1, new Keyframe(this, frame, value));
-                return ;
-            } else if (frame < this.keys[i].point[0]) {
+            if (key.point.worldPosition[0] <= this.keys[i].point.worldPosition[0]) {
                 insertIndex = i;
                 break ;
             }
         }
-        this.keys.splice(insertIndex,0, new Keyframe(this, frame, value));
+        this.keys.splice(insertIndex,0, key);
         managerForDOMs.update({o: this});
         managerForDOMs.update({o: this, i: "keys"});
     }
 
-    deleteKeyframe(key) {
+    removeKeyframe(/** @type {Keyframe} */ key) {
         this.keys.splice(this.keys.indexOf(key),1);
         managerForDOMs.update({o: this});
     }
@@ -175,14 +180,12 @@ export class KeyframeBlock {
                 break ;
             }
         }
-        changeParameter(this.targetObject, this.targetValue, bezierInterpolation(leftKey, rightKey, frame));
+        changeParameter(this, "value", bezierInterpolation(leftKey, rightKey, frame));
     }
 
     getSaveData() {
         return {
             type: "キーブロック",
-            targetObjectID: this.targetObject.id,
-            targetValue: this.targetValue,
             keys: this.keys.map(key => key.getSaveData()),
         };
     }

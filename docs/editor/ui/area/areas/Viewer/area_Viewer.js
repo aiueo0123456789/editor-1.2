@@ -30,6 +30,11 @@ import { GraphicMesh } from '../../../../core/objects/graphicMesh.js';
 import { SelectOnlyVertexCommand } from '../../../../commands/utile/selectVertices.js';
 import { managerForDOMs } from '../../../../utils/ui/util.js';
 import { BBezier } from '../../../../core/edit/BBezier.js';
+import { BMesh } from '../../../../core/edit/BMesh.js';
+import { BArmature } from '../../../../core/edit/BArmature.js';
+import { BArmatureAnimation } from '../../../../core/edit/BArmatureAnimation.js';
+import { SelectOnlyBoneCommand } from '../../../../commands/utile/selectBone.js';
+import { KeyframeInsertModal } from '../../../tools/keyframeInsert.js';
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");
 
@@ -47,10 +52,11 @@ const BMeshEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGrou
 const BMeshSilhouetteEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/silhouetteEdgesShader.wgsl"), [], "2d", "s");
 const graphicMeshsWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/graphicMesh/weightShader.wgsl"), [], "2d", "s");
 
+const BAABoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr")], await loadFile("./editor/shader/render/bone/BAABone.wgsl"), [], "2d", "s");
 const BArmatureVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr")], await loadFile("./editor/shader/render/bone/vertices.wgsl"), [], "2d", "t");
-const BArmatureBonesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr")], await loadFile("./editor/shader/render/bone/BABone.wgsl"), [], "2d", "t");
+const BArmatureBonesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr")], await loadFile("./editor/shader/render/bone/BABone.wgsl"), [], "2d", "s");
 const selectObjectOutlineBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr"),GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineBoneRenderPipeline.wgsl"), [], "mask", "t");
-const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bone/bone.wgsl"), [], "2d", "t");
+const boneBoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bone/bone.wgsl"), [], "2d", "s");
 const boneRelationshipsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bone/relationships.wgsl"), [], "2d", "s");
 
 const selectObjectOutlineBezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"),GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineBezierRenderPipeline.wgsl"), [], "mask", "s");
@@ -68,6 +74,7 @@ const useingToolInMode = {
     "メッシュ編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool},
     "ベジェ編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool},
     "ボーン編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "x": DeleteTool},
+    "ボーンアニメーション編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
     "オブジェクト": {"p": ParentPickModal},
 };
 
@@ -251,7 +258,6 @@ export class Area_Viewer {
                     if (context.currentMode == "オブジェクト") {
                         if (inputManager.consumeKeys(["a"])) {
                             context.setModeForSelected("ボーンアニメーション編集");
-                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else {
                             context.setModeForSelected("ボーン編集");
                         }
@@ -260,20 +266,20 @@ export class Area_Viewer {
                         this.modalOperator.changeModals({"p": ParentPickModal});
                     }
                 }
-                if (context.currentMode == "ボーンアニメーション編集") {
-                    if (inputManager.consumeKeys(["i"])) {
-                        const bones = app.context.getSelectBones;
-                        bones.forEach(bone => {
-                            app.options.keyframeInsert(bone, app.scene.frame_current);
-                        })
-                    }
-                    if (inputManager.consumeKeys(["x"])) {
-                        const bones = app.context.getSelectBones;
-                        bones.forEach(bone => {
-                            bone.keyframeBlockManager.clearAnimatoin();
-                        })
-                    }
-                }
+                // if (context.currentMode == "ボーンアニメーション編集") {
+                //     if (inputManager.consumeKeys(["i"])) {
+                //         const bones = app.context.getSelectBones;
+                //         bones.forEach(bone => {
+                //             app.options.keyframeInsert(bone, app.scene.frame_current);
+                //         })
+                //     }
+                //     if (inputManager.consumeKeys(["x"])) {
+                //         const bones = app.context.getSelectBones;
+                //         bones.forEach(bone => {
+                //             bone.keyframeBlockManager.clearAnimatoin();
+                //         })
+                //     }
+                // }
             } else if (context.activeObject.type == "ベジェモディファイア") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (context.currentMode == "オブジェクト") {
@@ -324,15 +330,27 @@ export class Area_Viewer {
         let minDis = Infinity;
         let minIndex = 0;
         let objectID = 0;
-        for (const /** @type {GraphicMesh} */ graphicMesh of app.context.selectedObjects) {
-            const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
-            const vertices = bm.verticesCoordinates;
-            for (const vertex of vertices) {
-                const dist = mathVec2.distanceR(vertex, position);
-                if (dist < minDis) {
-                    minDis = dist;
-                    minIndex = vertices.indexOf(vertex);
-                    objectID = graphicMesh.id;
+        for (const object of app.context.selectedObjects) {
+            const editObject = app.scene.editData.getEditObjectByObject(object);
+            if (editObject instanceof BMesh || editObject instanceof BBezier || editObject instanceof BArmature) {
+                const vertices = editObject.verticesCoordinates;
+                for (const vertex of vertices) {
+                    const dist = mathVec2.distanceR(vertex, position);
+                    if (dist < minDis) {
+                        minDis = dist;
+                        minIndex = vertices.indexOf(vertex);
+                        objectID = object.id;
+                    }
+                }
+            } else if (editObject instanceof BArmatureAnimation) {
+                const vertices = editObject.verticesCoordinates;
+                for (const vertex of vertices) {
+                    const dist = mathVec2.distanceR(vertex, position);
+                    if (dist < minDis) {
+                        minDis = dist;
+                        minIndex = vertices.indexOf(vertex);
+                        objectID = object.id;
+                    }
                 }
             }
         }
@@ -377,9 +395,8 @@ export class Area_Viewer {
         } else if (context.currentMode == "ベジェ頂点アニメーション編集") {
             app.scene.runtimeData.bezierModifierData.selectedForVertices(app.context.activeObject, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
         } else if (context.currentMode == "ボーンアニメーション編集") {
-            for (const armature of app.context.selectedObjects) {
-                await app.scene.runtimeData.armatureData.selectedForBone(armature, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
-            }
+            app.operator.appendCommand(new SelectOnlyBoneCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
+            app.operator.execute();
         } else if (context.currentMode == "メッシュウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.context.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
@@ -645,7 +662,7 @@ export class Renderer {
                     const ba = app.scene.editData.getEditObjectByObject(armature);
                     renderPass.setBindGroup(1, ba.renderingGroup);
                     renderPass.setPipeline(BArmatureBonesRenderPipeline);
-                    renderPass.draw(3 * 2, ba.bonesNum, 0, 0);
+                    renderPass.draw(4, ba.bonesNum, 0, 0);
                     renderPass.setPipeline(BArmatureVerticesRenderPipeline);
                     renderPass.draw(6 * 2, ba.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
                     // renderPass.setPipeline(boneRelationshipsRenderPipeline);
@@ -653,9 +670,21 @@ export class Renderer {
 
                     renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
                     renderPass.setPipeline(boneBoneRenderPipeline);
+                } else if (armature.mode == "ボーンアニメーション編集") {
+                    const baa = app.scene.editData.getEditObjectByObject(armature);
+                    renderPass.setBindGroup(1, baa.renderingGroup);
+                    renderPass.setPipeline(BAABoneRenderPipeline);
+                    renderPass.draw(4, baa.bonesNum, 0, 0);
+                    // renderPass.setPipeline(BArmatureVerticesRenderPipeline);
+                    // renderPass.draw(6 * 2, baa.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
+                    // renderPass.setPipeline(boneRelationshipsRenderPipeline);
+                    // renderPass.draw(4, bm.boneNum, 0, 0); // 4つの頂点から四角形で表示する
+
+                    renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
+                    renderPass.setPipeline(boneBoneRenderPipeline);
                 } else {
                     renderPass.setBindGroup(2, armature.objectDataGroup);
-                    renderPass.draw(3 * 2, armature.boneNum, 0, 0);
+                    renderPass.draw(4, armature.boneNum, 0, 0);
                 }
             }
             // renderPass.setPipeline(boneVerticesRenderPipeline);

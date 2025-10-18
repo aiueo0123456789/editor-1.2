@@ -63,7 +63,7 @@ export class BBezier {
     // 選択情報のクリア
     selectedClear() {
         this.vertices.forEach(vertex => {
-            vertex.selected = false
+            vertex.selected = false;
             GPU.writeBuffer(this.vertexSelectedBuffer, GPU.createBitData([0], ["u32"]), this.getVertexIndexByVertex(vertex) * 4);
         });
     }

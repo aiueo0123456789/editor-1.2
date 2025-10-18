@@ -1,24 +1,21 @@
 import { app } from "../../../main.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { hitTestPointTriangle } from "../../utils/utility.js";
 
-export class SelectOnlyVertexCommand {
+export class SelectOnlyBoneCommand {
     constructor(point,multiple) {
         this.multiple = multiple;
         this.targetObjects = app.context.selectedObjects;
         this.editObjects = this.targetObjects.map(object => app.scene.editData.getEditObjectByObject(object)); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
-        let minDis = Infinity;
         let minIndex = 0;
         let minObjectID = 0;
         this.originalSelectData = {};
         this.editObjects.forEach(editObject => {
             const objectID = editObject.id;
             this.originalSelectData[objectID] = editObject.verticesSelectData;
-            const vertices = editObject.verticesCoordinates;
-            for (const vertex of vertices) {
-                const dist = mathVec2.distanceR(vertex, point);
-                if (dist < minDis) {
-                    minDis = dist;
-                    minIndex = vertices.indexOf(vertex);
+            const bonesPolygons = editObject.bonesPolygons;
+            for (const polygons of bonesPolygons) {
+                if (hitTestPointTriangle(polygons[0], polygons[1], polygons[2], point) || hitTestPointTriangle(polygons[3], polygons[1], polygons[2], point)) {
+                    minIndex = bonesPolygons.indexOf(polygons);
                     minObjectID = objectID;
                 }
             }

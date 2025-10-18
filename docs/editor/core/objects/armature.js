@@ -1,13 +1,73 @@
 import { Attachments } from "./attachments/attachments.js"
 import { GPU } from "../../utils/webGPU.js";
 import { ObjectBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
-import { indexOfSplice } from "../../utils/utility.js";
+import { indexOfSplice, range } from "../../utils/utility.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 import { app } from "../../../main.js";
 import { mathVec2 } from "../../utils/mathVec.js";
 import { mathMat3x3 } from "../../utils/mathMat.js";
 
 export class Armature extends ObjectBase {
+    static addBoneDataR(a,b) {
+        const result = {x:0,y:0,sx:0,sy:0,r:0,l:0};
+        for (const key in a) {
+            result[key] += a[key];
+        }
+        for (const key in b) {
+            result[key] += b[key];
+        }
+        return result;
+    }
+    static addBoneData(t,a,b) {
+        const aCopy = this.copyBoneData(a);
+        const bCopy = this.copyBoneData(b);
+        for (const key in t) {
+            t[key] = 0;
+        }
+        for (const key in aCopy) {
+            t[key] += aCopy[key];
+        }
+        for (const key in bCopy) {
+            t[key] += bCopy[key];
+        }
+    }
+    static copyBoneData(a) {
+        if (!a.x) a.x = 0;
+        if (!a.y) a.y = 0;
+        if (!a.sx) a.sx = 0;
+        if (!a.sy) a.sy = 0;
+        if (!a.r) a.r = 0;
+        if (!a.l) a.l = 0;
+        return {x: a.x, y: a.y, sx: a.sx, sy: a.sy, r: a.r, l: a.l};
+    }
+    static getWorldBoneDataByVertices(head, tail) {
+        return [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)];
+    }
+
+    static getLocalBoneDataByVertices(head, tail, parentHead, parentTail) {
+        const myMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(head, tail), head);
+        if (parentHead && parentTail) {
+            const parentMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(parentHead, parentTail), parentHead);
+            const invMatrix = mathMat3x3.invertMatrix3x3(parentMatrix);
+            const localMatrix = mathMat3x3.multiplyMat3x3(myMatrix, invMatrix);
+            return {worldMatrix: myMatrix, bone: [localMatrix[2][0], localMatrix[2][1], 1, 1, Math.atan2(localMatrix[0][1], localMatrix[0][0]), mathVec2.distanceR(head, tail)]};
+        } else {
+            return {worldMatrix: myMatrix, bone: [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)]};
+        }
+    }
+
+    static getWorldMatrixByBoneData(bone) {
+        return mathMat3x3.createTransformMatrix([bone.sx,bone.sy], bone.r, [bone.x,bone.y]);
+    }
+
+    static getLocalMatrixByWorldMatrix(world, parentWorld) {
+        return mathMat3x3.multiplyMat3x3(world, mathMat3x3.invertMatrix3x3(parentWorld));
+    }
+
+    static getBoneDataByMatrix(matrix, l) {
+        return [matrix[2][0], matrix[2][1], 1, 1, Math.atan2(matrix[0][1], matrix[0][0]), l];
+    }
+
     static VERTEX_LEVEL = 2; // 小オブジェクトごとに何個の頂点を持つか
     constructor(data) {
         super(data.name, "アーマチュア", data.id);
@@ -28,6 +88,8 @@ export class Armature extends ObjectBase {
         this.allColors = [];
 
         this.allAnimations = [];
+        /** @type {KeyframeBlockManager} */
+        this.keyframeBlockManager = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロックマネージャー", object: this.allAnimations, parameters: range(0, this.allAnimations.length)});
 
         this.mode = "オブジェクト";
 
@@ -88,30 +150,6 @@ export class Armature extends ObjectBase {
         sharedDestroy(this);
     }
 
-    static createTransformMatrix(scale, angle, translation) {
-        let rx = angle;
-        let ry = angle + 1.5708;
-        // スケールと回転を組み合わせた行列
-        var matrix = mathMat3x3.createMatrix();
-        matrix[0] = vec3<f32>(scale.x * cos(rx), scale.x * sin(rx), 0.0);
-        matrix[1] = vec3<f32>(scale.y * cos(ry), scale.y * sin(ry), 0.0);
-        matrix[2] = vec3<f32>(translation.x, translation.y, 1.0);
-    
-        return matrix;
-    }
-
-    static getBoneData(head, tail, parentHead, parentTail) {
-        const myMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(head, tail), head);
-        if (parentHead && parentTail) {
-            const parentMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(parentHead, parentTail), parentHead);
-            const invMatrix = mathMat3x3.invertMatrix3x3(parentMatrix);
-            const localMatrix = mathMat3x3.multiplyMat3x3(myMatrix, invMatrix);
-            return {worldMatrix: myMatrix, bone: [localMatrix[2][0], localMatrix[2][1], 1, 1, Math.atan2(localMatrix[0][1], localMatrix[0][0]), mathVec2.distanceR(head, tail)]};
-        } else {
-            return {worldMatrix: myMatrix, bone: [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)]};
-        }
-    }
-
     init(data) {
         this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         this.propagateBuffers = [];
@@ -137,7 +175,10 @@ export class Armature extends ObjectBase {
                     0,
                 );
                 this.allAnimations.push(0,0,0,0,0,0); // x y sx sy r l
-                const boneData = Armature.getBoneData(childData.baseHead.co, childData.baseTail.co, parentHead, parentTail);
+                for (let i = 0; i < 6; i ++) {
+                    this.keyframeBlockManager.appendParameter(i + this.allAnimations.length - 6);
+                }
+                const boneData = Armature.getLocalBoneDataByVertices(childData.baseHead.co, childData.baseTail.co, parentHead, parentTail);
                 this.allBone.push(...boneData.bone);
                 this.allBoneWorldMatrix.push(...boneData.worldMatrix.flat());
                 loopChildren(childData.childrenBone, bone.children, childData.baseHead.co, childData.baseTail.co, myIndex);

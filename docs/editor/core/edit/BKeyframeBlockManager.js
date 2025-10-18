@@ -1,7 +1,7 @@
 import { app } from "../../../main.js";
-import { KeyframeBlock } from "./keyframe.js";
+import { KeyframeBlock } from "../objects/keyframe.js";
 
-export class KeyframeBlockManager {
+export class BKeyframeBlockManager {
     constructor(data = {blocks: null, object: null, parameters: null}) {
         this.type = "キーフレームブロックマネージャー";
         this.object = data.object;

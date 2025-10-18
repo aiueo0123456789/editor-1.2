@@ -17,6 +17,8 @@ import { Texture } from '../../core/objects/texture.js';
 import { MaskTexture } from '../../core/objects/maskTexture.js';
 import { UnfixedReference } from '../../utils/objects/util.js';
 import { EditDatas } from '../../core/edit/editData.js';
+import { KeyframeBlock } from '../../core/objects/keyframe.js';
+import { KeyframeBlockManager } from '../../core/objects/keyframeBlockManager.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
@@ -134,6 +136,9 @@ class Objects {
         this.graphicMeshs = [];
         /** @type {Armature[]} */
         this.armatures = [];
+        /** @type {KeyframeBlock[]} */
+        this.keyframeBlocks = [];
+        /** @type {KeyframeBlockManager[]} */
         this.keyframeBlockManagers = [];
         this.parameterManagers = [];
         /** @type {Particle[]} */
@@ -168,7 +173,7 @@ class Objects {
         this.bezierModifiers.length = 0;
         this.graphicMeshs.length = 0;
         this.armatures.length = 0;
-        this.keyframeBlockManagers.length = 0;
+        this.keyframeBlocks.length = 0;
     }
 
     createObject(data) {
@@ -181,6 +186,10 @@ class Objects {
             return new BezierModifier(data);
         } else if (objectType == "アーマチュア") {
             return new Armature(data);
+        } else if (objectType == "キーフレームブロック") {
+            return new KeyframeBlock(data);
+        } else if (objectType == "キーフレームブロックマネージャー") {
+            return new KeyframeBlockManager(data);
         } else if (objectType == "パラメーターマネージャー") {
             return new ParameterManager(data);
         } else if (objectType == "パーティクル") {
@@ -217,25 +226,12 @@ class Objects {
             return this.armatures;
         } else if (objectType == "アニメーションコレクター") {
             return this.animationCollectors;
+        } else if (objectType == "キーフレームブロック") {
+            return this.keyframeBlocks;
         } else if (objectType == "キーフレームブロックマネージャー") {
             return this.keyframeBlockManagers;
         } else if (objectType == "パラメーターマネージャー") {
             return this.parameterManagers;
-        } else if (objectType == "パーティクル") {
-            return this.particles;
-        } else if (objectType == "スクリプト") {
-            return this.scripts;
-        } else if (objectType == "テクスチャ") {
-            return this.textures;
-        } else if (objectType == "マスクテクスチャ") {
-            return this.maskTextures;
-        }
-    }
-
-    getDefaultParentByObject(object) {
-        const objectType = object.type;
-        if (objectType == "パラメーターマネージャー") {
-            return ;
         } else if (objectType == "パーティクル") {
             return this.particles;
         } else if (objectType == "スクリプト") {
@@ -469,11 +465,7 @@ export class Scene {
             });
         }
         for (const armature of this.objects.armatures) {
-            armature.allBone.forEach(bone => {
-                if (bone) {
-                    // GPU.writeBuffer(this.runtimeData.armatureData.runtimeAnimationData.buffer, new Float32Array([bone.x, bone.y, bone.sx, bone.sy, bone.r]), (armature.runtimeOffsetData.start.boneOffset + bone.localIndex) * this.runtimeData.armatureData.boneBlockByteLength);
-                }
-            });
+            GPU.writeBuffer(this.runtimeData.armatureData.runtimeAnimationData.buffer, new Float32Array(armature.allAnimations), armature.runtimeOffsetData.start.boneOffset * this.runtimeData.armatureData.boneBlockByteLength);
         }
         const computeCommandEncoder = device.createCommandEncoder();
         const computePassEncoder = computeCommandEncoder.beginComputePass();
@@ -577,8 +569,8 @@ export class Scene {
     }
 
     async getSaveData() {
-        const conversion = {"マスクテクスチャ": "maskTextures", "テクスチャ": "textures", "スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロックマネージャー": "keyframeBlockManagers", "パラメーターマネージャー": "parameterManagers"};
-        const result = {maskTextures: [], textures: [], scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
+        const conversion = {"マスクテクスチャ": "maskTextures", "テクスチャ": "textures", "スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "キーフレームブロックマネージャー": "keyframeBlockManagers", "パラメーターマネージャー": "parameterManagers"};
+        const object = {maskTextures: [], textures: [], scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], keyframeBlockManagers: [], parameterManagers: []};
         // 各オブジェクトの保存処理を並列化
         const promises = this.objects.allObject.map(async (object) => {
             return { type: object.type, data: await object.getSaveData() };
@@ -586,10 +578,10 @@ export class Scene {
         const resolved = await Promise.all(promises);
         // 結果を type ごとにまとめる
         for (const { type, data } of resolved) {
-            result[conversion[type]].push(data);
+            object[conversion[type]].push(data);
         }
         return {"scene": {
-                    "objects": result,
+                    "objects": object,
                     "frame_speed": this.frame_speed,
                     "frame_start": this.frame_start,
                     "frame_end": this.frame_end,
@@ -599,8 +591,17 @@ export class Scene {
 
     // フレームを適応
     updateAnimation(frame) {
+        for (const keyframeBlock of this.objects.keyframeBlocks) {
+            keyframeBlock.update(frame);
+        }
         for (const keyframeBlockManager of this.objects.keyframeBlockManagers) {
-            keyframeBlockManager.update(frame);
+            keyframeBlockManager.update();
+        }
+        for (const bkeyframeBlockManager of this.editData.bkeyframeBlockManagers) {
+            bkeyframeBlockManager.update();
+        }
+        for (const editObject of this.editData.allEditObjects) {
+            editObject.updateGPUData();
         }
     }
 
