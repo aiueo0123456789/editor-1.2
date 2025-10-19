@@ -17,7 +17,7 @@ class Vertex {
 
         this.x = 0;
         this.y = 0;
-        this.keyframeBlockManager = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロックマネージャー", object: this, parameters: ["x","y"]});
+        // this.keyframeBlockManager = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロックマネージャー", object: this, parameters: ["x","y"]});
     }
 
     get name() {

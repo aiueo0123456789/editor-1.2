@@ -2,23 +2,15 @@ import { app } from "../../../main.js";
 import { KeyframeBlock } from "./keyframe.js";
 
 export class KeyframeBlockManager {
-    constructor(data = {blocks: null, object: null, parameters: null}) {
+    constructor(data = {object: null, parameters: null}) {
         this.type = "キーフレームブロックマネージャー";
         this.object = data.object;
         this.parameters = data.parameters;
 
         this.blocksMap = new Map();
         for (let i = 0; i < this.parameters.length; i ++) {
-            if (data.blocks) {
-                this.blocksMap.set(this.parameters[i], data.blocks[i]);
-            } else {
-                this.blocksMap.set(this.parameters[i], app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}));
-            }
+            this.blocksMap.set(this.parameters[i], app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}));
         }
-    }
-
-    get valuesInObject() {
-        return this.parameters.map(targetValue => this.object[targetValue]);
     }
 
     setKeyframeBlocks(parameters, keyframeBlocks) {

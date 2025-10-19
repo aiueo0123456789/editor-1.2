@@ -1,5 +1,4 @@
 import { app } from "../../../main.js";
-import { KeyframeBlock } from "../objects/keyframe.js";
 
 export class BKeyframeBlockManager {
     constructor(data = {blocks: null, object: null, parameters: null}) {
@@ -9,11 +8,7 @@ export class BKeyframeBlockManager {
 
         this.blocksMap = new Map();
         for (let i = 0; i < this.parameters.length; i ++) {
-            if (data.blocks) {
-                this.blocksMap.set(this.parameters[i], data.blocks[i]);
-            } else {
-                this.blocksMap.set(this.parameters[i], app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}));
-            }
+            this.blocksMap.set(this.parameters[i], data.blocks[i]);
         }
     }
 
@@ -34,8 +29,8 @@ export class BKeyframeBlockManager {
         return [...this.blocksMap.values()];
     }
 
-    appendParameter(targetValue) {
-        this.blocksMap.set(targetValue, app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}));
+    appendParameter(targetValue, keyframeBlcok) {
+        this.blocksMap.set(targetValue, keyframeBlcok);
     }
 
     update() {

@@ -102,12 +102,15 @@ function update(object, groupID, others, DOMs) {
         o.context.fill();
     }
     // console.log(others.object.spaceData.getAllKeyframe)
-    for (const keyData of o.spaceData.getAllKeyframe) {
-        // 制御点と線
-        const getColor = (b) => {
-            return b ? "rgb(255, 174, 0)" : "rgb(200, 200, 200)";
+    console.log(o.spaceData.outlineKefyframeData);
+    for (const keyframeBlock of o.spaceData.outlineKefyframeData) {
+        for (const keyframe of keyframeBlock.object.keys) {
+            // 制御点と線
+            const getColor = (b) => {
+                return b ? "rgb(255, 174, 0)" : "rgb(200, 200, 200)";
+            }
+            circle(o.getKeyDisplayPosition(keyframeBlock.pathID, keyframe), 15, getColor(keyframeBlock.selectedPoint));
         }
-        circle(o.getKeyDisplayPosition(keyData), 15, getColor(keyData.point.selected));
     }
     circle(o.worldToCanvas(o.inputs.position), 20, "rgb(255, 0, 0)");
 }
@@ -177,42 +180,31 @@ export class Area_Timeline2 {
                                 },
                                 activeSource: {object: "context", parameter: "activeObject"}, selectSource: {object: "context/selectedObjects"}
                             },
-                            withObject: "spaceData/getAllObject",
+                            withObject: "spaceData/outlineData",
                             updateEventTarget: ["頂点選択","ボーン選択","オブジェクト選択"],
                             loopTarget: {
                                 parameter: "type",
                                 loopTargets: {
                                     // "キーフレームブロックマネージャー": ["blocks"],
-                                    others: ["keyframeBlockManager/blocks"],
+                                    others: ["children"],
                                 }
                             },
                             structures: [
                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
                                     true: [
-                                        {tagType: "gridBox", id: {path: "/id"}, axis: "c", allocation: "auto auto 1fr 50%", children: [
+                                        {tagType: "gridBox", id: {path: "/pathID"}, axis: "c", allocation: "auto auto 1fr 50%", children: [
                                             {tagType: "icon", src: {path: "/type"}},
                                             {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
                                             {tagType: "padding", size: "10px"},
-                                            {tagType: "dblClickInput", value: "/targetValue", type: "text"},
+                                            {tagType: "dblClickInput", value: "/parameter", type: "text"},
                                         ]}
                                     ],
                                     false: [
-                                        {tagType: "if", id: {path: "/id"}, formula: {source: "/type", conditions: "==", value: "ボーン"},
-                                            true: [
-                                                {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {tagType: "icon", src: {path: "/type"}},
-                                                    {tagType: "padding", size: "10px"},
-                                                    {tagType: "dblClickInput", value: "/name", type: "text"},
-                                                ]}
-                                            ],
-                                            false: [
-                                                {tagType: "gridBox", id: {path: "/id"}, axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {tagType: "icon", src: {path: "/type"}},
-                                                    {tagType: "padding", size: "10px"},
-                                                    {tagType: "dblClickInput", value: "/name", type: "text"},
-                                                ]}
-                                            ]
-                                        }
+                                        {tagType: "gridBox", id: {path: "/id"}, axis: "c", allocation: "auto 1fr 50%", children: [
+                                            {tagType: "icon", src: {path: "/type"}},
+                                            {tagType: "padding", size: "10px"},
+                                            {tagType: "dblClickInput", value: "/name", type: "text"},
+                                        ]}
                                     ]
                                 }
                             ]
@@ -264,11 +256,11 @@ export class Area_Timeline2 {
         managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
     }
 
-    getKeyDisplayPosition(keyframe) {
+    getKeyDisplayPosition(keyframeBlockPathID, keyframe) {
         const overviewBoundingbox = this.overview.scrollableContainer.getBoundingClientRect();
-        const tag = this.creatorForUI.getDOMFromID(keyframe.keyframeBlock.id);
-        const boundingbox = tag.getBoundingClientRect();
-        return [this.worldToCanvas([keyframe.point.worldPosition[0], 0])[0], (boundingbox.top + boundingbox.height - overviewBoundingbox.top + 7.5) * this.pixelDensity];
+        const tag = this.creatorForUI.getDOMFromID(keyframeBlockPathID);
+        const boundingbox = tag.element.getBoundingClientRect();
+        return [this.worldToCanvas([keyframe.point[0], 0])[0], (boundingbox.top + boundingbox.height - overviewBoundingbox.top + 7.5) * this.pixelDensity];
     }
 
     clipToCanvas(p) {

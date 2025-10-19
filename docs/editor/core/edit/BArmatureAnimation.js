@@ -1,10 +1,11 @@
 import { app } from "../../../main.js";
 import { mathMat3x3 } from "../../utils/mathMat.js";
 import { mathVec2 } from "../../utils/mathVec.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 import { range, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
-import { KeyframeBlockManager } from "../objects/keyframeBlockManager.js";
+import { BKeyframeBlockManager } from "./BKeyframeBlockManager.js";
 
 class Bone {
     constructor(data) {
@@ -27,7 +28,7 @@ class Bone {
         const baseLocalArray = Armature.getBoneDataByMatrix(this.baseLocalMatrix, this.baseWorldBoneData.l);
         this.baseLocalBoneData = {x: baseLocalArray[0], y: baseLocalArray[1], sx: baseLocalArray[2], sy: baseLocalArray[3], r: baseLocalArray[4], l: baseLocalArray[5]};
         this.animationLocalBoneData = {x: 0, y: 0, sx: 0, sy: 0, r: 0, l: 0};
-        this.keyframeBlockManager = app.scene.editData.createAndAppendBKeyframeBlockManager(this.animationLocalBoneData, ["x", "y", "sx", "sy", "r", "l"], data.animation.blocks);
+        this.keyframeBlockManager = new BKeyframeBlockManager({object: this.animationLocalBoneData, parameters: ["x", "y", "sx", "sy", "r", "l"], blocks: data.animation.blocks});
     }
 
     get polygon() {
@@ -114,6 +115,7 @@ export class BArmatureAnimation {
             bone.selected = false;
             GPU.writeBuffer(this.boneSelectedBuffer, GPU.createBitData([0], ["u32"]), this.getBoneIndex(bone) * 4);
         });
+        managerForDOMs.update({o: "ボーン選択"});
         // this.updateGPUData();
     }
 
@@ -122,6 +124,7 @@ export class BArmatureAnimation {
             this.bones[index].selected = true;
             GPU.writeBuffer(this.boneSelectedBuffer, GPU.createBitData([1], ["u32"]), index * 4);
         });
+        managerForDOMs.update({o: "ボーン選択"});
         // this.updateGPUData();
     }
 

@@ -1,4 +1,6 @@
 import { app } from "../../../../../main.js";
+import { BArmatureAnimation } from "../../../../core/edit/BArmatureAnimation.js";
+import { BKeyframeBlockManager } from "../../../../core/edit/BKeyframeBlockManager.js";
 import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
 import { mathVec2 } from "../../../../utils/mathVec.js";
 
@@ -55,17 +57,39 @@ export class TimelineSpaceData {
         return result;
     }
 
-    get getAllObject() {
+    get outlineData() {
+        const looper = (objects, othersData = {}, result = []) => {
+            for (const object of objects) {
+                if (object instanceof BArmatureAnimation) {
+                    object.selectedBones.forEach(bone => result.push({name: bone.name, type: "ボーン", children: looper([bone.keyframeBlockManager], {object: bone}), object: object}))
+                    // object.bones.forEach(bone => result.push({name: bone.name, type: "ボーン", children: looper([bone.keyframeBlockManager], {object: bone})}))
+                } else if (object instanceof BKeyframeBlockManager) {
+                    object.blocksMap.forEach((keyframeBlcok, parameter) => result.push({parameter: parameter, type: "キーフレームブロック", pathID: `${othersData.object.id}/${keyframeBlcok.id}`, object: keyframeBlcok}))
+                }
+            }
+            return result;
+        }
+        return looper(app.scene.editData.allEditObjects);
+    }
+
+    get outlineKefyframeData() {
         const result = [];
-        for (const object of app.context.getSelcetInSelectedObject) { // ボーンやベジェ頂点など
-            if ("keyframeBlockManager" in object) { // keyframeBlockManagerを持つものだけ
-                result.push(object)
+        const looper = (objects) => {
+            for (const object of objects) {
+                if (object.type == "キーフレームブロック") result.push(object);
+                else looper(object.children);
             }
         }
-        for (const /** @type {GraphicMesh} */ object of app.context.selectedObjects) { // グラフィックメッシュなど
-            if ("animationBlock" in object) {
-                for (const keyframeBlock of object.animationBlock.animations) {
-                    result.push(keyframeBlock)
+        looper(this.outlineData);
+        return result;
+    }
+
+    get getAllObject() {
+        const result = [];
+        for (const object of app.scene.editData.allEditObjects) {
+            if (object instanceof BArmatureAnimation) {
+                for (const bone of object.bones) {
+                    result.push(bone);
                 }
             }
         }

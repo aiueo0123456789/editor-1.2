@@ -89,7 +89,7 @@ export class Armature extends ObjectBase {
 
         this.allAnimations = [];
         /** @type {KeyframeBlockManager} */
-        this.keyframeBlockManager = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロックマネージャー", object: this.allAnimations, parameters: range(0, this.allAnimations.length)});
+        this.keyframeBlockManager = new KeyframeBlockManager({type: "キーフレームブロックマネージャー", object: this.allAnimations, parameters: []});
 
         this.mode = "オブジェクト";
 

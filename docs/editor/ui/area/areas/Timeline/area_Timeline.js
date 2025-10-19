@@ -300,11 +300,11 @@ export class Area_Timeline {
 
         this.groupID = createID();
 
-        managerForDOMs.set({o: "タイムライン-canvas", g: this.groupID}, update, {object: this});
-        managerForDOMs.set({o: "ボーン選択", g: this.groupID}, update, {object: this});
-        managerForDOMs.set({o: "頂点選択", g: this.groupID}, update, {object: this});
-        managerForDOMs.set({o: app.scene, i: "frame_current", g: this.groupID}, update, {object: this});
-        managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
+        // managerForDOMs.set({o: "タイムライン-canvas", g: this.groupID}, update, {object: this});
+        // managerForDOMs.set({o: "ボーン選択", g: this.groupID}, update, {object: this});
+        // managerForDOMs.set({o: "頂点選択", g: this.groupID}, update, {object: this});
+        // managerForDOMs.set({o: app.scene, i: "frame_current", g: this.groupID}, update, {object: this});
+        // managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
     }
 
     clipToCanvas(p) {

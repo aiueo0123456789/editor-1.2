@@ -1,4 +1,3 @@
-import { mathVec2 } from "../../utils/mathVec.js";
 import { changeParameter } from "../../utils/utility.js";
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
 import { app } from "../../../main.js";
@@ -6,13 +5,13 @@ import { app } from "../../../main.js";
 
 function bezierInterpolation(keyA, keyB, currentFrame) {
     // フレーム範囲外の場合は直接値を返す
-    if (currentFrame <= keyA.point.worldPosition[0]) return keyA.point.worldPosition[1];
-    if (currentFrame >= keyB.point.worldPosition[0]) return keyB.point.worldPosition[1];
+    if (currentFrame <= keyA.point[0]) return keyA.point[1];
+    if (currentFrame >= keyB.point[0]) return keyB.point[1];
     // ベジェ曲線の制御点を設定
-    const p0 = keyA.point.worldPosition;
-    const p1 = keyA.rightHandle.worldPosition;
-    const p2 = keyB.leftHandle.worldPosition;
-    const p3 = keyB.point.worldPosition;
+    const p0 = keyA.point;
+    const p1 = keyA.rightHandle;
+    const p2 = keyB.leftHandle;
+    const p3 = keyB.point;
     // 特定のx座標（フレーム）に対応するtの値を数値的に求める
     // 二分法を使用して解を求める
     let tLow = 0;
@@ -53,59 +52,26 @@ function cubic_bezier(t, p0, p1, p2, p3) {
     ];
 }
 
-class Handle {
-    constructor(keyframe, basePoint, data) {
-        this.keyframe = keyframe; // 基準
-        /** @type {Point} */
-        this.basePoint = basePoint; // 基準
-        this.localPosition = data.localPosition;
-        this.selected = false;
-    }
-
-    get worldPosition() {
-        return mathVec2.addR(this.basePoint.worldPosition, this.localPosition);
-    }
-}
-
-class Point {
-    constructor(keyframe, data) {
-        this.keyframe = keyframe; // 基準
-        this.worldPosition = data.worldPosition;
-        this.selected = false;
-    }
-}
-
 export class Keyframe {
     constructor(data) {
         this.type = "キーフレーム"
-        this.selected = false;
-        this.point = new Point(this, data.point);
-        this.rightHandle = new Handle(this, this.point, data.rightHandle);
-        this.leftHandle = new Handle(this, this.point, data.leftHandle);
+        this.selectedPoint = false;
+        this.selectedRightHandle = false;
+        this.selectedLeftHandle = false;
+        this.point = [...data.point];
+        this.rightHandle = [...data.rightHandle];
+        this.leftHandle = [...data.leftHandle];
     }
 
     get keyframeBlock() {
         return app.scene.objects.keyframeBlocks.filter(keyframeBlock => keyframeBlock.keys.includes(this))[0];
     }
 
-    setFrame(frame) {
-        this.point.worldPosition[0] = frame;
-    }
-
-    setValue(value) {
-        this.point.worldPosition[1] = value;
-    }
-
-    setFrameAndValue(frame,value) {
-        this.point.worldPosition[0] = frame;
-        this.point.worldPosition[1] = value;
-    }
-
     getSaveData() {
         return {
-            point: {worldPosition: this.point.worldPosition},
-            leftHandle: {localPosition: this.leftHandle.localPosition},
-            rightHandle: {localPosition: this.rightHandle.localPosition},
+            point: this.point,
+            leftHandle: this.leftHandle,
+            rightHandle: this.rightHandle,
         };
     }
 }
@@ -114,9 +80,9 @@ export class KeyframeBlock {
     static createKeyframe(frame, value) {
         return new Keyframe(
             {
-                point: {worldPosition: [frame, value]},
-                leftHandle: {localPosition: [-1, 0]},
-                rightHandle: {localPosition: [1, 0]}
+                point: [frame, value],
+                leftHandle: [frame + -1, value + 0],
+                rightHandle: [frame + 1, value + 0],
             }
         );
     }
@@ -132,7 +98,7 @@ export class KeyframeBlock {
     addKeyframe(/** @type {Keyframe} */ key) {
         let insertIndex = this.keys.length;
         for (let i = 0; i < this.keys.length; i ++) {
-            if (key.point.worldPosition[0] <= this.keys[i].point.worldPosition[0]) {
+            if (key.point[0] <= this.keys[i].point[0]) {
                 insertIndex = i;
                 break ;
             }
@@ -157,14 +123,14 @@ export class KeyframeBlock {
 
     getKeyFromFrame(frame, threshold = 0.5) {
         for (const key of this.keys) {
-            if (Math.abs(key.point.worldPosition[0] - frame) < threshold) return key;
+            if (Math.abs(key.point[0] - frame) < threshold) return key;
         }
         return null;
     }
 
     hasKeyFromFrame(frame, threshold = 0.5) {
         for (const key of this.keys) {
-            if (Math.abs(key.point.worldPosition[0] - frame) < threshold) return true;
+            if (Math.abs(key.point[0] - frame) < threshold) return true;
         }
         return false;
     }
@@ -176,7 +142,7 @@ export class KeyframeBlock {
         for (const key of this.keys) {
             leftKey = rightKey;
             rightKey = key;
-            if (frame < key.point.worldPosition[0]) {
+            if (frame < key.point[0]) {
                 break ;
             }
         }

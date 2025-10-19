@@ -64,6 +64,7 @@ export class OutlinerTag extends CustomTag {
         this.scrollable = createTag(this.scrollableContainer, "div", {class: "scrollable"});
         const array = [];
         let rootObject = isSourceFunction ? source() : creatorForUI.getParameter(searchTarget, source);
+        let lastScroll = 0;
         const getAllObject = () => {
             const getLoopChildren = (children, resultObject = []) => {
                 let filterBool_ = false;
@@ -116,14 +117,30 @@ export class OutlinerTag extends CustomTag {
             const allObject = getAllObject();
             // 削除があった場合対応するDOMを削除
             for (const object of lastUpdateObjects) {
+                const data = managerForDOMs.get({o: object, g: creatorForUI.groupID, i: outlinerID});
+                /** @type {HTMLElement} */
+                const childrenElement = data[0].others.childrenContainer;
+                this.scrollable.append(...childrenElement.children);
                 if (!allObject.includes(object)) {
                     this.objectDomMap.delete(object);
+                    data[0].others.container.remove();
+                    data[0].others.container = null;
+                    data[0].others.myContainer.remove();
+                    data[0].others.myContainer = null;
+                    data[0].others.childrenContainer.remove();
+                    data[0].others.childrenContainer = null;
+                    for (const tag of data[0].others.children) {
+                        tag.remove();
+                    }
+                    data[0].others.children.length = 0;
+                    data[0].others = null;
                     managerForDOMs.delete({o: object, g: creatorForUI.groupID, i: outlinerID});
                 }
             }
             // 追加があった場合新規作成
             for (const object of allObject) {
                 if (!lastUpdateObjects.includes(object)) {
+                    /** @type {HTMLElement} */
                     const container = createTag(null, "div", {style: "paddingLeft: 2px; height: fit-content; minHeight: auto;"});
                     container.addEventListener("click", (event) => {
                         if (app.input.keysDown["Shift"]) {
@@ -154,15 +171,16 @@ export class OutlinerTag extends CustomTag {
                     /** @type {HTMLElement} */
                     const myContainer = createTag(upContainer, "div");
                     const childrenContainer = createTag(container, "div", {style: "marginLeft: 10px; height: fit-content;"});
-                    creatorForUI.createFromChildren(myContainer, structures, object, flag);
+                    const children = creatorForUI.createFromChildren(myContainer, structures, object, flag);
                     visibleCheck.checkbox.addEventListener("change", () => {
                         childrenContainer.classList.toggle("hidden");
                     })
                     this.objectDomMap.set(object, container);
-                    managerForDOMs.set({o: object, g: creatorForUI.groupID, i: outlinerID, f: flag}, null, {container, myContainer, childrenContainer}); // セット
+                    managerForDOMs.set({o: object, g: creatorForUI.groupID, i: outlinerID, f: flag}, null, {container, myContainer, childrenContainer, children}); // セット
                 }
             }
             lastUpdateObjects = [...allObject];
+            // ヒエラルキーをセット
             const looper = (children,targetDOM = this.scrollable) => {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {

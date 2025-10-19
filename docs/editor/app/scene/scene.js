@@ -19,6 +19,7 @@ import { UnfixedReference } from '../../utils/objects/util.js';
 import { EditDatas } from '../../core/edit/editData.js';
 import { KeyframeBlock } from '../../core/objects/keyframe.js';
 import { KeyframeBlockManager } from '../../core/objects/keyframeBlockManager.js';
+import { BArmatureAnimation } from '../../core/edit/BArmatureAnimation.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
@@ -138,8 +139,6 @@ class Objects {
         this.armatures = [];
         /** @type {KeyframeBlock[]} */
         this.keyframeBlocks = [];
-        /** @type {KeyframeBlockManager[]} */
-        this.keyframeBlockManagers = [];
         this.parameterManagers = [];
         /** @type {Particle[]} */
         this.particles = [];
@@ -188,8 +187,6 @@ class Objects {
             return new Armature(data);
         } else if (objectType == "キーフレームブロック") {
             return new KeyframeBlock(data);
-        } else if (objectType == "キーフレームブロックマネージャー") {
-            return new KeyframeBlockManager(data);
         } else if (objectType == "パラメーターマネージャー") {
             return new ParameterManager(data);
         } else if (objectType == "パーティクル") {
@@ -228,8 +225,6 @@ class Objects {
             return this.animationCollectors;
         } else if (objectType == "キーフレームブロック") {
             return this.keyframeBlocks;
-        } else if (objectType == "キーフレームブロックマネージャー") {
-            return this.keyframeBlockManagers;
         } else if (objectType == "パラメーターマネージャー") {
             return this.parameterManagers;
         } else if (objectType == "パーティクル") {
@@ -569,8 +564,8 @@ export class Scene {
     }
 
     async getSaveData() {
-        const conversion = {"マスクテクスチャ": "maskTextures", "テクスチャ": "textures", "スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "キーフレームブロックマネージャー": "keyframeBlockManagers", "パラメーターマネージャー": "parameterManagers"};
-        const object = {maskTextures: [], textures: [], scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], keyframeBlockManagers: [], parameterManagers: []};
+        const conversion = {"マスクテクスチャ": "maskTextures", "テクスチャ": "textures", "スクリプト": "scripts", "パーティクル": "particles", "グラフィックメッシュ": "graphicMeshs", "ベジェモディファイア": "bezierModifiers", "アーマチュア": "armatures", "アニメーションコレクター": "animationCollectors", "キーフレームブロック": "keyframeBlocks", "パラメーターマネージャー": "parameterManagers"};
+        const object = {maskTextures: [], textures: [], scripts: [], particles: [], graphicMeshs: [], bezierModifiers: [], armatures: [], rotateMOdifiers: [], animationCollectors: [], keyframeBlocks: [], parameterManagers: []};
         // 各オブジェクトの保存処理を並列化
         const promises = this.objects.allObject.map(async (object) => {
             return { type: object.type, data: await object.getSaveData() };
@@ -594,11 +589,15 @@ export class Scene {
         for (const keyframeBlock of this.objects.keyframeBlocks) {
             keyframeBlock.update(frame);
         }
-        for (const keyframeBlockManager of this.objects.keyframeBlockManagers) {
-            keyframeBlockManager.update();
+        for (const armatures of this.objects.armatures) {
+            armatures.keyframeBlockManager.update();
         }
-        for (const bkeyframeBlockManager of this.editData.bkeyframeBlockManagers) {
-            bkeyframeBlockManager.update();
+        for (const editObject of this.editData.allEditObjects) {
+            if (editObject instanceof BArmatureAnimation) {
+                editObject.bones.forEach(bone => {
+                    bone.keyframeBlockManager.update();
+                })
+            }
         }
         for (const editObject of this.editData.allEditObjects) {
             editObject.updateGPUData();

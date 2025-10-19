@@ -1,7 +1,7 @@
 import { app } from "../../../main.js";
 import { BArmatureAnimation } from "../../core/edit/BArmatureAnimation.js";
+import { BKeyframeBlockManager } from "../../core/edit/BKeyframeBlockManager.js";
 import { KeyframeBlock } from "../../core/objects/keyframe.js";
-import { KeyframeBlockManager } from "../../core/objects/keyframeBlockManager.js";
 
 export class KeyframeInsertCommand {
     constructor() {
@@ -13,7 +13,7 @@ export class KeyframeInsertCommand {
             this.selectedBones = this.editObjects.map(editObject => editObject.selectedBones).flat();
             this.createdKeyframes = this.selectedBones.map(bone => {
                 const values = bone.keyframeBlockManager.valuesInObject;
-                /** @type {KeyframeBlockManager} */
+                /** @type {BKeyframeBlockManager} */
                 const keyframeBlockManager = bone.keyframeBlockManager;
                 return keyframeBlockManager.blocks.map((keyframeBlock, valueIndex) => KeyframeBlock.createKeyframe(app.scene.frame_current, values[valueIndex]));
             });
@@ -22,7 +22,7 @@ export class KeyframeInsertCommand {
 
     execute() {
         this.selectedBones.forEach((bone, boneIndex) => {
-            /** @type {KeyframeBlockManager} */
+            /** @type {BKeyframeBlockManager} */
             const keyframeBlockManager = bone.keyframeBlockManager;
             keyframeBlockManager.blocks.forEach((keyframeBlock, keyframeIndex) => {
                 keyframeBlock.addKeyframe(this.createdKeyframes[boneIndex][keyframeIndex]);
@@ -32,7 +32,7 @@ export class KeyframeInsertCommand {
 
     undo() {
         this.selectedBones.forEach((bone, boneIndex) => {
-            /** @type {KeyframeBlockManager} */
+            /** @type {BKeyframeBlockManager} */
             const keyframeBlockManager = bone.keyframeBlockManager;
             keyframeBlockManager.blocks.forEach((keyframeBlock, keyframeIndex) => {
                 keyframeBlock.removeKeyframe(this.createdKeyframes[boneIndex][keyframeIndex]);
