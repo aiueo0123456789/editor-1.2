@@ -291,7 +291,11 @@ export const tagCreater = {
         return creatorForUI.createFromChildren(t, functionResult, searchTarget, flag);
     },
     "html": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        return createTag(t, child.tag);
+        const element = createTag(t, child.tag);
+        if (child.children) {
+            creatorForUI.createFromChildren(element, child.children, searchTarget, flag);
+        }
+        return element;
     },
     "meter": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         const element = new MeterTag(creatorForUI, t, searchTarget, child, flag);
@@ -301,6 +305,15 @@ export const tagCreater = {
         const element = new TextureTag(creatorForUI, t, searchTarget, child, flag);
         return element;
     },
+    "color": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        console.log("colorTag",t)
+        if (t instanceof HTMLElement) {
+            t.style.backgroundColor = creatorForUI.getParameter(searchTarget, child.src);
+        } else {
+            t.element.style.backgroundColor = creatorForUI.getParameter(searchTarget, child.src);
+        }
+        return null;
+    }
 }
 
 export class ParameterReference {
@@ -343,7 +356,7 @@ export class CreatorForUI {
             let lastRoot = pathRoot[pathRoot.length - 1];
             let lastIsParameter = false;
             if (lastRoot[0] == "%") { // ~/%parameterNameの場合オブジェクト内のidを対象とする
-                lastRoot = lastRoot.slice(1);
+                lastRoot = lastRoot.slice(1); // %を取り除く
                 lastIsParameter = true;
             }
             let object = searchTarget;
@@ -371,21 +384,40 @@ export class CreatorForUI {
 
     getParameter(searchTarget, path, option = 0) {
         try {
-            // pathをもとに参照
+            let useSearchTarget = searchTarget;
+            // 一般的
             if (path[0] == "/") {
                 path = path.slice(1);
             } else {
-                searchTarget = this.globalInputObject;
+                useSearchTarget = this.globalInputObject;
             }
             if (path == "") {
-                return searchTarget;
+                return useSearchTarget;
             }
-            const pathRoot = path.split("/");
-            const root = pathRoot.slice(0, -1);
-            const lastRoot = pathRoot[pathRoot.length - 1];
-            let object = searchTarget;
+            let roots = [];
+            if (path.includes("{") && path.includes("}")) {
+                const matches = [];
+                // {〜} 部分を抽出しつつ置換
+                const replaced = path.replace(/\{([^{}]*)\}/g, (match, content, index) => {
+                    const currentIndex = matches.length;
+                    matches.push(this.getParameter(searchTarget, content));
+                    return `&${currentIndex}`;
+                });
+                roots = replaced.split("/").map(root => {
+                    if (root[0] == "&") return matches[root.slice(1)];
+                    else return root;
+                });
+            } else {
+                // 一般的
+                roots = path.split("/");
+            }
+            const root = roots.slice(0, -1);
+            const lastRoot = roots[roots.length - 1];
+            let object = useSearchTarget;
             for (const next of root) {
-                if (next in object) {
+                if (object instanceof Map) {
+                    object = object.get(next);
+                } else if (next in object) {
                     object = object[next];
                 } else {
                     return null;
@@ -407,7 +439,8 @@ export class CreatorForUI {
                     }
                 }
             }
-        } catch {
+        } catch(e) {
+            console.error(e);
             console.trace("値の取得", path, searchTarget, "でエラーが出ました");
         }
     }
@@ -421,29 +454,6 @@ export class CreatorForUI {
                 id = tagData.id;
             }
             this.domKeeper.delete(id);
-        }
-    }
-
-    // パスからオブジェクトの参照を見つける
-    findSource(path, searchTarget) {
-        try {
-            if (path == "") {
-                return searchTarget;
-            } else {
-                // pathをもとに参照
-                const pathRoot = path.split("/");
-                let object = searchTarget;
-                for (const next of pathRoot) {
-                    if (next in object) {
-                        object = object[next];
-                    } else {
-                        return null;
-                    }
-                }
-                return object;
-            }
-        } catch {
-            console.warn(path, searchTarget, "でエラーが出ました");
         }
     }
 
@@ -465,7 +475,7 @@ export class CreatorForUI {
         }
     }
 
-    // オブジェクトのパラメータと値を関連付ける
+    // inputとselectを値と関連付ける
     setWith(/** @type {HTMLElement} */t, withObject, searchTarget, flag, useCommand = true) {
         let source = this.getParameter(searchTarget, withObject, 1);
         if (!source) { // 取得できなかったら切り上げ
@@ -539,6 +549,7 @@ export class CreatorForUI {
         return this.setUpdateEventByPath(searchTarget, withObject, updateDOMsValue, flag);
     }
 
+    // 任意のパラメーターと値を関連付ける
     setWithParameter(/** @type {HTMLElement} */t, withObject, searchTarget, flag, parameter) {
         let source = this.getParameter(searchTarget, withObject, 1);
         if (!source) { // 取得できなかったら切り上げ
@@ -590,8 +601,7 @@ export class CreatorForUI {
                 result.selects = options.selectSource.function;
                 getSelectsDataFunction = options.selectSource.getFunction;
             } else {
-                result.selects = this.findSource(options.selectSource.object, this.globalInputObject);
-                console.log(options.selectSource.object, this.globalInputObject)
+                result.selects = this.getParameter(searchTarget, options.selectSource.object);
             }
         }
         let activeSource = null;
@@ -601,7 +611,7 @@ export class CreatorForUI {
                 activeSource = options.activeSource.function;
                 getActiveDataFunction = options.activeSource.getFunction;
             } else {
-                activeSource = {object: this.findSource(options.activeSource.object, this.globalInputObject), parameter: options.activeSource.parameter};
+                activeSource = {object: this.getParameter(searchTarget, options.activeSource.object), parameter: options.activeSource.parameter};
             }
         } else {
             activeSource = {object: result, parameter: "active"};

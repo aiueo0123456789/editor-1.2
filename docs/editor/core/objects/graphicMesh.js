@@ -283,10 +283,6 @@ export class GraphicMesh extends ObjectBase {
         return range(this.runtimeOffsetData.start.vertexOffset, this.runtimeOffsetData.end.vertexOffset);
     }
 
-    get animationWorldOffset() {
-        return this.animationBufferOffset * GraphicMesh.VERTEX_LEVEL;
-    }
-
     get verticesNum() {
         return this.allVertices.length / 2;
     }

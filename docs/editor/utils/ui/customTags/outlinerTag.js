@@ -44,15 +44,16 @@ export class OutlinerTag extends CustomTag {
             searchFilter = input.value;
             outlinerUpdate();
         })
+        /** @type {HTMLElement} */
         this.scrollableContainer = createTag(this.element, "div", {style: "width: 100%; height: 100%;"});
 
         let result = {active: null, selects: []};
         if (options.selectSource) {
-            result.selects = creatorForUI.findSource(options.selectSource.object, creatorForUI.globalInputObject);
+            result.selects = creatorForUI.getParameter(searchTarget, options.selectSource.object);
         }
         let activeSource = null;
         if (options.activeSource) {
-            activeSource = {object: creatorForUI.findSource(options.activeSource.object, creatorForUI.globalInputObject), parameter: options.activeSource.parameter};
+            activeSource = {object: creatorForUI.getParameter(searchTarget, options.activeSource.object), parameter: options.activeSource.parameter};
         } else {
             activeSource = {object: result, parameter: "active"};
         }
@@ -61,6 +62,7 @@ export class OutlinerTag extends CustomTag {
         let lastUpdateObjects = [];
         let rangeStartIndex = 0;
         let rangeEndIndex = 0;
+        /** @type {HTMLElement} */
         this.scrollable = createTag(this.scrollableContainer, "div", {class: "scrollable"});
         const array = [];
         let rootObject = isSourceFunction ? source() : creatorForUI.getParameter(searchTarget, source);
@@ -76,7 +78,7 @@ export class OutlinerTag extends CustomTag {
                         const targetType = child[loopTarget.parameter];
                         const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"] ? loopTarget.loopTargets["others"] : [];
                         for (const l of loopTargets) {
-                            const nextChildren = creatorForUI.findSource(l, child);
+                            const nextChildren = creatorForUI.getParameter(child, l);
                             if (nextChildren) { // 子要素がある場合ループする
                                 const fnResult = getLoopChildren(nextChildren, resultObject);
                                 if (fnResult.filter) {
@@ -86,7 +88,7 @@ export class OutlinerTag extends CustomTag {
                         }
                     } else {
                         for (const l of loopTarget) {
-                            const nextChildren = creatorForUI.findSource(l, child);
+                            const nextChildren = creatorForUI.getParameter(child, l);
                             if (nextChildren) { // 子要素がある場合ループする
                                 const fnResult = getLoopChildren(nextChildren, resultObject);
                                 if (fnResult.filter) {
@@ -191,14 +193,14 @@ export class OutlinerTag extends CustomTag {
                                 const targetType = child[loopTarget.parameter];
                                 const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
                                 for (const l of loopTargets) {
-                                    const nextChildren = creatorForUI.findSource(l, child);
+                                    const nextChildren = creatorForUI.getParameter(child, l);
                                     if (nextChildren) { // 子要素がある場合ループする
                                         looper(nextChildren, managerObject.childrenContainer);
                                     }
                                 }
                             } else {
                                 for (const l of loopTarget) {
-                                    const nextChildren = creatorForUI.findSource(l, child);
+                                    const nextChildren = creatorForUI.getParameter(child, l);
                                     if (nextChildren) { // 子要素がある場合ループする
                                         looper(nextChildren, managerObject.childrenContainer);
                                     }

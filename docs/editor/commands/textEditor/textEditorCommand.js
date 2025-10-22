@@ -20,6 +20,7 @@ export class TextEditor_textSplice {
         changeParameter(this.target.object, this.target.parameter, this.originalText.slice(0,this.startOffset) + this.originalText.slice(this.endOffset));
         const text = this.target.object[this.target.parameter];
         changeParameter(this.target.object, this.target.parameter, text.slice(0,this.startOffset) + this.insertText + text.slice(this.startOffset));
+        return {consumed: true};
     }
 
     undo() {
@@ -38,6 +39,7 @@ export class TextEditor_textRemove {
     execute() {
         const text = this.target.object[this.target.parameter];
         changeParameter(this.target.object, this.target.parameter, text.slice(0,this.offsetStart) + text.slice(this.offsetEnd));
+        return {consumed: true};
     }
 
     undo() {

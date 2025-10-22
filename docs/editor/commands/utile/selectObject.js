@@ -14,6 +14,7 @@ export class SetActiveObjectsCommand {
             this.object.selected = true;
         }
         managerForDOMs.update({o: "アクティブオブジェクト"});
+        return {consumed: true};
     }
 
     undo() {
@@ -42,8 +43,9 @@ export class SelectObjectsCommand {
             this.targetObject.selected = true;
         }
         managerForDOMs.update({o: "オブジェクト選択"});
+        return {consumed: true};
     }
-    
+
     undo() {
         if (this.targetObject) {
             this.targetObject.selected = false;

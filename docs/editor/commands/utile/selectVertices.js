@@ -1,5 +1,6 @@
 import { app } from "../../../main.js";
 import { mathVec2 } from "../../utils/mathVec.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 
 export class SelectOnlyVertexCommand {
     constructor(point,multiple) {
@@ -28,6 +29,7 @@ export class SelectOnlyVertexCommand {
     }
 
     execute() {
+        let hasDiff = false;
         this.editObjects.forEach(editObject => {
             const objectID = editObject.id;
             if (this.multiple) {
@@ -37,6 +39,14 @@ export class SelectOnlyVertexCommand {
                 editObject.select(this.selectData[objectID]);
             }
         })
+        this.editObjects.forEach(editObject => {
+            const objectID = editObject.id;
+            if (this.originalSelectData[objectID].filter((b, index) => editObject.verticesSelectData[index] !== b).length != 0) {
+                hasDiff = true;
+            }
+        })
+        managerForDOMs.update({o: "頂点選択"});
+        return {consumed: hasDiff};
     }
 
     undo() {
@@ -50,6 +60,7 @@ export class SelectOnlyVertexCommand {
                 }
             })
             editObject.select(originalIndexs);
+            managerForDOMs.update({o: "頂点選択"});
         })
     }
 }

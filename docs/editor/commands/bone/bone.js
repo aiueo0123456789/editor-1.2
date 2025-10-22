@@ -42,6 +42,7 @@ export class BoneExtrudeMoveCommand {
             this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => mathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
             editObject.updateGPUData();
         });
+        return {consumed: true};
     }
 
     redo() {

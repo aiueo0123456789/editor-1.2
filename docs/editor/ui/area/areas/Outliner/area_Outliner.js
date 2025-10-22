@@ -23,7 +23,7 @@ export class Area_Outliner {
                             app.context.setActiveObject(array[endIndex]);
                         }
                     },
-                    activeSource: {object: "context", parameter: "activeObject"}, selectSource: {object: "context/selectedObjects"}}, withObject: "scene/objects/rootObjects", updateEventTarget: "親変更", loopTarget: "children", structures: [
+                    activeSource: "context/activeObject", selectSource: "context/selectedObjects"}, withObject: "scene/objects/rootObjects", updateEventTarget: "親変更", loopTarget: "/children", structures: [
                         {
                             tagType: "if",
                             formula: {source: "/", conditions: "in", value: "name"},

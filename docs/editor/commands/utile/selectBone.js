@@ -1,4 +1,5 @@
 import { app } from "../../../main.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 import { hitTestPointTriangle } from "../../utils/utility.js";
 
 export class SelectOnlyBoneCommand {
@@ -34,6 +35,8 @@ export class SelectOnlyBoneCommand {
                 editObject.select(this.selectData[objectID]);
             }
         })
+        managerForDOMs.update({o: "ボーン選択"});
+        return {consumed: true};
     }
 
     undo() {
@@ -47,6 +50,7 @@ export class SelectOnlyBoneCommand {
                 }
             })
             editObject.select(originalIndexs);
+            managerForDOMs.update({o: "ボーン選択"});
         })
     }
 }

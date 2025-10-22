@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
-import { ModalOperator } from "../../operators/modalOperator.js";
+import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 class Modal {
     constructor() {
@@ -8,7 +8,7 @@ class Modal {
 }
 
 export class KeyframeRotate {
-    constructor(/** @type {ModalOperator} */operator) {
+    constructor(/** @type {ToolPanelOperator} */operator) {
         this.operator = operator;
         this.command = null;
         this.values = [

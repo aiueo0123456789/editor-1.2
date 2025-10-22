@@ -28,6 +28,7 @@ export class KeyframeInsertCommand {
                 keyframeBlock.addKeyframe(this.createdKeyframes[boneIndex][keyframeIndex]);
             });
         });
+        return {consumed: true};
     }
 
     undo() {

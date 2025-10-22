@@ -1,11 +1,11 @@
-import { KeyframeResizeCommand, KeyframeTranslateCommand } from "../../commands/keyframeTransform/keyframeTransform.js";
+import { KeyframeResizeCommand } from "../../commands/animation/keyframeTransform.js";
 import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
-import { ModalOperator } from "../../operators/modalOperator.js";
+import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class KeyframeResize {
-    constructor(/** @type {ModalOperator} */operator) {
+    constructor(/** @type {ToolPanelOperator} */operator) {
         this.operator = operator;
         this.command = null;
         this.values = [

@@ -48,6 +48,8 @@ export class BMesh {
         this.silhouetteEdges = [];
         this.texture = null;
         this.zIndex = 0;
+
+        this.activeBone = null;
     }
 
     // object.id
@@ -81,12 +83,14 @@ export class BMesh {
             vertex.selected = false;
             GPU.writeBuffer(this.vertexSelectedBuffer, GPU.createBitData([0], ["u32"]), this.getVertexIndexByVertex(vertex) * 4);
         });
+        this.activeBone = null;
     }
 
     // 頂点選択
     select(/** @type {Array} */ indexs) {
         indexs.forEach(index => {
             this.vertices[index].selected = true;
+            this.activeVertex = this.vertices[index];
             GPU.writeBuffer(this.vertexSelectedBuffer, GPU.createBitData([1], ["u32"]), index * 4);
         });
     }

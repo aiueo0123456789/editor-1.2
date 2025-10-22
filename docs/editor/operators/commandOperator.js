@@ -52,8 +52,11 @@ export class Operator {
     }
 
     appendCommand(command) {
-        command.id = createID();
-        this.commands.push(command);
+        if (command.error) console.error("コマンドの初期化でエラーが出た可能性があります");
+        else {
+            command.id = createID();
+            this.commands.push(command);
+        }
     }
 
     appendErrorLog(log) {
@@ -66,16 +69,19 @@ export class Operator {
         while (this.commands.length != 0) {
             const command = this.commands.pop();
             const result = command.execute();
-            if (result) {
-                if (result.error) {
-                    this.errorLog.push(result.error);
-                }
+            if (result.error) {
+                this.errorLog.push(result.error);
+                console.error("コマンド実行時のエラー", result, command)
+            } else if (result.consumed) {
+                commandsToStack.push(command);
+            } else {
+                console.warn("差分が検出できなかった可能性があります", result, command)
             }
-            commandsToStack.push(command);
         }
-        this.stack.history.push(commandsToStack);
-        this.stack.redoStack.length = 0; // 新しい操作をしたらRedoはリセット
-        managerForDOMs.update({o: this.stack.history});
+        if (commandsToStack.length) {
+            this.stack.history.push(commandsToStack);
+            this.stack.redoStack.length = 0; // 新しい操作をしたらRedoはリセット
+        }
     }
 }
 

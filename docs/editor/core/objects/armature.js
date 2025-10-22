@@ -43,7 +43,6 @@ export class Armature extends ObjectBase {
     static getWorldBoneDataByVertices(head, tail) {
         return [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)];
     }
-
     static getLocalBoneDataByVertices(head, tail, parentHead, parentTail) {
         const myMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(head, tail), head);
         if (parentHead && parentTail) {
@@ -55,15 +54,12 @@ export class Armature extends ObjectBase {
             return {worldMatrix: myMatrix, bone: [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)]};
         }
     }
-
     static getWorldMatrixByBoneData(bone) {
         return mathMat3x3.createTransformMatrix([bone.sx,bone.sy], bone.r, [bone.x,bone.y]);
     }
-
-    static getLocalMatrixByWorldMatrix(world, parentWorld) {
+    static getLocalMatrixByWorldMatrixs(world, parentWorld) {
         return mathMat3x3.multiplyMat3x3(world, mathMat3x3.invertMatrix3x3(parentWorld));
     }
-
     static getBoneDataByMatrix(matrix, l) {
         return [matrix[2][0], matrix[2][1], 1, 1, Math.atan2(matrix[0][1], matrix[0][0]), l];
     }
@@ -106,43 +102,11 @@ export class Armature extends ObjectBase {
         return this.runtimeOffsetData.start.boneOffset * 2;
     }
 
-    get animationWorldOffset() {
-        return this.animationBufferOffset * Armature.VERTEX_LEVEL;
-    }
-
     get verticesNum() {
         return this.allVertices.length / 2;
     }
     get boneNum() {
         return this.allBone.length / 6;
-    }
-
-    getBoneIndexFromBoneID(id) {
-        for (const bone of this.allBone) {
-            if (id = bone.id) {
-                return bone;
-            }
-        }
-        return null;
-    }
-
-    getSelectBones() {
-        return this.allBone.filter(bone => bone.selected);
-    }
-
-    // ボーンを削除してindexを返す
-    deleteBone(bone) {
-        if (bone.parent) {
-            indexOfSplice(bone.parent.childrenBone, bone);
-        }
-        const index = this.allBone.indexOf(bone);
-        this.allBone.splice(index, 1);
-        return index;
-    }
-
-    // boneを追加してindexを再計算する
-    appendBone(bone) {
-        this.allBone.push(bone);
     }
 
     // gc対象にしてメモリ解放
@@ -189,15 +153,6 @@ export class Armature extends ObjectBase {
 
         this.isInit = true;
         this.isChange = true;
-    }
-
-    // ボーンのindexからボーンの行列
-    async getBoneMatrixFromIndex(index) {
-        return await GPU.getF32BufferPartsData(this.boneMatrixBuffer, index, 4 * 3);
-    }
-    // indexを指定して行列を書き込み
-    setBoneMatrixFromIndex(index,matrix) {
-        GPU.writeBuffer(this.boneMatrixBuffer, matrix, (index + 4 * 3) * 4);
     }
 
     async getSaveData() {

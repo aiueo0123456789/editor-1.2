@@ -2,11 +2,11 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { WeightPaintCommand } from "../../commands/mesh/weightPaint.js";
-import { ModalOperator } from "../../operators/modalOperator.js";
-ModalOperator
+import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
+ToolPanelOperator
 
 export class WeightPaintModal {
-    constructor(/** @type {ModalOperator} */operator) {
+    constructor(/** @type {ToolPanelOperator} */operator) {
         this.operator = operator;
         console.log(app.appConfig.areasConfig["Viewer"].weightPaintMetaData)
         this.command = new WeightPaintCommand(app.context.activeObject, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.boneIndex, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue, 1, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.paintSize, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.bezierType);

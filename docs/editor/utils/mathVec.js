@@ -173,7 +173,6 @@ class Vec2 {
 
     averageR(pointArray) {
         const result = mathVec2.create();
-        console.log([...pointArray]);
         for (const point of pointArray) {
             mathVec2.add(result, result, point);
         }

@@ -57,7 +57,7 @@ export class CustomTag {
             managerForDOMs.deleteDataBlock(dataBlock);
         }
         this.children?.forEach(tag => {
-            if (isFunction(tag.remove)) tag.remove()
+            if (isFunction(tag?.remove)) tag.remove()
         });
         this.isRemoved = true;
     }

@@ -21,9 +21,9 @@ class Bone {
         this.baseWorldBoneData = {x: data.base[0], y: data.base[1], sx: data.base[2], sy: data.base[3], r: data.base[4], l: data.base[5]};
         this.baseWorldMatrix = Armature.getWorldMatrixByBoneData(this.baseWorldBoneData);
         if (this.parent) {
-            this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrix(this.baseWorldMatrix, this.parent.baseWorldMatrix);
+            this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrixs(this.baseWorldMatrix, this.parent.baseWorldMatrix);
         } else {
-            this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrix(this.baseWorldMatrix, mathMat3x3.createMatrix());
+            this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrixs(this.baseWorldMatrix, mathMat3x3.createMatrix());
         }
         const baseLocalArray = Armature.getBoneDataByMatrix(this.baseLocalMatrix, this.baseWorldBoneData.l);
         this.baseLocalBoneData = {x: baseLocalArray[0], y: baseLocalArray[1], sx: baseLocalArray[2], sy: baseLocalArray[3], r: baseLocalArray[4], l: baseLocalArray[5]};
@@ -38,7 +38,7 @@ class Bone {
         let position1 = this.headVertex;
         let position2 = this.tailVertex;
         let sub = mathVec2.subR(position2, position1);
-        let normal = mathVec2.normalizeR([-sub[0], sub[1]]); // 仮の法線
+        let normal = mathVec2.normalizeR([-sub[1], sub[0]]); // 仮の法線
         let sectionPosition = mathVec2.mixR(position1, position2, ratio);
 
         let k = mathVec2.scaleR(normal, size * mathVec2.lengthR(sub));
@@ -84,6 +84,8 @@ export class BArmatureAnimation {
         /** @type {Bone[]} */
         this.bones = [];
         this.meshRenderingGroup = null;
+
+        this.activeBone = null;
     }
 
     get id() {
@@ -115,16 +117,16 @@ export class BArmatureAnimation {
             bone.selected = false;
             GPU.writeBuffer(this.boneSelectedBuffer, GPU.createBitData([0], ["u32"]), this.getBoneIndex(bone) * 4);
         });
-        managerForDOMs.update({o: "ボーン選択"});
+        this.activeBone = null;
         // this.updateGPUData();
     }
 
     select(/** @type {Array} */ indexs) {
         indexs.forEach(index => {
             this.bones[index].selected = true;
+            this.activeBone = this.bones[index];
             GPU.writeBuffer(this.boneSelectedBuffer, GPU.createBitData([1], ["u32"]), index * 4);
         });
-        managerForDOMs.update({o: "ボーン選択"});
         // this.updateGPUData();
     }
 

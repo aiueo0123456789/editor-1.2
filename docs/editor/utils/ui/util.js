@@ -365,3 +365,10 @@ export function removeHTMLElementInObject(object, maxDepth = 10) {
     }
     fn(object);
 }
+
+export function rgbToRgba(rgb, alpha) {
+    return rgb.replace(
+        /^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/,
+        `rgba($1, $2, $3, ${alpha})`
+    );
+}

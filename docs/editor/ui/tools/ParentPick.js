@@ -1,10 +1,10 @@
 import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { ChangeParentCommand } from "../../commands/object/object.js";
-import { ModalOperator } from "../../operators/modalOperator.js";
+import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class ParentPickModal {
-    constructor(/** @type {ModalOperator} */operator) {
+    constructor(/** @type {ToolPanelOperator} */operator) {
         this.operator = operator;
         this.command = null;
         this.modal = {

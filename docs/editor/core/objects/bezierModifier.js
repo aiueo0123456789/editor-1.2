@@ -144,10 +144,6 @@ export class BezierModifier extends ObjectBase {
         return result;
     }
 
-    get animationWorldOffset() {
-        return this.animationBufferOffset * BezierModifier.VERTEX_LEVEL;
-    }
-
     // gc対象にしてメモリ解放
     destroy() {
         sharedDestroy(this);

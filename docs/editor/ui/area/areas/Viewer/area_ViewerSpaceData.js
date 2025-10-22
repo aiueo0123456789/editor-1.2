@@ -1,4 +1,4 @@
-import { ModalOperator } from "../../../../operators/modalOperator.js";
+import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
 import { managerForDOMs } from "../../../../utils/ui/util.js";
 import { GPU } from "../../../../utils/webGPU.js";
 

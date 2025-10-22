@@ -4,44 +4,44 @@ import { CreatorForUI } from "../utils/ui/creatorForUI.js";
 import { createTag } from "../utils/ui/util.js";
 import { isFunction } from "../utils/utility.js";
 
-export class ModalOperator {
-    constructor(dom, modals) {
+export class ToolPanelOperator {
+    constructor(dom, panels) {
         this.dom = createTag(dom, "div", {style: "width: 100%; height: 100%; position: absolute; pointerEvents: none;"});
         this.state = 0;
-        this.modals = modals;
-        this.nowModal = null;
+        this.panels = panels;
+        this.nowPanel = null;
         this.creatorForUI = new CreatorForUI();
     }
 
-    changeModals(newModals) {
-        this.modals = newModals;
+    changePanels(newPanels) {
+        this.panels = newPanels;
     }
 
     reset() {
         this.state = 0;
-        this.nowModal = null;
+        this.nowPanel = null;
         if (this.dom) {
             console.log("削除")
             this.creatorForUI.remove();
         }
     }
 
-    async setModal(model, /** @type {InputManager} */inputManager) {
-        if (this.nowModal) {
-            this.nowModal.execute();
+    setPanel(model, /** @type {InputManager} */inputManager) {
+        if (this.nowPanel) {
+            this.nowPanel.execute();
             this.reset();
         }
-        this.nowModal = new model(this);
+        this.nowPanel = new model(this);
         if (this.dom) {
-            console.log(this.nowModal);
+            console.log(this.nowPanel);
             this.creatorForUI.remove();
-            if (this.nowModal.modal) {
-                console.log(this.nowModal);
-                this.creatorForUI.shelfeCreate(this.dom, this.nowModal.modal);
+            if (this.nowPanel.modal) {
+                console.log(this.nowPanel);
+                this.creatorForUI.shelfeCreate(this.dom, this.nowPanel.modal);
             }
         }
-        if (isFunction(this.nowModal.init)) {
-            const consumed = await this.nowModal.init(inputManager);
+        if (isFunction(this.nowPanel.init)) {
+            const consumed = this.nowPanel.init(inputManager);
             if (consumed) {
                 if (consumed.complete) {
                     this.state ++;
@@ -51,29 +51,29 @@ export class ModalOperator {
         }
     }
 
-    async keyInput(/** @type {InputManager} */inputManager) {
-        if (this.nowModal && this.state == 0) {
-            if (app.input.consumeKeys([this.nowModal.activateKey])) {
+    keyInput(/** @type {InputManager} */inputManager) {
+        if (this.nowPanel && this.state == 0) {
+            if (app.input.consumeKeys([this.nowPanel.activateKey])) {
                 this.state ++;
             } else {
-                if (isFunction(this.nowModal.update)) {
-                    this.nowModal.update(inputManager);
+                if (isFunction(this.nowPanel.update)) {
+                    this.nowPanel.update(inputManager);
                 }
             }
         } else {
-            for (const key in this.modals) {
+            for (const key in this.panels) {
                 if (app.input.consumeKeys([key])) {
-                    this.setModal(this.modals[key], inputManager);
+                    this.setPanel(this.panels[key], inputManager);
                 }
             }
         }
     }
 
-    async mousemove(/** @type {InputManager} */inputManager) {
+    mousemove(/** @type {InputManager} */inputManager) {
         if (!this.state == 0) return ;
-        if (this.nowModal) {
-            if (isFunction(this.nowModal.mousemove)) {
-                const consumed = await this.nowModal.mousemove(inputManager);
+        if (this.nowPanel) {
+            if (isFunction(this.nowPanel.mousemove)) {
+                const consumed = this.nowPanel.mousemove(inputManager);
                 if (consumed) {
                     if (consumed.complete) {
                         this.state ++;
@@ -84,15 +84,15 @@ export class ModalOperator {
         }
         return false;
     }
-    async mousedown(/** @type {InputManager} */inputManager) {
+    mousedown(/** @type {InputManager} */inputManager) {
         if (this.state == 1) {
-            this.nowModal.execute();
+            this.nowPanel.execute();
             this.reset();
             return true;
         }
-        if (this.nowModal) {
-            if (isFunction(this.nowModal.mousedown)) {
-                const consumed = await this.nowModal.mousedown(inputManager);
+        if (this.nowPanel) {
+            if (isFunction(this.nowPanel.mousedown)) {
+                const consumed = this.nowPanel.mousedown(inputManager);
                 if (consumed) {
                     if (consumed.complete) {
                         this.state ++;
@@ -103,10 +103,10 @@ export class ModalOperator {
         }
         return false;
     }
-    async mouseup(/** @type {InputManager} */inputManager) {
-        if (this.nowModal) {
-            if (isFunction(this.nowModal.mouseup)) {
-                const consumed = await this.nowModal.mouseup(inputManager);
+    mouseup(/** @type {InputManager} */inputManager) {
+        if (this.nowPanel) {
+            if (isFunction(this.nowPanel.mouseup)) {
+                const consumed = this.nowPanel.mouseup(inputManager);
                 if (consumed) {
                     if (consumed.complete) {
                         this.state ++;

@@ -1,6 +1,6 @@
 import { app } from "../../../../../main.js";
 import { InputManager } from "../../../../app/inputManager/inputManager.js";
-import { ModalOperator } from "../../../../operators/modalOperator.js";
+import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
 import { mathVec2 } from "../../../../utils/mathVec.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
@@ -223,12 +223,12 @@ export class Area_Timeline {
                             loopTarget: {
                                 parameter: "type",
                                 loopTargets: {
-                                    "アーマチュア": ["allBone"],
-                                    "ボーン": ["keyframeBlockManager/blocks"],
-                                    "ベジェモディファイア": ["allPoint"],
-                                    "ポイント": ["basePoint/keyframeBlockManager/blocks", "baseLeftControlPoint/keyframeBlockManager/blocks", "baseRightControlPoint/keyframeBlockManager/blocks"],
-                                    "キーフレームブロックマネージャー": ["blocks"],
-                                    others: ["animationBlock/animations","keyframeBlockManager/blocks"]
+                                    "アーマチュア": ["/allBone"],
+                                    "ボーン": ["/keyframeBlockManager/blocks"],
+                                    "ベジェモディファイア": ["/allPoint"],
+                                    "ポイント": ["/basePoint/keyframeBlockManager/blocks", "/baseLeftControlPoint/keyframeBlockManager/blocks", "/baseRightControlPoint/keyframeBlockManager/blocks"],
+                                    "キーフレームブロックマネージャー": ["/blocks"],
+                                    others: ["/animationBlock/animations","/keyframeBlockManager/blocks"]
                                 }
                             },
                             structures: [
@@ -277,7 +277,7 @@ export class Area_Timeline {
         this.creatorForUI = area.creatorForUI;
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, {"g": KeyframeTranslate, "r": KeyframeRotate, "s": KeyframeResize, "x": KeyDelete});
+        this.modalOperator = new ToolPanelOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, {"g": KeyframeTranslate, "r": KeyframeRotate, "s": KeyframeResize, "x": KeyDelete});
 
         /** @type {HTMLElement} */
         this.canvas = this.creatorForUI.getDOMFromID("timelineCanvasForGrid");

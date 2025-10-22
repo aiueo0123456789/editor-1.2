@@ -10,6 +10,7 @@ import { roundUp } from "../../utils/utility.js";
 
 class TransformCommand {
     constructor(pivotType, useProportionalEdit, proportionalType, proportionalSize) {
+        this.error = false;
         this.editObjects = app.scene.editData.allEditObjects;
         this.value = [0,0];
         this.useProportional = useProportionalEdit;
@@ -79,6 +80,7 @@ class TransformCommand {
             this.targetBones = getSurfaceBones(this.selectedBones);
             this.originalBones = this.selectedBones.map(bone => Armature.copyBoneData(bone.animationLocalBoneData)); // 元の状態の記憶
         }
+        this.error = !(this.selectedBones?.length || this.selectedVertices?.length);
     }
 
     transform(value, useProportional, proportionalType, proportionalSize) {
@@ -163,6 +165,7 @@ class TransformCommand {
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
             }
         }
+        return {consumed: true};
     }
 
     undo() {

@@ -36,6 +36,7 @@ export class ChangeModeCommand {
                 app.scene.editData.appendEditObject(object, this.editObjects[index]);
             }
         })
+        return {consumed: true};
     }
 
     undo() {

@@ -2,6 +2,7 @@ import { app } from "../../../../../main.js";
 import { BArmatureAnimation } from "../../../../core/edit/BArmatureAnimation.js";
 import { BKeyframeBlockManager } from "../../../../core/edit/BKeyframeBlockManager.js";
 import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
+import { Keyframe, KeyframeBlock } from "../../../../core/objects/keyframe.js";
 import { mathVec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {
@@ -39,6 +40,16 @@ export class TimelineSpaceData {
 
     getSelectVerticesCenter() {
         return mathVec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
+    }
+
+    /** @type {KeyframeBlock[]} */
+    get keyframeBlocks() {
+        return app.scene.objects.keyframeBlocks.filter(keyframeBlock => this.outlineKefyframeData.map(object => object.object).includes(keyframeBlock));
+    }
+
+    /** @type {Keyframe[]} */
+    get keyframes() {
+        return this.keyframeBlocks.map(keyframeBlock => keyframeBlock.keys).flat();
     }
 
     get selectVertices() {

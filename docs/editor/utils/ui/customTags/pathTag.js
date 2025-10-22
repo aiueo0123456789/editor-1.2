@@ -25,6 +25,7 @@ export class PathTag extends CustomTag {
             const keep = createTag(null, "div");
             if (child.children) {
                 const o = creatorForUI.getParameter(searchTarget, child.sourceObject, 2);
+                console.log(searchTarget, child.sourceObject,o);
                 if (o) {
                     if (isFunction(o)) {
                         this.children = creatorForUI.createFromChildren(keep, child.children, o(), myFlag);

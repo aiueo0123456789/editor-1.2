@@ -7,8 +7,14 @@ export class InputNumberTag extends CustomTag {
         super();
         this.element;
         if (child.custom?.visual) {
+            /** @type {HTMLElement} */
             this.element = createTag(t, "input", {type: "number"});
             this.dataBlocks = [creatorForUI.setWith(this.element, child.value, searchTarget, flag, child.useCommand)];
+            if (child.submitEvent) {
+                this.element.addEventListener("input", () => {
+                    child.submitEvent();
+                })
+            }
         } else {
             this.element = createTag(t, "div");
             this.element.style.width = "100%";

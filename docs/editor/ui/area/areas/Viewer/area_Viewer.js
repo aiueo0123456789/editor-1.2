@@ -19,7 +19,7 @@ import { Camera } from '../../../../core/objects/camera.js';
 import { BoneAttachmentsModal } from './toolBar/armature/attachments.js';
 import { InputManager } from '../../../../app/inputManager/inputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
-import { ModalOperator } from '../../../../operators/modalOperator.js';
+import { ToolPanelOperator } from '../../../../operators/toolPanelOperator.js';
 import { CreateEdgeTool } from '../../../tools/CreateEdge.js';
 import { Particle } from '../../../../core/objects/particle.js';
 import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
@@ -35,6 +35,8 @@ import { BArmature } from '../../../../core/edit/BArmature.js';
 import { BArmatureAnimation } from '../../../../core/edit/BArmatureAnimation.js';
 import { SelectOnlyBoneCommand } from '../../../../commands/utile/selectBone.js';
 import { KeyframeInsertModal } from '../../../tools/keyframeInsert.js';
+import { ActiveVertexPanel } from './toolBar/panel/vertex.js';
+import { ActiveBonePanel } from './toolBar/panel/bone.js';
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");
 
@@ -70,13 +72,32 @@ const alphaBuffers = {
     "1": GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [1], ["f32"])]),
 };
 
-const useingToolInMode = {
+const useingToolPanelInMode = {
     "メッシュ編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool},
     "ベジェ編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool},
     "ボーン編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "x": DeleteTool},
     "ボーンアニメーション編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
     "オブジェクト": {"p": ParentPickModal},
 };
+
+const useingSideBarPanelInMode = {
+    "メッシュ編集": {
+        "頂点": ActiveVertexPanel,
+        "メッシュ": ActiveVertexPanel,
+        "辺": ActiveVertexPanel,
+    },
+    "ベジェ編集": {
+        "頂点": ActiveVertexPanel,
+        "メッシュ": ActiveVertexPanel,
+        "辺": ActiveVertexPanel,
+    },
+    "ボーン編集": {
+        "頂点": ActiveVertexPanel,
+    },
+    "ボーンアニメーション編集": {
+        "ボーン": ActiveBonePanel,
+    }
+}
 
 class SpaceData {
     constructor() {
@@ -186,8 +207,8 @@ export class Area_Viewer {
 
         this.creatorForUI.create(area.main, this.struct, {padding: false});
 
-        this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, [ArmaturePropertyModal,BonePropertyModal,BoneAttachmentsModal,VertexPropertyModal]);
-        this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, {});
+        this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, {});
+        this.toolPanelOperator = new ToolPanelOperator(this.creatorForUI.getDOMFromID("canvasContainer").element, {});
 
         this.canvas = this.creatorForUI.getDOMFromID("renderingCanvas");
         this.canvasRect = this.canvas.getBoundingClientRect();
@@ -212,7 +233,8 @@ export class Area_Viewer {
         });
 
         managerForDOMs.set({o: app.context, i: "currentMode"}, () => {
-            this.modalOperator.changeModals(useingToolInMode[app.context.currentMode]);
+            this.toolPanelOperator.changePanels(useingToolPanelInMode[app.context.currentMode]);
+            this.sideBarOperator.changeShelfes(useingSideBarPanelInMode[app.context.currentMode]);
         })
     }
 
@@ -226,7 +248,7 @@ export class Area_Viewer {
     async keyInput(/** @type {InputManager} */ inputManager) {
         this.inputs.keysDown = inputManager.keysDown;
         this.inputs.keysPush = inputManager.keysPush;
-        let consumed = await this.modalOperator.keyInput(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = this.toolPanelOperator.keyInput(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
         const context = app.context;
         if (context.activeObject) {
@@ -263,7 +285,7 @@ export class Area_Viewer {
                         }
                     } else {
                         context.setModeForSelected("オブジェクト");
-                        this.modalOperator.changeModals({"p": ParentPickModal});
+                        this.toolPanelOperator.changePanels({"p": ParentPickModal});
                     }
                 }
                 // if (context.currentMode == "ボーンアニメーション編集") {
@@ -285,17 +307,17 @@ export class Area_Viewer {
                     if (context.currentMode == "オブジェクト") {
                         if (inputManager.consumeKeys(["a"])) {
                             context.setModeForSelected("ベジェ頂点アニメーション編集");
-                            this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
+                            this.toolPanelOperator.changePanels({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else if (inputManager.consumeKeys(["w"])) {
                             context.setModeForSelected("ベジェウェイト編集");
-                            this.modalOperator.changeModals({});
+                            this.toolPanelOperator.changePanels({});
                         } else {
                             context.setModeForSelected("ベジェ編集");
                             // this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "v": AppendPoint});
                         }
                     } else {
                         context.setModeForSelected("オブジェクト");
-                        this.modalOperator.changeModals({"p": ParentPickModal});
+                        this.toolPanelOperator.changePanels({"p": ParentPickModal});
                     }
                 }
                 if (context.currentMode == "ベジェ頂点アニメーション編集") {
@@ -326,47 +348,13 @@ export class Area_Viewer {
         }
     }
 
-    selectOnlyOperator(position) {
-        let minDis = Infinity;
-        let minIndex = 0;
-        let objectID = 0;
-        for (const object of app.context.selectedObjects) {
-            const editObject = app.scene.editData.getEditObjectByObject(object);
-            if (editObject instanceof BMesh || editObject instanceof BBezier || editObject instanceof BArmature) {
-                const vertices = editObject.verticesCoordinates;
-                for (const vertex of vertices) {
-                    const dist = mathVec2.distanceR(vertex, position);
-                    if (dist < minDis) {
-                        minDis = dist;
-                        minIndex = vertices.indexOf(vertex);
-                        objectID = object.id;
-                    }
-                }
-            } else if (editObject instanceof BArmatureAnimation) {
-                const vertices = editObject.verticesCoordinates;
-                for (const vertex of vertices) {
-                    const dist = mathVec2.distanceR(vertex, position);
-                    if (dist < minDis) {
-                        minDis = dist;
-                        minIndex = vertices.indexOf(vertex);
-                        objectID = object.id;
-                    }
-                }
-            }
-        }
-        const result = {};
-        result[objectID] = [minIndex];
-        console.log(result);
-        return result;
-    }
-
     async mousedown(/** @type {InputManager} */ inputManager) {
         const local = this.convertCoordinate.screenPosFromGPUPos(mathVec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.position), this.canvas.offsetHeight)); // canvasないのlocal座標へ
         this.inputs.click = true;
         this.inputs.clickPosition = local;
         this.inputs.position = local;
 
-        let consumed = await this.modalOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = this.toolPanelOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
 
         const context = app.context;
@@ -403,7 +391,7 @@ export class Area_Viewer {
                 const bone = app.scene.runtimeData.armatureData.getSelectBones();
                 changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
             } else {
-                this.modalOperator.setModal(WeightPaintModal, this.inputs);
+                this.toolPanelOperator.setPanel(WeightPaintModal, this.inputs);
             }
         } else if (context.currentMode == "ベジェウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
@@ -411,7 +399,7 @@ export class Area_Viewer {
                 const bone = app.scene.runtimeData.armatureData.getSelectBones();
                 changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
             } else {
-                this.modalOperator.setModal(WeightPaintModal, this.inputs);
+                this.toolPanelOperator.setPanel(WeightPaintModal, this.inputs);
             }
         }
     }
@@ -421,11 +409,11 @@ export class Area_Viewer {
         mathVec2.sub(this.inputs.movement, local, this.inputs.position);
         this.inputs.position = local;
 
-        let consumed = await this.modalOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = this.toolPanelOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }
     async mouseup(inputManager) {
-        let consumed = await this.modalOperator.mouseup(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = this.toolPanelOperator.mouseup(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }
 

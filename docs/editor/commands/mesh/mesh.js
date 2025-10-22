@@ -67,6 +67,7 @@ export class DeleteVerticesCommand {
             editObject.vertices = editObject.vertices.filter(vert => !this.deleteVertices[editObject.id].includes(vert));
             editObject.updateGPUData();
         }
+        return {consumed: true};
     }
 
     redo() {

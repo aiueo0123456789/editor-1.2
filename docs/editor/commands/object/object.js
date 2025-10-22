@@ -25,6 +25,7 @@ export class RemoveObjectCommand {
         for (const object of this.objects) {
             app.scene.objects.removeObject(object);
         }
+        return {consumed: true};
     }
 
     undo() {
@@ -46,6 +47,7 @@ export class ChangeParentCommand {
         this.targets.forEach((target) => {
             target.changeParent(this.newParent);
         })
+        return {consumed: true};
     }
 
     undo() {

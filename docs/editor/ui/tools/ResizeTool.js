@@ -3,10 +3,10 @@ import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { ResizeCommand } from "../../commands/transform/transform.js";
 import { mathVec2 } from "../../utils/mathVec.js";
-import { ModalOperator } from "../../operators/modalOperator.js";
+import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class ResizeModal {
-    constructor(/** @type {ModalOperator} */operator) {
+    constructor(/** @type {ToolPanelOperator} */operator) {
         this.operator = operator;
         this.command = null;
         this.startPosition = [0,0];
