@@ -37,7 +37,7 @@ export class Area_Outliner {
                                             {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
                                             {tagType: "padding", size: "10px"},
                                             {tagType: "input", value: "/visible", type: "checkbox", look: {check: "display", uncheck: "hide"}},
-                                            {tagType: "input", value: "/zIndex", type: "number", min: 0, max: 100, step: 1, custom: {visual: "1"}},
+                                            {tagType: "input", value: "/zIndex", type: "number", min: 0, max: 100, step: 1},
                                         ]},
                                     ],
                                     false: [

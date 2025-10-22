@@ -23,6 +23,7 @@ import { SectionTag } from "./customTags/sectionTag.js";
 import { LabelTag } from "./customTags/labelTag.js";
 import { GridBoxTag } from "./customTags/gridBoxTag.js";
 import { DblClickInput } from "./customTags/dblclickInput.js";
+import { PanelTag } from "./customTags/panelTag.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -195,6 +196,9 @@ export const tagCreater = {
     },
     "section": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         return new SectionTag(creatorForUI,t,searchTarget,child,flag);
+    },
+    "panel": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new PanelTag(creatorForUI,t,searchTarget,child,flag);
     },
     "option": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "div", {class: "ui_options"});
@@ -423,7 +427,14 @@ export class CreatorForUI {
                     return null;
                 }
             }
-            const final = object[lastRoot];
+            let final;
+            if (object instanceof Map) {
+                final = object.get(lastRoot);
+            } else if (lastRoot in object) {
+                final = object[lastRoot];
+            } else {
+                return null;
+            }
             if (option == 1) {
                 return new ParameterReference(object, lastRoot);
             } else {
@@ -762,9 +773,7 @@ export class CreatorForUI {
     create(/** @type {HTMLElement} */target, struct, options = {heightCN: false, padding: true}) {
         this.remove();
         this.dom = target;
-        const domStruct = struct.DOM;
-        const inputObject = struct.inputObject;
-        this.globalInputObject = inputObject;
+        this.globalInputObject = struct.inputObject; // グローバル参照
 
         const t = createTag(target, "div");
 
@@ -782,17 +791,15 @@ export class CreatorForUI {
             t.style.width = "100%";
         }
 
-        this.createFromChildren(t,domStruct,inputObject);
+        this.createFromChildren(t,struct.DOM,struct.inputObject);
     }
 
     shelfeCreate(/** @type {HTMLElement} */target, struct) {
         this.remove();
         this.dom = target;
-        const domStruct = struct.DOM;
-        const inputObject = struct.inputObject;
-        this.globalInputObject = inputObject;
+        this.globalInputObject = struct.inputObject; // グローバル参照
 
-        this.createFromChildren(target,domStruct,inputObject);
+        this.createFromChildren(target,struct.DOM,struct.inputObject);
     }
 
     getDOMFromID(id) {

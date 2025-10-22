@@ -33,10 +33,8 @@ export class ToolPanelOperator {
         }
         this.nowPanel = new model(this);
         if (this.dom) {
-            console.log(this.nowPanel);
             this.creatorForUI.remove();
             if (this.nowPanel.modal) {
-                console.log(this.nowPanel);
                 this.creatorForUI.shelfeCreate(this.dom, this.nowPanel.modal);
             }
         }

@@ -199,8 +199,22 @@ export class BArmatureAnimation {
 
     toRutime() {
         const keyframeBlocks = [];
+        this.object.allPhysics.length = 0;
         for (const bone of this.bones) {
             keyframeBlocks.push(...bone.keyframeBlockManager.blocks); // x y sx sy r l
+            this.object.allPhysics.push(...bone.physics,
+                0, 1, 0,
+
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0, 0,
+                0,
+                0,
+                0,
+                0,
+            );
         }
         this.object.keyframeBlockManager.setKeyframeBlocks(range(0, keyframeBlocks.length), keyframeBlocks);
         const armatureData = app.scene.runtimeData.armatureData;

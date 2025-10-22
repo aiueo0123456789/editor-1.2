@@ -310,20 +310,6 @@ export function createDoubleClickInput(fn, object) {
     return inputTag;
 }
 
-export function createShelf(target, title = "テスト") {
-    const container = document.createElement("div");
-    container.classList.add("shelf");
-
-    const inner = document.createElement("div");
-    inner.classList.add("section");
-
-    const header = createSection(container, title, inner, "shelf-container").querySelector("div");
-    const translater = new TranslaterForDOM(header, container, target);
-    // const resizer = new ResizerForDOM(inner, "w", 100, 500);
-    target.append(container);
-    return {container: container, inner: inner};
-}
-
 export function createRange(target, options) {
     const range = createTag(target, "input", options);
     range.type = "range";

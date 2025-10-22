@@ -21,10 +21,10 @@ export class RotateModal {
             DOM: [
                 {tagType: "div", class: "shelfe", children: [
                     {tagType: "title", text: "TranslateModal", class: "shelfeTitle"},
-                    {tagType: "input", label: "回転量", value: "value/0", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                    {tagType: "input", label: "回転量", value: "value/0", type: "number", min: -1000, max: 1000, useCommand: false, custom: {visual: "range"}},
                     {tagType: "input", label: "プロポーショナル編集", type: "checkbox", checked: "value/2", look: {check: "check", uncheck: "uncheck"}, useCommand: false},
                     {tagType: "select", label: "種類", value: "value/3", sourceObject: ["リニア", "逆二乗", "一定"], options: {initValue: {path: "value/4"}}, useCommand: false},
-                    {tagType: "input", label: "半径", value: "value/4", type: "number", min: 0, max: 10000, useCommand: false},
+                    {tagType: "input", label: "半径", value: "value/4", type: "number", min: 0, max: 10000, useCommand: false, custom: {visual: "range"}},
                 ]}
             ]
         };

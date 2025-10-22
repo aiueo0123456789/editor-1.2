@@ -1,6 +1,10 @@
 import { app } from "../../../../main.js";
 import { CustomTag } from "../customTags.js";
-import { managerForDOMs, removeHTMLElementInObject } from "../util.js";
+import { managerForDOMs } from "../util.js";
+
+function update(o,g,others) {
+    others.checkbox.checked = others.targetKeyframeBlock.hasKeyFromFrame(app.scene.frame_current, 0.2);
+}
 
 export class HasKeyframeCheck extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
@@ -10,22 +14,22 @@ export class HasKeyframeCheck extends CustomTag {
         this.checkbox.style.display = "none";
         this.element = document.createElement("label");
         this.element.setAttribute("name", "checkbox");
-        const span = document.createElement("span");
-        span.classList.add("hasKeyframeCheck");
-        this.element.append(this.checkbox,span);
+        this.span = document.createElement("span");
+        this.span.classList.add("hasKeyframeCheck");
+        this.element.append(this.checkbox,this.span);
 
-        const object = creatorForUI.getParameter(searchTarget, child.targetObject);
-        const update = () => {
-            this.checkbox.checked = object.hasKeyFromFrame(app.scene.frame_current, 0.2);
-        }
-        this.checkbox.addEventListener("click", () => {
-            if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
-            } else {
-                object.insert(app.scene.frame_current, object.targetObject[object.targetValue], 0.2);
-            }
-        });
-        update();
-        this.dataBlocks = [managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: creatorForUI.groupID}, update), managerForDOMs.set({o: object, i: "keys", f: flag, g: creatorForUI.groupID}, update)];
+        this.targetKeyframeBlock = creatorForUI.getParameter(searchTarget, child.src);
+        // this.checkbox.addEventListener("click", () => {
+        //     if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
+        //     } else {
+        //         object.insert(app.scene.frame_current, this.targetKeyframeBlock.src[object.parameter], 0.2);
+        //     }
+        // });
+        update(null,null,{targetKeyframeBlock: this.targetKeyframeBlock, checkbox: this.checkbox});
+        this.dataBlocks = [
+            managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: creatorForUI.groupID}, update, {targetKeyframeBlock: this.targetKeyframeBlock, checkbox: this.checkbox}),
+            managerForDOMs.set({o: this.targetKeyframeBlock, i: "keys", f: flag, g: creatorForUI.groupID}, update, {targetKeyframeBlock: this.targetKeyframeBlock, checkbox: this.checkbox})
+        ];
         t.append(this.element);
     }
 }

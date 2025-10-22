@@ -37,6 +37,8 @@ import { SelectOnlyBoneCommand } from '../../../../commands/utile/selectBone.js'
 import { KeyframeInsertModal } from '../../../tools/keyframeInsert.js';
 import { ActiveVertexPanel } from './toolBar/panel/vertex.js';
 import { ActiveBonePanel } from './toolBar/panel/bone.js';
+import { ActiveMeshPanel } from './toolBar/panel/mesh.js';
+import { ActiveEdgePanel } from './toolBar/panel/edge.js';
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");
 
@@ -83,12 +85,11 @@ const useingToolPanelInMode = {
 const useingSideBarPanelInMode = {
     "メッシュ編集": {
         "頂点": ActiveVertexPanel,
-        "メッシュ": ActiveVertexPanel,
-        "辺": ActiveVertexPanel,
+        "メッシュ": ActiveMeshPanel,
+        "辺": ActiveEdgePanel,
     },
     "ベジェ編集": {
         "頂点": ActiveVertexPanel,
-        "メッシュ": ActiveVertexPanel,
         "辺": ActiveVertexPanel,
     },
     "ボーン編集": {
@@ -180,8 +181,8 @@ export class Area_Viewer {
                                         //     {tagType: "heightCenter", children: [
                                         //     ]}
                                         // ]},
-                                        {tagType: "input", label: "値", value: "areasConfig/weightPaintMetaData/weightValue", type: "number", min: 0, max: 1, step: 0.01, custom: {visual: "1"}},
-                                        {tagType: "input", label: "範囲", value: "areasConfig/weightPaintMetaData/paintSize", type: "number", min: 0, max: 1000, step: 0.01, custom: {visual: "1"}},
+                                        {tagType: "input", label: "値", value: "areasConfig/weightPaintMetaData/weightValue", type: "number", min: 0, max: 1, step: 0.01},
+                                        {tagType: "input", label: "範囲", value: "areasConfig/weightPaintMetaData/paintSize", type: "number", min: 0, max: 1000, step: 0.01},
                                         {tagType: "select", label: "種類", value: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
                                         // {tagType: "flexBox", interval: "5px", name: "", children: [
                                         //     {tagType: "heightCenter", children: [
@@ -190,9 +191,15 @@ export class Area_Viewer {
                                     ]},
                                 ], false: [
                                     {tagType: "flexBox", interval: "10px", children: [
-                                        {tagType: "input", label: "プロポーショナル編集", type: "checkbox", checked: "areasConfig/proportionalMetaData/use", look: {check: "check", uncheck: "uncheck"}},
-                                        {tagType: "select", label: "種類", value: "areasConfig/proportionalMetaData/type", sourceObject: ["リニア", "逆二乗", "一定"], options: {initValue: {path: "areasConfig/proportionalMetaData/type"}}},
-                                        {tagType: "input", label: "半径", value: "areasConfig/proportionalMetaData/size", type: "number", min: 0, max: 10000},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "input", label: "プロポーショナル編集", type: "checkbox", checked: "areasConfig/proportionalMetaData/use", look: {check: "check", uncheck: "uncheck"}},
+                                        ]},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "select", label: "種類", value: "areasConfig/proportionalMetaData/type", sourceObject: ["リニア", "逆二乗", "一定"], options: {initValue: {path: "areasConfig/proportionalMetaData/type"}}},
+                                        ]},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "input", label: "半径", value: "areasConfig/proportionalMetaData/size", type: "number", min: 0, max: 10000},
+                                        ]}
                                     ]},
                                 ]}
                             ]},

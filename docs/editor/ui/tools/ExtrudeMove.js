@@ -13,8 +13,8 @@ export class ExtrudeMove {
             DOM: [
                 {tagType: "div", class: "shelfe", children: [
                     {tagType: "title", text: "ExtrudeMove", class: "shelfeTitle"},
-                    {tagType: "input", label: "x", value: "value/0", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
-                    {tagType: "input", label: "y", value: "value/1", type: "number", min: -1000, max: 1000, custom: {visual: "1"}, useCommand: false},
+                    {tagType: "input", label: "x", value: "value/0", type: "number", min: -1000, max: 1000, useCommand: false},
+                    {tagType: "input", label: "y", value: "value/1", type: "number", min: -1000, max: 1000, useCommand: false},
                 ]}
             ]
         };

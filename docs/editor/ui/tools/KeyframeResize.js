@@ -18,8 +18,8 @@ export class KeyframeResize {
             DOM: [
                 {tagType: "div", class: "shelfe", children: [
                     {tagType: "title", text: "ResizeModal", class: "shelfeTitle"},
-                    {tagType: "input", label: "x", value: "value/0", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
-                    {tagType: "input", label: "y", value: "value/1", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
+                    {tagType: "input", label: "x", value: "value/0", type: "number",min: -1000, max: 1000},
+                    {tagType: "input", label: "y", value: "value/1", type: "number",min: -1000, max: 1000},
                     {tagType: "input", label: "スムーズ", value: "value/2", type: "number",min: 0, max: 2},
                     {tagType: "input", label: "半径", value: "value/3", type: "number",min: 0, max: 10000},
                 ]}

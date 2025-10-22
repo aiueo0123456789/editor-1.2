@@ -6,7 +6,8 @@ struct Bone {
 }
 
 struct PhysicsAttachmentData {
-    translate: vec2<f32>,
+    x: f32,
+    y: f32,
     rotate: f32,
     scaleX: f32,
     shearX: f32,
@@ -86,24 +87,14 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     }
     let boneIndex = boneIndexs[index];
     var attachmentData = physicsAttachmentDatas[boneIndex];
-    // attachmentData.inertia = 0.3;
-    // attachmentData.damping = 0.95;
-    // attachmentData.gravity = 10.0;
-    // attachmentData.wind = 0.0;
-    // attachmentData.rotate = 1.0;
-    // attachmentData.translate = vec2<f32>(0.0,0.0);
-    // attachmentData.mix = 1.0;
-    // attachmentData.strength = 100.0;
-    // attachmentData.mass = 1000.0;
-    // attachmentData.limit = 100.0;
     let mix = attachmentData.mix;
     if (mix == 0.0) {
         return;
     }
 
     let massInverse = 1.0 / attachmentData.mass;
-    let x = attachmentData.translate.x > 0.0;
-    let y = attachmentData.translate.y > 0.0;
+    let x = attachmentData.x > 0.0;
+    let y = attachmentData.y > 0.0;
     let rotateOrShearX = attachmentData.rotate > 0.0 || attachmentData.shearX > 0.0;
     let scaleX = attachmentData.scaleX > 0.0;
     let l = baseBone[boneIndex].length;
@@ -163,10 +154,10 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
                 attachmentData.velocity.y *= damping;
             }
             if (x) {
-                boneMatrix[2][0] += attachmentData.offset.x * mix * attachmentData.translate.x;
+                boneMatrix[2][0] += attachmentData.offset.x * mix * attachmentData.x;
             }
             if (y) {
-                boneMatrix[2][1] += attachmentData.offset.y * mix * attachmentData.translate.y;
+                boneMatrix[2][1] += attachmentData.offset.y * mix * attachmentData.y;
             }
         }
         if (rotateOrShearX || scaleX) {
@@ -230,10 +221,10 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         }
     } else if (attachmentData.pose_ == 1u) {
         if (x) {
-            boneMatrix[2][0] += attachmentData.offset.x * mix * attachmentData.translate.x;
+            boneMatrix[2][0] += attachmentData.offset.x * mix * attachmentData.x;
         }
         if (y) {
-            boneMatrix[2][1] += attachmentData.offset.y * mix * attachmentData.translate.y;
+            boneMatrix[2][1] += attachmentData.offset.y * mix * attachmentData.y;
         }
     }
 

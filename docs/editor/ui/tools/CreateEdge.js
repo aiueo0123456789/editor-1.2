@@ -14,8 +14,8 @@ export class CreateEdgeTool {
             DOM: [
                 {tagType: "div", class: "shelfe", children: [
                     {tagType: "title", text: "CreateEdgeModal", class: "shelfeTitle"},
-                    {tagType: "input", label: "x", value: "value/0", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
-                    {tagType: "input", label: "y", value: "value/1", type: "number",min: -1000, max: 1000, custom: {visual: "1"}},
+                    {tagType: "input", label: "x", value: "value/0", type: "number",min: -1000, max: 1000},
+                    {tagType: "input", label: "y", value: "value/1", type: "number",min: -1000, max: 1000},
                 ]}
             ]
         };

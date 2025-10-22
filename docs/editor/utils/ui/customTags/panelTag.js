@@ -1,19 +1,19 @@
 import { CustomTag } from "../customTags.js";
 import { createTag } from "../util.js";
 
-export class SectionTag extends CustomTag {
+export class PanelTag extends CustomTag {
     constructor(creatorForUI,t,searchTarget,child,flag) {
         super();
-        this.element = createTag(t, "div", {class: child?.options?.min ? "minSection" : "sectionOrPanel"});
+        this.element = createTag(t, "div", {class: "sectionOrPanel"});
         this.element.setAttribute("name", child.name);
         this.header = createTag(this.element, "div", {class: "sectionOrPanel-header"});
 
         this.arrow = createTag(this.header, "span", {class: "downArrow"});
-        this.sectionName = createTag(this.header, "p");
-        this.sectionName.textContent = child.name;
+        this.panelName = createTag(this.header, "p");
+        this.panelName.textContent = child.name;
 
         this.mainContainer = createTag(this.element, "div", {class: "sectionOrPanel-mainContainer"});
-        this.main = createTag(this.mainContainer, "div", {class: "section-main"});
+        this.main = createTag(this.mainContainer, "div", {class: "panel-main"});
 
         let lastHeight = "fit-content";
         this.header.addEventListener("click", () => {

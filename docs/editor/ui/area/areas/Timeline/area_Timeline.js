@@ -174,9 +174,9 @@ export class Area_Timeline {
                     {tagType: "option",style: "height: 25px;", name: "情報", children: [
                         {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto 1fr", children: [
                             {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "auto auto auto 1fr", children: [
-                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500, custom: {visual: "1"}},
-                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500, custom: {visual: "1"}},
-                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500},
+                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500},
+                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500},
                                 {tagType: "padding", size: "10px"},
                             ]},
 
@@ -193,9 +193,9 @@ export class Area_Timeline {
 
                             {tagType: "gridBox", style: "width: 100%; height: 100%;", axis: "c", allocation: "1fr auto auto auto", children: [
                                 {tagType: "padding", size: "10px"},
-                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500, custom: {visual: "1"}},
-                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500, custom: {visual: "1"}},
-                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500, custom: {visual: "1"}},
+                                {tagType: "input", label: "現在", name: "frame_current", value: "scene/frame_current", type: "number", max: 500, min: -500},
+                                {tagType: "input", label: "開始", name: "frame_start", value: "scene/frame_start", type: "number", max: 500, min: -500},
+                                {tagType: "input", label: "終了", name: "frame_end", value: "scene/frame_end", type: "number", max: 500, min: -500},
                             ]}
                         ]},
                     ]},

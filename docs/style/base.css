@@ -398,6 +398,9 @@ input[type="file"] {
     grid-template-columns: 1fr 5px 1fr;
 }
 
+.panel-main .label-input {
+}
+
 label {
     display: flex;
     justify-content: center; /* 横中央揃え */

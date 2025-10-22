@@ -9,9 +9,9 @@ export class Area_Property {
             inputObject: {"scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"], "app": app},
             DOM: [
                 {tagType: "section", name: "アニメーション", children: [
-                    {tagType: "input", label: "開始", value: "scene/frame_start", type: "number", min: 0, max: 500, step: 1},
-                    {tagType: "input", label: "終了", value: "scene/frame_end", type: "number", min: 0, max: 500, step: 1},
-                    {tagType: "input", label: "再生速度", value: "scene/frame_speed", type: "number", min: 0, max: 10, step: 0.1},
+                    {tagType: "input", label: "開始", value: "scene/frame_start", type: "number", min: 0, max: 500, step: 1, custom: {visual: "range"}},
+                    {tagType: "input", label: "終了", value: "scene/frame_end", type: "number", min: 0, max: 500, step: 1, custom: {visual: "range"}},
+                    {tagType: "input", label: "再生速度", value: "scene/frame_speed", type: "number", min: 0, max: 10, step: 0.1, custom: {visual: "range"}},
                 ]},
                 {tagType: "section", name: "マスク", children: [
                     {tagType: "list", label: "マスク", appendEvent: () => {
@@ -39,8 +39,8 @@ export class Area_Property {
                     ]}
                 ]},
                 {tagType: "section", name: "カメラ", children: [
-                    {tagType: "input", label: "表示範囲x", value: "scene/objects/renderingCamera/displayRange/0", type: "number", min: 1, max: 2048, step: 1},
-                    {tagType: "input", label: "表示範囲y", value: "scene/objects/renderingCamera/displayRange/1", type: "number", min: 1, max: 2048, step: 1},
+                    {tagType: "input", label: "表示範囲x", value: "scene/objects/renderingCamera/displayRange/0", type: "number", min: 1, max: 2048, step: 1, custom: {visual: "range"}},
+                    {tagType: "input", label: "表示範囲y", value: "scene/objects/renderingCamera/displayRange/1", type: "number", min: 1, max: 2048, step: 1, custom: {visual: "range"}},
                 ]}
             ],
         };

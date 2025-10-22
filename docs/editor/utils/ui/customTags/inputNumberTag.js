@@ -1,21 +1,12 @@
 import { CreatorForUI } from "../creatorForUI.js";
 import { CustomTag } from "../customTags.js";
-import { createRange, createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
+import { createRange, createTag } from "../util.js";
 
 export class InputNumberTag extends CustomTag {
     constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
         super();
         this.element;
-        if (child.custom?.visual) {
-            /** @type {HTMLElement} */
-            this.element = createTag(t, "input", {type: "number"});
-            this.dataBlocks = [creatorForUI.setWith(this.element, child.value, searchTarget, flag, child.useCommand)];
-            if (child.submitEvent) {
-                this.element.addEventListener("input", () => {
-                    child.submitEvent();
-                })
-            }
-        } else {
+        if (child?.custom?.visual == "range") {
             this.element = createTag(t, "div");
             this.element.style.width = "100%";
             this.element.style.display = "grid";
@@ -31,6 +22,15 @@ export class InputNumberTag extends CustomTag {
             number.style.borderTopLeftRadius = "0px";
             number.style.borderBottomLeftRadius = "0px";
             this.dataBlocks = [creatorForUI.setWith(range, child.value, searchTarget, flag, child.useCommand), creatorForUI.setWith(number, child.value, searchTarget, flag, child.useCommand)];
+        } else {
+            /** @type {HTMLElement} */
+            this.element = createTag(t, "input", {type: "number"});
+            this.dataBlocks = [creatorForUI.setWith(this.element, child.value, searchTarget, flag, child.useCommand)];
+            if (child.submitEvent) {
+                this.element.addEventListener("input", () => {
+                    child.submitEvent();
+                })
+            }
         }
     }
 }

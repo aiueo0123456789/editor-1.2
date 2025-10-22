@@ -109,7 +109,18 @@ canvas {
     vertical-align: middle;
 }
 
-.section {
+.panel-main {
+    padding: 5px;
+    width: 100%;
+    max-height: fit-content;
+    display: flex;
+    flex-flow: column;
+    overflow-y: hidden;
+    gap: 5px;
+    transition: height 0.3s ease;
+}
+
+.sectionOrPanel {
     width: 100%;
     height: fit-content;
     /* border: 1px solid var(--sub2Color); */
@@ -119,26 +130,26 @@ canvas {
     gap: 5px;
     /* padding: 5px; */
 }
-/* .section:hover {
-    border: 1px solid var(--subHoverColor);
-    background-color: var(--sub2HoverColor);
-} */
-.section-title {
-    padding: 5px;
+.sectionOrPanel-header {
     width: 100%;
     display: flex;
-    flex-flow: column;
-    gap: 5px;
 }
-.section-main {
-    padding: 5px;
+.sectionOrPanel-mainContainer {
     width: 100%;
     max-height: fit-content;
     display: flex;
     flex-flow: column;
     overflow-y: hidden;
-    gap: 5px;
     transition: height 0.3s ease;
+}
+.section-main {
+    width: 100%;
+    padding: 5px;
+    max-height: fit-content;
+    display: flex;
+    flex-flow: column;
+    overflow-y: hidden;
+    gap: 5px;
 }
 .minSection {
     width: 100%;
