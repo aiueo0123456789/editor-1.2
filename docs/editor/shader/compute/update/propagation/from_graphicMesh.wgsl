@@ -118,14 +118,15 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (arrayLength(&allocationArray) <= objectIndex) { // オブジェクト数を超えているか
         return ;
     }
-    if (allocationArray[objectIndex].MAX_VERTICES <= vertexIndex) { // 頂点数を超えているか
+    let allocation = allocationArray[objectIndex];
+    if (allocation.MAX_VERTICES <= vertexIndex) { // 頂点数を超えているか
         return ;
     }
 
-    let fixVertexIndex = allocationArray[objectIndex].vertexBufferOffset + vertexIndex;
-    if (allocationArray[objectIndex].parentType == 2u) { // 親がベジェモディファイア
+    let fixVertexIndex = allocation.vertexBufferOffset + vertexIndex;
+    if (allocation.parentType == 2u) { // 親がベジェモディファイア
         let weightBlock = weightBlocks[fixVertexIndex];
-        let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocationArray[objectIndex].parentIndex].vertexBufferOffset; // ベジェのindex
+        let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocation.parentIndex].vertexBufferOffset; // ベジェのindex
         let t = weightBlock.weights[0]; // ベジェのt
 
         // 元のベジェ
@@ -144,10 +145,11 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 
         let rotatePosition = rotate2D(renderingVertices[fixVertexIndex] + (position2 - position1) - position2, calculateRotation(normal1, normal2));
         renderingVertices[fixVertexIndex] = rotatePosition + position2;
-    } else if (allocationArray[objectIndex].parentType == 3u) { // 親がアーマチュア
+    } else if (allocation.parentType == 3u) { // 親がアーマチュア
         let weightBlock = weightBlocks[fixVertexIndex];
         let position = vec3<f32>(renderingVertices[fixVertexIndex],1.0);
-        let indexs = weightBlock.indexs + boneAllocationArray[allocationArray[objectIndex].parentIndex].vertexBufferOffset;
+        // let indexs = weightBlock.indexs + boneAllocationArray[allocation.parentIndex].vertexBufferOffset;
+        let indexs = weightBlock.indexs;
         let weights = weightBlock.weights;
         var skinnedPosition = vec3<f32>(0.0,0.0,1.0);
         // 各ボーンのワールド行列を用いてスキニング
@@ -155,7 +157,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
             let weight = weights[i];
             if (0.0 < weight) {
                 let boneIndex = indexs[i];
-                skinnedPosition += weight * getPoseMatrix(boneIndex) * inverseMat3x3(getPoseMatrix(boneIndex)) * position;
+                skinnedPosition += weight * getPoseMatrix(boneIndex) * inverseMat3x3(getBaseMatrix(boneIndex)) * position;
             }
         }
         renderingVertices[fixVertexIndex] = skinnedPosition.xy;

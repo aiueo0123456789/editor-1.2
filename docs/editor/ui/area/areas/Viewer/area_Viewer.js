@@ -8,37 +8,31 @@ import { ParentPickModal } from '../../../tools/ParentPick.js';
 import { DeleteTool } from '../../../tools/Delete.js';
 import { WeightPaintModal } from '../../../tools/WeightPaintTool.js';
 import { ToolsBarOperator } from '../../../../operators/toolsBarOperator.js';
-import { BonePropertyModal } from './toolBar/armature/bone.js';
-import { ArmaturePropertyModal } from './toolBar/armature/armature.js';
 import { EdgeJoinTool } from '../../../tools/EdgeJoin.js';
 import { AppendVertex } from '../../../tools/appendVertex.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
 import { boolTo0or1, calculateLocalMousePosition, changeParameter, loadFile, range } from '../../../../utils/utility.js';
 import { mathVec2 } from '../../../../utils/mathVec.js';
 import { Camera } from '../../../../core/objects/camera.js';
-import { BoneAttachmentsModal } from './toolBar/armature/attachments.js';
 import { InputManager } from '../../../../app/inputManager/inputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 import { ToolPanelOperator } from '../../../../operators/toolPanelOperator.js';
 import { CreateEdgeTool } from '../../../tools/CreateEdge.js';
 import { Particle } from '../../../../core/objects/particle.js';
 import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
-import { AppendPoint } from '../../../tools/AppendPoint.js';
 import { app } from '../../../../../main.js';
-import { VertexPropertyModal } from './toolBar/bezier/vertex.js';
-import { GraphicMesh } from '../../../../core/objects/graphicMesh.js';
 import { SelectOnlyVertexCommand } from '../../../../commands/utile/selectVertices.js';
 import { managerForDOMs } from '../../../../utils/ui/util.js';
 import { BBezier } from '../../../../core/edit/BBezier.js';
-import { BMesh } from '../../../../core/edit/BMesh.js';
-import { BArmature } from '../../../../core/edit/BArmature.js';
-import { BArmatureAnimation } from '../../../../core/edit/BArmatureAnimation.js';
 import { SelectOnlyBoneCommand } from '../../../../commands/utile/selectBone.js';
 import { KeyframeInsertModal } from '../../../tools/keyframeInsert.js';
 import { ActiveVertexPanel } from './toolBar/panel/vertex.js';
 import { ActiveBonePanel } from './toolBar/panel/bone.js';
 import { ActiveMeshPanel } from './toolBar/panel/mesh.js';
 import { ActiveEdgePanel } from './toolBar/panel/edge.js';
+import { WeightPaintPanel } from './toolBar/panel/weight.js';
+import { BMeshWeight } from '../../../../core/edit/BMeshWeight.js';
+
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");
 
@@ -49,12 +43,14 @@ const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("
 const renderParticlePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/particleVertex.wgsl"), [], "2d", "s", "wl");
 const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./editor/shader/render/mask.wgsl"), [["u"]], "mask", "t");
 
+const BMWMeshsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/BMWmeshs.wgsl"), [], "2d", "t", "wl");
+const BMWWeightsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/BMWweights.wgsl"), [], "2d", "s");
 const BMeshMainRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/main.wgsl"), [], "2d", "t", "wl");
 const BMeshVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/verticesShader.wgsl"), [], "2d", "s");
 const BMeshMeshRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/meshShader.wgsl"), [], "2d", "s");
 const BMeshEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/edgeShader.wgsl"), [], "2d", "s");
 const BMeshSilhouetteEdgeRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/silhouetteEdgesShader.wgsl"), [], "2d", "s");
-const graphicMeshsWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/graphicMesh/weightShader.wgsl"), [], "2d", "s");
+// const graphicMeshsWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr"), GPU.getGroupLayout("Vu"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/graphicMesh/weightShader.wgsl"), [], "2d", "s");
 
 const BAABoneRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr")], await loadFile("./editor/shader/render/bone/BAABone.wgsl"), [], "2d", "s");
 const BArmatureVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_VFsr_Vsr_Vsr_Vsr")], await loadFile("./editor/shader/render/bone/vertices.wgsl"), [], "2d", "t");
@@ -97,6 +93,9 @@ const useingSideBarPanelInMode = {
     },
     "ボーンアニメーション編集": {
         "ボーン": ActiveBonePanel,
+    },
+    "メッシュウェイト編集": {
+        "ウェイトペイント": WeightPaintPanel,
     }
 }
 
@@ -177,17 +176,18 @@ export class Area_Viewer {
                                 {tagType: "if", formula: {source: "/currentMode", conditions: "==", value: "メッシュウェイト編集"},
                                 true: [
                                     {tagType: "flexBox", interval: "10px", children: [
-                                        // {tagType: "flexBox", interval: "5px", name: "", children: [
-                                        //     {tagType: "heightCenter", children: [
-                                        //     ]}
-                                        // ]},
-                                        {tagType: "input", label: "値", value: "areasConfig/weightPaintMetaData/weightValue", type: "number", min: 0, max: 1, step: 0.01},
-                                        {tagType: "input", label: "範囲", value: "areasConfig/weightPaintMetaData/paintSize", type: "number", min: 0, max: 1000, step: 0.01},
-                                        {tagType: "select", label: "種類", value: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
-                                        // {tagType: "flexBox", interval: "5px", name: "", children: [
-                                        //     {tagType: "heightCenter", children: [
-                                        //     ]}
-                                        // ]},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "input", label: "値", value: "areasConfig/weightPaintMetaData/weightValue", type: "number", min: 0, max: 1, step: 0.01},
+                                        ]},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "input", label: "範囲", value: "areasConfig/weightPaintMetaData/decaySize", type: "number", min: 0, max: 1000, step: 0.01},
+                                        ]},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "select", label: "範囲", value: "areasConfig/weightPaintMetaData/decayType", sourceObject: ["ミックス","最大","最小"], options: {initValue: {path: "areasConfig/weightPaintMetaData/decayType"}}},
+                                        ]},
+                                        {tagType: "heightCenter", children: [
+                                            {tagType: "select", label: "種類", value: "areasConfig/weightPaintMetaData/bezierType", sourceObject: [0,1], options: {initValue: "0"}},
+                                        ]}
                                     ]},
                                 ], false: [
                                     {tagType: "flexBox", interval: "10px", children: [
@@ -239,10 +239,12 @@ export class Area_Viewer {
             this.renderer.resizeCVS();
         });
 
-        managerForDOMs.set({o: app.context, i: "currentMode"}, () => {
+        const modeChangeEvent = () => {
             this.toolPanelOperator.changePanels(useingToolPanelInMode[app.context.currentMode]);
             this.sideBarOperator.changeShelfes(useingSideBarPanelInMode[app.context.currentMode]);
-        })
+        }
+        managerForDOMs.set({o: app.context, i: "currentMode"}, modeChangeEvent)
+        modeChangeEvent();
     }
 
     async update() {
@@ -255,7 +257,7 @@ export class Area_Viewer {
     async keyInput(/** @type {InputManager} */ inputManager) {
         this.inputs.keysDown = inputManager.keysDown;
         this.inputs.keysPush = inputManager.keysPush;
-        let consumed = this.toolPanelOperator.keyInput(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.keyInput(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
         const context = app.context;
         if (context.activeObject) {
@@ -361,7 +363,7 @@ export class Area_Viewer {
         this.inputs.clickPosition = local;
         this.inputs.position = local;
 
-        let consumed = this.toolPanelOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
 
         const context = app.context;
@@ -393,10 +395,15 @@ export class Area_Viewer {
             app.operator.appendCommand(new SelectOnlyBoneCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
             app.operator.execute();
         } else if (context.currentMode == "メッシュウェイト編集") {
+            // if (inputManager.consumeKeys(["Alt"])) {
+            //     await app.scene.runtimeData.armatureData.selectedForBone(app.context.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
+            //     const bone = app.scene.runtimeData.armatureData.getSelectBones();
+            //     changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
+            // } else {
+            // }
             if (inputManager.consumeKeys(["Alt"])) {
-                await app.scene.runtimeData.armatureData.selectedForBone(app.context.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
-                const bone = app.scene.runtimeData.armatureData.getSelectBones();
-                changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
+                app.operator.appendCommand(new SelectOnlyBoneCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
+                app.operator.execute();
             } else {
                 this.toolPanelOperator.setPanel(WeightPaintModal, this.inputs);
             }
@@ -404,7 +411,7 @@ export class Area_Viewer {
             if (inputManager.consumeKeys(["Alt"])) {
                 await app.scene.runtimeData.armatureData.selectedForBone(app.context.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
                 const bone = app.scene.runtimeData.armatureData.getSelectBones();
-                changeParameter(this.areasConfig.weightPaintMetaData, "boneIndex", bone[0].index);
+                changeParameter(this.areasConfig.weightPaintMetaData, "weightBlockIndex", bone[0].index);
             } else {
                 this.toolPanelOperator.setPanel(WeightPaintModal, this.inputs);
             }
@@ -416,11 +423,11 @@ export class Area_Viewer {
         mathVec2.sub(this.inputs.movement, local, this.inputs.position);
         this.inputs.position = local;
 
-        let consumed = this.toolPanelOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }
     async mouseup(inputManager) {
-        let consumed = this.toolPanelOperator.mouseup(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.mouseup(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }
 
@@ -591,6 +598,15 @@ export class Renderer {
                     // パイプラインやグループを元に戻す
                     renderPass.setPipeline(renderPipeline);
                     renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
+                } else if (graphicMesh.mode == "メッシュウェイト編集") {
+                    const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
+                    renderPass.setBindGroup(1, bm.renderingGroup);
+                    renderPass.setPipeline(BMWMeshsRenderPipeline);
+                    renderPass.draw(3 * bm.meshesNum, 1, 0, 0); // 3つの頂点から三角形を表示する * meshNum
+
+                    // パイプラインやグループを元に戻す
+                    renderPass.setPipeline(renderPipeline);
+                    renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 }
             }
         }
@@ -619,15 +635,10 @@ export class Renderer {
                             renderPass.setPipeline(BMeshVerticesRenderPipeline);
                             renderPass.draw(4, bm.verticesNum, 0, 0); // 4つの頂点から四角形を表示
                         } else if (graphicMesh.mode == "メッシュウェイト編集") {
-                            // メッシュ表示
-                            renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
-                            renderPass.setPipeline(BMeshMeshRenderPipeline);
-                            renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
-                            // 頂点描画
-                            renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
-                            renderPass.setBindGroup(3, this.viewer.areasConfig.targetWeightIndexGroup);
-                            renderPass.setPipeline(graphicMeshsWeightRenderPipeline);
-                            renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
+                            const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
+                            renderPass.setBindGroup(1, bm.renderingGroup);
+                            renderPass.setPipeline(BMWWeightsRenderPipeline);
+                            renderPass.draw(4, bm.verticesNum, 0, 0);
                         } else if (graphicMesh.mode == "メッシュ頂点アニメーション編集") {
                             // メッシュ表示
                             renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
@@ -665,7 +676,7 @@ export class Renderer {
 
                     renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
                     renderPass.setPipeline(boneBoneRenderPipeline);
-                } else if (armature.mode == "ボーンアニメーション編集") {
+                } else if (armature.mode == "ボーンアニメーション編集" || armature.mode == "メッシュウェイト編集") {
                     const baa = app.scene.editData.getEditObjectByObject(armature);
                     renderPass.setBindGroup(1, baa.renderingGroup);
                     renderPass.setPipeline(BAABoneRenderPipeline);

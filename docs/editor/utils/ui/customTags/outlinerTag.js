@@ -224,22 +224,22 @@ export class OutlinerTag extends CustomTag {
         }
         // 選択表示の更新
         const listActive = (o, gID, t) => {
-            console.log("ヒエラルキーアクティブ")
-            const createdTags = managerForDOMs.get({g: creatorForUI.groupID, i: outlinerID}); // すでに作っている場合
-            createdTags.forEach((data, object) => {
-                const bool_ = activeSource.object[activeSource.parameter] == object;
-                if (bool_) {
-                    data.others.myContainer.classList.add("activeColor");
-                } else {
-                    data.others.myContainer.classList.remove("activeColor");
-                    const bool__ = result.selects.includes(object);
-                    if (bool__) {
-                        data.others.myContainer.classList.add("activeColor2");
-                    } else {
-                        data.others.myContainer.classList.remove("activeColor2");
-                    }
-                }
-            })
+            // console.log("ヒエラルキーアクティブ")
+            // const createdTags = managerForDOMs.get({g: creatorForUI.groupID, i: outlinerID}); // すでに作っている場合
+            // createdTags.forEach((data, object) => {
+            //     const bool_ = activeSource.object[activeSource.parameter] == object;
+            //     if (bool_) {
+            //         data.others.myContainer.classList.add("activeColor");
+            //     } else {
+            //         data.others.myContainer.classList.remove("activeColor");
+            //         const bool__ = result.selects.includes(object);
+            //         if (bool__) {
+            //             data.others.myContainer.classList.add("activeColor2");
+            //         } else {
+            //             data.others.myContainer.classList.remove("activeColor2");
+            //         }
+            //     }
+            // })
         }
         managerForDOMs.set({o: activeSource.object, g: creatorForUI.groupID, i: activeSource.parameter, f: flag}, listActive);
         managerForDOMs.set({o: result.selects, g: creatorForUI.groupID, f: flag}, listActive);

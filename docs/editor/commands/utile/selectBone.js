@@ -1,12 +1,12 @@
 import { app } from "../../../main.js";
+import { BArmatureAnimation } from "../../core/edit/BArmatureAnimation.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { hitTestPointTriangle } from "../../utils/utility.js";
 
 export class SelectOnlyBoneCommand {
     constructor(point,multiple) {
         this.multiple = multiple;
-        this.targetObjects = app.context.selectedObjects;
-        this.editObjects = this.targetObjects.map(object => app.scene.editData.getEditObjectByObject(object)); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
+        this.editObjects = app.scene.editData.allEditObjects.filter(editData => editData instanceof BArmatureAnimation); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
         let minIndex = 0;
         let minObjectID = 0;
         this.originalSelectData = {};

@@ -61,6 +61,16 @@ export class RuntimeDataBase {
         this.setGroup();
     }
 
+    updateAtParts(object, newData) {
+        const lastRuntimeOffsetCache = structuredClone(this.lastRuntimeOffset);
+        const myRuntimeData = lastRuntimeOffsetCache[object.id];
+        this.setOffset();
+        for (const [buffer, data] of newData) {
+            buffer.update(myRuntimeData.start[buffer.sourceOffsetType], myRuntimeData.end[buffer.sourceOffsetType], object.runtimeOffsetData.start[buffer.sourceOffsetType], object.runtimeOffsetData.end[buffer.sourceOffsetType], data);
+        }
+        this.setGroup();
+    }
+
     delete(object) {
         if (!this.order.includes(object)) return ;
         this.order.splice(this.order.indexOf(object), 1);

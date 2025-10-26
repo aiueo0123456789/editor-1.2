@@ -1,12 +1,14 @@
 import { app } from "../../../main.js";
+import { BArmature } from "../../core/edit/BArmature.js";
+import { BBezier } from "../../core/edit/BBezier.js";
+import { BMesh } from "../../core/edit/BMesh.js";
 import { mathVec2 } from "../../utils/mathVec.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 
 export class SelectOnlyVertexCommand {
     constructor(point,multiple) {
         this.multiple = multiple;
-        this.targetObjects = app.context.selectedObjects;
-        this.editObjects = this.targetObjects.map(object => app.scene.editData.getEditObjectByObject(object)); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
+        this.editObjects = app.scene.editData.allEditObjects.filter(editData => editData instanceof BMesh || editData instanceof BBezier || editData instanceof BArmature); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
         let minDis = Infinity;
         let minIndex = 0;
         let minObjectID = 0;

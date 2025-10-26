@@ -20,24 +20,23 @@ export class Area_Property {
                     }, deleteEvent: (masks) => {
                         app.operator.appendCommand(new RemoveObjectCommand(masks));
                         app.operator.execute();
-                    }, withObject: "scene/objects/maskTextures", options: {type: "min"}, liStruct:[
-                        {tagType: "gridBox", axis: "c", allocation: "50% 1fr", children: [
+                    }, src: "scene/objects/maskTextures", type: "min", liStruct:[
+                        {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
                             {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
-                            {tagType: "padding", size: "10px"},
                         ]},
                     ]}
                 ]},
-                {tagType: "section", name: "パラメーターコレクター", children: [
-                    {tagType: "list", appendEvent: () => {
-                        // appendAnimationToObject(app.context.activeObject, "新規");
-                    }, deleteEvent: (animations) => {
-                        for (const animation of animations) {
-                            // deleteAnimationToObject(app.context.activeObject, animation);
-                        }
-                    }, withObject: "scene/objects/parameterManagers", options: {}, liStruct:[
-                        {tagType: "nodeFromFunction", source: "/getNodeData"}
-                    ]}
-                ]},
+                // {tagType: "section", name: "パラメーターコレクター", children: [
+                //     {tagType: "list", appendEvent: () => {
+                //         // appendAnimationToObject(app.context.activeObject, "新規");
+                //     }, deleteEvent: (animations) => {
+                //         for (const animation of animations) {
+                //             // deleteAnimationToObject(app.context.activeObject, animation);
+                //         }
+                //     }, src: "scene/objects/parameterManagers", options: {}, liStruct:[
+                //         {tagType: "nodeFromFunction", source: "/getNodeData"}
+                //     ]}
+                // ]},
                 {tagType: "section", name: "カメラ", children: [
                     {tagType: "input", label: "表示範囲x", value: "scene/objects/renderingCamera/displayRange/0", type: "number", min: 1, max: 2048, step: 1, custom: {visual: "range"}},
                     {tagType: "input", label: "表示範囲y", value: "scene/objects/renderingCamera/displayRange/1", type: "number", min: 1, max: 2048, step: 1, custom: {visual: "range"}},

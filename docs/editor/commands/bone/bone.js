@@ -63,7 +63,7 @@ export class BoneExtrudeMoveCommand {
 export class BoneDelete extends Base{
     constructor(targets) {
         super(targets);
-        this.indexsMeta = new Array(targets.lenght);
+        this.indexsMeta = new Array(targets.length);
     }
 
     update() {

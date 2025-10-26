@@ -26,9 +26,9 @@ export class ToolPanelOperator {
         }
     }
 
-    setPanel(model, /** @type {InputManager} */inputManager) {
+    async setPanel(model, /** @type {InputManager} */inputManager) {
         if (this.nowPanel) {
-            this.nowPanel.execute();
+            await this.nowPanel.execute();
             this.reset();
         }
         this.nowPanel = new model(this);
@@ -39,7 +39,7 @@ export class ToolPanelOperator {
             }
         }
         if (isFunction(this.nowPanel.init)) {
-            const consumed = this.nowPanel.init(inputManager);
+            const consumed = await this.nowPanel.init(inputManager);
             if (consumed) {
                 if (consumed.complete) {
                     this.state ++;
@@ -49,29 +49,29 @@ export class ToolPanelOperator {
         }
     }
 
-    keyInput(/** @type {InputManager} */inputManager) {
+    async keyInput(/** @type {InputManager} */inputManager) {
         if (this.nowPanel && this.state == 0) {
             if (app.input.consumeKeys([this.nowPanel.activateKey])) {
                 this.state ++;
             } else {
                 if (isFunction(this.nowPanel.update)) {
-                    this.nowPanel.update(inputManager);
+                    await this.nowPanel.update(inputManager);
                 }
             }
         } else {
             for (const key in this.panels) {
                 if (app.input.consumeKeys([key])) {
-                    this.setPanel(this.panels[key], inputManager);
+                    await this.setPanel(this.panels[key], inputManager);
                 }
             }
         }
     }
 
-    mousemove(/** @type {InputManager} */inputManager) {
+    async mousemove(/** @type {InputManager} */inputManager) {
         if (!this.state == 0) return ;
         if (this.nowPanel) {
             if (isFunction(this.nowPanel.mousemove)) {
-                const consumed = this.nowPanel.mousemove(inputManager);
+                const consumed = await this.nowPanel.mousemove(inputManager);
                 if (consumed) {
                     if (consumed.complete) {
                         this.state ++;
@@ -82,15 +82,15 @@ export class ToolPanelOperator {
         }
         return false;
     }
-    mousedown(/** @type {InputManager} */inputManager) {
+    async mousedown(/** @type {InputManager} */inputManager) {
         if (this.state == 1) {
-            this.nowPanel.execute();
+            await this.nowPanel.execute();
             this.reset();
             return true;
         }
         if (this.nowPanel) {
             if (isFunction(this.nowPanel.mousedown)) {
-                const consumed = this.nowPanel.mousedown(inputManager);
+                const consumed = await this.nowPanel.mousedown(inputManager);
                 if (consumed) {
                     if (consumed.complete) {
                         this.state ++;
@@ -101,10 +101,10 @@ export class ToolPanelOperator {
         }
         return false;
     }
-    mouseup(/** @type {InputManager} */inputManager) {
+    async mouseup(/** @type {InputManager} */inputManager) {
         if (this.nowPanel) {
             if (isFunction(this.nowPanel.mouseup)) {
-                const consumed = this.nowPanel.mouseup(inputManager);
+                const consumed = await this.nowPanel.mouseup(inputManager);
                 if (consumed) {
                     if (consumed.complete) {
                         this.state ++;

@@ -22,10 +22,11 @@ export class ViewerSpaceData {
         }
 
         this.weightPaintMetaData = {
-            boneIndex: 0,
+            weightBlockIndex: 0,
             bezierType: 0,
             weightValue: 1,
-            paintSize: 100,
+            decayType: "ミックス",
+            decaySize: 200,
         }
 
         this.areas = [];
@@ -33,18 +34,6 @@ export class ViewerSpaceData {
         // this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {});
 
         this.weightBezierType = 0;
-        this.weightEditBoneIndexBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
-        this.targetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.weightEditBoneIndexBuffer]);
-        this.cTargetWeightIndexGroup = GPU.createGroup(GPU.getGroupLayout("Cu"), [this.weightEditBoneIndexBuffer]);
-
-        const weightIndexUpdate = () => {
-            GPU.writeBuffer(this.weightEditBoneIndexBuffer, new Uint32Array([this.weightPaintMetaData.boneIndex]));
-        }
-        const weightValueUpdate = () => {
-        }
-
-        managerForDOMs.set({o: this.weightPaintMetaData, i: "weightValue"}, weightValueUpdate);
-        managerForDOMs.set({o: this.weightPaintMetaData, i: "boneIndex"}, weightIndexUpdate);
     }
 
     createModeSelectList() {

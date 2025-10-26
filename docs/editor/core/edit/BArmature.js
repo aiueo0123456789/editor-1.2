@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { createArrayAndFillN, roundUp } from "../../utils/utility.js";
+import { createArrayNAndFill, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
 
@@ -29,7 +29,7 @@ class Bone {
 
 export class BArmature {
     static createBone(head, tail, parent = null) {
-        return new Bone({name: "名称未設定", parent: parent, headVertex: {co: head}, tailVertex: {co: tail}, color: [0,0,0,1], physics: createArrayAndFillN(13, 0)});
+        return new Bone({name: "名称未設定", parent: parent, headVertex: {co: head}, tailVertex: {co: tail}, color: [0,0,0,1], physics: createArrayNAndFill(13, 0)});
     }
 
     constructor() {
@@ -113,7 +113,7 @@ export class BArmature {
         return this.bones.filter(bone => bone.parent == null);
     }
 
-    async fromArmature(object) {
+    async fromArmature(/** @type {Armature} */object) {
         console.log(object)
         const armatureData = app.scene.runtimeData.armatureData;
         this.object = object;
@@ -125,7 +125,7 @@ export class BArmature {
         const createBones = (children, parent) => {
             for (const childData of children) {
                 const boneIndex = childData.index;
-                const bone = new Bone({name: "a" + boneIndex, parent: parent, headVertex: {co: coordinate[boneIndex].slice(0,2)}, tailVertex: {co: coordinate[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
+                const bone = new Bone({name: object.bonesMetaData[boneIndex].name, parent: parent, headVertex: {co: coordinate[boneIndex].slice(0,2)}, tailVertex: {co: coordinate[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
                 this.bones[boneIndex] = bone;
                 createBones(childData.children, bone);
             }

@@ -557,6 +557,8 @@ export class Scene {
         computePassEncoder.end();
 
         device.queue.submit([computeCommandEncoder.finish()]);
+        // GPU.consoleBufferData(this.runtimeData.armatureData.renderingBoneMatrix.buffer, this.runtimeData.armatureData.renderingBoneMatrix.struct);
+        // GPU.consoleBufferData(this.runtimeData.armatureData.baseBoneMatrix.buffer, this.runtimeData.armatureData.baseBoneMatrix.struct);
     }
 
     getAllObjectFromType(types) {

@@ -35,6 +35,9 @@ class Edge {
 }
 
 export class BMesh {
+    static createVertex(co, uv, weightBlock = [0,0,0,0,1,0,0,0]) {
+        return new Vert({co: co, uv: uv, weightBlock: weightBlock});
+    }
     constructor() {
         /** @type {GraphicMesh} */
         this.object = null;

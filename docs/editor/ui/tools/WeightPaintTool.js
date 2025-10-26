@@ -9,7 +9,7 @@ export class WeightPaintModal {
     constructor(/** @type {ToolPanelOperator} */operator) {
         this.operator = operator;
         console.log(app.appConfig.areasConfig["Viewer"].weightPaintMetaData)
-        this.command = new WeightPaintCommand(app.context.activeObject, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.boneIndex, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue, 1, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.paintSize, app.appConfig.areasConfig["Viewer"].weightPaintMetaData.bezierType);
+        this.command = new WeightPaintCommand();
         this.values = [
             0,0, // スライド量
         ];
@@ -43,7 +43,6 @@ export class WeightPaintModal {
     }
 
     mousedown() {
-        
     }
 
     execute() {

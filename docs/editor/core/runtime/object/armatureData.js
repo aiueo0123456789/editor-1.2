@@ -137,7 +137,7 @@ export class ArmatureData extends RuntimeDataBase {
             data.boneIndexsGroup = GPU.createGroup(GPU.getGroupLayout("Csr"), [boneIndexsBuffer]);
             this.propagate.push(data);
         });
-        console.log(this.propagate);
+        // console.log(this.propagate);
     }
 
     // ベースデータの更新

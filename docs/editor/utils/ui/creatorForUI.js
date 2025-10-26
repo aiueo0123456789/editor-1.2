@@ -1,4 +1,4 @@
-import { ChecksTag } from "./customTags.js";
+import { ChecksTag, CustomTag } from "./customTags.js";
 import { createButton, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
 import { changeParameter, hexToRgba, isFunction, isPassByReference, isPlainObject, rgbToHex } from "../utility.js";
 import { app } from "../../../main.js";
@@ -24,6 +24,7 @@ import { LabelTag } from "./customTags/labelTag.js";
 import { GridBoxTag } from "./customTags/gridBoxTag.js";
 import { DblClickInput } from "./customTags/dblclickInput.js";
 import { PanelTag } from "./customTags/panelTag.js";
+import { ListTag } from "./customTags/listTag.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -152,40 +153,7 @@ export const tagCreater = {
         return new DblClickInput(creatorForUI,t,searchTarget,child,flag);
     },
     "list": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        let element;
-        if (child.options.type == "min") {
-            element = createMinList(t,child.name);
-            const listOutputData = creatorForUI.createListChildren(element.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
-            if (child.appendEvent) {
-                if (isFunction(child.appendEvent)) {
-                    element.appendButton.addEventListener("click", child.appendEvent);
-                }
-            } else {
-                element.appendButton.classList.add("color2");
-                element.appendButton.style.pointerEvents = "none";
-            }
-            if (child.deleteEvent) {
-                if (isFunction(child.deleteEvent)) {
-                    element.deleteButton.addEventListener("click", () => {
-                        console.log("削除", listOutputData)
-                        child.deleteEvent(listOutputData.selects);
-                    });
-                }
-            } else {
-                element.deleteButton.classList.add("color2");
-                element.deleteButton.style.pointerEvents = "none";
-            }
-        } else if (child.options.type == "noScroll") {
-            element = createTag(t, "ul");
-            creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
-        } else if (child.options.type == "row") {
-            element = createTag(t, "ul", {class: "flexRow"});
-            creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
-        } else {
-            element = createTag(t, "ul", {class: "scrollable"});
-            creatorForUI.createListChildren(element, child.liStruct, child.withObject, searchTarget, child.options, flag);
-        }
-        return element;
+        return new ListTag(/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag);
     },
     "container": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         let element = createTag(t, "ul");
@@ -333,6 +301,13 @@ export class ParameterReference {
 
 // UIを作るクラス
 export class CreatorForUI {
+    static tagAppendChildren(t, children) {
+        let appendTarget = t instanceof HTMLElement ? t : t.element;
+        for (const child of children) {
+            let appendChild = child instanceof HTMLElement ? child : child.element;
+            appendTarget.append(appendChild);
+        }
+    }
     constructor() {
         this.groupID = createID();
         this.dom = null;
@@ -726,35 +701,37 @@ export class CreatorForUI {
             }
             try {
                 if (element) {
-                    const setTarget = element instanceof HTMLElement ? element : element.element;
-                    if (child.style) {
-                        setStyle(setTarget, child.style);
-                    }
-                    if (child.class) {
-                        setClass(setTarget, child.class);
-                    }
-                    if (child.event) {
-                        for (const eventName in child.event) {
-                            setTarget.addEventListener(eventName, () => {
-                                child.event[eventName](searchTarget, element);
-                            })
+                    if (element instanceof CustomTag && element.isSetLabel || element instanceof HTMLElement) {
+                        const setTarget = element instanceof HTMLElement ? element : element.element;
+                        if (child.style) {
+                            setStyle(setTarget, child.style);
                         }
-                    }
-                    if (child.id) {
-                        let id = "";
-                        if (child.id.path) {
-                            id = this.getParameter(searchTarget, child.id.path);
-                        } else {
-                            id = child.id;
+                        if (child.class) {
+                            setClass(setTarget, child.class);
                         }
-                        this.domKeeper.set(id, element);
-                    }
-                    if (child.label) element = new LabelTag(setTarget, child.label);
-                    if (child.labelIn) {
-                        const label = createTag(t, "label");
-                        const span = createTag(label, "span");
-                        span.textContent = child.labelIn;
-                        label.append(setTarget);
+                        if (child.event) {
+                            for (const eventName in child.event) {
+                                setTarget.addEventListener(eventName, () => {
+                                    child.event[eventName](searchTarget, element);
+                                })
+                            }
+                        }
+                        if (child.id) {
+                            let id = "";
+                            if (child.id.path) {
+                                id = this.getParameter(searchTarget, child.id.path);
+                            } else {
+                                id = child.id;
+                            }
+                            this.domKeeper.set(id, element);
+                        }
+                        if (child.label) element = new LabelTag(setTarget, child.label);
+                        if (child.labelIn) {
+                            const label = createTag(t, "label");
+                            const span = createTag(label, "span");
+                            span.textContent = child.labelIn;
+                            label.append(setTarget);
+                        }
                     }
                 }
             } catch (e) {

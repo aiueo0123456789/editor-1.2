@@ -37,7 +37,8 @@ export class ChecksTag {
 }
 
 export class CustomTag {
-    constructor() {
+    constructor(isSetLabel = true) {
+        this.isSetLabel = isSetLabel;
         this.customTag = true;
         this.isRemoved = false;
         this.dataBlocks = [];

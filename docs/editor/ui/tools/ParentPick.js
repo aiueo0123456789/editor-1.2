@@ -19,20 +19,20 @@ export class ParentPickModal {
     }
 
     async init() {
+        this.command = new ChangeParentCommand(app.context.selectedObjects);
+        app.operator.appendCommand(this.command);
     }
 
     mousemove(/** @type {InputManager} */inputManager) {
     }
 
     execute() {
-        app.operator.appendCommand(this.command);
         app.operator.execute();
     }
 
     async mousedown(/** @type {InputManager} */inputManager) {
-        console.log("親変更")
         const parent = await app.scene.rayCast(inputManager.position, {types: ["アーマチュア", "ベジェモディファイア"]});
-        this.command = new ChangeParentCommand(app.context.selectedObjects, parent[0]);
+        this.command.update(parent[0]);
         return {complete: true};
     }
 }

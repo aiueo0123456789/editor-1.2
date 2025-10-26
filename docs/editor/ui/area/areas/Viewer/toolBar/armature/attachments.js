@@ -19,7 +19,7 @@ export class BoneAttachmentsModal {
                                 for (const animation of animations) {
                                     // deleteAnimationToObject(app.context.activeObject, animation);
                                 }
-                            }, withObject: "/0/attachments/list", options: {}, liStruct:[
+                            }, src: "/0/attachments/list", type: "min", liStruct:[
                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "物理アタッチメント"},
                                     true: [
                                         {tagType: "section", name: "物理アタッチメント", children: [

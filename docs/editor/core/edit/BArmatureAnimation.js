@@ -1,11 +1,12 @@
 import { app } from "../../../main.js";
+import { ChangeParameterCommand } from "../../commands/utile/utile.js";
 import { mathMat3x3 } from "../../utils/mathMat.js";
 import { mathVec2 } from "../../utils/mathVec.js";
-import { managerForDOMs } from "../../utils/ui/util.js";
-import { range, roundUp } from "../../utils/utility.js";
+import { changeParameter, range, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
 import { BKeyframeBlockManager } from "./BKeyframeBlockManager.js";
+import { BMeshWeight } from "./BMeshWeight.js";
 
 class Bone {
     constructor(data) {
@@ -78,7 +79,8 @@ class Bone {
 }
 
 export class BArmatureAnimation {
-    constructor() {
+    constructor(mode) {
+        this.mode = mode;
         /** @type {Armature} */
         this.object = null;
         /** @type {Bone[]} */
@@ -125,6 +127,10 @@ export class BArmatureAnimation {
         indexs.forEach(index => {
             this.bones[index].selected = true;
             this.activeBone = this.bones[index];
+            if (this.mode == "weightPaint") {
+                changeParameter(app.appConfig.areasConfig["Viewer"].weightPaintMetaData, "weightBlockIndex", this.getBoneIndex(this.activeBone));
+                app.scene.editData.allEditObjects.forEach(editObject => editObject instanceof BMeshWeight && editObject.updateGPUData()); // 編集中のメッシュの表示用データを更新
+            }
             GPU.writeBuffer(this.boneSelectedBuffer, GPU.createBitData([1], ["u32"]), index * 4);
         });
         // this.updateGPUData();
@@ -158,6 +164,31 @@ export class BArmatureAnimation {
         this.boneColorsBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.color).flat(), ["f32", "f32", "f32", "f32"]);
         this.boneSelectedBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.selected ? 1 : 0).flat(), ["u32"]);
         this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr"), [this.verticesBuffer, this.boneColorsBuffer, this.boneSelectedBuffer]);
+        // 実行データの更新
+        this.object.allAnimations.length = 0;
+        for (const bone of this.bones) {
+            this.object.allAnimations.push(
+                bone.animationLocalBoneData.x,
+                bone.animationLocalBoneData.y,
+                bone.animationLocalBoneData.sx,
+                bone.animationLocalBoneData.sy,
+                bone.animationLocalBoneData.r,
+                bone.animationLocalBoneData.l,
+            );
+        }
+        // const armatureData = app.scene.runtimeData.armatureData;
+        // armatureData.update
+        // const map = new Map();
+        // // map.set(armatureData.renderingBoneMatrix, this.bones.map(bone => bone.poseWorldMatrix).flat(2));
+        // map.set(armatureData.runtimeAnimationData, this.bones.map(bone => [
+        //     bone.animationLocalBoneData.x,
+        //     bone.animationLocalBoneData.y,
+        //     bone.animationLocalBoneData.sx,
+        //     bone.animationLocalBoneData.sy,
+        //     bone.animationLocalBoneData.r,
+        //     bone.animationLocalBoneData.l
+        // ]).flat(1));
+        // armatureData.updateAtParts(this.object, map);
     }
 
     get root() {
@@ -176,7 +207,7 @@ export class BArmatureAnimation {
             for (const childData of children) {
                 const boneIndex = childData.index;
                 const bone = new Bone({
-                    name: "a" + boneIndex,
+                    name: object.bonesMetaData[boneIndex].name,
                     parent: parent,
                     base: Armature.getWorldBoneDataByVertices(coordinate[boneIndex].slice(0,2), coordinate[boneIndex].slice(2,4)),
                     color: colors[boneIndex],
@@ -200,6 +231,7 @@ export class BArmatureAnimation {
     toRutime() {
         const keyframeBlocks = [];
         this.object.allPhysics.length = 0;
+        this.object.allAnimations.length = 0;
         for (const bone of this.bones) {
             keyframeBlocks.push(...bone.keyframeBlockManager.blocks); // x y sx sy r l
             this.object.allPhysics.push(...bone.physics,
@@ -214,6 +246,14 @@ export class BArmatureAnimation {
                 0,
                 0,
                 0,
+            );
+            this.object.allAnimations.push(
+                bone.animationLocalBoneData.x,
+                bone.animationLocalBoneData.y,
+                bone.animationLocalBoneData.sx,
+                bone.animationLocalBoneData.sy,
+                bone.animationLocalBoneData.r,
+                bone.animationLocalBoneData.l,
             );
         }
         this.object.keyframeBlockManager.setKeyframeBlocks(range(0, keyframeBlocks.length), keyframeBlocks);

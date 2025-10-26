@@ -358,3 +358,7 @@ export function rgbToRgba(rgb, alpha) {
         `rgba($1, $2, $3, ${alpha})`
     );
 }
+
+export function deepCopy(object) {
+    return JSON.parse(JSON.stringify(object));
+}

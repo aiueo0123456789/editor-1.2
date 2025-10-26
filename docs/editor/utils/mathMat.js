@@ -108,8 +108,16 @@ class MathMat3x3 {
         //  m2 m5 m8
         // ] の順になっていると考える
         return [
-          m[0][0] * x + m[1][0] * y + m[2][0],  // result.x
-          m[0][1] * x + m[1][1] * y + m[2][1]   // result.y
+            m[0][0] * x + m[1][0] * y + m[2][0],  // result.x
+            m[0][1] * x + m[1][1] * y + m[2][1]   // result.y
+        ];
+    }
+
+    mat3x3ToArray(array) {
+        return [
+            [array[0], array[1], array[2]],
+            [array[3], array[4], array[5]],
+            [array[6], array[7], array[8]],
         ];
     }
 }

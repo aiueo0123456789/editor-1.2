@@ -8,6 +8,9 @@ import { mathVec2 } from "../../utils/mathVec.js";
 import { mathMat3x3 } from "../../utils/mathMat.js";
 
 export class Armature extends ObjectBase {
+    static createBoneMetaData(index, name, connected) {
+        return {index: index, name: name, relations: {connected: connected}};
+    }
     static addBoneDataR(a,b) {
         const result = {x:0,y:0,sx:0,sy:0,r:0,l:0};
         for (const key in a) {
@@ -82,6 +85,8 @@ export class Armature extends ObjectBase {
         // 頂点
         this.allVertices = [];
         this.allColors = [];
+        // 名前など
+        this.bonesMetaData = [];
 
         this.allAnimations = [];
         /** @type {KeyframeBlockManager} */
@@ -145,6 +150,7 @@ export class Armature extends ObjectBase {
                 const boneData = Armature.getLocalBoneDataByVertices(childData.baseHead.co, childData.baseTail.co, parentHead, parentTail);
                 this.allBone.push(...boneData.bone);
                 this.allBoneWorldMatrix.push(...boneData.worldMatrix.flat());
+                this.bonesMetaData.push(Armature.createBoneMetaData(myIndex, childData.name, false));
                 loopChildren(childData.childrenBone, bone.children, childData.baseHead.co, childData.baseTail.co, myIndex);
             }
         }

@@ -49,8 +49,8 @@ export class ObjectBase extends NameAndTypeAndID{
         this.parent = parent;
         if (!(parent instanceof UnfixedReference)) {
             app.options.assignWeights(this);
-            if (isFunction(this.runtimeData.updateParent)) {
-                if (this.runtimeData) this.runtimeData.updateParent(this);
+            if (isFunction(this.runtimeData.updateAllocationData)) {
+                if (this.runtimeData) this.runtimeData.updateAllocationData(this);
             }
         }
     }

@@ -76,11 +76,8 @@ export class GraphicMeshData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {GraphicMesh} */graphicMesh) {
-        if (!graphicMesh.parent || graphicMesh.parent.isRoot) {
-            return new Uint32Array([graphicMesh.runtimeOffsetData.start.vertexOffset, graphicMesh.runtimeOffsetData.start.animationOffset, graphicMesh.runtimeOffsetData.start.animationWeightOffset, graphicMesh.verticesNum, graphicMesh.animationsNum, 0, 0, GPU.padding]);
-        } else {
-            return new Uint32Array([graphicMesh.runtimeOffsetData.start.vertexOffset, graphicMesh.runtimeOffsetData.start.animationOffset, graphicMesh.runtimeOffsetData.start.animationWeightOffset, graphicMesh.verticesNum, graphicMesh.animationsNum, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.start.allocationOffset, GPU.padding]);
-        }
+        if (graphicMesh.parent) return new Uint32Array([graphicMesh.runtimeOffsetData.start.vertexOffset, graphicMesh.runtimeOffsetData.start.animationOffset, graphicMesh.runtimeOffsetData.start.animationWeightOffset, graphicMesh.verticesNum, graphicMesh.animationsNum, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.start.allocationOffset, GPU.padding]);
+        else return new Uint32Array([graphicMesh.runtimeOffsetData.start.vertexOffset, graphicMesh.runtimeOffsetData.start.animationOffset, graphicMesh.runtimeOffsetData.start.animationWeightOffset, graphicMesh.verticesNum, graphicMesh.animationsNum, 0, 0, GPU.padding]);
     }
 
     updateAllocationData(/** @type {GraphicMesh} */graphicMesh) {
@@ -96,12 +93,6 @@ export class GraphicMeshData extends RuntimeDataBase {
         for (const object of this.order) {
         }
         let allocationData = this.getAllocationData(graphicMesh);
-        GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
-    }
-
-    updateParent(/** @type {GraphicMesh} */graphicMesh) {
-        let allocationData = this.getAllocationData(graphicMesh);
-        GPU.writeBuffer(this.allocations.buffer, allocationData, (graphicMesh.runtimeOffsetData.start.allocationOffset * 8) * 4);
         GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
     }
 

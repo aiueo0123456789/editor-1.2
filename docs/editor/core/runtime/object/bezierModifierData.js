@@ -70,11 +70,6 @@ export class BezierModifierData extends RuntimeDataBase {
         }
     }
 
-    updateParent(/** @type {BezierModifier} */bezierModifier) {
-        let allocationData = this.getAllocationData(bezierModifier);
-        GPU.writeBuffer(this.allocations.buffer, allocationData, (bezierModifier.runtimeOffsetData.start.allocationOffset * 8) * 4);
-        GPU.writeBuffer(bezierModifier.objectDataBuffer, allocationData);
-    }
 
     setGroup() {
         this.renderingGizumoGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.renderingVertices.buffer, this.weightBlocks.buffer]); // 表示用

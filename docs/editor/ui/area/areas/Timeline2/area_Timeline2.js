@@ -310,7 +310,7 @@ export class Area_Timeline2 {
     }
 
     async keyInput(/** @type {InputManager} */inputManager) {
-        let consumed = this.toolPanelOperator.keyInput(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.keyInput(inputManager); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }
 
@@ -318,7 +318,7 @@ export class Area_Timeline2 {
         const mouseLocalPoint = calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity);
         const world = this.canvasToWorld(mouseLocalPoint);
         this.inputs.position = world;
-        let consumed = this.toolPanelOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.mousedown(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
         app.operator.appendCommand(new SelectOnlyKeyframeCommand(mouseLocalPoint, !inputManager.keysDown["Shift"], this));
         app.operator.execute();
@@ -340,7 +340,7 @@ export class Area_Timeline2 {
             return ;
         }
 
-        let consumed = this.toolPanelOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
+        let consumed = await this.toolPanelOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
         if (consumed) return ;
     }
     mouseup(inputManager) {

@@ -43,6 +43,10 @@ export class ChangeParentCommand {
         this.newParent = newParent;
     }
 
+    update(newParent) {
+        this.newParent = newParent;
+    }
+
     execute() {
         this.targets.forEach((target) => {
             target.changeParent(this.newParent);

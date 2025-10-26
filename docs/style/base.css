@@ -1,4 +1,6 @@
 :root {
+    --activeColor: #4772b3;
+    --selectedColor: #4c658b;
     --backColor: rgb(0, 0, 0);
     --baseColor: rgb(59, 59, 59);
     --subColor: rgb(24, 24, 24);

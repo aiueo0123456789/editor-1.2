@@ -1,58 +1,113 @@
 import { app } from "../../../main.js";
-import { loadFile } from "../../utils/utility.js";
-import { GPU } from "../../utils/webGPU.js";
+import { BMeshWeight } from "../../core/edit/BMeshWeight.js";
+import { mathVec2 } from "../../utils/mathVec.js";
+import { createArrayNAndFill } from "../../utils/utility.js";
 
-const weightPaintPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csrw_Csr_Cu_Cu_Cu_Csr")], await loadFile("./editor/shader/compute/command/mesh/paint.wgsl"));
+class WeightBlock {
+    constructor(data) {
+        this.name = data.name;
+        this.index = data.index;
+        this.weights = data.weights;
+    }
+}
 
 export class WeightPaintCommand {
-    constructor(target, paintTargetIndex, weight, decayType, decaySize, bezierType = 0) {
-        this.configBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32","f32","u32","f32"]);
-        this.pointBuffer = GPU.createUniformBuffer(8, undefined, ["f32","f32"]);
-        this.decayBezierBuffer = GPU.createStorageBuffer(2 * 3 * 2 * 4, undefined, ["f32","f32"]);
-        if (bezierType == 0) {
-            GPU.writeBuffer(this.decayBezierBuffer, new Float32Array([
-                0,1, -0.5,1, 0.5,0.5,
-                1,0, 0.5,0.5, 1.5,0,
-            ]));
-        } else if (bezierType == 1) {
-            GPU.writeBuffer(this.decayBezierBuffer, new Float32Array([
-                0,1, -0.5,1, 0.5,1,
-                1,1, 0.5,1, 1.5,1,
-            ]));
+    constructor(
+        weightBlockIndex = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightBlockIndex,
+        weightValue = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue,
+        decayType = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.decayType,
+        decaySize = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.decaySize,
+        bezierType = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.bezierType
+    ) {
+        this.error = false;
+        this.weightBlockIndex = weightBlockIndex;
+        this.weightvalue = weightValue;
+        this.decayType = decayType;
+        this.decaySize = decaySize;
+        this.bezierType = bezierType;
+        this.editObjects = app.scene.editData.allEditObjects.filter(editObject => editObject instanceof BMeshWeight);
+        if (this.editObjects[0] instanceof BMeshWeight) {
+            this.isBMeshWeight = true;
         }
-        let groupNum = 1;
-        this.target = target;
-        if (target.type == "グラフィックメッシュ") {
-            this.targetBuffer = app.scene.runtimeData.graphicMeshData.weightBlocks.buffer;
-            this.verticesPositionBuffer = app.scene.runtimeData.graphicMeshData.renderingVertices.buffer;
-            this.runtimeObject = app.scene.runtimeData.graphicMeshData;
-            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer, target.runtimeOffsetData.start.vertexOffset * app.scene.runtimeData.graphicMeshData.weightBlockByteLength, target.verticesNum * app.scene.runtimeData.graphicMeshData.weightBlockByteLength);
-        } else if (target.type == "ベジェモディファイア") {
-            this.targetBuffer = app.scene.runtimeData.bezierModifierData.weightBlocks.buffer;
-            this.verticesPositionBuffer = app.scene.runtimeData.bezierModifierData.renderingVertices.buffer;
-            this.runtimeObject = app.scene.runtimeData.bezierModifierData;
-            this.originalBuffer = GPU.copyBufferToNewBuffer(this.targetBuffer, target.runtimeOffsetData.start.pointOffset * app.scene.runtimeData.bezierModifierData.weightBlockByteLength, target.pointNum * app.scene.runtimeData.bezierModifierData.weightBlockByteLength);
-            groupNum = 3;
+        if (this.isBMeshWeight) {
+            this.editObject_WeightBlocks = this.editObjects.map(editObject => editObject.weightBlocks);
+            this.originalWeightBlocks = this.editObject_WeightBlocks.map(weightBlocks => weightBlocks.map(weightBlock => [...weightBlock.weights]));
+            this.paintWeightValue = this.editObject_WeightBlocks.map((weightBlocks,objectIndex) => createArrayNAndFill(this.editObjects[objectIndex].verticesNum, 0));
+            this.minDistDecays = this.editObject_WeightBlocks.map((weightBlocks,objectIndex) => createArrayNAndFill(this.editObjects[objectIndex].verticesNum, 0));
         }
-        this.maxWeightBuffer = GPU.createStorageBuffer(target.verticesNum * 4, undefined, ["f32"]);
-        this.workNum = Math.ceil(target.verticesNum / 64);
-        GPU.writeBuffer(this.configBuffer, GPU.createBitData([decayType,decaySize,paintTargetIndex,weight, groupNum],["u32","f32","u32","f32","u32"]))
-        this.group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Csrw_Csr_Cu_Cu_Cu_Csr"), [this.targetBuffer, this.originalBuffer, this.maxWeightBuffer, this.verticesPositionBuffer, target.objectDataBuffer, this.pointBuffer, this.configBuffer, this.decayBezierBuffer]);
+        console.log(this)
     }
 
     update(point) {
-        console.log("ペイント")
-        GPU.writeBuffer(this.pointBuffer, new Float32Array(point));
-        GPU.runComputeShader(weightPaintPipeline, [this.group], this.workNum);
-        // GPU.consoleBufferData(this.targetBuffer, ["u32","u32","u32","u32","f32","f32","f32","f32"]);
+        const decaysList = this.editObjects.map(editObject => editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (mathVec2.distanceR(point, co) / this.decaySize))));
+        decaysList.forEach((decays, objectIndex) => decays.forEach((decay, vertexIndex) => {
+            if (this.minDistDecays[objectIndex][vertexIndex] < decay) {
+                this.minDistDecays[objectIndex][vertexIndex] = decay;
+            }
+            if (this.decayType == "ミックス") this.paintWeightValue[objectIndex][vertexIndex] = this.minDistDecays[objectIndex][vertexIndex] * this.weightvalue + this.originalWeightBlocks[objectIndex][this.weightBlockIndex][vertexIndex] * (1 - this.minDistDecays[objectIndex][vertexIndex]);
+        }))
+        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
+            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
+                weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[objectIndex][vertexIndex];
+            }
+        })
+        // 正規化
+        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
+            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
+                let availableWeight = 1 - this.paintWeightValue[objectIndex][vertexIndex]; // ターゲット以外が使える重み
+                let sumWeight = 0; // ターゲット以外の重み
+                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
+                    if (this.weightBlockIndex != boneIndex) {
+                        sumWeight += this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                        weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                    }
+                }
+                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
+                    if (this.weightBlockIndex != boneIndex) {
+                        weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                    }
+                }
+            }
+            this.editObjects[objectIndex].updateGPUData();
+        })
     }
 
     execute() {
-        GPU.runComputeShader(weightPaintPipeline, [this.group], this.workNum);
+        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
+            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
+                weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[objectIndex][vertexIndex];
+            }
+        })
+        // 正規化
+        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
+            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
+                let availableWeight = 1 - this.paintWeightValue[objectIndex][vertexIndex]; // ターゲット以外が使える重み
+                let sumWeight = 0; // ターゲット以外の重み
+                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
+                    if (this.weightBlockIndex != boneIndex) {
+                        sumWeight += this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                        weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                    }
+                }
+                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
+                    if (this.weightBlockIndex != boneIndex) {
+                        weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                    }
+                }
+            }
+            this.editObjects[objectIndex].updateGPUData();
+        })
+        return {consumed: true};
     }
 
     undo() {
-        this.target.isChange = true;
-        GPU.copyBuffer(this.originalBuffer, this.targetBuffer);
+        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
+            for (let boneIndex = 0; boneIndex < originalWeightBlocks[objectIndex].length; boneIndex ++) {
+                for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
+                    weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
+                }
+            }
+            this.editObjects[objectIndex].updateGPUData();
+        })
     }
 }

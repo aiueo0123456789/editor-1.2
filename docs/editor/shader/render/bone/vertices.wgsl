@@ -50,12 +50,12 @@ fn vmain(
     let index = instanceIndex;
     let bone = verticesPosition[index];
     let p = select(bone.h, bone.t, (vertexIndex % 12) / 6 == 1);
-    let lenght = distance(bone.h, bone.t);
+    let length = distance(bone.h, bone.t);
     var output: VertexOutput;
 
     let fixIndex = index * 2u + (vertexIndex % 12) / 6;
 
-    output.position = worldPosToClipPos(p + point * size * lenght);
+    output.position = worldPosToClipPos(p + point * size * length);
     output.uv = point;
     output.kind = select(0.0, 1.0, (vertexIndex % 12) / 6 == 1);
     output.boneIndex = index;

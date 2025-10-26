@@ -82,9 +82,7 @@ export class Context {
         for (const object of this.selectedObjects) {
             if (object.type == "アーマチュア") {
                 for (const bone of object.allBone) {
-                    if (bone.selected) {
-                        result.push(bone);
-                    }
+                    if (bone.selected) result.push(bone);
                 }
             } else if (object.type == "グラフィックメッシュ") {
                 result.push(...object.allVertices.filter(vertex => vertex && vertex.selected));

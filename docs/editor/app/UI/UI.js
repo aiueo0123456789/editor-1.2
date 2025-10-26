@@ -225,7 +225,7 @@ export class UI {
     }
 
     getImgURLFromImgName(imgName) {
-        return `/docs/config/画像データ/ui_icon/カスタムチェックボックスロック/SVG/${imgName}.svg`;
+        return `/docs/config/画像データ/ui_icon/SVG/${imgName}.svg`;
     }
 
     updateLoadingModal(id, percentage, txt) {

@@ -53,7 +53,7 @@ export function createArrayN(N, data = undefined) {
     }
 }
 
-export function createArrayAndFillN(N, data) {
+export function createArrayNAndFill(N, data) {
     return [...Array(N)].map(() => data);
 }
 

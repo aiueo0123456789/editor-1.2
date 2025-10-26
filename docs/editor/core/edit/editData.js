@@ -3,6 +3,7 @@ import { BArmature } from "./BArmature.js";
 import { BArmatureAnimation } from "./BArmatureAnimation.js";
 import { BBezier } from "./BBezier.js";
 import { BMesh } from "./BMesh.js";
+import { BMeshWeight } from "./BMeshWeight.js";
 
 export class EditDatas {
     constructor(/** @type {Application} */ app) {
@@ -28,6 +29,10 @@ export class EditDatas {
                 const bm = new BMesh();
                 bm.fromMesh(object);
                 return bm;
+            } else if (mode == "メッシュウェイト編集") {
+                const bmw = new BMeshWeight();
+                bmw.fromMesh(object);
+                return bmw;
             }
         } else if (object.type == "アーマチュア") {
             if (mode == "ボーン編集") {
@@ -36,6 +41,10 @@ export class EditDatas {
                 return ba;
             } else if (mode == "ボーンアニメーション編集") {
                 const baa = new BArmatureAnimation();
+                baa.fromArmature(object);
+                return baa;
+            } else if (mode == "メッシュウェイト編集") {
+                const baa = new BArmatureAnimation("weightPaint");
                 baa.fromArmature(object);
                 return baa;
             }
