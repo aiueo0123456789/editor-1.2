@@ -1,5 +1,5 @@
 import { CreatorForUI } from "../creatorForUI.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
 export class InputColorTag extends CustomTag {

@@ -1,6 +1,6 @@
 import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { createID, createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 import { InputCheckboxTag } from "./inputCheckboxTag.js";
 

@@ -1,15 +1,8 @@
 import { app } from "../../../main.js";
-import { AppendVertex } from "../../ui/tools/appendVertex.js";
-import { CreateEdgeTool } from "../../ui/tools/CreateEdge.js";
-import { DeleteTool } from "../../ui/tools/Delete.js";
-import { EdgeJoinTool } from "../../ui/tools/EdgeJoin.js";
-import { ParentPickModal } from "../../ui/tools/ParentPick.js";
-import { ResizeModal } from "../../ui/tools/ResizeTool.js";
-import { RotateModal } from "../../ui/tools/RotateTool.js";
-import { TranslateModal } from "../../ui/tools/TranslateTool.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 import { changeParameter } from "../../utils/utility.js";
 
-export class ChangeModeCommand {
+export class ChangeEditModeCommand {
     constructor(mode) {
         this.targetObjects = app.context.selectedObjects;
         this.originalMode = app.context.currentMode;
@@ -36,6 +29,7 @@ export class ChangeModeCommand {
                 app.scene.editData.appendEditObject(object, this.editObjects[index]);
             }
         })
+        managerForDOMs.update({o: "changeEditMode"});
         return {consumed: true};
     }
 
@@ -53,6 +47,7 @@ export class ChangeModeCommand {
                 app.scene.editData.appendEditObject(object, this.editObjects[index]);
             }
         })
+        managerForDOMs.update({o: "changeEditMode"});
         console.log(app);
     }
 }

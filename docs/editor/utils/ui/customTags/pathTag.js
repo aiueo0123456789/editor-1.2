@@ -1,6 +1,6 @@
 import { isFunction } from "../../utility.js";
 import { CreatorForUI, ParameterReference } from "../creatorForUI.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { createID, createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
 export class PathTag extends CustomTag {

@@ -31,7 +31,6 @@ import { ActiveBonePanel } from './toolBar/panel/bone.js';
 import { ActiveMeshPanel } from './toolBar/panel/mesh.js';
 import { ActiveEdgePanel } from './toolBar/panel/edge.js';
 import { WeightPaintPanel } from './toolBar/panel/weight.js';
-import { BMeshWeight } from '../../../../core/edit/BMeshWeight.js';
 
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");
@@ -43,6 +42,9 @@ const renderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("
 const renderParticlePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr"), GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/particleVertex.wgsl"), [], "2d", "s", "wl");
 const maskRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft")], await loadFile("./editor/shader/render/mask.wgsl"), [["u"]], "mask", "t");
 
+const BMSMainRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/bms/main.wgsl"), [], "2d", "t", "wl");
+const BMSMeshsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/bms/meshs.wgsl"), [], "2d", "s");
+const BMSVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/bms/vertices.wgsl"), [], "2d", "s");
 const BMWMeshsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/BMWmeshs.wgsl"), [], "2d", "t", "wl");
 const BMWWeightsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/BMWweights.wgsl"), [], "2d", "s");
 const BMeshMainRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vsr_Vu_Ft")], await loadFile("./editor/shader/render/graphicMesh/main.wgsl"), [], "2d", "t", "wl");
@@ -75,6 +77,7 @@ const useingToolPanelInMode = {
     "ベジェ編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "x": DeleteTool, "j": EdgeJoinTool, "v": AppendVertex, "m": CreateEdgeTool},
     "ボーン編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "x": DeleteTool},
     "ボーンアニメーション編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
+    "メッシュシェイプキー編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
     "オブジェクト": {"p": ParentPickModal},
 };
 
@@ -127,7 +130,7 @@ export class Area_Viewer {
                                     {tagType: "path", sourceObject: "context/activeObject", updateEventTarget: {path: "context/%activeObject"}, children: [
                                         {tagType: "if", formula: {source: "/type", conditions: "==", value: "グラフィックメッシュ"},
                                             true: [
-                                                {tagType: "select", value: (value) => {app.context.setModeForSelected(value)}, sourceObject: ["オブジェクト", "メッシュ編集", "メッシュウェイト編集", "メッシュアニメーション編集"], options: {initValue: "オブジェクト"}},
+                                                {tagType: "select", value: (value) => {app.context.setModeForSelected(value)}, sourceObject: ["オブジェクト", "メッシュ編集", "メッシュウェイト編集", "メッシュシェイプキー編集"], options: {initValue: "オブジェクト"}},
                                             ], false: [
                                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},
                                                     true: [
@@ -206,7 +209,7 @@ export class Area_Viewer {
                         ]}
                     ]},
                     {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                        {tagType: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
+                        {tagType: "html", tag: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
                     ]},
                 ]}
             ]
@@ -265,7 +268,7 @@ export class Area_Viewer {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (context.currentMode == "オブジェクト") {
                         if (context.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
-                            context.setModeForSelected("メッシュ頂点アニメーション編集");
+                            context.setModeForSelected("メッシュシェイプキー編集");
                             // this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else if (inputManager.consumeKeys(["w"])) {
                             context.setModeForSelected("メッシュウェイト編集");
@@ -387,8 +390,9 @@ export class Area_Viewer {
             // }
             app.operator.appendCommand(new SelectOnlyVertexCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
             app.operator.execute();
-        } else if (context.currentMode == "メッシュ頂点アニメーション編集") {
-            app.scene.runtimeData.graphicMeshData.selectedForVertices(app.context.activeObject, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
+        } else if (context.currentMode == "メッシュシェイプキー編集") {
+            app.operator.appendCommand(new SelectOnlyVertexCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
+            app.operator.execute();
         } else if (context.currentMode == "ベジェ頂点アニメーション編集") {
             app.scene.runtimeData.bezierModifierData.selectedForVertices(app.context.activeObject, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
         } else if (context.currentMode == "ボーンアニメーション編集") {
@@ -599,10 +603,19 @@ export class Renderer {
                     renderPass.setPipeline(renderPipeline);
                     renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 } else if (graphicMesh.mode == "メッシュウェイト編集") {
-                    const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
-                    renderPass.setBindGroup(1, bm.renderingGroup);
+                    const bmw = app.scene.editData.getEditObjectByObject(graphicMesh);
+                    renderPass.setBindGroup(1, bmw.renderingGroup);
                     renderPass.setPipeline(BMWMeshsRenderPipeline);
-                    renderPass.draw(3 * bm.meshesNum, 1, 0, 0); // 3つの頂点から三角形を表示する * meshNum
+                    renderPass.draw(3 * bmw.meshesNum, 1, 0, 0); // 3つの頂点から三角形を表示する * meshNum
+
+                    // パイプラインやグループを元に戻す
+                    renderPass.setPipeline(renderPipeline);
+                    renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
+                } else if (graphicMesh.mode == "メッシュシェイプキー編集") {
+                    const bms = app.scene.editData.getEditObjectByObject(graphicMesh);
+                    renderPass.setBindGroup(1, bms.renderingGroup);
+                    renderPass.setPipeline(BMSMainRenderPipeline);
+                    renderPass.draw(3 * bms.meshesNum, 1, 0, 0); // 3つの頂点から三角形を表示する * meshNum
 
                     // パイプラインやグループを元に戻す
                     renderPass.setPipeline(renderPipeline);
@@ -635,19 +648,17 @@ export class Renderer {
                             renderPass.setPipeline(BMeshVerticesRenderPipeline);
                             renderPass.draw(4, bm.verticesNum, 0, 0); // 4つの頂点から四角形を表示
                         } else if (graphicMesh.mode == "メッシュウェイト編集") {
-                            const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
-                            renderPass.setBindGroup(1, bm.renderingGroup);
+                            const bmw = app.scene.editData.getEditObjectByObject(graphicMesh);
+                            renderPass.setBindGroup(1, bmw.renderingGroup);
                             renderPass.setPipeline(BMWWeightsRenderPipeline);
-                            renderPass.draw(4, bm.verticesNum, 0, 0);
-                        } else if (graphicMesh.mode == "メッシュ頂点アニメーション編集") {
-                            // メッシュ表示
-                            renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
-                            renderPass.setPipeline(BMeshMeshRenderPipeline);
-                            renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
-                            // 頂点描画
-                            renderPass.setBindGroup(2, graphicMesh.objectDataGroup);
-                            renderPass.setPipeline(BMeshVerticesRenderPipeline);
-                            renderPass.draw(4, graphicMesh.verticesNum, 0, 0);
+                            renderPass.draw(4, bmw.verticesNum, 0, 0);
+                        } else if (graphicMesh.mode == "メッシュシェイプキー編集") {
+                            const bms = app.scene.editData.getEditObjectByObject(graphicMesh);
+                            renderPass.setBindGroup(1, bms.renderingGroup);
+                            renderPass.setPipeline(BMSMeshsRenderPipeline);
+                            renderPass.draw(3 * 4, bms.meshesNum, 0, 0); // 3つの頂点から三角形を表示する * meshNum
+                            renderPass.setPipeline(BMSVerticesRenderPipeline);
+                            renderPass.draw(4, bms.verticesNum, 0, 0); // 3つの頂点から三角形を表示する * meshNum
                         } else if (graphicMesh.mode == "オブジェクト") {
                             if (graphicMesh.selected) {
                                 // メッシュ表示

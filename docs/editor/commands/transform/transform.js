@@ -3,6 +3,7 @@ import { BArmature } from "../../core/edit/BArmature.js";
 import { BArmatureAnimation } from "../../core/edit/BArmatureAnimation.js";
 import { BBezier } from "../../core/edit/BBezier.js";
 import { BMesh } from "../../core/edit/BMesh.js";
+import { BMeshShapeKey } from "../../core/edit/BMeshShapeKey.js";
 import { Armature } from "../../core/objects/armature.js";
 import { mathMat3x3 } from "../../utils/mathMat.js";
 import { mathVec2 } from "../../utils/mathVec.js";
@@ -16,50 +17,51 @@ class TransformCommand {
         this.useProportional = useProportionalEdit;
         this.proportionalType = proportionalType;
         this.proportionalSize = proportionalSize;
-        if (this.editObjects[0] instanceof BMesh) {
-            this.isBMesh = true;
-        } else if (this.editObjects[0] instanceof BArmature) {
-            this.isBArmature = true;
-        } else if (this.editObjects[0] instanceof BBezier) {
-            this.isBBezier = true;
-        } else if (this.editObjects[0] instanceof BArmatureAnimation) {
-            this.isBArmatureAnimation = true;
-        }
+
+        if (this.editObjects[0] instanceof BMesh) this.isBMesh = true;
+        else if (this.editObjects[0] instanceof BArmature) this.isBArmature = true;
+        else if (this.editObjects[0] instanceof BBezier) this.isBBezier = true;
+        else if (this.editObjects[0] instanceof BArmatureAnimation) this.isBArmatureAnimation = true;
+        else if (this.editObjects[0] instanceof BMeshShapeKey) this.isBMeshAnimation = true;
+
         if (this.isBMesh || this.isBArmature || this.isBBezier) {
-            this.selectedVertices = this.editObjects.map(editObject => editObject.selectedVerticesCoordinates).flat();
+            this.processType = "vertex";
+            this.selectedVertices = this.editObjects.map(editObject => editObject.selectedVertices).flat();
+            this.selectedVerticesCoordinates = this.selectedVertices.map(vertex => vertex.co);
             if (pivotType == "boundingboxCenter") {
-                this.pivotPoint = mathVec2.averageR(this.selectedVertices);
+                this.pivotPoint = mathVec2.averageR(this.selectedVerticesCoordinates);
             } else if (pivotType == "activeElement") {
-                this.pivotPoint = mathVec2.averageR(this.selectedVertices);
+                this.pivotPoint = mathVec2.averageR(this.selectedVerticesCoordinates);
             }
-            this.targetVertices = this.editObjects.map(editObject => editObject.verticesCoordinates).flat();
-            this.originalVertices = this.targetVertices.map(vertex => [...vertex]); // 元の状態の記憶
-        } else if (this.isBArmatureAnimation) {
-            this.selectedBones = this.editObjects.map(editObject => editObject.selectedBones).flat();
-            this.selectedVertices = this.selectedBones.map(bone => bone.headVertex);
+            this.targetVertices = this.editObjects.map(editObject => editObject.vertices).flat();
+            this.originalVerticesCoordinates = this.targetVertices.map(vertex => [...vertex.co]); // 元の状態の記憶
+            this.selectedVerticesIndexs = this.selectedVertices.map(vertex => this.targetVertices.indexOf(vertex));
+        } else if (this.isBMeshAnimation) { // 一つまでしか編集できない
+            this.processType = "vertex";
+            this.activeShapeKey = this.editObjects[0].activeShapeKey;
+            this.error = !this.activeShapeKey;
+            this.selectedVertices = this.editObjects[0].selectedVertices;
+            this.selectedVerticesCoordinates = this.selectedVertices.map(vertex => this.activeShapeKey.data[vertex.index].co);
             if (pivotType == "boundingboxCenter") {
-                this.pivotPoint = mathVec2.averageR(this.selectedVertices);
+                this.pivotPoint = mathVec2.averageR(this.selectedVerticesCoordinates);
             } else if (pivotType == "activeElement") {
-                this.pivotPoint = mathVec2.averageR(this.selectedVertices);
+                this.pivotPoint = mathVec2.averageR(this.selectedVerticesCoordinates);
+            }
+            this.targetVertices = this.editObjects[0].vertices.map(vertex => this.activeShapeKey.data[vertex.index]); // 対象をアクティブシェイプキーの参照に
+            this.originalVerticesCoordinates = this.targetVertices.map(vertex => [...vertex.co]); // 元の状態の記憶
+            this.selectedVerticesIndexs = this.selectedVertices.map(vertex => vertex.index);
+            console.log(this)
+        } else if (this.isBArmatureAnimation) {
+            this.processType = "bone";
+            this.selectedBones = this.editObjects.map(editObject => editObject.selectedBones).flat();
+            this.selectedVerticesCoordinates = this.selectedBones.map(bone => bone.headVertex);
+            if (pivotType == "boundingboxCenter") {
+                this.pivotPoint = mathVec2.averageR(this.selectedVerticesCoordinates);
+            } else if (pivotType == "activeElement") {
+                this.pivotPoint = mathVec2.averageR(this.selectedVerticesCoordinates);
             }
             const getSurfaceBones = (bones) => {
                 const isSurface = (bone) => {
-                    // 全ての子要素を平坦化してincludes
-                    // const getChildren = (bone) => {
-                    //     if (!bone.children) return [];
-                    //     const result = [...bone.children]; // ボーンの子要素
-                    //     for (const childBone of bone.children) {
-                    //         result.push(...getChildren(childBone)); // 子要素の子要素
-                    //     }
-                    //     return result;
-                    // }
-                    // for (const checkBone of bones) {
-                    //     if (getChildren(checkBone).includes(bone)) {
-                    //         return false;
-                    //     }
-                    // }
-                    // return true;
-
                     // 全ての親要素を辿って見つけたらfalse
                     let isLoop = true;
                     let nowBone = bone;
@@ -80,7 +82,7 @@ class TransformCommand {
             this.targetBones = getSurfaceBones(this.selectedBones);
             this.originalBones = this.selectedBones.map(bone => Armature.copyBoneData(bone.animationLocalBoneData)); // 元の状態の記憶
         }
-        this.error = !(this.selectedBones?.length || this.selectedVertices?.length);
+        !this.error && (this.error = !(this.selectedBones?.length || this.selectedVertices?.length));
     }
 
     transform(value, useProportional, proportionalType, proportionalSize) {
@@ -90,21 +92,21 @@ class TransformCommand {
         this.proportionalSize = proportionalSize;
         // 重みの再計算
         if (this.useProportional) {
-            if (this.isBMesh || this.isBArmature || this.isBBezier) {
+            if (this.processType == "vertex") {
                 this.weights = this.targetVertices.map((vertex, index) => {
-                    if (this.selectedVertices.includes(vertex)) {
+                    if (this.selectedVerticesIndexs.includes(index)) {
                         return 1;
                     } else {
-                        const dist = mathVec2.distanceR(this.originalVertices[index], this.pivotPoint);
+                        const dist = mathVec2.distanceR(this.originalVerticesCoordinates[index], this.pivotPoint);
                         const weight = roundUp(1 - (dist / this.proportionalSize), 0);
                         return weight;
                     }
                 });
             }
         } else {
-            if (this.isBMesh || this.isBArmature || this.isBBezier) {
+            if (this.processType == "vertex") {
                 this.weights = this.targetVertices.map((vertex, index) => {
-                    if (this.selectedVertices.includes(vertex)) {
+                    if (this.selectedVerticesIndexs.includes(index)) {
                         return 1;
                     } else {
                         return 0;
@@ -113,10 +115,10 @@ class TransformCommand {
             }
         }
         if (this instanceof TranslateCommand) {
-            if (this.isBMesh || this.isBArmature || this.isBBezier) {
-                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index])));
+            if (this.processType == "vertex") {
+                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex.co, this.originalVerticesCoordinates[index], mathVec2.scaleR(this.value, this.weights[index])));
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
-            } else if (this.isBArmatureAnimation) {
+            } else if (this.processType == "bone") {
                 this.targetBones.forEach((bone, index) => {
                     // mathVec2.add(bone, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index]))
                     const localValue = mathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
@@ -126,10 +128,10 @@ class TransformCommand {
             }
         } else if (this instanceof ResizeCommand) {
         } else if (this instanceof RotateCommand) {
-            if (this.isBMesh || this.isBArmature || this.isBBezier) {
-                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index])));
+            if (this.processType == "vertex") {
+                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex.co, this.originalVerticesCoordinates[index], mathVec2.scaleR(this.value, this.weights[index])));
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
-            } else if (this.isBArmatureAnimation) {
+            } else if (this.processType == "bone") {
                 this.targetBones.forEach((bone, index) => {
                     // mathVec2.add(bone, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index]))
                     // const localValue = mathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
@@ -142,10 +144,10 @@ class TransformCommand {
 
     execute() {
         if (this instanceof TranslateCommand) {
-            if (this.isBMesh || this.isBArmature || this.isBBezier) {
-                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index])));
+            if (this.processType == "vertex") {
+                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex.co, this.originalVerticesCoordinates[index], mathVec2.scaleR(this.value, this.weights[index])));
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
-            } else if (this.isBArmatureAnimation) {
+            } else if (this.processType == "bone") {
                 this.targetBones.forEach((bone, index) => {
                     // mathVec2.add(bone, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index]))
                     const localValue = mathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
@@ -155,10 +157,10 @@ class TransformCommand {
             }
         } else if (this instanceof ResizeCommand) {
         } else if (this instanceof RotateCommand) {
-            if (this.isBMesh || this.isBArmature || this.isBBezier) {
-                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index])));
+            if (this.processType == "vertex") {
+                this.targetVertices.forEach((vertex, index) => mathVec2.add(vertex.co, this.originalVerticesCoordinates[index], mathVec2.scaleR(this.value, this.weights[index])));
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
-            } else if (this.isBArmatureAnimation) {
+            } else if (this.processType == "bone") {
                 this.targetBones.forEach((bone, index) => {
                     Armature.addBoneData(bone.animationLocalBoneData, this.originalBones[index], {r: this.value[0]});
                 });
@@ -169,10 +171,10 @@ class TransformCommand {
     }
 
     undo() {
-        if (this.isBMesh || this.isBArmature || this.isBBezier) {
-            this.targetVertices.forEach((vertex, index) => mathVec2.set(vertex, this.originalVertices[index]));
+        if (this.processType == "vertex") {
+            this.targetVertices.forEach((vertex, index) => mathVec2.set(vertex.co, this.originalVerticesCoordinates[index]));
             this.editObjects.forEach(editObject => editObject.updateGPUData());
-        } else if (this.isBArmatureAnimation) {
+        } else if (this.processType == "bone") {
             this.targetBones.forEach((bone, index) => {
                 Armature.addBoneData(bone.animationLocalBoneData, this.originalBones[index], {});
             });

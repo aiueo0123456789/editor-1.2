@@ -38,7 +38,7 @@ export class Area_Previewer {
             DOM: [
                 {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; display: flex; justifyContent: center; alignItems: center; backgroundColor: rgb(55, 55, 55);", children: [
                     // {tagType: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
-                    {tagType: "canvas", id: "renderingCanvas"},
+                    {tagType: "html", tag: "canvas", id: "renderingCanvas"},
                 ]},
             ]
         }

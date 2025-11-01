@@ -1,4 +1,4 @@
-import { arrayToPush } from "../../../../editor/utils/utility.js";
+import { pushToArray } from "../../../../editor/utils/utility.js";
 import { PhysicsAttachmentData } from "./physics/data.js";
 
 export class Attachments {
@@ -16,7 +16,7 @@ export class Attachments {
         if (data.type == "物理アタッチメント") {
             attachment = new PhysicsAttachmentData(Object.assign({bone: this.bone}, data));
         }
-        arrayToPush(this.list,attachment);
+        pushToArray(this.list,attachment);
         return attachment;
     }
 

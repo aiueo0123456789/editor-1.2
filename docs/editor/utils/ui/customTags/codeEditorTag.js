@@ -2,7 +2,7 @@ import { app } from "../../../../main.js";
 import { TextEditor_textSplice } from "../../../commands/textEditor/textEditorCommand.js";
 import { isNumber } from "../../utility.js";
 import { tagCreater } from "../creatorForUI.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { AutoGrid, createGrid } from "../grid.js";
 import { createIcon, createTag, managerForDOMs, removeHTMLElementInObject, setClass, setLabel, setStyle } from "../util.js";
 

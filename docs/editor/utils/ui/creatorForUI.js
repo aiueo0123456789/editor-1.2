@@ -1,4 +1,4 @@
-import { ChecksTag, CustomTag } from "./customTags.js";
+import { ChecksTag, CustomTag } from "./customTag.js";
 import { createButton, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
 import { changeParameter, hexToRgba, isFunction, isPassByReference, isPlainObject, rgbToHex } from "../utility.js";
 import { app } from "../../../main.js";
@@ -25,6 +25,7 @@ import { GridBoxTag } from "./customTags/gridBoxTag.js";
 import { DblClickInput } from "./customTags/dblclickInput.js";
 import { PanelTag } from "./customTags/panelTag.js";
 import { ListTag } from "./customTags/listTag.js";
+import { CanvasTag } from "./customTags/canvasTag.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -227,8 +228,7 @@ export const tagCreater = {
         return element;
     },
     "canvas": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        let element = createTag(t, "canvas");
-        return element;
+        return new CanvasTag(creatorForUI, t, searchTarget, child, flag);
     },
     "path": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         return new PathTag(creatorForUI, t, searchTarget, child, flag);

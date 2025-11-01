@@ -1,7 +1,7 @@
 import { Application } from "../../../app/app.js";
 import { mathMat3x3 } from "../../../utils/mathMat.js";
 import { managerForDOMs } from "../../../utils/ui/util.js";
-import { arrayToSet, createArrayN, loadFile } from "../../../utils/utility.js";
+import { setToArray, createArrayN, loadFile } from "../../../utils/utility.js";
 import { GPU } from "../../../utils/webGPU.js";
 import { Armature } from "../../objects/armature.js";
 import { BufferManager } from "../bufferManager.js";

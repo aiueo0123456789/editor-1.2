@@ -43,7 +43,7 @@ export class ResizeModal {
             if (this.type == "メッシュ編集") {
                 this.command = new ResizeCommand(this.type,app.context.selectVertices);
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
-            } else if (this.type == "メッシュ頂点アニメーション編集") {
+            } else if (this.type == "メッシュシェイプキー編集") {
                 this.command = new ResizeCommand(this.type, app.context.getSelselectVerticesectVertices, {targetAnimation: app.context.activeObject.animationBlock.activeAnimation});
                 this.center = await app.scene.getSelectVerticesCenter(app.scene.runtimeData.graphicMeshData.renderingVertices.buffer, app.scene.runtimeData.graphicMeshData.selectedVertices.buffer);
             } else if (this.type == "ボーン編集") {

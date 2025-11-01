@@ -13,7 +13,7 @@ import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
 import { OutlinerSpaceData } from "../ui/area/areas/Outliner/area_OutlinerSpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
 import { GPU } from "../utils/webGPU.js";
-import { CreateObjectCommand, RemoveObjectCommand } from "../commands/object/object.js";
+import { CreateObjectCommand, DeleteObjectCommand } from "../commands/object/object.js";
 import { CreateEdgeTool } from "../ui/tools/CreateEdge.js";
 import { NodeEditorSpaceData } from "../ui/area/areas/NodeEditor/area_NodeEditorSpaceData.js";
 import { Area_NodeEditor } from "../ui/area/areas/nodeEditor/area_NodeEditor.js";
@@ -342,7 +342,7 @@ class AppConfig {
                     }},
                     {label: "削除", children: [
                         {label: "選択物", eventFn: () => {
-                            const command = new RemoveObjectCommand(this.app.context.selectedObjects);
+                            const command = new DeleteObjectCommand(this.app.context.selectedObjects);
                             this.app.operator.appendCommand(command);
                             this.app.operator.execute();
                         }},

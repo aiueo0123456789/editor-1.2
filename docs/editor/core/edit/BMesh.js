@@ -1,4 +1,5 @@
 import { app } from "../../../main.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { GraphicMesh } from "../objects/graphicMesh.js";
@@ -141,13 +142,6 @@ export class BMesh {
 
     get meshesNum() {
         return this.meshes.length;
-    }
-
-    get verticesCoordinates() {
-        return this.vertices.map(vertex => vertex.co);
-    }
-    get selectedVerticesCoordinates() {
-        return this.selectedVertices.map(vertex => vertex.co);
     }
 
     updateGPUData() {

@@ -1,4 +1,5 @@
 import { app } from "../../../main.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { BezierModifier } from "../objects/bezierModifier.js";
@@ -85,12 +86,6 @@ export class BBezier {
     }
     get verticesNum() {
         return this.vertices.length;
-    }
-    get verticesCoordinates() {
-        return this.vertices.map(vertex => vertex.co);
-    }
-    get selectedVerticesCoordinates() {
-        return this.selectedVertices.map(vertex => vertex.co);
     }
 
     updateGPUData() {

@@ -4,7 +4,7 @@ import { GraphicMesh } from '../../core/objects/graphicMesh.js';
 import { BezierModifier } from '../../core/objects/bezierModifier.js';
 import { Armature } from '../../core/objects/armature.js';
 import { AnimationCollector } from '../../core/objects/animationCollector.js';
-import { changeParameter, indexOfSplice, loadFile, arrayToPush } from '../../utils/utility.js';
+import { changeParameter, indexOfSplice, loadFile, pushToArray } from '../../utils/utility.js';
 import { Application } from '../app.js';
 import { mathVec2 } from '../../utils/mathVec.js';
 import { RuntimeDatas } from '../../core/runtime/runtimeDatas.js';
@@ -12,7 +12,7 @@ import { ParameterManager } from '../../core/objects/parameterManager.js';
 import { Particle } from '../../core/objects/particle.js';
 import { Script } from '../../core/objects/script.js';
 import { Camera } from '../../core/objects/camera.js';
-import { RemoveObjectCommand } from '../../commands/object/object.js';
+import { DeleteObjectCommand } from '../../commands/object/object.js';
 import { Texture } from '../../core/objects/texture.js';
 import { MaskTexture } from '../../core/objects/maskTexture.js';
 import { UnfixedReference } from '../../utils/objects/util.js';
@@ -20,6 +20,7 @@ import { EditDatas } from '../../core/edit/editData.js';
 import { KeyframeBlock } from '../../core/objects/keyframe.js';
 import { KeyframeBlockManager } from '../../core/objects/keyframeBlockManager.js';
 import { BArmatureAnimation } from '../../core/edit/BArmatureAnimation.js';
+import { BlendShape } from '../../core/objects/blendShape.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
 const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
@@ -148,9 +149,10 @@ class Objects {
         this.textures = [];
         /** @type {MaskTexture[]} */
         this.maskTextures = [];
+        /** @type {BlendShape[]} */
+        this.blendShapes = [];
 
         this.renderingCamera = new Camera();
-
         this.allObject = [];
     }
 
@@ -197,6 +199,8 @@ class Objects {
             return new Texture(data);
         } else if (objectType == "マスクテクスチャ") {
             return new MaskTexture(data);
+        } else if (objectType == "ブレンドシェイプ") {
+            return new BlendShape(data);
         }
     }
 
@@ -235,6 +239,8 @@ class Objects {
             return this.textures;
         } else if (objectType == "マスクテクスチャ") {
             return this.maskTextures;
+        } else if (objectType == "ブレンドシェイプ") {
+            return this.blendShapes;
         }
     }
 
@@ -265,7 +271,7 @@ class Objects {
             object.runtimeData.append(object);
             object.runtimeData.updateBaseData(object);
         }
-        arrayToPush(this.searchArrayFromType(object.type), object);
+        pushToArray(this.searchArrayFromType(object.type), object);
         this.allObject.push(object);
         return object;
     }
@@ -329,7 +335,7 @@ export class Scene {
     }
 
     reset() {
-        this.app.operator.appendCommand(new RemoveObjectCommand(this.objects.allObject));
+        this.app.operator.appendCommand(new DeleteObjectCommand(this.objects.allObject));
         this.app.operator.execute();
     }
 
@@ -449,7 +455,7 @@ export class Scene {
         }
         for (const graphicMesh of this.objects.graphicMeshs) {
             graphicMesh.animationBlock.animations.forEach(animation => {
-                GPU.writeBuffer(this.runtimeData.graphicMeshData.animationWights.buffer, new Float32Array([animation.weight]), animation.worldWeightIndex * 4);
+                GPU.writeBuffer(this.runtimeData.graphicMeshData.shapeKeyWights.buffer, new Float32Array([animation.weight]), animation.worldWeightIndex * 4);
             });
         }
         for (const bezierModifier of this.objects.bezierModifiers) {

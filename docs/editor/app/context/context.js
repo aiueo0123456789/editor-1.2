@@ -1,4 +1,4 @@
-import { ChangeModeCommand } from "../../commands/utile/changeMode.js";
+import { ChangeEditModeCommand } from "../../commands/utile/changeEditMode.js";
 import { SelectObjectsCommand, SetActiveObjectsCommand } from "../../commands/utile/selectObject.js";
 import { Armature } from "../../core/objects/armature.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
@@ -34,7 +34,7 @@ export class Context {
     }
 
     setModeForSelected(mode) {
-        this.app.operator.appendCommand(new ChangeModeCommand(mode));
+        this.app.operator.appendCommand(new ChangeEditModeCommand(mode));
         this.app.operator.execute();
     }
 

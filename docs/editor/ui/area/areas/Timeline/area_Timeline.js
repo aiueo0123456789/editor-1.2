@@ -264,7 +264,7 @@ export class Area_Timeline {
                         },
                     ],child2: [
                         {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
-                            {tagType: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
+                            {tagType: "html", tag: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
                         ]},
                     ]}
                 ]}

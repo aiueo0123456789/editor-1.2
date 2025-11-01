@@ -1,6 +1,8 @@
 import { app } from "../../../../../main.js";
+import { CreateShapeKeyCommand, DeleteShapeKeyCommand } from "../../../../commands/mesh/shapeKey.js";
 import { ChangeParentCommand } from "../../../../commands/object/object.js";
 import { ChangeParameterCommand } from "../../../../commands/utile/utile.js";
+import { BMeshShapeKey } from "../../../../core/edit/BMeshShapeKey.js";
 import { appendAnimationToObject, deleteAnimationToObject } from "../../../../utils/objects/util.js";
 import { changeParameter } from "../../../../utils/utility.js";
 
@@ -97,47 +99,32 @@ export class Area_Inspector {
                 ], errorChildren: [
                     {tagType: "section", name: "基本情報", children: []}
                 ]},
-                {tagType: "path", sourceObject: "context/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
-                    // {tagType: "if", formula: {source: "/", conditions: "in", value: "MAX_ANIMATIONS"},
-                    //     true: [
-                    //         {tagType: "section", name: "アニメーション", children: [
-                    //             {tagType: "input", label: "アニメーション最大数", value: "/MAX_ANIMATIONS", options: {tagType: "number"}, custom: {collision: false, visual: "1"}},
-                    //             {tagType: "list", name: "アニメーション", appendEvent: () => {
-                    //                 appendAnimationToObject(app.context.activeObject, "新規");
-                    //             }, deleteEvent: (animations) => {
-                    //                 for (const animation of animations) {
-                    //                     deleteAnimationToObject(app.context.activeObject, animation);
-                    //                 }
-                    //             }, withObject: "/animationBlock/animations", options: {type: "min", selectSource: {
-                    //                 function: (index, object) => {
-                    //                 },
-                    //                 getFunction: (object) => {
-                    //                 }
-                    //             }, activeSource: {
-                    //                 function: (index, object) => {
-                    //                     changeParameter(app.context.activeObject.animationBlock, "activeAnimationIndex", index);
-                    //                 },
-                    //                 getFunction: (object) => {
-                    //                     return object.user.animationBlock.activeAnimation == object;
-                    //                 }
-                    //             }}, liStruct:[
-                    //                 {tagType: "gridBox", axis: "c", allocation: "50% 1fr 50px 20px", children: [
-                    //                     {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
-                    //                     {tagType: "padding", size: "10px"},
-                    //                     {tagType: "input", value: "/weight", options: {tagType: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
-                    //                     {tagType: "hasKeyframeCheck", targetObject: "/keyframeBlockManager/blocksMap/weight"}
-                    //                 ]},
-                    //             ]},
-                    //             {tagType: "path", sourceObject: "context/activeObject/animationBlock/activeAnimation", updateEventTarget: {path: "context/activeObject/animationBlock/activeAnimationIndex"}, children :[
-                    //                 {tagType: "input", label: "名称", value: "/name", options: {tagType: "text"}},
-                    //                 // {tagType: "padding", size: "10px"},
-                    //                 {tagType: "input", label: "重み", value: "/weight", options: {tagType: "number", min: 0, max: 1, step: 0.01}, custom: {visual: "1"}},
-                    //                 {tagType: "hasKeyframeCheck", label: "キーフレーム", targetObject: "/keyframeBlockManager/blocksMap/weight"}
-                    //             ]}
-                    //         ]}
-                    //     ], false: [
-                    //     ]
-                    // }
+                {tagType: "path", sourceObject: "scene/editData/editObjects/{context/activeObject/id}", updateEventTarget: "changeEditMode", children: [
+                    {
+                        tagType: "if", formula: {source: "/constructor/name", conditions: "==", value: "BMeshShapeKey"},
+                        true: [
+                            {tagType: "section", name: "シェイプキー", children: [
+                                {tagType: "list", label: "シェイプキー", appendEvent: () => {
+                                    app.operator.appendCommand(new CreateShapeKeyCommand("名称未設定"));
+                                    app.operator.execute();
+                                }, deleteEvent: (shapeKeys) => {
+                                    app.operator.appendCommand(new DeleteShapeKeyCommand(shapeKeys));
+                                    app.operator.execute();
+                                }, activeEvent: (object) => {
+                                    /** @type {BMeshShapeKey} */
+                                    const bms = app.scene.editData.getEditObjectByObject(app.context.activeObject);
+                                    changeParameter(bms, "activeShapeKey", object);
+                                    bms.updateGPUData();
+                                }, src: "/shapeKeys", type: "min", liStruct:[
+                                    {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
+                                        {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                                    ]},
+                                ]}
+                            ]},
+                        ],
+                        false: [
+                        ]
+                    }
                 ]},
                 {tagType: "section", name: "詳細設定", children: [
 

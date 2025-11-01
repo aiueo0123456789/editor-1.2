@@ -20,10 +20,10 @@ export class BoneExtrudeMoveCommand {
             for (const editObject of this.editObjects) {
                 const bones = [];
                 this.createBonesIneditObject[editObject.id] = bones;
-                editObject.selectedVerticesCoordinates.forEach(co => {
-                    const bone = BArmature.createBone(co, co);
+                editObject.selectedVertices.forEach(vertex => {
+                    const bone = BArmature.createBone(vertex.co, vertex.co);
                     editObject.bones.push(bone);
-                    bones.push({bone: bone, baseCo: co});
+                    bones.push({bone: bone, baseCo: vertex.co});
                 });
             }
         }

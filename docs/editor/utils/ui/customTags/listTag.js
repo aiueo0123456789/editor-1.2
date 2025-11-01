@@ -1,7 +1,7 @@
 import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
 import { CreatorForUI } from "../creatorForUI.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { ResizerForDOM } from "../resizer.js";
 import { createMinButton, createTag, managerForDOMs } from "../util.js";
 
@@ -22,9 +22,9 @@ export class ListTag extends CustomTag {
 
             // アクション
             if (child.appendEvent || child.deleteEvent) {
-                this.actionButtons = createTag(this.element, "div", {style: "width: 20px;"});
-                this.appendButton = createMinButton(this.actionButtons, "+");
-                this.deleteButton = createMinButton(this.actionButtons, "-");
+                this.actionBar = createTag(this.element, "div", {style: "width: 20px;"});
+                this.appendButton = createMinButton(this.actionBar, "+");
+                this.deleteButton = createMinButton(this.actionBar, "-");
                 // const listOutputData = creatorForUI.createListChildren(this.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
                 if (child.appendEvent) {
                     if (isFunction(child.appendEvent)) {
@@ -37,8 +37,7 @@ export class ListTag extends CustomTag {
                 if (child.deleteEvent) {
                     if (isFunction(child.deleteEvent)) {
                         this.deleteButton.addEventListener("click", () => {
-                            console.log("削除", listOutputData)
-                            child.deleteEvent(listOutputData.selects);
+                            child.deleteEvent(this.selected);
                         });
                     }
                 } else {
@@ -46,6 +45,40 @@ export class ListTag extends CustomTag {
                     this.deleteButton.style.pointerEvents = "none";
                 }
             }
+        } else {
+            this.listNameTag = createTag(t, "p", {textContent: child.label});
+            this.element = createTag(t, "div", {style: ""});
+            // アクション
+            if (child.appendEvent || child.deleteEvent) {
+                this.actionBar = createTag(this.element, "div", {style: "display: flex; height: 20px;"});
+                this.appendButton = createMinButton(this.actionBar, "+");
+                this.deleteButton = createMinButton(this.actionBar, "-");
+                // const listOutputData = creatorForUI.createListChildren(this.list, child.liStruct, child.withObject, searchTarget, child.options, flag);
+                if (child.appendEvent) {
+                    if (isFunction(child.appendEvent)) {
+                        this.appendButton.addEventListener("click", child.appendEvent);
+                    }
+                } else {
+                    this.appendButton.classList.add("color2");
+                    this.appendButton.style.pointerEvents = "none";
+                }
+                if (child.deleteEvent) {
+                    if (isFunction(child.deleteEvent)) {
+                        this.deleteButton.addEventListener("click", () => {
+                            child.deleteEvent(this.selected);
+                        });
+                    }
+                } else {
+                    this.deleteButton.classList.add("color2");
+                    this.deleteButton.style.pointerEvents = "none";
+                }
+            }
+
+            this.listContainer = createTag(this.element, "div", {style: "height: 200px;"});
+            new ResizerForDOM(this.listContainer, "h", 100, 600);
+            /** @type {HTMLElement} */
+            this.list = createTag(this.listContainer, "div", {class: "scrollable", style: "padding: 2px; gap: 2px;"});
+
         }
         let lastItems = [];
         let tags = new Map();

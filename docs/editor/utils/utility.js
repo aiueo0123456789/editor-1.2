@@ -21,8 +21,10 @@ export function IsString(value) {
 
 export function indexOfSplice(array, deleteValue) {
     if (!array.includes(deleteValue)) return;
-    array.splice(array.indexOf(deleteValue), 1);
+    const index = array.indexOf(deleteValue);
+    array.splice(index, 1);
     managerForDOMs.update({o: array});
+    return index;
 }
 
 export function hitTestPointTriangle(a, b, c, p) {
@@ -39,6 +41,23 @@ export function hitTestPointTriangle(a, b, c, p) {
     let c2 = mathVec2.crossR(bc, cp);
     let c3 = mathVec2.crossR(ca, ap);
     return (c1 > 0.0 && c2 > 0.0 && c3 > 0.0) || (c1 < 0.0 && c2 < 0.0 && c3 < 0.0);
+}
+
+export function lerpTriangle(p0, p1, p2, v0, v1, v2, p) {
+    const eux = p1[0] - p0[0];
+    const euy = p1[1] - p0[1];
+    const evx = p2[0] - p0[0];
+    const evy = p2[1] - p0[1];
+    const d = eux * evy - evx * euy;
+    const a = p[1] - p0[1];
+    const b = p[0] - p0[0];
+    const u = (-evx * a + evy * b) / d;
+    const v = (eux * a - euy * b) / d;
+    if (Array.isArray(v0)) { // 配列
+        return v0.map((x,index) => v0[index] + u * (v1[index] - v0[index]) + v * (v2[index] - v0[index]));
+    } else { // 通常
+        return v0 + u * (v1 - v0) + v * (v2 - v0);
+    }
 }
 
 export function createArrayN(N, data = undefined) {
@@ -192,12 +211,22 @@ export function changeParameter(object, parameter, newValue) {
     managerForDOMs.update({o: object, i: parameter});
 }
 
-export function arrayToPush(array, value) {
+export function indexRemoveToArray(array, index) {
+    array.splice(index, 1);
+    managerForDOMs.update({o: array});
+}
+
+export function insertToArray(array, index, value) {
+    array.splice(index, 0, value);
+    managerForDOMs.update({o: array});
+}
+
+export function pushToArray(array, value) {
     array.push(value);
     managerForDOMs.update({o: array});
 }
 
-export function arrayToArrayCopy(target, source) {
+export function copyToArray(target, source) {
     target.length = 0;
     for (const value of source) {
         target.push(value);
@@ -205,7 +234,7 @@ export function arrayToArrayCopy(target, source) {
     managerForDOMs.update({o: target});
 }
 
-export function arrayToSet(array, data, index, structSize = 0) {
+export function setToArray(array, data, index, structSize = 0) {
     let offset = index * structSize;
     for (let i = 0; i < data.length; i ++) {
         array[offset + i] = data[i];

@@ -15,7 +15,7 @@ class Vert {
 
 class Mesh {
     constructor(data) {
-        this.vertices = data.vertices;
+        this.indexs = data.indexs;
     }
 }
 
@@ -68,24 +68,12 @@ export class BMeshWeight {
         return this.vertices.indexOf(vertex);
     }
 
-    // メッシュの頂点indexを返す
-    getMeshLoop(mesh) {
-        return mesh.vertices.map(vertex => this.getVertexIndexByVertex(vertex));
-    }
-
     get verticesNum() {
         return this.vertices.length;
     }
 
     get meshesNum() {
         return this.meshes.length;
-    }
-
-    get verticesCoordinates() {
-        return this.vertices.map(vertex => vertex.co);
-    }
-    get verticesWeightBlocks() {
-        return this.vertices.map(vertex => vertex.weightBlock);
     }
 
     get renderingVerticesCoordinates() {
@@ -116,7 +104,7 @@ export class BMeshWeight {
         this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.renderingVerticesCoordinates.flat(), ["f32", "f32"]);
         this.uvsBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.uv).flat(), ["f32", "f32"]);
         this.weightBlocksBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 4, 4), this.weightBlocks[app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightBlockIndex].weights, ["f32"]);
-        this.meshesBuffer = GPU.createStorageBuffer(roundUp(this.meshes.length * 3 * 4, 3 * 4), this.meshes.map(mesh => this.getMeshLoop(mesh)).flat(), ["u32", "u32", "u32"]);
+        this.meshesBuffer = GPU.createStorageBuffer(roundUp(this.meshes.length * 3 * 4, 3 * 4), this.meshes.map(mesh => mesh.indexs).flat(), ["u32", "u32", "u32"]);
         this.zIndexBuffer = GPU.createUniformBuffer(4, [1 / (this.zIndex + 1)], ["f32"]);
         this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft"), [this.verticesBuffer, this.uvsBuffer, this.weightBlocksBuffer, this.meshesBuffer, this.zIndexBuffer, this.texture.view]);
     }
@@ -147,7 +135,7 @@ export class BMeshWeight {
             this.bones.push(new Bone({baseMatrix: mathMat3x3.mat3x3ToArray(boneBaseMatrixs[boneIndex]), poseMatrix: mathMat3x3.mat3x3ToArray(bonePoseMatrixs[boneIndex])}));
         }
         for (let i = 0; i < meshes.length; i ++) {
-            this.meshes.push(new Mesh({vertices: meshes[i].map(vertexIndex => this.vertices[vertexIndex])}));
+            this.meshes.push(new Mesh({indexs: meshes[i]}));
         }
         console.log(this)
         this.texture = object.texture;

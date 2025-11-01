@@ -1,4 +1,4 @@
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { createTag } from "../util.js";
 
 export class SectionTag extends CustomTag {

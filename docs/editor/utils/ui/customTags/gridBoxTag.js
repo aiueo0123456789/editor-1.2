@@ -1,5 +1,5 @@
 import { CreatorForUI } from "../creatorForUI.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { createTag } from "../util.js";
 
 export class GridBoxTag extends CustomTag {

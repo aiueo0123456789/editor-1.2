@@ -1,6 +1,6 @@
 import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
 import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
-import { arrayToArrayCopy, arrayToPush, changeParameter, indexOfSplice, IsString, range, waitUntilFrame } from "../../utils/utility.js";
+import { copyToArray, pushToArray, changeParameter, indexOfSplice, IsString, range, waitUntilFrame, createArrayNAndFill, createArrayN, hitTestPointTriangle, lerpTriangle } from "../../utils/utility.js";
 import { mathVec2 } from "../../utils/mathVec.js";
 import { GPU } from "../../utils/webGPU.js";
 import { AnimationBlock, VerticesAnimation } from "./animation.js";
@@ -8,6 +8,7 @@ import { managerForDOMs } from "../../utils/ui/util.js";
 import { app } from "../../../main.js";
 import { Texture } from "./texture.js";
 import { MaskTexture } from "./maskTexture.js";
+import { BlendShape, ShapeKeyMetaData } from "./blendShape.js";
 
 class Editor extends ObjectEditorBase {
     constructor(graphicMesh) {
@@ -68,14 +69,14 @@ class Editor extends ObjectEditorBase {
     }
 
     setSaveData(data) {
-        arrayToArrayCopy(this.baseEdges, data.baseEdges);
-        arrayToArrayCopy(this.baseSilhouetteEdges, data.baseSilhouetteEdges);
+        copyToArray(this.baseEdges, data.baseEdges);
+        copyToArray(this.baseSilhouetteEdges, data.baseSilhouetteEdges);
         this.updateEdgeGPU();
         this.setImageBBox(data.imageBBox);
     }
 
     setBaseSilhouetteEdges(edges) {
-        arrayToArrayCopy(this.baseSilhouetteEdges, edges);
+        copyToArray(this.baseSilhouetteEdges, edges);
         this.updateEdgeGPU();
     }
 
@@ -142,7 +143,7 @@ class Editor extends ObjectEditorBase {
 
     appendBaseEdge(edge) {
         if (this.hasEdge(edge)) return ;
-        arrayToPush(this.baseEdges, edge);
+        pushToArray(this.baseEdges, edge);
         this.createMesh();
     }
 
@@ -206,6 +207,13 @@ class Editor extends ObjectEditorBase {
 }
 
 export class GraphicMesh extends ObjectBase {
+    createBlendShape(name) {
+        return new BlendShape({name: name, shapeKeys: [], dimension: 2, points: []});
+    }
+    createShapeKeyMetaData(name, index) {
+        return new ShapeKeyMetaData({name: name, index: index, object: this});
+    }
+
     static VERTEX_LEVEL = 1; // 小オブジェクトごとに何個の頂点を持つか
     constructor(data) {
         super(data.name, "グラフィックメッシュ", data.id);
@@ -230,7 +238,15 @@ export class GraphicMesh extends ObjectBase {
         // その他
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
+        /** @type {BlendShape[]} */
+        this.blendShapes = [];
+        /** @type {ShapeKeyMetaData[]} */
+        this.shapeKeyMetaDatas = [];
+        this.shapeKeysBlocks = [];
+
         this.allVertices = [];
+        this.allShapeKeys = []; // 変形データ
+        this.allShapeKeyWeights = []; // 重み
         this.allUVs = [];
         this.allWeightBlocks = [];
         this.allMeshes = [];
@@ -256,6 +272,16 @@ export class GraphicMesh extends ObjectBase {
         managerForDOMs.set({o: this, i: "zIndex"}, () => {
             GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
         })
+    }
+
+    update() {
+        this.blendShapes.forEach(blendShape => {
+            blendShape.update();
+        })
+    }
+
+    get shapeKeysNum() {
+        return this.shapeKeyMetaDatas.length;
     }
 
     get hasAllData() {
@@ -289,9 +315,6 @@ export class GraphicMesh extends ObjectBase {
     get meshesNum() {
         return this.allMeshes.length / 3;
     }
-    get animationsNum() {
-        return this.animationBlock.animations.length;
-    }
 
     // gc対象にしてメモリ解放
     destroy() {
@@ -312,6 +335,7 @@ export class GraphicMesh extends ObjectBase {
     }
 
     init(data) {
+        this.shapeKeyMetaDatas.length = 0;
         this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         this.zIndex = data.zIndex;
         GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
@@ -332,6 +356,11 @@ export class GraphicMesh extends ObjectBase {
                 this.runtimeData.setAnimationData(this, animationData, index);
             })
             this.animationBlock.setSaveData(data.animationKeyDatas);
+        }
+        if (data.ShapeKeys) {
+            for (const shapeKeyData of data.ShapeKeys) {
+                this.shapeKeyMetaDatas.push({name: shapeKeyData.name});
+            }
         }
         this.changeTexture(app.scene.objects.getObjectFromID(data.texture));
 

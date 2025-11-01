@@ -3,6 +3,7 @@ import { BArmature } from "./BArmature.js";
 import { BArmatureAnimation } from "./BArmatureAnimation.js";
 import { BBezier } from "./BBezier.js";
 import { BMesh } from "./BMesh.js";
+import { BMeshShapeKey } from "./BMeshShapeKey.js";
 import { BMeshWeight } from "./BMeshWeight.js";
 
 export class EditDatas {
@@ -33,6 +34,10 @@ export class EditDatas {
                 const bmw = new BMeshWeight();
                 bmw.fromMesh(object);
                 return bmw;
+            } else if (mode == "メッシュシェイプキー編集") {
+                const bma = new BMeshShapeKey();
+                bma.fromMesh(object);
+                return bma;
             }
         } else if (object.type == "アーマチュア") {
             if (mode == "ボーン編集") {

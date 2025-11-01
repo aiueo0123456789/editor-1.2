@@ -1,7 +1,7 @@
 import { app } from "../../../../main.js";
 import { isFunction } from "../../utility.js";
 import { CreatorForUI } from "../creatorForUI.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { createTag, removeHTMLElementInObject } from "../util.js";
 
 export class ButtonTag extends CustomTag {

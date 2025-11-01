@@ -8,6 +8,7 @@ export class CreateObjectCommand {
 
     execute() {
         app.scene.objects.appendObject(this.object);
+        return {consumed: true};
     }
 
     undo() {
@@ -16,7 +17,7 @@ export class CreateObjectCommand {
 }
 
 // 削除コマンド
-export class RemoveObjectCommand {
+export class DeleteObjectCommand {
     constructor(objects) {
         this.objects = [...objects];
     }

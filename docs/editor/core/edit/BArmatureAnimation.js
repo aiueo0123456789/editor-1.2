@@ -28,7 +28,7 @@ class Bone {
         }
         const baseLocalArray = Armature.getBoneDataByMatrix(this.baseLocalMatrix, this.baseWorldBoneData.l);
         this.baseLocalBoneData = {x: baseLocalArray[0], y: baseLocalArray[1], sx: baseLocalArray[2], sy: baseLocalArray[3], r: baseLocalArray[4], l: baseLocalArray[5]};
-        this.animationLocalBoneData = {x: 0, y: 0, sx: 0, sy: 0, r: 0, l: 0};
+        this.animationLocalBoneData = {x: data.animation.values[0], y: data.animation.values[1], sx: data.animation.values[2], sy: data.animation.values[3], r: data.animation.values[4], l: data.animation.values[5]};
         this.keyframeBlockManager = new BKeyframeBlockManager({object: this.animationLocalBoneData, parameters: ["x", "y", "sx", "sy", "r", "l"], blocks: data.animation.blocks});
     }
 
@@ -152,15 +152,8 @@ export class BArmatureAnimation {
         return this.bones.length;
     }
 
-    get verticesCoordinates() {
-        return this.vertices.map(vertex => vertex);
-    }
-    get selectedVerticesCoordinates() {
-        return this.selectedVertices.map(vertex => vertex.co);
-    }
-
     updateGPUData() {
-        this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.verticesCoordinates.length * 2 * 4, 2 * 4), this.verticesCoordinates.map(vertex => vertex).flat(), ["f32", "f32"]);
+        this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.co).flat(), ["f32", "f32"]);
         this.boneColorsBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.color).flat(), ["f32", "f32", "f32", "f32"]);
         this.boneSelectedBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.selected ? 1 : 0).flat(), ["u32"]);
         this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr"), [this.verticesBuffer, this.boneColorsBuffer, this.boneSelectedBuffer]);
@@ -176,19 +169,6 @@ export class BArmatureAnimation {
                 bone.animationLocalBoneData.l,
             );
         }
-        // const armatureData = app.scene.runtimeData.armatureData;
-        // armatureData.update
-        // const map = new Map();
-        // // map.set(armatureData.renderingBoneMatrix, this.bones.map(bone => bone.poseWorldMatrix).flat(2));
-        // map.set(armatureData.runtimeAnimationData, this.bones.map(bone => [
-        //     bone.animationLocalBoneData.x,
-        //     bone.animationLocalBoneData.y,
-        //     bone.animationLocalBoneData.sx,
-        //     bone.animationLocalBoneData.sy,
-        //     bone.animationLocalBoneData.r,
-        //     bone.animationLocalBoneData.l
-        // ]).flat(1));
-        // armatureData.updateAtParts(this.object, map);
     }
 
     get root() {
@@ -213,7 +193,8 @@ export class BArmatureAnimation {
                     color: colors[boneIndex],
                     physics: physics[boneIndex].slice(0, 13),
                     animation: {
-                        blocks: object.keyframeBlockManager.blocks.slice(boneIndex * 6, boneIndex * 6 + 6)
+                        blocks: object.keyframeBlockManager.blocks.slice(boneIndex * 6, boneIndex * 6 + 6),
+                        values: object.allAnimations.slice(boneIndex * 6, boneIndex * 6 + 6)
                     }
                 });
                 this.bones[boneIndex] = bone;

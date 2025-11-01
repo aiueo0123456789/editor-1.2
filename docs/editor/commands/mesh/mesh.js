@@ -2,7 +2,7 @@
 import { app } from "../../../main.js";
 import { GraphicMesh } from "../../core/objects/graphicMesh.js";
 import { createEdgeFromTexture } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
-import { arrayToArrayCopy } from "../../utils/utility.js";
+import { copyToArray } from "../../utils/utility.js";
 
 export class EdgeJoinCommand {
     constructor(/** @type {GraphicMesh} */target, edge) {
@@ -148,10 +148,10 @@ export class CreateEdgeFromeTextureCommand {
 
     undo() {
         for (let i = 0; i < this.targets.length; i ++) {
-            arrayToArrayCopy(this.targets[i].allMeshes, this.meta[i].meshes);
-            arrayToArrayCopy(this.targets[i].allVertices, this.meta[i].vertices);
-            arrayToArrayCopy(this.targets[i].editor.baseEdges, this.meta[i].baseEdges);
-            arrayToArrayCopy(this.targets[i].editor.baseSilhouetteEdges, this.meta[i].baseSilhouetteEdges);
+            copyToArray(this.targets[i].allMeshes, this.meta[i].meshes);
+            copyToArray(this.targets[i].allVertices, this.meta[i].vertices);
+            copyToArray(this.targets[i].editor.baseEdges, this.meta[i].baseEdges);
+            copyToArray(this.targets[i].editor.baseSilhouetteEdges, this.meta[i].baseSilhouetteEdges);
             app.scene.runtimeData.graphicMeshData.updateBaseData(this.targets[i]);
         }
     }

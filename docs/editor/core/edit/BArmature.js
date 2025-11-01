@@ -1,4 +1,5 @@
 import { app } from "../../../main.js";
+import { mathVec2 } from "../../utils/mathVec.js";
 import { createArrayNAndFill, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
@@ -90,13 +91,6 @@ export class BArmature {
 
     get bonesNum() {
         return this.bones.length;
-    }
-
-    get verticesCoordinates() {
-        return this.vertices.map(vertex => vertex.co);
-    }
-    get selectedVerticesCoordinates() {
-        return this.selectedVertices.map(vertex => vertex.co);
     }
 
     updateGPUData() {

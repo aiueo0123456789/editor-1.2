@@ -1,5 +1,5 @@
 import { app } from "../../../../main.js";
-import { CustomTag } from "../customTags.js";
+import { CustomTag } from "../customTag.js";
 import { managerForDOMs } from "../util.js";
 
 function update(o,g,others) {

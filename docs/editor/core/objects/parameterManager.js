@@ -1,5 +1,5 @@
 import { createID, managerForDOMs } from "../../utils/ui/util.js";
-import { indexOfSplice, arrayToPush } from "../../utils/utility.js";
+import { indexOfSplice, pushToArray } from "../../utils/utility.js";
 
 export class ParameterManager {
     constructor(data) {
@@ -32,7 +32,7 @@ export class ParameterManager {
     }
 
     append(object) {
-        arrayToPush(this.targets, object);
+        pushToArray(this.targets, object);
     }
 
     remove(object) {
