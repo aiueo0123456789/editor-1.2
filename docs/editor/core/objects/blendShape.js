@@ -1,4 +1,5 @@
 import { cdt } from "../../utils/objects/graphicMesh/createMesh/cdt.js";
+import { createID } from "../../utils/ui/util.js";
 import { copyToArray, createArrayN, createArrayNAndFill, hitTestPointTriangle, lerpTriangle } from "../../utils/utility.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 
@@ -13,32 +14,42 @@ export class ShapeKeyMetaData {
 class Point {
     constructor(data) {
         this.co = data.co;
+        /** @type {Number[]} */
         this.weights = data.weights;
     }
 }
 
 export class BlendShape {
-    static createPoint(co, weight) {
-        return new Point({co: co, weight: weight});
+    createPoint(co) {
+        return new Point({co: co, weights: this.shapeKeys.map(shapeKey => 0)});
     }
     constructor(data) {
+        this.id = data.id ? data.id : createID();
         this.name = data.name;
         this.type = "ブレンドシェイプ";
         /** @type {ShapeKeyMetaData[]} */
         this.shapeKeys = data.shapeKeys;
         this.dimension = data.dimension;
         this.value = createArrayNAndFill(this.dimension, 0);
-        /** @type {Point} */
+        /** @type {Point[]} */
         this.points = data.points;
         this.max = data.max;
         this.min = data.min;
         this.weights = [];
         this.triangles = []; // ドロネーで自動生成
         this.keyframeBlockManager = new KeyframeBlockManager({type: "キーフレームブロックマネージャー", object: this.value, parameters: createArrayN(this.dimension)});
+
+        // エディターデータ
+        this.activePoint = null;
+    }
+
+    apppendShapeKey(/** @type {ShapeKeyMetaData} */shapeKey) {
+        this.shapeKeys.push(shapeKey);
+        this.points.forEach(point => point.weights.push(0))
     }
 
     updateTriangle() {
-        copyToArray(this.triangles, cdt(this.points.map(point => point.co)).meshes);
+        copyToArray(this.triangles, cdt(this.points.map(point => point.co), []).meshes.map(indexs => indexs.map(index => this.points[index])));
     }
 
     /**
@@ -47,15 +58,14 @@ export class BlendShape {
     updateWeights() {
         let targetTriangle = null;
         for (const triangle of this.triangles) {
-            console.log(triangle);
-            if (hitTestPointTriangle(this.points[triangle[0]].co,this.points[triangle[1]].co,this.points[triangle[2]].co,this.value)) {
+            if (hitTestPointTriangle(triangle[0].co,triangle[1].co,triangle[2].co,this.value)) {
                 targetTriangle = triangle;
                 break ;
             }
         }
         this.weights = lerpTriangle(
-            this.points[targetTriangle[0]].co,this.points[targetTriangle[1]].co,this.points[targetTriangle[2]].co,
-            this.points[targetTriangle[0]].weights,this.points[targetTriangle[1]].weights,this.points[targetTriangle[2]].weights,
+            targetTriangle[0].co,targetTriangle[1].co,targetTriangle[2].co,
+            targetTriangle[0].weights,targetTriangle[1].weights,targetTriangle[2].weights,
             this.value
         );
     }

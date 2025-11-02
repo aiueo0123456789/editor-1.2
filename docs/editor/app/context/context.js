@@ -1,8 +1,6 @@
 import { ChangeEditModeCommand } from "../../commands/utile/changeEditMode.js";
 import { SelectObjectsCommand, SetActiveObjectsCommand } from "../../commands/utile/selectObject.js";
 import { Armature } from "../../core/objects/armature.js";
-import { managerForDOMs } from "../../utils/ui/util.js";
-import { changeParameter } from "../../utils/utility.js";
 import { Application } from "../app.js";
 
 export class Context {
@@ -10,8 +8,7 @@ export class Context {
         this.app = app;
         this.currentMode = "オブジェクト";
         this.activeObject = null; // 注目されているオブジェクト
-        this.activeVertex = null;
-        this.activeBone = null;
+        this.activeBlendShapePoint = null;
     }
 
     // 選択されているオブジェクト

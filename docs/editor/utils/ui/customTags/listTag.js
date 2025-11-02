@@ -75,10 +75,8 @@ export class ListTag extends CustomTag {
             }
 
             this.listContainer = createTag(this.element, "div", {style: "height: 200px;"});
-            new ResizerForDOM(this.listContainer, "h", 100, 600);
             /** @type {HTMLElement} */
             this.list = createTag(this.listContainer, "div", {class: "scrollable", style: "padding: 2px; gap: 2px;"});
-
         }
         let lastItems = [];
         let tags = new Map();

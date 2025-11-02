@@ -1,11 +1,70 @@
 import { app } from "../../../main.js";
 import { BMeshShapeKey } from "../../core/edit/BMeshShapeKey.js";
+import { BlendShape, ShapeKeyMetaData } from "../../core/objects/blendShape.js";
 import { pushToArray, indexOfSplice, insertToArray, indexRemoveToArray } from "../../utils/utility.js";
+
+export class DeleteShapeKeyInBlendShapeCommand {
+    constructor(/** @type {BlendShape} */blendShape, /** @type {ShapeKeyMetaData} */ shapeKey) {
+        this.blendShape = blendShape;
+        this.shapeKey = shapeKey;
+        this.insertIndex = 0;
+        // this.originalWeights = blendShape.points;
+    }
+
+    execute() {
+        this.insertIndex = indexOfSplice(this.blendShape.shapeKeys, this.shapeKey);
+        // this.blendShape.points.map(point => point.weights.splice(-1, 1));
+        return {consumed: true};
+    }
+
+    undo() {
+        insertToArray(this.blendShape.shapeKeys, this.insertIndex, this.shapeKey);
+        // this.blendShape.points.map(point => point.weights.push(0));
+    }
+}
+
+export class AppendShapeKeyInBlendShapeCommand {
+    constructor(/** @type {BlendShape} */blendShape, /** @type {ShapeKeyMetaData} */ shapeKey) {
+        this.blendShape = blendShape;
+        this.shapeKey = shapeKey;
+    }
+
+    execute() {
+        pushToArray(this.blendShape.shapeKeys, this.shapeKey);
+        this.blendShape.points.map(point => point.weights.push(0));
+        return {consumed: true};
+    }
+
+    undo() {
+        indexOfSplice(this.blendShape.shapeKeys, this.shapeKey);
+        this.blendShape.points.map(point => point.weights.splice(-1, 1));
+    }
+}
+
+/**
+ * ブレンドシェイプにポイントを追加
+ */
+export class AppendBlendShapePointCommand {
+    constructor(/** @type {BlendShape} */blendShape) {
+        this.blendShape = blendShape;
+        this.newPoint = this.blendShape.createPoint([...blendShape.value]);
+    }
+
+    execute() {
+        pushToArray(this.blendShape.points, this.newPoint);
+        this.blendShape.updateTriangle();
+        return {consumed: true};
+    }
+
+    undo() {
+        indexOfSplice(this.blendShape.points, this.newPoint);
+        this.blendShape.updateTriangle();
+    }
+}
 
 /**
  * アクティブなオブジェクトにシェイプキーを追加
  */
-
 export class CreateShapeKeyCommand {
     constructor(name) {
         /** @type {BMeshShapeKey} */

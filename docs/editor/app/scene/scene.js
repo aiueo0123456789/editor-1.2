@@ -156,6 +156,10 @@ class Objects {
         this.allObject = [];
     }
 
+    get shapeKeys() {
+        return this.graphicMeshs.map(graphicMesh => graphicMesh.shapeKeyMetaDatas).flat();
+    }
+
     get rootObjects() {
         return this.allObject.filter(object => {return "parent" in object && object.parent == null});
     }

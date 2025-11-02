@@ -1,6 +1,9 @@
 import { app } from "../../../main.js";
+import { mathVec2 } from "../../utils/mathVec.js";
+import { managerForDOMs } from "../../utils/ui/util.js";
 import { roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
+import { ShapeKeyMetaData } from "../objects/blendShape.js";
 import { GraphicMesh } from "../objects/graphicMesh.js";
 
 class Vert {
@@ -119,10 +122,11 @@ export class BMeshShapeKey {
     async fromMesh(object) {
         const graphicMeshData = app.scene.runtimeData.graphicMeshData;
         this.object = object;
-        const [coordinate,meshes,uvs] = await Promise.all([
+        const [coordinate,meshes,uvs,shape] = await Promise.all([
             graphicMeshData.baseVertices.getObjectData(object),
             graphicMeshData.meshes.getObjectData(object),
-            graphicMeshData.uv.getObjectData(object)
+            graphicMeshData.uv.getObjectData(object),
+            graphicMeshData.shapeKeys.getObjectData(object)
         ]);
         for (let i = 0; i < coordinate.length; i ++) {
             this.vertices.push(new Vert({co: coordinate[i], uv: uvs[i], index: i}));
@@ -130,7 +134,7 @@ export class BMeshShapeKey {
         this.object.shapeKeyMetaDatas.forEach((shapeKeyMetaDta, shapeKeyIndex) => {
             const data = [];
             for (let vertrxIndex = 0; vertrxIndex < coordinate.length; vertrxIndex ++) {
-                data.push(new ShapeKeyVert({co: coordinate[vertrxIndex]}));
+                data.push(new ShapeKeyVert({co: mathVec2.subR(shape[shapeKeyIndex * coordinate.length + vertrxIndex], coordinate[vertrxIndex])}));
             }
             this.shapeKeys.push(new ShapeKey({name: shapeKeyMetaDta.name, data: data}));
         })
@@ -147,9 +151,15 @@ export class BMeshShapeKey {
     }
 
     toRutime() {
-        for (const vert of this.vertices) {
-        }
+        this.object.allShapeKeys.length = 0;
+        this.object.allShapeKeyWeights.length = 0;
+        this.shapeKeys.forEach((shapeKey, shapeKeyIndex) => {
+            this.object.allShapeKeyWeights.push(0);
+            this.object.allShapeKeys.push(...shapeKey.data.map((vertex, vertexIndex) => mathVec2.subR(vertex.co, this.vertices[vertexIndex].co)).flat());
+            this.object.shapeKeyMetaDatas.push(new ShapeKeyMetaData({name: shapeKey.name, index: shapeKeyIndex, weight: 0}));
+        })
         const graphicMeshData = app.scene.runtimeData.graphicMeshData;
+        managerForDOMs.update({o: this.object.shapeKeyMetaDatas})
         graphicMeshData.update(this.object);
     }
 }

@@ -22,7 +22,7 @@ export class ButtonTag extends CustomTag {
         }
         if (isFunction(child.submitFunction)) {
             this.element.addEventListener("click", () => {
-                child.submitFunction();
+                child.submitFunction(searchTarget);
             })
         }
     }

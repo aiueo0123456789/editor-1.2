@@ -35,12 +35,4 @@ export class ViewerSpaceData {
 
         this.weightBezierType = 0;
     }
-
-    createModeSelectList() {
-        const result = [];
-        result.push("オブジェクト");
-        result.push("test");
-
-        return result;
-    }
 }

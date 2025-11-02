@@ -8,7 +8,7 @@ import { managerForDOMs } from "../../utils/ui/util.js";
 import { app } from "../../../main.js";
 import { Texture } from "./texture.js";
 import { MaskTexture } from "./maskTexture.js";
-import { BlendShape, ShapeKeyMetaData } from "./blendShape.js";
+import { ShapeKeyMetaData } from "./blendShape.js";
 
 class Editor extends ObjectEditorBase {
     constructor(graphicMesh) {
@@ -207,9 +207,6 @@ class Editor extends ObjectEditorBase {
 }
 
 export class GraphicMesh extends ObjectBase {
-    createBlendShape(name) {
-        return new BlendShape({name: name, shapeKeys: [], dimension: 2, points: []});
-    }
     createShapeKeyMetaData(name, index) {
         return new ShapeKeyMetaData({name: name, index: index, object: this});
     }
@@ -238,11 +235,8 @@ export class GraphicMesh extends ObjectBase {
         // その他
         this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
-        /** @type {BlendShape[]} */
-        this.blendShapes = [];
         /** @type {ShapeKeyMetaData[]} */
         this.shapeKeyMetaDatas = [];
-        this.shapeKeysBlocks = [];
 
         this.allVertices = [];
         this.allShapeKeys = []; // 変形データ

@@ -37,7 +37,6 @@ export class Area_Previewer {
             inputObject: {"scene": app.scene, "o": this.spaceData, "areasConfig": this.areasConfig},
             DOM: [
                 {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; display: flex; justifyContent: center; alignItems: center; backgroundColor: rgb(55, 55, 55);", children: [
-                    // {tagType: "canvas", id: "renderingCanvas", style: "width: 100%; height: 100%; position: absolute;"},
                     {tagType: "html", tag: "canvas", id: "renderingCanvas"},
                 ]},
             ]
@@ -93,11 +92,8 @@ export class Area_Previewer {
             this.canvas.style.height = `${targetHeight}px`;
 
             // 内部描画サイズ（ぼやけ防止）
-            this.canvas.width = Math.round(targetWidth);
-            this.canvas.height = Math.round(targetHeight);
-            this.canvasRect = this.canvas.getBoundingClientRect();
-            this.canvas.width = this.canvasRect.width * this.pixelDensity;
-            this.canvas.height = this.canvasRect.height * this.pixelDensity;
+            this.canvas.width = Math.round(targetWidth) * this.pixelDensity;
+            this.canvas.height = Math.round(targetHeight) * this.pixelDensity;
             this.renderer.resizeCVS();
         }
 

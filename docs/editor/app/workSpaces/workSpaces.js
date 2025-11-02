@@ -135,7 +135,35 @@ export class WorkSpaces {
                     }
                 }
             }),
-            new SpacesStructure(this, "Previewer", {
+            new SpacesStructure(this, "blendShape", {
+                type: "grid",
+                axis: "c",
+                child1: {
+                    type: "grid",
+                    axis: "r",
+                    child1: {
+                        type: "area",
+                        areaType: "Viewer"
+                    },
+                    child2: {
+                        type: "area",
+                        areaType: "Timeline2"
+                    }
+                },
+                child2: {
+                    type: "grid",
+                    axis: "r",
+                    child1: {
+                        type: "area",
+                        areaType: "BlendShape"
+                    },
+                    child2: {
+                        type: "area",
+                        areaType: "Inspector"
+                    }
+                }
+            }),
+            new SpacesStructure(this, "previewer", {
                 type: "grid",
                 axis: "c",
                 child1: {

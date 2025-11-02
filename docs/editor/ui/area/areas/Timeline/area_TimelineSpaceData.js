@@ -30,14 +30,6 @@ export class TimelineSpaceData {
         return result;
     }
 
-    createModeSelectList() {
-        const result = [];
-        result.push("オブジェクト");
-        result.push("test");
-
-        return result;
-    }
-
     getSelectVerticesCenter() {
         return mathVec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
     }

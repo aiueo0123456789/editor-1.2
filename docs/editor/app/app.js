@@ -23,6 +23,8 @@ import { WorkSpaces } from "./workSpaces/workSpaces.js";
 import { Area_Timeline2 } from "../ui/area/areas/Timeline2/area_Timeline2.js";
 import { UI } from "./ui/ui.js";
 import { Context } from "./context/context.js";
+import { Area_BlendShape } from "../ui/area/areas/BlendShapes/area_BlendShape.js";
+import { Area_BlendShapeSpaceData } from "../ui/area/areas/BlendShapes/area_BlendShapeSpaceData.js";
 
 const allLanguageData = await loadFile("./config/language/language.json");
 const calculateParentWeightForBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/bone.wgsl"));
@@ -37,6 +39,7 @@ export const useClassFromAreaType = {
     "Property": {area: Area_Property, areaConfig: TimelineSpaceData},
     "NodeEditor": {area: Area_NodeEditor, areaConfig: NodeEditorSpaceData},
     "Previewer": {area: Area_Previewer, areaConfig: PreviewerSpaceData},
+    "BlendShape": {area: Area_BlendShape, areaConfig: Area_BlendShapeSpaceData},
 };
 
 class AppOptions {

@@ -1,3 +1,5 @@
+import { managerForDOMs } from "./ui/util.js";
+
 class Vec2 {
     constructor() {
     }
@@ -17,11 +19,13 @@ class Vec2 {
     set(t,a) {
         t[0] = a[0];
         t[1] = a[1];
+        managerForDOMs.update({o: t});
     }
 
     add(t,a,b) {
         t[0] = a[0] + b[0];
         t[1] = a[1] + b[1];
+        managerForDOMs.update({o: t});
     }
 
     addR(a,b) {
@@ -31,6 +35,7 @@ class Vec2 {
     sub(t,a,b) {
         t[0] = a[0] - b[0];
         t[1] = a[1] - b[1];
+        managerForDOMs.update({o: t});
     }
 
     subR(a,b) {
@@ -40,6 +45,7 @@ class Vec2 {
     scale(t,a,b) {
         t[0] = a[0] * b;
         t[1] = a[1] * b;
+        managerForDOMs.update({o: t});
     }
 
     scaleR(a,b) {
@@ -49,6 +55,7 @@ class Vec2 {
     reverseScale(t,a,b) {
         t[0] = a[0] / b;
         t[1] = a[1] / b;
+        managerForDOMs.update({o: t});
     }
 
     reverseScaleR(a,b) {
@@ -58,6 +65,7 @@ class Vec2 {
     mul(t,a,b) {
         t[0] = a[0] * b[0];
         t[1] = a[1] * b[1];
+        managerForDOMs.update({o: t});
     }
 
     mulR(a,b) {
@@ -67,6 +75,7 @@ class Vec2 {
     div(t,a,b) {
         t[0] = a[0] / b[0];
         t[1] = a[1] / b[1];
+        managerForDOMs.update({o: t});
     }
 
     divR(a,b) {

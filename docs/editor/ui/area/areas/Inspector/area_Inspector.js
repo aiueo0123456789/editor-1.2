@@ -13,7 +13,7 @@ export class Area_Inspector {
         this.struct = {
             inputObject: {"context": app.context,"scene": app.scene, "areaConfig": app.appConfig.areasConfig["Outliner"]},
             DOM: [
-                {tagType: "path", sourceObject: "context/activeObject", updateEventTarget: "アクティブオブジェクト", children: [
+                {tagType: "path", sourceObject: "context/activeObject", updateEventTarget: {path: "context/%activeObject"}, children: [
                     {tagType: "section", name: "基本情報", children: [
                         {tagType: "if", formula: {source: "/type", conditions: "==", value: "グラフィックメッシュ"},
                             true: [
@@ -95,7 +95,25 @@ export class Area_Inspector {
                                 }
                             ]
                         }
-                    ]}
+                    ]},
+                    {tagType: "section", name: "シェイプキー", children: [
+                        {tagType: "list", label: "シェイプキー", appendEvent: () => {
+                            // app.operator.appendCommand(new CreateShapeKeyCommand("名称未設定"));
+                            // app.operator.execute();
+                        }, deleteEvent: (shapeKeys) => {
+                            // app.operator.appendCommand(new DeleteShapeKeyCommand(shapeKeys));
+                            // app.operator.execute();
+                        }, activeEvent: (object) => {
+                            // /** @type {BMeshShapeKey} */
+                            // const bms = app.scene.editData.getEditObjectByObject(app.context.activeObject);
+                            // changeParameter(bms, "activeShapeKey", object);
+                            // bms.updateGPUData();
+                        }, src: "/shapeKeyMetaDatas", type: "min", liStruct:[
+                            {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
+                                {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                            ]},
+                        ]}
+                    ]},
                 ], errorChildren: [
                     {tagType: "section", name: "基本情報", children: []}
                 ]},

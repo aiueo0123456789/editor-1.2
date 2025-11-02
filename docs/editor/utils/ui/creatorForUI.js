@@ -26,6 +26,7 @@ import { DblClickInput } from "./customTags/dblclickInput.js";
 import { PanelTag } from "./customTags/panelTag.js";
 import { ListTag } from "./customTags/listTag.js";
 import { CanvasTag } from "./customTags/canvasTag.js";
+import { DualListboxTag } from "./customTags/dualListbox.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -274,8 +275,10 @@ export const tagCreater = {
         return element;
     },
     "texture": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
-        const element = new TextureTag(creatorForUI, t, searchTarget, child, flag);
-        return element;
+        return new TextureTag(creatorForUI, t, searchTarget, child, flag);
+    },
+    "dualListbox": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
+        return new DualListboxTag(creatorForUI, t, searchTarget, child, flag);
     },
     "color": (/** @type {CreatorForUI} */ creatorForUI,t,searchTarget,child,flag) => {
         console.log("colorTag",t)
