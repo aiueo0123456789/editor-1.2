@@ -25,17 +25,12 @@ export class NameAndTypeAndID {
 export class ObjectBase extends NameAndTypeAndID{
     constructor(name,type,id) {
         super(name, type, id);
-        this.isInit = false;
-
         this.selected = false;
-
         this.mode = "オブジェクト";
-
         this.runtimeOffsetData = {
             start: {},
             end: {},
         };
-
         this.parent = null;
     }
 

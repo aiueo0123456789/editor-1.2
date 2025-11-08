@@ -99,13 +99,16 @@ export class Armature extends ObjectBase {
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
+        // ベースローカル行列
         this.allBone = [];
+        // ベースワールド行列
         this.allBoneWorldMatrix = [];
+        // ボーンの色
+        this.allColors = [];
         // 物理演算パラメーター
         this.allPhysics = [];
         // 頂点
         this.allVertices = [];
-        this.allColors = [];
         // 名前など
         /** @type {BoneMetaData[]} */
         this.boneMetaDatas = [];
@@ -130,8 +133,6 @@ export class Armature extends ObjectBase {
         copyToArray(this.allPhysics, data.physicsDatas.flat());
         copyToArray(this.allVertices, data.vertices.flat());
         console.log(this)
-
-        this.isInit = true;
     }
 
     get root() {

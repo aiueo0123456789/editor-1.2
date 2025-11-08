@@ -36,7 +36,6 @@ export class BezierModifier extends ObjectBase {
         copyToArray(this.shapeKeyMetaDatas, data.shapeKeyMetaDatas.map(shapeKeyMetaData => this.createShapeKeyMetaData(shapeKeyMetaData.name, shapeKeyMetaData.index, shapeKeyMetaData.id)));
         copyToArray(this.allShapeKeyWeights, createArrayNAndFill(this.shapeKeyMetaDatas.length, 0));
         copyToArray(this.allShapeKeys, data.shapeKeys.flat());
-        this.isInit = true;
         console.log(this)
     }
 

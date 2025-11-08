@@ -160,7 +160,7 @@ export class BMeshShapeKey {
             this.object.shapeKeyMetaDatas.push(this.object.createShapeKeyMetaData(shapeKey.name, shapeKeyIndex));
         })
         const graphicMeshData = app.scene.runtimeData.graphicMeshData;
-        managerForDOMs.update({o: this.object.shapeKeyMetaDatas})
         graphicMeshData.update(this.object);
+        managerForDOMs.update({o: this.object.shapeKeyMetaDatas})
     }
 }

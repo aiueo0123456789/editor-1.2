@@ -135,8 +135,8 @@ export class BBezierShapeKey {
     }
 
     toRutime() {
-        this.object.allShapeKeys.length = 0;
         this.object.allShapeKeyWeights.length = 0;
+        this.object.allShapeKeys.length = 0;
         this.object.shapeKeyMetaDatas.length = 0;
         this.shapeKeys.forEach((shapeKey, shapeKeyIndex) => {
             this.object.allShapeKeyWeights.push(1);
@@ -144,7 +144,7 @@ export class BBezierShapeKey {
             this.object.shapeKeyMetaDatas.push(this.object.createShapeKeyMetaData(shapeKey.name, shapeKeyIndex));
         })
         const bezierModifierData = app.scene.runtimeData.bezierModifierData;
-        managerForDOMs.update({o: this.object.shapeKeyMetaDatas});
         bezierModifierData.update(this.object);
+        managerForDOMs.update({o: this.object.shapeKeyMetaDatas});
     }
 }

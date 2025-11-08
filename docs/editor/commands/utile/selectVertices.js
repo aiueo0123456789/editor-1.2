@@ -18,7 +18,9 @@ export class SelectOnlyVertexCommand {
         this.editObjects.forEach(editObject => {
             const objectID = editObject.id;
             this.originalSelectData[objectID] = editObject.verticesSelectData;
-            const verticesCoordinates = editObject.vertices.map(vertex => vertex.co);
+            let verticesCoordinates;
+            if (editObject instanceof BMeshShapeKey || editObject instanceof BBezierShapeKey) verticesCoordinates = editObject.activeShapeKey.data.map(vertex => vertex.co);
+            else verticesCoordinates = editObject.vertices.map(vertex => vertex.co);
             for (const vertex of verticesCoordinates) {
                 const dist = MathVec2.distanceR(vertex, point);
                 if (dist < minDis) {

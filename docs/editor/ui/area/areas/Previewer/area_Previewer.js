@@ -203,7 +203,7 @@ export class Renderer {
             renderPass.setPipeline(renderPipeline);
             renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
             for (const graphicMesh of app.scene.renderingOrder) {
-                if (graphicMesh.isInit && graphicMesh.visible) {
+                if (graphicMesh.visible) {
                     renderPass.setBindGroup(2, graphicMesh.renderGroup);
                     renderPass.setBindGroup(3, alphaBuffers["1"]);
                     renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshesOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
@@ -211,7 +211,7 @@ export class Renderer {
                 }
             }
             // for (const graphicMesh of app.scene.objects.graphicMeshs) {
-            //     if (graphicMesh.isInit && graphicMesh.visible) {
+            //     if (graphicMesh.visible) {
             //         renderPass.setBindGroup(2, graphicMesh.renderGroup);
             //         // renderPass.setBindGroup(3, alphaBuffers["0.5"]);
             //         renderPass.setBindGroup(3, alphaBuffers["1"]);

@@ -555,11 +555,11 @@ export class Renderer {
             renderPass.setPipeline(renderPipeline);
             renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
             for (const graphicMesh of app.scene.renderingOrder) {
-                if (graphicMesh.mode == "オブジェクト" && graphicMesh.isInit && graphicMesh.visible) {
-                    // renderPass.setBindGroup(2, graphicMesh.renderGroup);
-                    // renderPass.setBindGroup(3, alphaBuffers["1"]);
-                    // renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshesOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
-                    // renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
+                if (graphicMesh.mode == "オブジェクト" && graphicMesh.visible) {
+                    renderPass.setBindGroup(2, graphicMesh.renderGroup);
+                    renderPass.setBindGroup(3, alphaBuffers["1"]);
+                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshesOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 } else if (graphicMesh.mode == "メッシュ編集") {
                     const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
                     renderPass.setBindGroup(1, bm.renderingGroup);
@@ -601,7 +601,7 @@ export class Renderer {
         if (app.scene.objects.graphicMeshs.length) {
             if (this.viewer.spaceData.visibleObjects.graphicMesh) {
                 for (const graphicMesh of app.scene.renderingOrder) {
-                    if (graphicMesh.isInit && graphicMesh.visible) {
+                    if (graphicMesh.visible) {
                         // モード別
                         if (graphicMesh.mode == "メッシュ編集") {
                             const bm = app.scene.editData.getEditObjectByObject(graphicMesh);

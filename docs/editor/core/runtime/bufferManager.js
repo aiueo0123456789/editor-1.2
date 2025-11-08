@@ -87,7 +87,9 @@ export class BufferManager {
     }
 
     update(deleteOffset1, deleteOffset2, insertOffset1, insertOffset2, data) {
-        // console.log("更新",this,deleteOffset1, deleteOffset2, insertOffset1, insertOffset2, data)
+        // if (this.bufferName == "shapeKeys" || this.bufferName == "shapeKeyWights") {
+        //     console.log("更新",this,deleteOffset1, deleteOffset2, insertOffset1, insertOffset2, data)
+        // }
         const beforeBuffer = GPU.copyBufferToNewBuffer(this.buffer, 0, this.structByteSize * deleteOffset1);
         const afterBuffer = GPU.copyBufferToNewBuffer(this.buffer, this.structByteSize * deleteOffset2, this.buffer.size - this.structByteSize * deleteOffset2);
         let newDataBuffer;

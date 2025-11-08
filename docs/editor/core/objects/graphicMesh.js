@@ -76,7 +76,6 @@ export class GraphicMesh extends ObjectBase {
         } else {
             this.changeClippingMask(app.scene.objects.getObjectFromID("baseMaskTexture"));
         }
-        this.isInit = true;
         this.setGroup();
 
         managerForDOMs.set({o: this, i: "zIndex"}, () => {
