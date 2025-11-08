@@ -3,7 +3,7 @@ import { CustomTag } from "../customTag.js";
 import { createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
 export class InputFileTag extends CustomTag{
-    constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+    constructor(/** @type {CreatorForUI} */creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.element = createTag(t, "input", child.options);
         this.dataBlocks = [creatorForUI.setWith(this.element, child.value, searchTarget, flag)];

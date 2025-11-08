@@ -2,7 +2,7 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { RotateCommand } from "../../commands/transform/transform.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class RotateModal {
@@ -51,7 +51,7 @@ export class RotateModal {
 
     async mousemove(/** @type {InputManager} */inputManager) {
         // console.log(inputManager)
-        this.values[0] += mathVec2.getAngularVelocity(this.command.pivotPoint, inputManager.lastPosition, inputManager.movement);
+        this.values[0] += MathVec2.getAngularVelocity(this.command.pivotPoint, inputManager.lastPosition, inputManager.movement);
         managerForDOMs.update({o: this.values});
         return true;
     }

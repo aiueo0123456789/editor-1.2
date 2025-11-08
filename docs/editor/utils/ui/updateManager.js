@@ -1,4 +1,4 @@
-import { indexOfSplice, isPlainObject } from "../utility.js";
+import { indexOfSplice, isNumber, isPlainObject } from "../utility.js";
 import { managerForDOMs } from "./util.js";
 
 export class updateManager_DataBlock {
@@ -68,10 +68,10 @@ export class updateManager {
     }
 
     get(IDs) {
-        if (!IDs.o) IDs.o = "~@all";
-        if (!IDs.g) IDs.g = "~@all";
-        if (!IDs.i) IDs.i = "~@all";
-        if (!IDs.f) IDs.f = "~@all";
+        if (!("o" in IDs)) IDs.o = "~@all";
+        if (!("i" in IDs)) IDs.i = "~@all";
+        if (!("g" in IDs)) IDs.g = "~@all";
+        if (!("f" in IDs)) IDs.f = "~@all";
         /** @type {Array} */
         const o = getFn(this.objects,IDs.o);
         /** @type {Array} */
@@ -111,10 +111,10 @@ export class updateManager {
     }
 
     delete(IDs) {
-        if (!IDs.o) IDs.o = "~@all";
-        if (!IDs.g) IDs.g = "~@all";
-        if (!IDs.i) IDs.i = "~@all";
-        if (!IDs.f) IDs.f = "~@all";
+        if (!("o" in IDs)) IDs.o = "~@all";
+        if (!("i" in IDs)) IDs.i = "~@all";
+        if (!("g" in IDs)) IDs.g = "~@all";
+        if (!("f" in IDs)) IDs.f = "~@all";
         /** @type {Array} */
         const o = IDs.o == "~@all" ? [...this.objects.values()].flat() : this.objects.has(IDs.o) ? this.objects.get(IDs.o) : [];
         /** @type {Array} */
@@ -160,9 +160,9 @@ export class updateManager {
     }
 
     set(IDs, updateFn, others = null) {
-        if (!IDs.i) IDs.i = "defo";
-        if (!IDs.g) IDs.g = "defo";
-        if (!IDs.f) IDs.f = "defo";
+        if (!("i" in IDs)) IDs.i = "defo";
+        if (!("g" in IDs)) IDs.g = "defo";
+        if (!("f" in IDs)) IDs.f = "defo";
         const object = IDs.o;
         const groupID = IDs.g;
         const ID = IDs.i;

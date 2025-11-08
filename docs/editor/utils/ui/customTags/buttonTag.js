@@ -5,7 +5,7 @@ import { CustomTag } from "../customTag.js";
 import { createTag, removeHTMLElementInObject } from "../util.js";
 
 export class ButtonTag extends CustomTag {
-    constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+    constructor(/** @type {CreatorForUI} */creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         /** @type {HTMLElement} */
         this.element = createTag(t, "div");

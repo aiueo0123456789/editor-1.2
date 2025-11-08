@@ -1,5 +1,5 @@
 import { isLowerCase, isPlainObject } from "./utility.js";
-import { mathVec2 } from "./mathVec.js";
+import { MathVec2 } from "./mathVec.js";
 
 export function IsString(value) {
     return typeof value === "string" || value instanceof String;
@@ -1151,7 +1151,7 @@ class WebGPU {
         object.BBox.width = [mappedRange[2], mappedRange[3]];
         object.BBox.width = mappedRange[2] - mappedRange[0];
         object.BBox.height = mappedRange[3] - mappedRange[1];
-        object.BBox.center = mathVec2.reverseScaleR(mathVec2.addR(object.BBox.min,object.BBox.max), 2);
+        object.BBox.center = MathVec2.reverseScaleR(MathVec2.addR(object.BBox.min,object.BBox.max), 2);
         readBuffer.unmap();
     }
 

@@ -1,15 +1,38 @@
-import { Attachments } from "./attachments/attachments.js"
 import { GPU } from "../../utils/webGPU.js";
 import { ObjectBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
-import { indexOfSplice, range } from "../../utils/utility.js";
 import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 import { app } from "../../../main.js";
-import { mathVec2 } from "../../utils/mathVec.js";
-import { mathMat3x3 } from "../../utils/mathMat.js";
+import { MathVec2 } from "../../utils/mathVec.js";
+import { MathMat3x3 } from "../../utils/mathMat.js";
+import { copyToArray, createArrayNAndFill, isNumber } from "../../utils/utility.js";
+
+class BoneMetaData {
+    constructor(data) {
+        this.name = data.name;
+        /** @type {BoneMetaData} */
+        this.parentIndex = data.parentIndex;
+        this.index = data.index;
+        this.depth = data.depth;
+        this.relations = data.relations;
+
+        /** @type {BoneMetaData[]} */
+        this.children = [];
+    }
+
+    getSaveData() {
+        return {
+            name: this.name,
+            parentIndex: this.parentIndex,
+            index: this.index,
+            depth: this.depth,
+            children: this.children.map(child => child.index)
+        };
+    }
+}
 
 export class Armature extends ObjectBase {
-    static createBoneMetaData(index, name, connected) {
-        return {index: index, name: name, relations: {connected: connected}};
+    static createBoneMetaData(name, index, parentIndex = -1, depth = 0, connected) {
+        return new BoneMetaData({name: name, index: index, parentIndex: parentIndex, depth: depth, relations: {connected: connected}});
     }
     static addBoneDataR(a,b) {
         const result = {x:0,y:0,sx:0,sy:0,r:0,l:0};
@@ -44,30 +67,29 @@ export class Armature extends ObjectBase {
         return {x: a.x, y: a.y, sx: a.sx, sy: a.sy, r: a.r, l: a.l};
     }
     static getWorldBoneDataByVertices(head, tail) {
-        return [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)];
+        return [head[0], head[1], 1, 1, MathVec2.getAngle(head, tail), MathVec2.distanceR(head, tail)];
     }
     static getLocalBoneDataByVertices(head, tail, parentHead, parentTail) {
-        const myMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(head, tail), head);
+        const myMatrix = MathMat3x3.createTransformMatrix([1,1], MathVec2.getAngle(head, tail), head);
         if (parentHead && parentTail) {
-            const parentMatrix = mathMat3x3.createTransformMatrix([1,1], mathVec2.getAngle(parentHead, parentTail), parentHead);
-            const invMatrix = mathMat3x3.invertMatrix3x3(parentMatrix);
-            const localMatrix = mathMat3x3.multiplyMat3x3(myMatrix, invMatrix);
-            return {worldMatrix: myMatrix, bone: [localMatrix[2][0], localMatrix[2][1], 1, 1, Math.atan2(localMatrix[0][1], localMatrix[0][0]), mathVec2.distanceR(head, tail)]};
+            const parentMatrix = MathMat3x3.createTransformMatrix([1,1], MathVec2.getAngle(parentHead, parentTail), parentHead);
+            const invMatrix = MathMat3x3.invertMatrix3x3(parentMatrix);
+            const localMatrix = MathMat3x3.multiplyMat3x3(myMatrix, invMatrix);
+            return {worldMatrix: myMatrix, bone: [localMatrix[2][0], localMatrix[2][1], 1, 1, Math.atan2(localMatrix[0][1], localMatrix[0][0]), MathVec2.distanceR(head, tail)]};
         } else {
-            return {worldMatrix: myMatrix, bone: [head[0], head[1], 1, 1, mathVec2.getAngle(head, tail), mathVec2.distanceR(head, tail)]};
+            return {worldMatrix: myMatrix, bone: [head[0], head[1], 1, 1, MathVec2.getAngle(head, tail), MathVec2.distanceR(head, tail)]};
         }
     }
-    static getWorldMatrixByBoneData(bone) {
-        return mathMat3x3.createTransformMatrix([bone.sx,bone.sy], bone.r, [bone.x,bone.y]);
+    static getMatrixByBoneData(bone) {
+        return MathMat3x3.createTransformMatrix([bone.sx,bone.sy], bone.r, [bone.x,bone.y]);
     }
     static getLocalMatrixByWorldMatrixs(world, parentWorld) {
-        return mathMat3x3.multiplyMat3x3(world, mathMat3x3.invertMatrix3x3(parentWorld));
+        return MathMat3x3.multiplyMat3x3(world, MathMat3x3.invertMatrix3x3(parentWorld));
     }
     static getBoneDataByMatrix(matrix, l) {
         return [matrix[2][0], matrix[2][1], 1, 1, Math.atan2(matrix[0][1], matrix[0][0]), l];
     }
 
-    static VERTEX_LEVEL = 2; // 小オブジェクトごとに何個の頂点を持つか
     constructor(data) {
         super(data.name, "アーマチュア", data.id);
         this.runtimeData = app.scene.runtimeData.armatureData;
@@ -77,7 +99,6 @@ export class Armature extends ObjectBase {
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
-        this.root = [];
         this.allBone = [];
         this.allBoneWorldMatrix = [];
         // 物理演算パラメーター
@@ -86,7 +107,8 @@ export class Armature extends ObjectBase {
         this.allVertices = [];
         this.allColors = [];
         // 名前など
-        this.bonesMetaData = [];
+        /** @type {BoneMetaData[]} */
+        this.boneMetaDatas = [];
 
         this.allAnimations = [];
         /** @type {KeyframeBlockManager} */
@@ -94,7 +116,30 @@ export class Armature extends ObjectBase {
 
         this.mode = "オブジェクト";
 
-        this.init(data);
+        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
+        console.log(data);
+
+        // メタデータの作成
+        for (const boneMetaData of data.boneMetaDatas) {
+            this.boneMetaDatas.push(Armature.createBoneMetaData(boneMetaData.name, boneMetaData.index, boneMetaData.parentIndex, boneMetaData.depth, false));
+        }
+        copyToArray(this.allBone, data.bones.flat());
+        copyToArray(this.allAnimations, createArrayNAndFill(data.bones.length, 0));
+        copyToArray(this.allBoneWorldMatrix, data.worldMatrix.flat());
+        copyToArray(this.allColors, data.boneColors.flat());
+        copyToArray(this.allPhysics, data.physicsDatas.flat());
+        copyToArray(this.allVertices, data.vertices.flat());
+        console.log(this)
+
+        this.isInit = true;
+    }
+
+    get root() {
+        return this.boneMetaDatas.filter(boneMetaData => boneMetaData.depth == 0);
+    }
+
+    getBoneChildren(bone) {
+        return this.boneMetaDatas.filter(boneMetaData => boneMetaData.parentIndex == bone.index);
     }
 
     resolvePhase() {
@@ -110,7 +155,7 @@ export class Armature extends ObjectBase {
     get verticesNum() {
         return this.allVertices.length / 2;
     }
-    get boneNum() {
+    get bonesNum() {
         return this.allBone.length / 6;
     }
 
@@ -119,56 +164,19 @@ export class Armature extends ObjectBase {
         sharedDestroy(this);
     }
 
-    init(data) {
-        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
-        this.propagateBuffers = [];
-        const loopChildren = (children, parent, parentHead = null, parentTail = null, parentIndex = -1) => {
-            for (const childData of children) {
-                const myIndex = this.boneNum;
-                const bone = {index: myIndex, parentIndex: parentIndex, children: []};
-                parent.push(bone);
-
-                this.allVertices.push(...childData.baseHead.co);
-                this.allVertices.push(...childData.baseTail.co);
-                this.allColors.push(...childData.color);
-                const physicsData = childData.attachments.list[0];
-                this.allPhysics.push(physicsData.x, physicsData.y, physicsData.rotate, physicsData.scaleX, physicsData.shearX, physicsData.inertia, physicsData.strength, physicsData.damping, physicsData.mass, physicsData.wind, physicsData.gravity, physicsData.mix, physicsData.limit, 0, 1, 0,
-                    0, 0,
-                    0, 0,
-                    0, 0,
-                    0, 0,
-                    0, 0,
-                    0,
-                    0,
-                    0,
-                    0,
-                );
-                this.allAnimations.push(0,0,0,0,0,0); // x y sx sy r l
-                for (let i = 0; i < 6; i ++) {
-                    this.keyframeBlockManager.appendParameter(i + this.allAnimations.length - 6);
-                }
-                const boneData = Armature.getLocalBoneDataByVertices(childData.baseHead.co, childData.baseTail.co, parentHead, parentTail);
-                this.allBone.push(...boneData.bone);
-                this.allBoneWorldMatrix.push(...boneData.worldMatrix.flat());
-                this.bonesMetaData.push(Armature.createBoneMetaData(myIndex, childData.name, false));
-                loopChildren(childData.childrenBone, bone.children, childData.baseHead.co, childData.baseTail.co, myIndex);
-            }
-        }
-        loopChildren(data.bones, this.root);
-        console.log(this)
-
-        this.isInit = true;
-        this.isChange = true;
-    }
-
     async getSaveData() {
         return {
             name: this.name,
             id: this.id,
-            parent: this.parent ? this.parent.id : null,
+            parentIndex: this.parent ? this.parent.id : null,
             type: this.type,
-            // bones: this.allBone.map(bone => bone.getSaveData()),
-            bones: this.root.map(bone => bone.getSaveData()),
+            boneMetaDatas: this.boneMetaDatas.map(bone => bone.getSaveData()),
+            bones: await this.runtimeData.baseBone.getObjectData(this),
+            worldMatrix: await this.runtimeData.baseBoneMatrix.getObjectData(this),
+            physicsDatas: await this.runtimeData.physicsData.getObjectData(this),
+            boneColors: await this.runtimeData.colors.getObjectData(this),
+            vertices: await this.runtimeData.baseVertices.getObjectData(this),
+            keyframeBlockManager: this.keyframeBlockManager.getSaveData(),
         };
     }
 }

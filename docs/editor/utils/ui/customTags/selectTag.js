@@ -4,7 +4,7 @@ import { CustomTag } from "../customTag.js";
 import { createIcon, createTag, managerForDOMs, removeHTMLElementInObject, setClass } from "../util.js";
 
 export class SelectTag extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.customTag = true;
         this.element = createTag(t, "div");

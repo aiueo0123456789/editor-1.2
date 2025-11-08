@@ -64,7 +64,8 @@ export class FaileIOManager {
             await Promise.all(promises);
             this.app.ui.updateLoadingModal(loadingModalID,50,"テクスチャの読み込み完了");
 
-            const objectTypes = ["maskTextures", "textures", "scripts", "particles", "bezierModifiers", "armatures", "graphicMeshs", "animationCollectors"];
+            console.log(json)
+            const objectTypes = ["maskTextures", "textures", "scripts", "particles", "bezierModifiers", "armatures", "graphicMeshs", "blendShapes"];
             for (const objectType of objectTypes) {
                 for (const objectData of json.scene.objects[objectType]) {
                     this.app.scene.objects.createObjectAndSetUp(objectData);
@@ -74,9 +75,7 @@ export class FaileIOManager {
             this.app.ui.updateLoadingModal(loadingModalID,90, "オブジェクトのセット完了");
             // オブジェクト同士の参照を解決
             for (const object of this.app.scene.objects.allObject) {
-                if (isFunction(object.resolvePhase)) {
-                    object.resolvePhase();
-                }
+                if (isFunction(object.resolvePhase)) object.resolvePhase();
             }
             this.app.ui.updateLoadingModal(loadingModalID,95, "オブジェクト同士の参照を解決");
             // ヒエラルキーを構築

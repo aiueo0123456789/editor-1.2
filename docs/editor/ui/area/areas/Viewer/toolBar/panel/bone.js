@@ -12,7 +12,7 @@ export class ActiveBonePanel {
                 {tagType: "div", class: "sideBar-shelfe", children: [
                     {tagType: "panel", name: "ボーン", children: [
                         {tagType: "path", sourceObject: "scene/editData/editObjects/{context/activeObject/id}/activeBone", updateEventTarget: "ボーン選択", children: [
-                            {tagType: "dblClickInput", label: "ボーンの名前", value: "/name", type: "text"},
+                            {tagType: "dblClickInput", label: "ボーンの名前", value: "/name"},
                             {tagType: "panel", name: "ヘッド", children: [
                                 {tagType: "input", label: "x", value: "/headVertex/0", type: "number"},
                                 {tagType: "input", label: "y", value: "/headVertex/1", type: "number"},

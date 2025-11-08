@@ -49,7 +49,7 @@ class AppOptions {
             "アーマチュア": {
                 "normal": {
                     type: "アーマチュア",
-                    boneNum: 1,
+                    bonesNum: 1,
                     bones: [{
                         index: 0,
                         childrenBone: [],
@@ -84,7 +84,7 @@ class AppOptions {
                 },
                 "body": {
                     type: "アーマチュア",
-                    boneNum: 2,
+                    bonesNum: 2,
                     bones: [{
                         index: 0,
                         childrenBone: [
@@ -208,12 +208,6 @@ class AppOptions {
             return this.primitives[objectType][name];
         } catch {
             return null;
-        }
-    }
-
-    keyframeInsert(object, frame) {
-        for (const data in object.keyframeBlockManager.blocksMap) {
-            object.keyframeBlockManager.blocksMap[data].insert(frame, object[data]);
         }
     }
 
@@ -458,7 +452,6 @@ export class Application { // 全てをまとめる
         this.appPerformance.update();
         // 表示順番の再計算
         this.scene.updateRenderingOrder();
-        this.scene.updateAnimationCollectors();
         // 単位: 秒
         this.scene.frameUpdate(1 / 60);
         this.scene.update();

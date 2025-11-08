@@ -3,7 +3,7 @@ import { CustomTag } from "../customTag.js";
 import { createRange, createTag } from "../util.js";
 
 export class InputNumberTag extends CustomTag {
-    constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+    constructor(/** @type {CreatorForUI} */creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.element;
         if (child?.custom?.visual == "range") {
@@ -22,6 +22,11 @@ export class InputNumberTag extends CustomTag {
             number.style.borderTopLeftRadius = "0px";
             number.style.borderBottomLeftRadius = "0px";
             this.dataBlocks = [creatorForUI.setWith(range, child.value, searchTarget, flag, child.useCommand), creatorForUI.setWith(number, child.value, searchTarget, flag, child.useCommand)];
+        } else if (child?.custom?.visual == "rangeOnly") {
+            /** @type {HTMLElement} */
+            this.element = createRange(t, child);
+            this.dataBlocks = [creatorForUI.setWith(this.element, child.value, searchTarget, flag, child.useCommand)];
+            console.log(child,this)
         } else {
             /** @type {HTMLElement} */
             this.element = createTag(t, "input", {type: "number"});

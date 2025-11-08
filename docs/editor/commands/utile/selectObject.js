@@ -30,7 +30,7 @@ export class SelectObjectsCommand {
     constructor(object,multiple) {
         this.multiple = multiple;
         this.targetObject = object;
-        this.originalSelectData = app.context.selectedObjects;
+        this.originalSelectData = app.context.selectedObjects; // selectedObjectsはゲッターだから[...app.context.selectedObjects]じゃなくていい
     }
 
     execute() {

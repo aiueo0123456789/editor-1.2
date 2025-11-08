@@ -1,5 +1,4 @@
 import { app } from "../../../main.js";
-import { mathVec2 } from "../../utils/mathVec.js";
 import { createArrayNAndFill, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
@@ -25,6 +24,11 @@ class Bone {
         this.physics = data.physics;
 
         this.color = data.color;
+    }
+
+    get depth() {
+        if (this.parent) return this.parent.depth + 1;
+        else return 0;
     }
 }
 
@@ -119,9 +123,9 @@ export class BArmature {
         const createBones = (children, parent) => {
             for (const childData of children) {
                 const boneIndex = childData.index;
-                const bone = new Bone({name: object.bonesMetaData[boneIndex].name, parent: parent, headVertex: {co: coordinate[boneIndex].slice(0,2)}, tailVertex: {co: coordinate[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
+                const bone = new Bone({name: object.boneMetaDatas[boneIndex].name, parent: parent, headVertex: {co: coordinate[boneIndex].slice(0,2)}, tailVertex: {co: coordinate[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
                 this.bones[boneIndex] = bone;
-                createBones(childData.children, bone);
+                createBones(object.getBoneChildren(childData), bone);
             }
         }
         createBones(object.root, null);
@@ -130,6 +134,7 @@ export class BArmature {
     }
 
     toRutime() {
+        this.object.boneMetaDatas.length = 0;
         this.object.allVertices.length = 0;
         this.object.allPhysics.length = 0;
         this.object.allBone.length = 0;
@@ -139,6 +144,7 @@ export class BArmature {
         this.object.allAnimations.length = 0;
         for (const bone of this.bones) {
             const parent = bone.parent;
+            this.object.boneMetaDatas.push(Armature.createBoneMetaData(bone.name, this.getBoneIndex(bone), this.getBoneIndex(parent), bone.depth, false));
             const boneData = Armature.getLocalBoneDataByVertices(bone.headVertex.co, bone.tailVertex.co, parent?.headVertex?.co, parent?.tailVertex?.co);
             this.object.allVertices.push(...bone.headVertex.co);
             this.object.allVertices.push(...bone.tailVertex.co);
@@ -160,14 +166,18 @@ export class BArmature {
             this.object.allColors.push(...bone.color);
             this.object.allAnimations.push(0,0,0,0,0,0); // x y sx sy r l
         }
-        const createRoot = (bones, parent) => {
-            for (const bone of bones) {
-                const boneData = {index: this.getBoneIndex(bone), parentIndex: this.getBoneIndex(bone.parent), children: []};
-                parent.push(boneData);
-                createRoot(this.getBoneChildren(bone), boneData.children);
-            }
-        }
-        createRoot(this.root, this.object.root);
+        // const loopChildren = (bones, parent = null) => {
+        //     for (const bone of bones) {
+        //         const boneMetaData = Armature.createBoneMetaData(bone.name, this.getBoneIndex(bone), parent, false);
+        //         if (parent) {
+        //             parent.children.push(boneMetaData);
+        //         } else {
+        //             this.object.root.push(boneMetaData);
+        //         }
+        //         loopChildren(this.getBoneChildren(bone), boneMetaData);
+        //     }
+        // }
+        // loopChildren(this.root);
         const armatureData = app.scene.runtimeData.armatureData;
         armatureData.update(this.object);
     }

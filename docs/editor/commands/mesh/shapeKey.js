@@ -13,13 +13,11 @@ export class DeleteShapeKeyInBlendShapeCommand {
 
     execute() {
         this.insertIndex = indexOfSplice(this.blendShape.shapeKeys, this.shapeKey);
-        // this.blendShape.points.map(point => point.weights.splice(-1, 1));
         return {consumed: true};
     }
 
     undo() {
         insertToArray(this.blendShape.shapeKeys, this.insertIndex, this.shapeKey);
-        // this.blendShape.points.map(point => point.weights.push(0));
     }
 }
 
@@ -31,13 +29,13 @@ export class AppendShapeKeyInBlendShapeCommand {
 
     execute() {
         pushToArray(this.blendShape.shapeKeys, this.shapeKey);
-        this.blendShape.points.map(point => point.weights.push(0));
+        this.blendShape.points.forEach(point => point.weights.push(0));
         return {consumed: true};
     }
 
     undo() {
         indexOfSplice(this.blendShape.shapeKeys, this.shapeKey);
-        this.blendShape.points.map(point => point.weights.splice(-1, 1));
+        this.blendShape.points.forEach(point => point.weights.splice(-1, 1));
     }
 }
 
@@ -74,7 +72,6 @@ export class CreateShapeKeyCommand {
     }
 
     execute() {
-        console.log(this)
         pushToArray(this.editObject.shapeKeys, this.newShapeKey);
         return {consumed: true};
     }

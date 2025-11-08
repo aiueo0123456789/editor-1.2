@@ -2,6 +2,7 @@ import { Application } from "../../app/app.js";
 import { BArmature } from "./BArmature.js";
 import { BArmatureAnimation } from "./BArmatureAnimation.js";
 import { BBezier } from "./BBezier.js";
+import { BBezierShapeKey } from "./BBezierShapeKey.js";
 import { BMesh } from "./BMesh.js";
 import { BMeshShapeKey } from "./BMeshShapeKey.js";
 import { BMeshWeight } from "./BMeshWeight.js";
@@ -35,9 +36,9 @@ export class EditDatas {
                 bmw.fromMesh(object);
                 return bmw;
             } else if (mode == "メッシュシェイプキー編集") {
-                const bma = new BMeshShapeKey();
-                bma.fromMesh(object);
-                return bma;
+                const bms = new BMeshShapeKey();
+                bms.fromMesh(object);
+                return bms;
             }
         } else if (object.type == "アーマチュア") {
             if (mode == "ボーン編集") {
@@ -58,6 +59,10 @@ export class EditDatas {
                 const bb = new BBezier();
                 bb.fromBezier(object);
                 return bb;
+            } else if (mode == "ベジェシェイプキー編集") {
+                const bbs = new BBezierShapeKey();
+                bbs.fromBezier(object);
+                return bbs;
             }
         }
     }

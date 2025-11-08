@@ -2,7 +2,7 @@ import { app } from "../../../../../main.js";
 import { AppendBlendShapePointCommand, AppendShapeKeyInBlendShapeCommand } from "../../../../commands/mesh/shapeKey.js";
 import { CreateObjectCommand, DeleteObjectCommand } from "../../../../commands/object/object.js";
 import { BlendShape } from "../../../../core/objects/blendShape.js";
-import { mathVec2 } from "../../../../utils/mathVec.js";
+import { MathVec2 } from "../../../../utils/mathVec.js";
 import { calculateLocalMousePosition, objectInit } from "../../../../utils/utility.js";
 
 export class Area_Property {
@@ -28,7 +28,7 @@ export class Area_Property {
                         app.operator.execute();
                     }, src: "scene/objects/maskTextures", type: "min", liStruct:[
                         {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
-                            {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                            {tagType: "dblClickInput", value: "/name"},
                         ]},
                     ]}
                 ]},
@@ -57,7 +57,7 @@ export class Area_Property {
                 //     }, src: "scene/objects/blendShapes", liStruct:[
                 //         {tagType: "box", children: [
                 //             {tagType: "gridBox", axis: "c", allocation: "100px 1fr 20px 100px", style: "maxHeight: 100px; height: 100px;", children: [
-                //                 {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                //                 {tagType: "dblClickInput", value: "/name"},
                 //                 {tagType: "canvas", color: "rgb(211, 211, 211)", draw: (/** @type {HTMLCanvasElement} */cvs, /** @type {BlendShape} */object) => {
                 //                 }, init: (/** @type {HTMLCanvasElement} */cvs, /** @type {BlendShape} */object) => {
                 //                     const ctx = cvs.getContext("2d");
@@ -166,7 +166,7 @@ export class Area_Property {
                 //                     // app.operator.appendCommand(new DeleteObjectCommand(blendShape));
                 //                     // app.operator.execute();
                 //                 }, src: "/shapeKeys", liStruct:[
-                //                     {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                //                     {tagType: "dblClickInput", value: "/name"},
                 //                 ]}
                 //             ]},
                 //         ]},

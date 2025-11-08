@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { GraphicMesh } from "../objects/graphicMesh.js";

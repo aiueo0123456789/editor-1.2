@@ -5,7 +5,7 @@ import { managerForDOMs, removeHTMLElementInObject } from "../util.js";
 const hadClass = {};
 
 export class InputCheckboxTag extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.checkbox = document.createElement("input");
         this.checkbox.type = "checkbox";

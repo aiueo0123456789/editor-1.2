@@ -1,13 +1,14 @@
 import { app } from "../../../../../main.js";
 import { InputManager } from "../../../../app/inputManager/inputManager.js";
-import { AppendBlendShapePointCommand, AppendShapeKeyInBlendShapeCommand, DeleteShapeKeyInBlendShapeCommand } from "../../../../commands/mesh/shapeKey.js";
 import { CreateObjectCommand } from "../../../../commands/object/object.js";
+import { ChangeParameterCommand } from "../../../../commands/utile/utile.js";
 import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
 import { ToolsBarOperator } from "../../../../operators/toolsBarOperator.js";
-import { mathVec2 } from "../../../../utils/mathVec.js";
+import { MathVec2 } from "../../../../utils/mathVec.js";
 import { calculateLocalMousePosition, changeParameter } from "../../../../utils/utility.js";
 import { Area_BlendShapeSpaceData } from "./area_BlendShapeSpaceData.js";
 import { BlendShapePanel } from "./panel/blendShape.js";
+import { BlendShapePointPanel } from "./panel/blendShapePoint.js";
 
 export class Area_BlendShape {
     constructor(area) {
@@ -51,7 +52,7 @@ export class Area_BlendShape {
         this.creatorForUI.create(area.main, this.struct);
 
         this.sideBarOperator = new ToolsBarOperator(this.creatorForUI.getDOMFromID("main").element, {});
-        this.sideBarOperator.changeShelfes({"BlendShap": BlendShapePanel});
+        this.sideBarOperator.changeShelfes({"BlendShap": BlendShapePanel, "BlendShapePointPanel": BlendShapePointPanel});
         this.toolPanelOperator = new ToolPanelOperator(this.creatorForUI.getDOMFromID("main").element, {});
 
         this.box = this.creatorForUI.getDOMFromID("canvasContainer").element;
@@ -66,7 +67,7 @@ export class Area_BlendShape {
 
     canvasResize() {
         if (!this.activeBlendShape) return ;
-        const size = mathVec2.subR(this.activeBlendShape.max,this.activeBlendShape.min);
+        const size = MathVec2.subR(this.activeBlendShape.max,this.activeBlendShape.min);
         const ratio = size[0] / size[1];
         const rect = this.box.getBoundingClientRect();
         let targetWidth, targetHeight;
@@ -93,24 +94,31 @@ export class Area_BlendShape {
     }
 
     getCanvasPositionByValue(value) {
-        return mathVec2.mulR([this.canvas.width, this.canvas.height], mathVec2.divR(mathVec2.subR(value, this.activeBlendShape.min), mathVec2.subR(this.activeBlendShape.max, this.activeBlendShape.min)));
+        return MathVec2.mulR([this.canvas.width, this.canvas.height], MathVec2.divR(MathVec2.subR(value, this.activeBlendShape.min), MathVec2.subR(this.activeBlendShape.max, this.activeBlendShape.min)));
     }
     getValueByLocalMousePosition(localMousePosition) {
-        return mathVec2.addR(mathVec2.mulR(mathVec2.subR(this.activeBlendShape.max, this.activeBlendShape.min), mathVec2.divR(mathVec2.scaleR(localMousePosition, this.pixelDensity), [this.canvas.width, this.canvas.height])), this.activeBlendShape.min);
+        return MathVec2.addR(MathVec2.mulR(MathVec2.subR(this.activeBlendShape.max, this.activeBlendShape.min), MathVec2.divR(localMousePosition, [this.canvas.width, this.canvas.height])), this.activeBlendShape.min);
     }
 
     mousedown(inputManager) {
+        for (const point of this.activeBlendShape.points) {
+            if (MathVec2.distanceR(this.getCanvasPositionByValue(point.co), calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)) < 5 * this.pixelDensity) {
+                app.operator.appendCommand(new ChangeParameterCommand(this.activeBlendShape, "activePoint", point));
+                app.operator.execute();
+                return ;
+            }
+        }
         this.isMouseContentAndMouseDown = true;
-        mathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position)));
+        MathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
     }
 
     mousemove(/** @type {InputManager} */ inputManager) {
-        if (this.isMouseContentAndMouseDown) mathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position)));
+        if (this.isMouseContentAndMouseDown) MathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
     }
 
     mouseup(inputManager) {
         this.isMouseContentAndMouseDown = false;
-        mathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position)));
+        MathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
     }
 
     update() {

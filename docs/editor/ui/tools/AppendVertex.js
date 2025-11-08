@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
-import { AppendVertexCommand } from "../../commands/mesh/mesh.js";
 
+// 制作途中
 export class AppendVertex {
     constructor(/** @type {ModalOperator} */operator) {
         this.operator = operator;
@@ -17,7 +17,7 @@ export class AppendVertex {
     }
 
     async init(input) {
-        this.command = new AppendVertexCommand(app.context.activeObject, input.position);
+        // this.command = new AppendVertexCommand(app.context.activeObject, input.position);
         return {complete: true};
     }
 }

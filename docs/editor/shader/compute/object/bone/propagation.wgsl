@@ -54,7 +54,6 @@ fn getMatrix(index: u32) -> mat3x3<f32> {
     );
 }
 
-
 fn setMatrix(index: u32, m: mat3x3<f32>) {
     let fixIndex = index * 9u;
     boneMatrixs[fixIndex] = m[0][0];
@@ -75,5 +74,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         return ;
     }
     let relationship = relationships[index];
-    setMatrix(relationship.child, getMatrix(relationship.parent) * getMatrix(relationship.child));
+    if (relationship.parent != relationship.child) { // indexが同じなら親を持たない
+        setMatrix(relationship.child, getMatrix(relationship.parent) * getMatrix(relationship.child));
+    }
 }

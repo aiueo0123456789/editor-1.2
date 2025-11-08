@@ -28,7 +28,7 @@ export class ToolsBarOperator {
         this.creatorForUI.remove();
         for (const shelfeName in this.shelfes) {
             // 横
-            this.creatorForUI.createFromChildren(this.domForSideBar,[
+            this.creatorForUI.createFromChildren(this.domForSideBar,null,[
                 {tagType: "div", children: [
                     {tagType: "div", options: {textContent: shelfeName}, style: "writingMode: vertical-rl;"},
                 ], class: "sideBar-toolTitle"}

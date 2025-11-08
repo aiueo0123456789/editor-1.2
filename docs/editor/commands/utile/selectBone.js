@@ -12,7 +12,7 @@ export class SelectOnlyBoneCommand {
         this.originalSelectData = {};
         this.editObjects.forEach(editObject => {
             const objectID = editObject.id;
-            this.originalSelectData[objectID] = editObject.verticesSelectData;
+            this.originalSelectData[objectID] = editObject.bonesSelectData;
             const bonesPolygons = editObject.bonesPolygons;
             for (const polygons of bonesPolygons) {
                 if (hitTestPointTriangle(polygons[0], polygons[1], polygons[2], point) || hitTestPointTriangle(polygons[3], polygons[1], polygons[2], point)) {

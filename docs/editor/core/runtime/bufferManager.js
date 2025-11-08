@@ -1,4 +1,4 @@
-import { createArrayN, isNumber } from "../../utils/utility.js";
+import { isNumber } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 
 export class BufferManager {
@@ -12,6 +12,11 @@ export class BufferManager {
         this.formulaParts = calculateFormula.split(" ");
         this.formulaParts = this.formulaParts.map(value => isNumber(value) ? Number(value) : value);
         this.sourceOffsetType = "";
+    }
+
+    get minimumOrMoreBuffer() {
+        if (this.buffer.size == 0) return GPU.createBuffer(this.structByteSize, ["v","s"]);
+        else return this.buffer;
     }
 
     async getObjectData(object) {
@@ -47,7 +52,7 @@ export class BufferManager {
         return Math.ceil(ans);
     }
 
-    get influenceValues() {
+    get influenceValues() { // サイズ計算で使われる変数
         const influenceValues = [];
         for (const part of this.formulaParts) {
             if ("*/+-".includes(part)) {
@@ -82,6 +87,7 @@ export class BufferManager {
     }
 
     update(deleteOffset1, deleteOffset2, insertOffset1, insertOffset2, data) {
+        // console.log("更新",this,deleteOffset1, deleteOffset2, insertOffset1, insertOffset2, data)
         const beforeBuffer = GPU.copyBufferToNewBuffer(this.buffer, 0, this.structByteSize * deleteOffset1);
         const afterBuffer = GPU.copyBufferToNewBuffer(this.buffer, this.structByteSize * deleteOffset2, this.buffer.size - this.structByteSize * deleteOffset2);
         let newDataBuffer;

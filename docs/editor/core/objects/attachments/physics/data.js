@@ -21,7 +21,7 @@ export class PhysicsAttachmentData {
         this.limit = data.limit;
 
         managerForDOMs.set({o: this, i: "&all"}, () => {
-            app.scene.runtimeData.armatureData.updateBaseData(this.bone.armature);
+            app.scene.runtimeData.armatureData.update(this.bone.armature);
         });
     }
 

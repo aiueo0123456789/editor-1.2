@@ -3,7 +3,6 @@ import { CreateShapeKeyCommand, DeleteShapeKeyCommand } from "../../../../comman
 import { ChangeParentCommand } from "../../../../commands/object/object.js";
 import { ChangeParameterCommand } from "../../../../commands/utile/utile.js";
 import { BMeshShapeKey } from "../../../../core/edit/BMeshShapeKey.js";
-import { appendAnimationToObject, deleteAnimationToObject } from "../../../../utils/objects/util.js";
 import { changeParameter } from "../../../../utils/utility.js";
 
 export class Area_Inspector {
@@ -69,14 +68,14 @@ export class Area_Inspector {
                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "ベジェモディファイア"},
                                     true: [
                                         {tagType: "input", label: "名前", value: "/name", type: "text"},
-                                        {tagType: "input", label: "頂点数", value: "/pointNum", type: "number", custom: {collision: false, visual: "1"}},
+                                        {tagType: "input", label: "頂点数", value: "/pointsNum", type: "number", custom: {collision: false, visual: "1"}},
                                     ],
                                     false: [
                                         {tagType: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},
                                             true: [
                                                 {tagType: "input", label: "名前", value: "/name", type: "text"},
-                                                {tagType: "input", label: "最大ボーン数", value: "/boneNum", type: "number", custom: {visual: "1"}},
-                                                {tagType: "input", label: "ボーン数", value: "/boneNum", type: "number", custom: {collision: false, visual: "1"}},
+                                                {tagType: "input", label: "最大ボーン数", value: "/bonesNum", type: "number", custom: {visual: "1"}},
+                                                {tagType: "input", label: "ボーン数", value: "/bonesNum", type: "number", custom: {collision: false, visual: "1"}},
                                             ],
                                             false: [
                                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "テクスチャ"},
@@ -110,7 +109,7 @@ export class Area_Inspector {
                             // bms.updateGPUData();
                         }, src: "/shapeKeyMetaDatas", type: "min", liStruct:[
                             {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
-                                {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                                {tagType: "dblClickInput", value: "/name"},
                             ]},
                         ]}
                     ]},
@@ -135,12 +134,37 @@ export class Area_Inspector {
                                     bms.updateGPUData();
                                 }, src: "/shapeKeys", type: "min", liStruct:[
                                     {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
-                                        {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                                        {tagType: "dblClickInput", value: "/name"},
                                     ]},
                                 ]}
                             ]},
                         ],
                         false: [
+                            {
+                                tagType: "if", formula: {source: "/constructor/name", conditions: "==", value: "BBezierShapeKey"},
+                                true: [
+                                    {tagType: "section", name: "シェイプキー", children: [
+                                        {tagType: "list", label: "シェイプキー", appendEvent: () => {
+                                            app.operator.appendCommand(new CreateShapeKeyCommand("名称未設定"));
+                                            app.operator.execute();
+                                        }, deleteEvent: (shapeKeys) => {
+                                            app.operator.appendCommand(new DeleteShapeKeyCommand(shapeKeys));
+                                            app.operator.execute();
+                                        }, activeEvent: (object) => {
+                                            /** @type {BMeshShapeKey} */
+                                            const bms = app.scene.editData.getEditObjectByObject(app.context.activeObject);
+                                            changeParameter(bms, "activeShapeKey", object);
+                                            bms.updateGPUData();
+                                        }, src: "/shapeKeys", type: "min", liStruct:[
+                                            {tagType: "gridBox", axis: "c", allocation: "1fr", children: [
+                                                {tagType: "dblClickInput", value: "/name"},
+                                            ]},
+                                        ]}
+                                    ]},
+                                ],
+                                false: [
+                                ]
+                            }
                         ]
                     }
                 ]},

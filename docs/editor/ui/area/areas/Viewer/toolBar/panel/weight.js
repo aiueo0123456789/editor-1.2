@@ -11,7 +11,7 @@ export class WeightPaintPanel {
                     {tagType: "panel", name: "ウェイトペイント", children: [
                         {
                             tagType: "list", label: "ボーン",
-                            src: "context/activeObject/parent/bonesMetaData",
+                            src: "context/activeObject/parent/boneMetaDatas",
                             activeEvent: (object) => {
                                 changeParameter(app.appConfig.areasConfig["Viewer"].weightPaintMetaData,"weightBlockIndex",object.index)
                                 app.scene.editData.allEditObjects.forEach(editObject => editObject instanceof BArmatureAnimation && (editObject.selectedClear(),editObject.select([object.index])));

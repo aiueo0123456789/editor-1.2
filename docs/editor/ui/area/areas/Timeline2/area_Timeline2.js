@@ -3,7 +3,7 @@ import { InputManager } from "../../../../app/inputManager/inputManager.js";
 import { SelectOnlyKeyframeCommand } from "../../../../commands/utile/selectKeyframe.js";
 import { Keyframe } from "../../../../core/objects/keyframe.js";
 import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
-import { mathVec2 } from "../../../../utils/mathVec.js";
+import { MathVec2 } from "../../../../utils/mathVec.js";
 import { OutlinerTag } from "../../../../utils/ui/customTags/outlinerTag.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs, rgbToRgba } from "../../../../utils/ui/util.js";
@@ -106,13 +106,13 @@ export class Area_Timeline2 {
                                             ]},
                                             {tagType: "icon", src: {path: "/type"}},
                                             {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
-                                            {tagType: "dblClickInput", value: "/parameter", type: "text"},
+                                            {tagType: "dblClickInput", value: "/parameter"},
                                         ]}
                                     ],
                                     false: [
                                         {tagType: "gridBox", id: {path: "/id"}, axis: "c", allocation: "auto 1fr", children: [
                                             {tagType: "icon", src: {path: "/type"}},
-                                            {tagType: "dblClickInput", value: "/name", type: "text"},
+                                            {tagType: "dblClickInput", value: "/name"},
                                         ]}
                                     ]
                                 }
@@ -189,7 +189,7 @@ export class Area_Timeline2 {
 
         const gridRender = (gap, offset, width, color, string = false) => {
             const leftDown = this.canvasToWorld([0,this.canvasSize[1]]);
-            const decimalOffset = mathVec2.modR(mathVec2.subR([0,0],leftDown), gap);
+            const decimalOffset = MathVec2.modR(MathVec2.subR([0,0],leftDown), gap);
             for (let x = 0; x < this.canvas.width / this.zoom[0]; x += gap[0]) {
                 const wx = this.worldToCanvas([x + leftDown[0] + decimalOffset[0] + offset[0],0])[0];
                 line([wx, this.canvas.height], [wx,0], width, color);
@@ -224,7 +224,7 @@ export class Area_Timeline2 {
         }
 
         const gap = [getGridStep(this.zoom[0]),getGridStep(this.zoom[1])];
-        const bigGap = mathVec2.scaleR(gap, 5);
+        const bigGap = MathVec2.scaleR(gap, 5);
 
         this.spaceData.outlineKefyframeData.forEach((keyframeBlock, index) => {
             const displayHeight = this.getKeyFrameBlockDisplayTop(keyframeBlock.pathID);
@@ -276,29 +276,29 @@ export class Area_Timeline2 {
     }
 
     clipToCanvas(p) {
-        return mathVec2.mulR([p[0] / 2 + 0.5, 1 - (p[1] / 2 + 0.5)], this.canvasSize); // -1 ~ 1を0 ~ 1にしてyを0 ~ 1から1 ~ 0にしてcanvasSizeをかける
+        return MathVec2.mulR([p[0] / 2 + 0.5, 1 - (p[1] / 2 + 0.5)], this.canvasSize); // -1 ~ 1を0 ~ 1にしてyを0 ~ 1から1 ~ 0にしてcanvasSizeをかける
     }
 
     worldToCamera(p) {
-        return mathVec2.mulR(mathVec2.subR(p, this.camera), mathVec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
+        return MathVec2.mulR(MathVec2.subR(p, this.camera), MathVec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
     }
 
     cameraToWorld(p) {
-        return mathVec2.addR(mathVec2.divR(p, mathVec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
+        return MathVec2.addR(MathVec2.divR(p, MathVec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
     }
 
     worldToClip(p) {
-        return mathVec2.divR(this.worldToCamera(p), mathVec2.reverseScaleR(this.canvasSize, 2)); // worldToCamera(p) / (canvasSize / 2)
+        return MathVec2.divR(this.worldToCamera(p), MathVec2.reverseScaleR(this.canvasSize, 2)); // worldToCamera(p) / (canvasSize / 2)
     }
 
     clipToWorld(p) {
-        return this.cameraToWorld(mathVec2.mulR(p, mathVec2.reverseScaleR(this.canvasSize, 2))); // cameraToWorld(y * (canvasSize / 2)) = p
+        return this.cameraToWorld(MathVec2.mulR(p, MathVec2.reverseScaleR(this.canvasSize, 2))); // cameraToWorld(y * (canvasSize / 2)) = p
     }
 
     canvasToClip(p) {
-        const a = mathVec2.divR(p,this.canvasSize);
+        const a = MathVec2.divR(p,this.canvasSize);
         a[1] = 1 - a[1];
-        return mathVec2.subR(mathVec2.scaleR(a, 2), [1,1]); // canvasで割ってyを1 ~ 0から 0 ~ 1にして-1 ~ 1
+        return MathVec2.subR(MathVec2.scaleR(a, 2), [1,1]); // canvasで割ってyを1 ~ 0から 0 ~ 1にして-1 ~ 1
     }
 
     canvasToWorld(p) {
@@ -328,10 +328,10 @@ export class Area_Timeline2 {
         }
     }
     async mousemove(inputManager) {
-        const local = mathVec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.position), this.pixelDensity);
+        const local = MathVec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.position), this.pixelDensity);
         const world = this.canvasToWorld(local);
         this.inputs.lastPosition = [...this.inputs.position];
-        mathVec2.sub(this.inputs.movement, world, this.inputs.position);
+        MathVec2.sub(this.inputs.movement, world, this.inputs.position);
         this.inputs.position = world;
 
         if (this.frameBarDrag) {

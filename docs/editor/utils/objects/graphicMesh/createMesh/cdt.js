@@ -1,4 +1,4 @@
-import { mathVec2 } from "../../../mathVec.js";
+import { MathVec2 } from "../../../mathVec.js";
 import { createArrayN, errorCut } from "../../../utility.js";
 
 /* https://takashiijiri.com/study/miscs/DelaunayTriangulation.htm の制約つきドロネー分割---(逐次加点法)をもとに書いたコードです */
@@ -43,27 +43,27 @@ function hitTestTriangle(traingleA, traingleB, traingleC, point) {
         Math.max(traingleA[1],traingleB[1],traingleC[1]) < point[1] || Math.min(traingleA[1],traingleB[1],traingleC[1]) > point[1]) {
         return false;
     }
-    let ab = mathVec2.subR(traingleB, traingleA);
-    let bp = mathVec2.subR(point, traingleB);
+    let ab = MathVec2.subR(traingleB, traingleA);
+    let bp = MathVec2.subR(point, traingleB);
 
-    let bc = mathVec2.subR(traingleC, traingleB);
-    let cp = mathVec2.subR(point, traingleC);
+    let bc = MathVec2.subR(traingleC, traingleB);
+    let cp = MathVec2.subR(point, traingleC);
 
-    let ca = mathVec2.subR(traingleA, traingleC);
-    let ap = mathVec2.subR(point, traingleA);
+    let ca = MathVec2.subR(traingleA, traingleC);
+    let ap = MathVec2.subR(point, traingleA);
 
-    let c1 = mathVec2.crossR(ab, bp);
-    let c2 = mathVec2.crossR(bc, cp);
-    let c3 = mathVec2.crossR(ca, ap);
+    let c1 = MathVec2.crossR(ab, bp);
+    let c2 = MathVec2.crossR(bc, cp);
+    let c3 = MathVec2.crossR(ca, ap);
     return (c1 > 0.0 && c2 > 0.0 && c3 > 0.0) || (c1 < 0.0 && c2 < 0.0 && c3 < 0.0);
 }
 
 function isSquareConvex(p1,p2,p3,p4) {
     // 四角形の各点で外積を計算
-    const cross1 = mathVec2.cross3R(p1, p2, p3);
-    const cross2 = mathVec2.cross3R(p2, p3, p4);
-    const cross3 = mathVec2.cross3R(p3, p4, p1);
-    const cross4 = mathVec2.cross3R(p4, p1, p2);
+    const cross1 = MathVec2.cross3R(p1, p2, p3);
+    const cross2 = MathVec2.cross3R(p2, p3, p4);
+    const cross3 = MathVec2.cross3R(p3, p4, p1);
+    const cross4 = MathVec2.cross3R(p4, p1, p2);
 
     // すべての外積の符号が同じかを確認
     const allPositive = cross1 > 0 && cross2 > 0 && cross3 > 0 && cross4 > 0;
@@ -226,7 +226,7 @@ export function cdt(inputVertices, cnEdges) {
                 const Dv = inputVertices[ABD[2]];
 
                 const centerABC = getTriangleCenterPoint(Av,Bv,Cv);
-                const radius = mathVec2.distanceR(centerABC, Av);
+                const radius = MathVec2.distanceR(centerABC, Av);
                 if (edgecnContainsEdge(AB)) { // ABが線分制約の場合スキップ
                 } else if (edgecnContainsEdge(CD) && isSquareConvex(Av,Bv,Cv,Dv)) { // CDが線分制約で四角形ABCDが凸
                     // flip
@@ -240,7 +240,7 @@ export function cdt(inputVertices, cnEdges) {
                     S.push([D,B]);
                     S.push([B,C]);
                     S.push([C,A]);
-                } else if (mathVec2.distanceR(centerABC, Dv) < radius) { // ABCの外接円にDが入る
+                } else if (MathVec2.distanceR(centerABC, Dv) < radius) { // ABCの外接円にDが入る
                     // flip
                     changeTriangleIndexs(ABCi, [A,C,D]);
                     // meshes[ABCi] = [A,C,D]; // ABCをACDに

@@ -1,4 +1,4 @@
-import { mathVec2 } from "../mathVec.js";
+import { MathVec2 } from "../mathVec.js";
 
 class HTMLElementResizeObserver {
     constructor() {
@@ -14,7 +14,7 @@ class HTMLElementResizeObserver {
     check() {
         this.observationObjects.forEach((value, index) => {
             if (value.fn) {
-                if (!mathVec2.same([value.htmlElement.offsetWidth, value.htmlElement.offsetHeight], this.beforeSize[index])) {
+                if (!MathVec2.same([value.htmlElement.offsetWidth, value.htmlElement.offsetHeight], this.beforeSize[index])) {
                     value.fn();
                 }
                 this.beforeSize[index] = [value.htmlElement.offsetWidth, value.htmlElement.offsetHeight];

@@ -1,134 +1,134 @@
 import { managerForDOMs } from "./ui/util.js";
 
-class Vec2 {
+export class MathVec2 {
     constructor() {
     }
 
-    create() {
+    static create() {
         return new Float32Array(2);
     }
 
-    mixR(a,b,raito) {
+    static mixR(a,b,raito) {
         return this.addR(this.scaleR(a,1-raito), this.scaleR(b,raito));
     }
 
-    random(range) {
+    static random(range) {
         return this.scaleR(this.subR(this.scaleR([Math.random(),Math.random()],2),[1,1]), range);
     }
 
-    set(t,a) {
+    static set(t,a) {
         t[0] = a[0];
         t[1] = a[1];
         managerForDOMs.update({o: t});
     }
 
-    add(t,a,b) {
+    static add(t,a,b) {
         t[0] = a[0] + b[0];
         t[1] = a[1] + b[1];
         managerForDOMs.update({o: t});
     }
 
-    addR(a,b) {
+    static addR(a,b) {
         return [a[0] + b[0], a[1] + b[1]];
     }
 
-    sub(t,a,b) {
+    static sub(t,a,b) {
         t[0] = a[0] - b[0];
         t[1] = a[1] - b[1];
         managerForDOMs.update({o: t});
     }
 
-    subR(a,b) {
+    static subR(a,b) {
         return [a[0] - b[0], a[1] - b[1]];
     }
 
-    scale(t,a,b) {
+    static scale(t,a,b) {
         t[0] = a[0] * b;
         t[1] = a[1] * b;
         managerForDOMs.update({o: t});
     }
 
-    scaleR(a,b) {
+    static scaleR(a,b) {
         return [a[0] * b, a[1] * b];
     }
 
-    reverseScale(t,a,b) {
+    static reverseScale(t,a,b) {
         t[0] = a[0] / b;
         t[1] = a[1] / b;
         managerForDOMs.update({o: t});
     }
 
-    reverseScaleR(a,b) {
+    static reverseScaleR(a,b) {
         return [a[0] / b, a[1] / b];
     }
 
-    mul(t,a,b) {
+    static mul(t,a,b) {
         t[0] = a[0] * b[0];
         t[1] = a[1] * b[1];
         managerForDOMs.update({o: t});
     }
 
-    mulR(a,b) {
+    static mulR(a,b) {
         return [a[0] * b[0], a[1] * b[1]];
     }
 
-    div(t,a,b) {
+    static div(t,a,b) {
         t[0] = a[0] / b[0];
         t[1] = a[1] / b[1];
         managerForDOMs.update({o: t});
     }
 
-    divR(a,b) {
+    static divR(a,b) {
         return [a[0] / b[0], a[1] / b[1]];
     }
 
-    angleAFromB(a, b) {
+    static angleAFromB(a, b) {
         const delta = [b[0] - a[0], b[1] - a[1]]
 
         return Math.atan2(delta[1], delta[0]) - 1.5708;
     }
 
-    normalizeR(a) {
+    static normalizeR(a) {
         const len = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
         return [a[0] / len, a[1] / len];
     }
 
-    subAndnormalizeR(a,b) {
+    static subAndnormalizeR(a,b) {
         const sub = [a[0] - b[0], a[1] - b[1]];
         const len = Math.sqrt(sub[0] * sub[0] + sub[1] * sub[1]);
         return [sub[0] / len, sub[1] / len];
     }
 
-    crossR(vec1, vec2) {
+    static crossR(vec1, vec2) {
         return vec1[0] * vec2[1] - vec2[0] * vec1[1];
     }
 
-    dotR(vec1, vec2) {
+    static dotR(vec1, vec2) {
         return vec1[0] * vec2[0] + vec1[1] * vec2[1];
     }
 
-    cross3R(a, b, c) {
+    static cross3R(a, b, c) {
         return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
     }
 
-    lengthR(vec) {
+    static lengthR(vec) {
         return Math.sqrt(vec[0] ** 2 + vec[1] ** 2);
     }
 
-    distanceR(a, b) {
+    static distanceR(a, b) {
         const sub = [a[0] - b[0], a[1] - b[1]];
         return Math.sqrt(sub[0] ** 2 + sub[1] ** 2);
     }
 
-    same(a,b) {
+    static same(a,b) {
         return a[0] == b[0] && a[1] == b[1];
     }
 
-    max(a) {
+    static max(a) {
         return Math.max(a[0], a[1]);
     }
 
-    createBBox(points) {
+    static createBBox(points) {
         if (!points.length) return {max: [NaN, NaN], min: [NaN, NaN]};
         let maxX = points[0][0];
         let maxY = points[0][1];
@@ -145,7 +145,7 @@ class Vec2 {
 
     // 地点Aから見た地点Bの角速度を求める関数
     // A: [x, y], B: [x, y], C: [vx, vy] (移動量)
-    getAngularVelocity(A, B, C) {
+    static getAngularVelocity(A, B, C) {
         // ベクトルABを計算
         const AB = this.subR(B, A);
 
@@ -168,11 +168,11 @@ class Vec2 {
     }
 
 
-    getAngle(p1, p2) {
+    static getAngle(p1, p2) {
         return Math.atan2(p2[1] - p1[1], p2[0] - p1[0]);
     }
 
-    rotate2D(point, angle) {
+    static rotate2D(point, angle) {
         let sinTheta = Math.sin(angle);
         let cosTheta = Math.cos(angle);
         let xPrime = point[0] * cosTheta - point[1] * sinTheta;
@@ -180,31 +180,29 @@ class Vec2 {
         return [xPrime,yPrime];
     }
 
-    averageR(pointArray) {
-        const result = mathVec2.create();
+    static averageR(pointArray) {
+        const result = MathVec2.create();
         for (const point of pointArray) {
-            mathVec2.add(result, result, point);
+            MathVec2.add(result, result, point);
         }
-        mathVec2.reverseScale(result, result, pointArray.length);
+        MathVec2.reverseScale(result, result, pointArray.length);
         return result;
     }
 
-    decimalPartR(vec) {
+    static decimalPartR(vec) {
         return [vec[0] - Math.floor(vec[0]), vec[1] - Math.floor(vec[1])];
     }
 
-    modR(a,b) {
+    static modR(a,b) {
         return [a[0] % b[0], a[1] % b[1]];
     }
 
-    flipY(vec, height) {
+    static flipY(vec, height) {
         vec[1] = height - vec[1];
         return vec;
     }
 
-    copy(vec) {
+    static copy(vec) {
         return [...vec];
     }
 }
-
-export const mathVec2 = new Vec2();

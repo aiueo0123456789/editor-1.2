@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
 import { TimelineSpaceData } from "../../ui/area/areas/Timeline/area_TimelineSpaceData.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 
 export class SelectOnlyKeyframeCommand {
     constructor(point,multiple,area) {
@@ -14,7 +14,7 @@ export class SelectOnlyKeyframeCommand {
         this.selectKeyframe = null;
         for (const keyframeBlock of this.timeLineSpaceData.outlineKefyframeData) {
             for (const keyframe of keyframeBlock.object.keys) {
-                const dist = mathVec2.distanceR(area.getKeyframeDisplayPosition(keyframeBlock.pathID, keyframe), point);
+                const dist = MathVec2.distanceR(area.getKeyframeDisplayPosition(keyframeBlock.pathID, keyframe), point);
                 if (dist < minDist) {
                     minDist = dist;
                     this.selectKeyframe = keyframe;

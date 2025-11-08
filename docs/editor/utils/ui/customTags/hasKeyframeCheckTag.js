@@ -7,7 +7,7 @@ function update(o,g,others) {
 }
 
 export class HasKeyframeCheck extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.checkbox = document.createElement("input");
         this.checkbox.type = "checkbox";

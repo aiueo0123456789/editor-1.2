@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
 import { BArmature } from "../../core/edit/BArmature.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { indexOfSplice, removeDuplicates } from "../../utils/utility.js";
 
 class Base {
@@ -32,14 +32,14 @@ export class BoneExtrudeMoveCommand {
     extrudeMove(value) {
         this.value = [...value];
         this.editObjects.forEach(editObject => {
-            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => mathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
+            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => MathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
             editObject.updateGPUData();
         });
     }
 
     execute() {
         this.editObjects.forEach(editObject => {
-            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => mathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
+            this.createBonesIneditObject[editObject.id].forEach(boneAndBaseCo => MathVec2.add(boneAndBaseCo.bone.tailVertex.co, boneAndBaseCo.baseCo, this.value));
             editObject.updateGPUData();
         });
         return {consumed: true};
@@ -79,7 +79,7 @@ export class BoneDelete extends Base{
             bone.armature.allBone.splice(this.indexsMeta[index], 1);
         });
         for (const armature of this.armatures) {
-            app.scene.runtimeData.armatureData.updateBaseData(armature);
+            app.scene.runtimeData.armatureData.update(armature);
         }
     }
 
@@ -89,7 +89,7 @@ export class BoneDelete extends Base{
             bone.parent.childrenBone.push(bone);
         });
         for (const armature of this.armatures) {
-            app.scene.runtimeData.armatureData.updateBaseData(armature);
+            app.scene.runtimeData.armatureData.update(armature);
         }
     }
 }

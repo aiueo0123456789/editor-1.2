@@ -2,7 +2,7 @@ import { CreatorForUI } from "../creatorForUI.js";
 import { createTag } from "../util.js";
 
 export class DblClickInput {
-    constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+    constructor(/** @type {CreatorForUI} */creatorForUI,t,parent,searchTarget,child,flag) {
         this.element = createTag(t, "input");
         this.element.type = "text";
         this.element.classList.add("dblClickInput");

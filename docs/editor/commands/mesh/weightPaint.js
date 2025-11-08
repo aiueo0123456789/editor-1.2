@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
 import { BMeshWeight } from "../../core/edit/BMeshWeight.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { createArrayNAndFill } from "../../utils/utility.js";
 
 class WeightBlock {
@@ -39,7 +39,7 @@ export class WeightPaintCommand {
     }
 
     update(point) {
-        const decaysList = this.editObjects.map(editObject => editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (mathVec2.distanceR(point, co) / this.decaySize))));
+        const decaysList = this.editObjects.map(editObject => editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (MathVec2.distanceR(point, co) / this.decaySize))));
         decaysList.forEach((decays, objectIndex) => decays.forEach((decay, vertexIndex) => {
             if (this.minDistDecays[objectIndex][vertexIndex] < decay) {
                 this.minDistDecays[objectIndex][vertexIndex] = decay;

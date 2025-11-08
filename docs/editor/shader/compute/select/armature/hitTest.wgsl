@@ -67,10 +67,6 @@ fn isSelected(bone: BoneVertices) -> bool {
     return hitTestPointTriangle(v0,v1,v2,point);
 }
 
-fn isNaN(x: f32) -> bool {
-    return x != x;
-}
-
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     if (global_id.x == 0u) {
@@ -81,10 +77,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         return;
     }
     let boneIndex = global_id.x + allocation.vertexBufferOffset;
-    if (isNaN(vertices[boneIndex].h.x) || isNaN(vertices[boneIndex].t.x)) {
-    } else {
-        if (isSelected(vertices[boneIndex])) {
-            atomicStore(&result, 1);
-        }
+    if (isSelected(vertices[boneIndex])) {
+        atomicStore(&result, 1);
     }
 }

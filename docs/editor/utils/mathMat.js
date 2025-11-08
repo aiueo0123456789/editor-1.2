@@ -1,8 +1,8 @@
-class MathMat3x3 {
+export class MathMat3x3 {
     constructor() {
     }
 
-    createMatrix() {
+    static createMatrix() {
         return [
             [1,0,0],
             [0,1,0],
@@ -10,7 +10,7 @@ class MathMat3x3 {
         ];
     }
 
-    createTransformMatrix(scale, angle, translation) {
+    static createTransformMatrix(scale, angle, translation) {
         let rx = angle;
         let ry = angle + 1.5708;
         // スケールと回転を組み合わせた行列
@@ -22,7 +22,7 @@ class MathMat3x3 {
         return matrix;
     }
 
-    multiplyMat3x3(a, b) {
+    static multiplyMat3x3(a, b) {
         const result = [
             [0, 0, 0],
             [0, 0, 0],
@@ -39,7 +39,7 @@ class MathMat3x3 {
         return result;
     }
 
-    mat4x3ValuesToMat3x3(m) {
+    static mat4x3ValuesToMat3x3(m) {
         return [
             m[0],m[1],m[2],
             m[4],m[5],m[6],
@@ -47,7 +47,7 @@ class MathMat3x3 {
         ];
     }
 
-    invertMatrix3x3AndRemoveTranslation(m) {
+    static invertMatrix3x3AndRemoveTranslation(m) {
         const a = m[0][0], b = m[0][1], c = m[0][2];
         const d = m[1][0], e = m[1][1], f = m[1][2];
         const g = m[2][0], h = m[2][1], i = m[2][2];
@@ -66,7 +66,7 @@ class MathMat3x3 {
             [0,0,1],
         ];
     }
-    invertMatrix3x3(m) {
+    static invertMatrix3x3(m) {
         const a = m[0][0], b = m[0][1], c = m[0][2];
         const d = m[1][0], e = m[1][1], f = m[1][2];
         const g = m[2][0], h = m[2][1], i = m[2][2];
@@ -86,12 +86,12 @@ class MathMat3x3 {
         ];
     }
 
-    getLocalVec2(worldMatrix,vec2d) {
+    static getLocalVec2(worldMatrix,vec2d) {
         return this.multiplyMatrix3x3WithVec2(this.invertMatrix3x3AndRemoveTranslation(worldMatrix),vec2d);
     }
 
     // 並行移動を削除
-    removeTranslation(m) {
+    static removeTranslation(m) {
         return [
             m[0], m[1], m[2],
             m[3], m[4], m[5],
@@ -99,7 +99,7 @@ class MathMat3x3 {
         ];
     }
 
-    multiplyMatrix3x3WithVec2(m, v) {
+    static multiplyMatrix3x3WithVec2(m, v) {
         const x = v[0], y = v[1];
 
         // WGSLでは列優先なので、m = [
@@ -113,7 +113,7 @@ class MathMat3x3 {
         ];
     }
 
-    mat3x3ToArray(array) {
+    static mat3x3ToArray(array) {
         return [
             [array[0], array[1], array[2]],
             [array[3], array[4], array[5]],
@@ -121,5 +121,3 @@ class MathMat3x3 {
         ];
     }
 }
-
-export const mathMat3x3 = new MathMat3x3();

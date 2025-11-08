@@ -17,7 +17,12 @@ export class Context {
     }
 
     selectAll() {
-        this.app.scene.objects.allObject
+        this.app.scene.objects.allObject.forEach(object => {
+            if ("selected" in object) {
+                this.app.operator.appendCommand(new SelectObjectsCommand(object, true));
+            }
+        });
+        this.app.operator.execute();
     }
 
     setSelectedObject(object, append = false) {

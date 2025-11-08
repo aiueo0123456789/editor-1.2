@@ -2,7 +2,7 @@ import { CustomTag } from "../customTag.js";
 import { createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
 export class MeterTag extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.bar = document.createElement("div");
         this.element = createTag(t, "div", {class: "meter"});

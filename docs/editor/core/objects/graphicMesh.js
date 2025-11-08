@@ -1,217 +1,16 @@
-import { createEdgeFromTexture, createMeshFromTexture, cutSilhouetteOutTriangle } from "../../utils/objects/graphicMesh/createMesh/createMesh.js";
-import { BoundingBox, ObjectBase, ObjectEditorBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
-import { copyToArray, pushToArray, changeParameter, indexOfSplice, IsString, range, waitUntilFrame, createArrayNAndFill, createArrayN, hitTestPointTriangle, lerpTriangle } from "../../utils/utility.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { ObjectBase, sharedDestroy, UnfixedReference } from "../../utils/objects/util.js";
+import { changeParameter, copyToArray, range } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
-import { AnimationBlock, VerticesAnimation } from "./animation.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { app } from "../../../main.js";
 import { Texture } from "./texture.js";
 import { MaskTexture } from "./maskTexture.js";
 import { ShapeKeyMetaData } from "./blendShape.js";
 
-class Editor extends ObjectEditorBase {
-    constructor(graphicMesh) {
-        super();
-        this.baseEdges = [];
-        this.baseSilhouetteEdges = [];
-        this.graphicMesh = graphicMesh;
-        this.imageBBox = new BoundingBox();
-        this.imageBBoxBuffer = GPU.createUniformBuffer(2 * 4 + 2 * 4, undefined, ["f32"]);
-
-        this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
-        this.baseEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
-        this.outlineVertices = [];
-        this.outlineEdges = [];
-
-        this.updateEdgeGPU = () => {
-            if (this.baseSilhouetteEdges.length == 0) {
-                this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
-            } else {
-                this.baseSilhouetteEdgesBuffer = GPU.createStorageBuffer(this.baseSilhouetteEdges.length * 2 * 4, new Uint32Array(this.baseSilhouetteEdges.flat()), ["u32", "u32"]);
-            }
-            if (this.baseEdges.length == 0) {
-                this.baseEdgesBuffer = GPU.createStorageBuffer(2 * 4, new Uint32Array([0,0]), ["u32"]);
-            } else {
-                this.baseEdgesBuffer = GPU.createStorageBuffer(this.baseEdges.length * 2 * 4, new Uint32Array(this.baseEdges.flat()), ["u32", "u32"]);
-            }
-            this.graphicMesh.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.graphicMesh.objectMeshData, this.baseSilhouetteEdgesBuffer,  this.baseEdgesBuffer]);
-        }
-
-        managerForDOMs.set({o: this.baseEdges, i: "&all"}, this.updateEdgeGPU);
-        managerForDOMs.set({o: this.baseSilhouetteEdges, i: "&all"}, this.updateEdgeGPU);
-    }
-
-    get baseEdgesNum() {
-        return this.baseEdges.length;
-    }
-
-    get baseSilhouetteEdgesNum() {
-        return this.baseSilhouetteEdges.length;
-    }
-
-    destroy() {
-        this.graphicMesh = null;
-    }
-
-    setImageBBox(bbox) {
-        // this.imageBBox = bbox;
-        this.imageBBox.set(bbox);
-        GPU.writeBuffer(this.imageBBoxBuffer, new Float32Array([...this.imageBBox.min,...this.imageBBox.max]));
-    }
-
-    getSaveData() {
-        return {
-            baseSilhouetteEdges: this.baseSilhouetteEdges,
-            baseEdges: this.baseEdges,
-            imageBBox: this.imageBBox,
-        };
-    }
-
-    setSaveData(data) {
-        copyToArray(this.baseEdges, data.baseEdges);
-        copyToArray(this.baseSilhouetteEdges, data.baseSilhouetteEdges);
-        this.updateEdgeGPU();
-        this.setImageBBox(data.imageBBox);
-    }
-
-    setBaseSilhouetteEdges(edges) {
-        copyToArray(this.baseSilhouetteEdges, edges);
-        this.updateEdgeGPU();
-    }
-
-    async createEdgeFromTexture(pixelDensity, scale) {
-        const result = await createEdgeFromTexture(this.graphicMesh.texture, pixelDensity, scale);
-        result.vertices = this.calculateLocalVerticesToWorldVertices(result.vertices);
-        this.graphicMesh.allVertices.length = 0;
-        for (let i = 0; i < result.vertices.length; i ++) {
-            this.graphicMesh.allVertices.push(new Vertex(this.graphicMesh, {base: result.vertices[i], uv: result.uv[i]}));
-        }
-        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
-        this.setBaseSilhouetteEdges(result.edges);
-        this.createMesh();
-        app.options.assignWeights(this.graphicMesh);
-    }
-
-    async createMesh() {
-        await waitUntilFrame(() => {return !this.graphicMesh.runtimeData.write});
-        const vertices = this.graphicMesh.allVertices.map(vertex => vertex.co);
-        const meshData = cutSilhouetteOutTriangle(vertices, createMeshFromTexture(vertices, this.baseEdges.concat(this.baseSilhouetteEdges)), this.baseSilhouetteEdges); // メッシュの作成とシルエットの外の三角形を削除
-        // const meshData = createMeshFromTexture(vertices, this.baseEdges); // メッシュの作成とシルエットの外の三角形を削除
-        this.graphicMesh.allMeshes.length = 0;
-        for (let i = 0; i < meshData.length; i ++) {
-            new Mesh(this.graphicMesh,undefined, meshData[i]);
-        }
-        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
-        this.updateEdgeGPU();
-    }
-
-    deleteBaseVertices(indexs) {
-        for (const index of indexs) {
-            for (let i = this.baseEdges.length - 1; i >= 0; i --) {
-                if (this.baseEdges[i].includes(index)) {
-                    this.baseEdges.splice(i, 1);
-                } else {
-                    for (let j = 0; j < 2; j ++) {
-                        if (this.baseEdges[i][j] > index) this.baseEdges[i][j] --;
-                    }
-                }
-            }
-            for (let i = this.baseSilhouetteEdges.length - 1; i >= 0; i --) {
-                if (this.baseSilhouetteEdges[i].includes(index)) {
-                    this.baseSilhouetteEdges.splice(i, 1);
-                } else {
-                    for (let j = 0; j < 2; j ++) {
-                        if (this.baseSilhouetteEdges[i][j] > index) this.baseSilhouetteEdges[i][j] --;
-                    }
-                }
-            }
-        }
-    }
-
-    hasEdge(edge) {
-        for (const edge_ of this.baseEdges) {
-            if (
-                edge[0] == edge_[0] && edge[1] == edge_[1] ||
-                edge[0] == edge_[1] && edge[1] == edge_[0]
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    appendBaseEdge(edge) {
-        if (this.hasEdge(edge)) return ;
-        pushToArray(this.baseEdges, edge);
-        this.createMesh();
-    }
-
-    deleteBaseEdge(edge) {
-        for (let i = 0; i < this.baseEdges.length; i ++) {
-            const edge_ = this.baseEdges[i];
-            if (
-                edge[0] == edge_[0] && edge[1] == edge_[1] ||
-                edge[0] == edge_[1] && edge[1] == edge_[0]
-            ) {
-                this.baseEdges.splice(i, 1);
-            }
-        }
-        this.createMesh();
-    }
-
-    // 頂点たちからUV
-    calculateVerticesToUV(vertices, axisType = "world") {
-        if (axisType == "world") {
-            return vertices.map((position) => this.calculatWorldPositionToUV(position));
-        } else {
-            return vertices.map((position) => this.calculatLocalPositionToUV(position));
-        }
-    }
-    // ローカルポジションからUV
-    calculatLocalPositionToUV(position) {
-        const a = mathVec2.mulR(mathVec2.addR(position, [this.imageBBox.width / 2, this.imageBBox.height / 2]), [1 / this.imageBBox.width, 1 / this.imageBBox.height]);
-        return [a[0], 1 - a[1]];
-    }
-    // ワールドポジションからUV
-    calculatWorldPositionToUV(position) {
-        const a = mathVec2.mulR(mathVec2.subR(position, this.imageBBox.min), [1 / this.imageBBox.width, 1 / this.imageBBox.height]);
-        return [a[0], 1 - a[1]];
-    }
-
-    // ローカルポジションの頂点たちからワールドポジション
-    calculateLocalVerticesToWorldVertices(vertices) {
-        return vertices.map((vertex) => this.calculateLocalPositionToWorldPosition(vertex));
-    }
-    // ローカルポジションからワールドポジション
-    calculateLocalPositionToWorldPosition(position) {
-        // return vec2.addR(position, this.BBox.center);
-        return mathVec2.addR(position, this.imageBBox.center);
-    }
-
-    createVertex(coordinate) {
-        return new Vertex(this.graphicMesh, {base: coordinate, uv: this.calculatWorldPositionToUV(coordinate), parentWeight: {indexs: [0,0,0,0], weights: [1,0,0,0]}});
-    }
-
-    appendVertex(vertex) {
-        this.graphicMesh.allVertices.push(vertex);
-        this.createMesh();
-        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
-    }
-
-    deleteVertex(vertex) {
-        indexOfSplice(this.graphicMesh.allVertices, vertex)
-        this.createMesh();
-        this.graphicMesh.runtimeData.updateBaseData(this.graphicMesh);
-    }
-}
-
 export class GraphicMesh extends ObjectBase {
-    createShapeKeyMetaData(name, index) {
-        return new ShapeKeyMetaData({name: name, index: index, object: this});
+    createShapeKeyMetaData(name, index, id = undefined) {
+        return new ShapeKeyMetaData({name: name, index: index, object: this, id: id});
     }
-
-    static VERTEX_LEVEL = 1; // 小オブジェクトごとに何個の頂点を持つか
     constructor(data) {
         super(data.name, "グラフィックメッシュ", data.id);
         this.runtimeData = app.scene.runtimeData.graphicMeshData;
@@ -231,9 +30,6 @@ export class GraphicMesh extends ObjectBase {
 
         /** @type {Texture} */
         this.texture = null;
-
-        // その他
-        this.animationBlock = new AnimationBlock(this, VerticesAnimation);
 
         /** @type {ShapeKeyMetaData[]} */
         this.shapeKeyMetaDatas = [];
@@ -256,12 +52,32 @@ export class GraphicMesh extends ObjectBase {
         this.maskTypeBuffer = GPU.createUniformBuffer(4, undefined, ["f32"]);
         GPU.writeBuffer(this.maskTypeBuffer, new Float32Array([0])); // 0　マスク 反転マスク
 
-        this.editor = new Editor(this);
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectMeshData = GPU.createUniformBuffer(4 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
-        this.objectMeshDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu_Vsr_Vsr"), [this.objectMeshData, this.editor.baseSilhouetteEdgesBuffer, this.editor.baseEdgesBuffer]);
-        this.init(data);
+
+        this.shapeKeyMetaDatas.length = 0;
+        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
+        this.zIndex = data.zIndex;
+        GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
+        this.autoWeight = data.autoWeight ? data.autoWeight : true;
+        copyToArray(this.allVertices, data.vertices.flat());
+        copyToArray(this.allUVs, data.uv.flat());
+        copyToArray(this.allMeshes, data.meshes.flat());
+        copyToArray(this.allWeightBlocks, data.weightBlocks.flat());
+        copyToArray(this.shapeKeyMetaDatas, data.shapeKeyMetaDatas.map(shapeKeyMetaData => this.createShapeKeyMetaData(shapeKeyMetaData.name, shapeKeyMetaData.index, shapeKeyMetaData.id)));
+        copyToArray(this.allShapeKeys, data.shapeKeys.flat());
+        this.changeTexture(app.scene.objects.getObjectFromID(data.texture));
+        if (data.renderingTarget) {
+            this.changeRenderingTarget(app.scene.objects.getObjectFromID(data.renderingTarget));
+        }
+        if (data.clippingMask) {
+            this.changeClippingMask(app.scene.objects.getObjectFromID(data.clippingMask));
+        } else {
+            this.changeClippingMask(app.scene.objects.getObjectFromID("baseMaskTexture"));
+        }
+        this.isInit = true;
+        this.setGroup();
 
         managerForDOMs.set({o: this, i: "zIndex"}, () => {
             GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
@@ -300,7 +116,7 @@ export class GraphicMesh extends ObjectBase {
 
     // 頂点のworldIndexs
     get VWs() {
-        return range(this.runtimeOffsetData.start.vertexOffset, this.runtimeOffsetData.end.vertexOffset);
+        return range(this.runtimeOffsetData.start.verticesOffset, this.runtimeOffsetData.end.verticesOffset);
     }
 
     get verticesNum() {
@@ -322,57 +138,10 @@ export class GraphicMesh extends ObjectBase {
         // ブッファの宣言
         this.texture = null;
 
-        // その他
-        this.animationBlock = null;
-
         this.parent = "";
     }
 
     init(data) {
-        this.shapeKeyMetaDatas.length = 0;
-        this.changeParent(app.scene.objects.getObjectFromID(data.parent));
-        this.zIndex = data.zIndex;
-        GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
-        this.autoWeight = data.autoWeight ? data.autoWeight : true;
-
-        for (const vertex of data.vertices) {
-            this.allVertices.push(...vertex.co);
-            this.allUVs.push(...vertex.uv);
-            this.allWeightBlocks.push(...vertex.parentWeight.indexs);
-            this.allWeightBlocks.push(...vertex.parentWeight.weights);
-        }
-        for (const mesh of data.meshes) {
-            this.allMeshes.push(...mesh.indexs);
-        }
-        if (data.animationKeyDatas) {
-            data.animationKeyDatas.forEach((keyData,index) => {
-                const animationData = keyData.transformData.transformData;
-                this.runtimeData.setAnimationData(this, animationData, index);
-            })
-            this.animationBlock.setSaveData(data.animationKeyDatas);
-        }
-        if (data.ShapeKeys) {
-            for (const shapeKeyData of data.ShapeKeys) {
-                this.shapeKeyMetaDatas.push({name: shapeKeyData.name});
-            }
-        }
-        this.changeTexture(app.scene.objects.getObjectFromID(data.texture));
-
-        if (data.renderingTarget) {
-            this.changeRenderingTarget(app.scene.objects.getObjectFromID(data.renderingTarget));
-        }
-        if (data.clippingMask) {
-            this.changeClippingMask(app.scene.objects.getObjectFromID(data.clippingMask));
-        } else {
-            this.changeClippingMask(app.scene.objects.getObjectFromID("baseMaskTexture"));
-        }
-
-        if (data.editor) {
-            this.editor.setSaveData(data.editor);
-        }
-        this.isInit = true;
-        this.isChange = true;
-        this.setGroup();
     }
 
     changeTexture(texture) {
@@ -407,23 +176,23 @@ export class GraphicMesh extends ObjectBase {
     }
 
     async getSaveData() {
-        const animationKeyDatas = await this.animationBlock.getSaveData()
         return {
             name: this.name,
             id: this.id,
-            type: this.type,
             parent: this.parent ? this.parent.id : null,
+            type: this.type,
             autoWeight: this.autoWeight,
             baseTransformIsLock: this.baseTransformIsLock,
             zIndex: this.zIndex,
-            vertices: this.allVertices.map(vertex => vertex.getSaveData()),
-            meshes: this.allMeshes.map(mesh => mesh.getSaveData()),
-            animationKeyDatas: animationKeyDatas,
-            // texture: await GPU.textureToBase64(this.texture),
+            vertices: await this.runtimeData.baseVertices.getObjectData(this),
+            uv: await this.runtimeData.uv.getObjectData(this),
+            weightBlocks: await this.runtimeData.weightBlocks.getObjectData(this),
+            meshes: await this.runtimeData.meshes.getObjectData(this),
+            shapeKeys: await this.runtimeData.shapeKeys.getObjectData(this),
+            shapeKeyMetaDatas: this.shapeKeyMetaDatas.map(shapeKeyMetaData => shapeKeyMetaData.getSaveData()),
             texture: this.texture.id,
             renderingTarget: this.renderingTarget ? this.renderingTarget.id : null,
             clippingMask: this.clippingMask.id,
-            editor: this.editor.getSaveData(),
         };
     }
 }

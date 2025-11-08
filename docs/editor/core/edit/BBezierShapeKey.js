@@ -3,12 +3,12 @@ import { MathVec2 } from "../../utils/mathVec.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { pushToArray, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
+import { BezierModifier } from "../objects/bezierModifier.js";
 import { GraphicMesh } from "../objects/graphicMesh.js";
 
 class Vert {
     constructor(data) {
         this.co = [...data.co];
-        this.uv = data.uv;
         this.index = data.index;
         this.selected = false;
     }
@@ -30,24 +30,14 @@ class ShapeKeyVert {
     }
 }
 
-class Mesh {
-    constructor(data) {
-        this.indexs = data.indexs;
-    }
-}
-
-export class BMeshShapeKey {
+export class BBezierShapeKey {
     constructor() {
-        /** @type {GraphicMesh} */
+        /** @type {BezierModifier} */
         this.object = null;
         /** @type {Vert[]} */
         this.vertices = [];
         /** @type {ShapeKey[]} */
         this.shapeKeys = [];
-        /** @type {Mesh[]} */
-        this.meshes = [];
-        this.texture = null;
-        this.zIndex = 0;
 
         /** @type {ShapeKey} */
         this.activeShapeKey = null;
@@ -104,49 +94,43 @@ export class BMeshShapeKey {
         return this.vertices.length;
     }
 
-    get meshesNum() {
-        return this.meshes.length;
+    get anchorPointsNum() {
+        return this.vertices.length / 3;
     }
 
     updateGPUData() {
         if (this.activeShapeKey) this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => this.activeShapeKey.data[vertex.index].co).flat(), ["f32", "f32"]);
         else this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.co).flat(), ["f32", "f32"]);
-        this.uvsBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.uv).flat(), ["f32", "f32"]);
         this.vertexSelectedBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 4, 4), this.vertices.map(vertex => vertex.selected ? 1 : 0), ["u32"]);
-        this.meshesBuffer = GPU.createStorageBuffer(roundUp(this.meshes.length * 3 * 4, 3 * 4), this.meshes.map(mesh => mesh.indexs).flat(), ["u32", "u32", "u32"]);
-        this.zIndexBuffer = GPU.createUniformBuffer(4, [1 / (this.zIndex + 1)], ["f32"]);
-        this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr_Vsr_Vsr_Vu_Ft"), [this.verticesBuffer, this.uvsBuffer, this.meshesBuffer, this.vertexSelectedBuffer, this.zIndexBuffer, this.texture.view]);
+        this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_Vsr"), [this.verticesBuffer, this.vertexSelectedBuffer]);
     }
 
-    async fromMesh(object) {
-        const graphicMeshData = app.scene.runtimeData.graphicMeshData;
+    async fromBezier(/** @type {BezierModifier} */object) {
+        const bezierModifierData = app.scene.runtimeData.bezierModifierData;
         this.object = object;
-        const [coordinate,meshes,uvs,shape] = await Promise.all([
-            graphicMeshData.baseVertices.getObjectData(object),
-            graphicMeshData.meshes.getObjectData(object),
-            graphicMeshData.uv.getObjectData(object),
-            graphicMeshData.shapeKeys.getObjectData(object)
+        const [coordinate,shape] = await Promise.all([
+            bezierModifierData.baseVertices.getObjectData(object),
+            bezierModifierData.shapeKeys.getObjectData(object)
         ]);
         for (let i = 0; i < coordinate.length; i ++) {
-            this.vertices.push(new Vert({co: coordinate[i], uv: uvs[i], index: i}));
+            this.vertices.push(new Vert({co: coordinate[i].slice(0,2), index: i * 3}));
+            this.vertices.push(new Vert({co: coordinate[i].slice(2,4), index: i * 3 + 1}));
+            this.vertices.push(new Vert({co: coordinate[i].slice(4,6), index: i * 3 + 2}));
         }
         console.log(shape)
         this.object.shapeKeyMetaDatas.forEach((shapeKeyMetaDta, shapeKeyIndex) => {
             const data = [];
             for (let vertrxIndex = 0; vertrxIndex < coordinate.length; vertrxIndex ++) {
-                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex], coordinate[vertrxIndex])}));
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(0,2), coordinate[vertrxIndex].slice(0,2))}));
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(2,4), coordinate[vertrxIndex].slice(2,4))}));
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(4,6), coordinate[vertrxIndex].slice(4,6))}));
             }
             pushToArray(this.shapeKeys, new ShapeKey({name: shapeKeyMetaDta.name, data: data}));
         })
         this.activeShapeKey = this.shapeKeys[0];
-        for (let i = 0; i < meshes.length; i ++) {
-            this.meshes.push(new Mesh({indexs: meshes[i]}));
-        }
         // this.edges.push(new Edge({vertices: [this.vertices[0],this.vertices[1]]}));
         // this.silhouetteEdges.push(new Edge({vertices: [this.vertices[1],this.vertices[2]]}));
         console.log(this)
-        this.texture = object.texture;
-        this.zIndex = object.zIndex;
         this.updateGPUData();
     }
 
@@ -159,8 +143,8 @@ export class BMeshShapeKey {
             this.object.allShapeKeys.push(...shapeKey.data.map((vertex, vertexIndex) => MathVec2.subR(vertex.co, this.vertices[vertexIndex].co)).flat());
             this.object.shapeKeyMetaDatas.push(this.object.createShapeKeyMetaData(shapeKey.name, shapeKeyIndex));
         })
-        const graphicMeshData = app.scene.runtimeData.graphicMeshData;
-        managerForDOMs.update({o: this.object.shapeKeyMetaDatas})
-        graphicMeshData.update(this.object);
+        const bezierModifierData = app.scene.runtimeData.bezierModifierData;
+        managerForDOMs.update({o: this.object.shapeKeyMetaDatas});
+        bezierModifierData.update(this.object);
     }
 }

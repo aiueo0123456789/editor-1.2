@@ -34,16 +34,16 @@ export class Area_Outliner {
                                     true: [
                                         {tagType: "gridBox", axis: "c", allocation: "auto 50% 1fr auto 20%", children: [
                                             {tagType: "icon", src: {path: "/type"}},
-                                            {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                                            {tagType: "dblClickInput", value: "/name"},
                                             {tagType: "padding", size: "10px"},
-                                            {tagType: "input", value: "/visible", type: "checkbox", look: {check: "display", uncheck: "hide"}},
+                                            {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
                                             {tagType: "input", value: "/zIndex", type: "number", min: 0, max: 100, step: 1},
                                         ]},
                                     ],
                                     false: [
                                         {tagType: "gridBox", axis: "c", allocation: "auto 50% 1fr", children: [
                                             {tagType: "icon", src: {path: "/type"}},
-                                            {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
+                                            {tagType: "dblClickInput", value: "/name"},
                                             {tagType: "padding", size: "10px"},
                                         ]},
                                     ]
@@ -51,7 +51,7 @@ export class Area_Outliner {
                             ],
                             false: [
                                 {tagType: "gridBox", axis: "c", allocation: "50% 1fr", children: [
-                                    {tagType: "dblClickInput", value: "/type", options: {tagType: "text"}},
+                                    {tagType: "dblClickInput", value: "/type"},
                                     {tagType: "padding", size: "10px"},
                                 ]},
                             ]

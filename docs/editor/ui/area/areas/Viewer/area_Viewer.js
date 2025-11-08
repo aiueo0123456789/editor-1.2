@@ -12,14 +12,13 @@ import { EdgeJoinTool } from '../../../tools/EdgeJoin.js';
 import { AppendVertex } from '../../../tools/appendVertex.js';
 import { device, format, GPU } from "../../../../utils/webGPU.js";
 import { boolTo0or1, calculateLocalMousePosition, changeParameter, loadFile, range } from '../../../../utils/utility.js';
-import { mathVec2 } from '../../../../utils/mathVec.js';
+import { MathVec2 } from '../../../../utils/mathVec.js';
 import { Camera } from '../../../../core/objects/camera.js';
 import { InputManager } from '../../../../app/inputManager/inputManager.js';
 import { ViewerSpaceData } from './area_ViewerSpaceData.js';
 import { ToolPanelOperator } from '../../../../operators/toolPanelOperator.js';
 import { CreateEdgeTool } from '../../../tools/CreateEdge.js';
 import { Particle } from '../../../../core/objects/particle.js';
-import { AppendPointCommand } from '../../../../commands/mesh/bezier.js';
 import { app } from '../../../../../main.js';
 import { SelectOnlyVertexCommand } from '../../../../commands/utile/selectVertices.js';
 import { managerForDOMs } from '../../../../utils/ui/util.js';
@@ -78,6 +77,7 @@ const useingToolPanelInMode = {
     "ボーン編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "e": ExtrudeMove, "x": DeleteTool},
     "ボーンアニメーション編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
     "メッシュシェイプキー編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
+    "ベジェシェイプキー編集": {"g": TranslateModal, "r": RotateModal, "s": ResizeModal, "i": KeyframeInsertModal},
     "オブジェクト": {"p": ParentPickModal},
 };
 
@@ -136,7 +136,7 @@ export class Area_Viewer {
                                                     true: [
                                                         {tagType: "select", value: (value) => {app.context.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ボーン編集", "ボーンアニメーション編集"], options: {initValue: "オブジェクト"}},
                                                     ], false: [
-                                                        {tagType: "select", value: (value) => {app.context.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ベジェ編集", "ベジェウェイト編集", "ベジェアニメーション編集"], options: {initValue: "オブジェクト"}},
+                                                        {tagType: "select", value: (value) => {app.context.setModeForSelected(value)}, sourceObject: ["オブジェクト", "ベジェ編集", "ベジェウェイト編集", "ベジェシェイプキー編集"], options: {initValue: "オブジェクト"}},
                                                     ]
                                                 }
                                             ],
@@ -267,7 +267,7 @@ export class Area_Viewer {
             if (context.activeObject.type == "グラフィックメッシュ") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (context.currentMode == "オブジェクト") {
-                        if (context.activeObject.animationBlock.activeAnimation && inputManager.consumeKeys(["a"])) {
+                        if (inputManager.consumeKeys(["a"])) {
                             context.setModeForSelected("メッシュシェイプキー編集");
                             // this.modalOperator.changeModals({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
                         } else if (inputManager.consumeKeys(["w"])) {
@@ -300,26 +300,11 @@ export class Area_Viewer {
                         this.toolPanelOperator.changePanels({"p": ParentPickModal});
                     }
                 }
-                // if (context.currentMode == "ボーンアニメーション編集") {
-                //     if (inputManager.consumeKeys(["i"])) {
-                //         const bones = app.context.getSelectBones;
-                //         bones.forEach(bone => {
-                //             app.options.keyframeInsert(bone, app.scene.frame_current);
-                //         })
-                //     }
-                //     if (inputManager.consumeKeys(["x"])) {
-                //         const bones = app.context.getSelectBones;
-                //         bones.forEach(bone => {
-                //             bone.keyframeBlockManager.clearAnimatoin();
-                //         })
-                //     }
-                // }
             } else if (context.activeObject.type == "ベジェモディファイア") {
                 if (inputManager.consumeKeys(["Tab"])) {
                     if (context.currentMode == "オブジェクト") {
                         if (inputManager.consumeKeys(["a"])) {
-                            context.setModeForSelected("ベジェ頂点アニメーション編集");
-                            this.toolPanelOperator.changePanels({"g": TranslateModal, "r": RotateModal, "s": ResizeModal});
+                            context.setModeForSelected("ベジェシェイプキー編集");
                         } else if (inputManager.consumeKeys(["w"])) {
                             context.setModeForSelected("ベジェウェイト編集");
                             this.toolPanelOperator.changePanels({});
@@ -332,20 +317,6 @@ export class Area_Viewer {
                         this.toolPanelOperator.changePanels({"p": ParentPickModal});
                     }
                 }
-                if (context.currentMode == "ベジェ頂点アニメーション編集") {
-                    if (inputManager.consumeKeys(["i"])) {
-                        const vertices = app.context.getSelectVertices;
-                        vertices.forEach(vertex => {
-                            app.options.keyframeInsert(vertex, app.scene.frame_current);
-                        })
-                    }
-                    if (inputManager.consumeKeys(["x"])) {
-                        const vertices = app.context.getSelectVertices;
-                        vertices.forEach(vertex => {
-                            vertex.keyframeBlockManager.clearAnimatoin();
-                        })
-                    }
-                }
             }
         }
         if (context.currentMode == "オブジェクト") {
@@ -353,15 +324,10 @@ export class Area_Viewer {
                 app.context.selectAll();
             }
         }
-        if (context.currentMode == "ベジェ編集") {
-            if (inputManager.consumeKeys(["e"])) {
-                app.operator.appendCommand(new AppendPointCommand());
-            }
-        }
     }
 
     async mousedown(/** @type {InputManager} */ inputManager) {
-        const local = this.convertCoordinate.screenPosFromGPUPos(mathVec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.position), this.canvas.offsetHeight)); // canvasないのlocal座標へ
+        const local = this.convertCoordinate.screenPosFromGPUPos(MathVec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.position), this.canvas.offsetHeight)); // canvasないのlocal座標へ
         this.inputs.click = true;
         this.inputs.clickPosition = local;
         this.inputs.position = local;
@@ -393,8 +359,9 @@ export class Area_Viewer {
         } else if (context.currentMode == "メッシュシェイプキー編集") {
             app.operator.appendCommand(new SelectOnlyVertexCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
             app.operator.execute();
-        } else if (context.currentMode == "ベジェ頂点アニメーション編集") {
-            app.scene.runtimeData.bezierModifierData.selectedForVertices(app.context.activeObject, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
+        } else if (context.currentMode == "ベジェシェイプキー編集") {
+            app.operator.appendCommand(new SelectOnlyVertexCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
+            app.operator.execute();
         } else if (context.currentMode == "ボーンアニメーション編集") {
             app.operator.appendCommand(new SelectOnlyBoneCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
             app.operator.execute();
@@ -423,8 +390,8 @@ export class Area_Viewer {
     }
     async mousemove(inputManager) {
         this.inputs.lastPosition = [...this.inputs.position];
-        const local = this.convertCoordinate.screenPosFromGPUPos(mathVec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.position), this.canvas.offsetHeight)); // canvasないのlocal座標へ
-        mathVec2.sub(this.inputs.movement, local, this.inputs.position);
+        const local = this.convertCoordinate.screenPosFromGPUPos(MathVec2.flipY(calculateLocalMousePosition(this.canvas, inputManager.position), this.canvas.offsetHeight)); // canvasないのlocal座標へ
+        MathVec2.sub(this.inputs.movement, local, this.inputs.position);
         this.inputs.position = local;
 
         let consumed = await this.toolPanelOperator.mousemove(this.inputs); // モーダルオペレータがアクションをおこしたら処理を停止
@@ -440,7 +407,7 @@ export class Area_Viewer {
             this.camera.zoom += inputManager.wheelDelta[1] / 200;
             this.camera.zoom = Math.max(Math.min(this.camera.zoom,this.camera.zoomMax),this.camera.zoomMin);
         } else {
-            this.camera.position = mathVec2.addR(this.camera.position, mathVec2.scaleR([inputManager.wheelDelta[0], -inputManager.wheelDelta[1]], 1 / this.camera.zoom));
+            this.camera.position = MathVec2.addR(this.camera.position, MathVec2.scaleR([inputManager.wheelDelta[0], -inputManager.wheelDelta[1]], 1 / this.camera.zoom));
         }
         this.camera.updateBuffer();
     }
@@ -517,19 +484,19 @@ export class Renderer {
                     if (object.type == "グラフィックメッシュ") {
                         selectObjectOutlineRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                         selectObjectOutlineRenderPass.setBindGroup(2, object.maskRenderGroup);
-                        selectObjectOutlineRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, object.runtimeOffsetData.start.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, object.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                        selectObjectOutlineRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, object.runtimeOffsetData.start.meshesOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, object.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                         selectObjectOutlineRenderPass.setPipeline(selectObjectOutlinePipeline);
                         selectObjectOutlineRenderPass.draw(object.meshesNum * 3, 1, 0, 0);
                     } else if (object.type == "アーマチュア") {
                         selectObjectOutlineRenderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
                         selectObjectOutlineRenderPass.setBindGroup(2, object.objectDataGroup);
                         selectObjectOutlineRenderPass.setPipeline(selectObjectOutlineBoneRenderPipeline);
-                        selectObjectOutlineRenderPass.draw(3 * 2, object.boneNum, 0, 0);
+                        selectObjectOutlineRenderPass.draw(3 * 2, object.bonesNum, 0, 0);
                     } else if (object.type == "ベジェモディファイア") {
                         selectObjectOutlineRenderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
                         selectObjectOutlineRenderPass.setBindGroup(2, object.objectDataGroup);
                         selectObjectOutlineRenderPass.setPipeline(selectObjectOutlineBezierRenderPipeline);
-                        selectObjectOutlineRenderPass.draw(2 * 50, object.pointNum - 1, 0, 0);
+                        selectObjectOutlineRenderPass.draw(2 * 50, object.pointsNum - 1, 0, 0);
                     }
                 })
                 // 処理の終了と送信
@@ -554,7 +521,7 @@ export class Renderer {
                 maskRenderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
                 for (const graphicMesh of maskTexture.renderingObjects) {
                     maskRenderPass.setBindGroup(2, graphicMesh.maskRenderGroup);
-                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    maskRenderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshesOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
                     maskRenderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 }
                 // 処理の終了と送信
@@ -589,10 +556,10 @@ export class Renderer {
             renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
             for (const graphicMesh of app.scene.renderingOrder) {
                 if (graphicMesh.mode == "オブジェクト" && graphicMesh.isInit && graphicMesh.visible) {
-                    renderPass.setBindGroup(2, graphicMesh.renderGroup);
-                    renderPass.setBindGroup(3, alphaBuffers["1"]);
-                    renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
-                    renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
+                    // renderPass.setBindGroup(2, graphicMesh.renderGroup);
+                    // renderPass.setBindGroup(3, alphaBuffers["1"]);
+                    // renderPass.setVertexBuffer(0, app.scene.runtimeData.graphicMeshData.meshes.buffer, graphicMesh.runtimeOffsetData.start.meshesOffset * app.scene.runtimeData.graphicMeshData.meshBlockByteLength, graphicMesh.meshesNum * app.scene.runtimeData.graphicMeshData.meshBlockByteLength);
+                    // renderPass.draw(graphicMesh.meshesNum * 3, 1, 0, 0);
                 } else if (graphicMesh.mode == "メッシュ編集") {
                     const bm = app.scene.editData.getEditObjectByObject(graphicMesh);
                     renderPass.setBindGroup(1, bm.renderingGroup);
@@ -660,12 +627,6 @@ export class Renderer {
                             renderPass.setPipeline(BMSVerticesRenderPipeline);
                             renderPass.draw(4, bms.verticesNum, 0, 0); // 3つの頂点から三角形を表示する * meshNum
                         } else if (graphicMesh.mode == "オブジェクト") {
-                            if (graphicMesh.selected) {
-                                // メッシュ表示
-                                // renderPass.setBindGroup(2, graphicMesh.objectMeshDataGroup);
-                                // renderPass.setPipeline(BMeshsMeshRenderPipeline);
-                                // renderPass.draw(3 * 4, graphicMesh.meshesNum, 0, 0); // (3 * 4) 3つの辺を4つの頂点を持つ四角形で表示する
-                            }
                         }
                     }
                 }
@@ -683,7 +644,7 @@ export class Renderer {
                     renderPass.setPipeline(BArmatureVerticesRenderPipeline);
                     renderPass.draw(6 * 2, ba.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
                     // renderPass.setPipeline(boneRelationshipsRenderPipeline);
-                    // renderPass.draw(4, bm.boneNum, 0, 0); // 4つの頂点から四角形で表示する
+                    // renderPass.draw(4, bm.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
 
                     renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
                     renderPass.setPipeline(boneBoneRenderPipeline);
@@ -692,30 +653,26 @@ export class Renderer {
                     renderPass.setBindGroup(1, baa.renderingGroup);
                     renderPass.setPipeline(BAABoneRenderPipeline);
                     renderPass.draw(4, baa.bonesNum, 0, 0);
-                    // renderPass.setPipeline(BArmatureVerticesRenderPipeline);
-                    // renderPass.draw(6 * 2, baa.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
-                    // renderPass.setPipeline(boneRelationshipsRenderPipeline);
-                    // renderPass.draw(4, bm.boneNum, 0, 0); // 4つの頂点から四角形で表示する
 
                     renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
                     renderPass.setPipeline(boneBoneRenderPipeline);
                 } else {
                     renderPass.setBindGroup(2, armature.objectDataGroup);
-                    renderPass.draw(4, armature.boneNum, 0, 0);
+                    renderPass.draw(4, armature.bonesNum, 0, 0);
                 }
             }
             // renderPass.setPipeline(boneVerticesRenderPipeline);
             // for (const armature of app.scene.objects.armatures) {
             //     if (armature.mode == "ボーン編集") {
             //         renderPass.setBindGroup(2, armature.objectDataGroup);
-            //         renderPass.draw(6 * 2, armature.boneNum, 0, 0);
+            //         renderPass.draw(6 * 2, armature.bonesNum, 0, 0);
             //     }
             // }
             // renderPass.setPipeline(boneRelationshipsRenderPipeline);
             // for (const armature of app.scene.objects.armatures) {
             //     if (armature.mode == "ボーン編集" || armature.mode == "ボーンアニメーション編集") {
             //         renderPass.setBindGroup(2, armature.objectDataGroup);
-            //         renderPass.draw(4, armature.boneNum, 0, 0);
+            //         renderPass.draw(4, armature.bonesNum, 0, 0);
             //     }
             // }
         }
@@ -723,7 +680,7 @@ export class Renderer {
             renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
             renderPass.setPipeline(bezierRenderPipeline);
             for (const bezierModifier of app.scene.objects.bezierModifiers) {
-                if (bezierModifier.mode == "ベジェ編集") {
+                if (bezierModifier.mode == "ベジェ編集" || bezierModifier.mode == "ベジェシェイプキー編集") {
                     /** @type {BBezier} */
                     const bb = app.scene.editData.getEditObjectByObject(bezierModifier);
                     renderPass.setBindGroup(1, bb.renderingGroup);
@@ -736,21 +693,21 @@ export class Renderer {
                     renderPass.setPipeline(bezierRenderPipeline);
                 } else {
                     renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
-                    renderPass.draw(2 * 50, bezierModifier.pointNum - 1, 0, 0);
+                    renderPass.draw(2 * 50, bezierModifier.pointsNum - 1, 0, 0);
                 }
             }
             // for (const bezierModifier of app.scene.objects.bezierModifiers) {
             //     if (bezierModifier.mode == "ベジェ編集") {
             //         const ba = app.scene.editData.getEditObjectByObject(armature);
             //         renderPass.setPipeline(BBezierVerticesRenderPipeline);
-            //         renderPass.draw(2 * 3 * 3, bezierModifier.pointNum, 0, 0);
+            //         renderPass.draw(2 * 3 * 3, bezierModifier.pointsNum, 0, 0);
             //     } else if (bezierModifier.mode == "ベジェウェイト編集") {
             //         renderPass.setPipeline(bezierWeightRenderPipeline);
             //         renderPass.setBindGroup(3, this.viewer.areasConfig.targetWeightIndexGroup);
             //         renderPass.draw(4, bezierModifier.verticesNum, 0, 0);
             //     } else if (bezierModifier.mode == "ベジェ頂点アニメーション編集") {
             //         renderPass.setPipeline(BBezierVerticesRenderPipeline);
-            //         renderPass.draw(2 * 3 * 3, bezierModifier.pointNum, 0, 0);
+            //         renderPass.draw(2 * 3 * 3, bezierModifier.pointsNum, 0, 0);
             //     }
             // }
         }

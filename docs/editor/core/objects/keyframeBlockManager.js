@@ -45,6 +45,8 @@ export class KeyframeBlockManager {
     getSaveData() {
         return {
             type: this.type,
+            parameters: this.parameters,
+            keyframeBlocks: this.parameters.map(key => this.blocksMap.get(key).getSaveData())
         };
     }
 }

@@ -1,7 +1,7 @@
 import { CustomTag } from "../customTag.js";
 
 export class CanvasTag extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.element = document.createElement("div");
         this.element.style.width = "100%";

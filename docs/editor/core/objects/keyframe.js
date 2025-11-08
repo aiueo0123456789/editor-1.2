@@ -88,7 +88,7 @@ export class KeyframeBlock {
     }
     constructor(data = {keys: []}) {
         this.type = "キーフレームブロック";
-        this.id = createID();
+        this.id = data.id ? data.id : createID();
         this.visible = true;
         /** @type {Keyframe[]} */
         this.keys = [];
@@ -152,6 +152,7 @@ export class KeyframeBlock {
     getSaveData() {
         return {
             type: "キーブロック",
+            id: this.id,
             keys: this.keys.map(key => key.getSaveData()),
         };
     }

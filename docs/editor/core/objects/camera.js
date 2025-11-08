@@ -1,4 +1,4 @@
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { device, GPU } from "../../utils/webGPU.js";
 

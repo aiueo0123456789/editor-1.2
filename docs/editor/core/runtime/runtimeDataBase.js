@@ -87,11 +87,11 @@ export class RuntimeDataBase {
         objectInit(this.offsetAndFormulas);
         for (const key in this) {
             const p = this[key];
-            if (p instanceof BufferManager) {
-                let result = p.influenceValues;
+            if (p instanceof BufferManager) { // 全てのbufferで使うオフセットの検出
+                let influenceValues = p.influenceValues;  // サイズ計算で使われる変数
                 let hash;
                 const ids = [];
-                for (const value of result) {
+                for (const value of influenceValues) {
                     if (!alreadyDetected.includes(value)) {
                         alreadyDetected.push(value);
                     }
@@ -99,10 +99,10 @@ export class RuntimeDataBase {
                 }
                 hash = ids.sort((a,b) => a > b).join("*");
                 if (!alreadyFoundID[hash]) {
-                    this.offsetAndFormulas[result.join("*")] = result;
+                    this.offsetAndFormulas[influenceValues.join("*")] = influenceValues;
                     alreadyFoundID[hash] = true;
                 }
-                p.sourceOffsetType = this.offsetNameConverter[result.join("*")];
+                p.sourceOffsetType = this.offsetNameConverter[influenceValues.join("*")];
             }
         }
     }

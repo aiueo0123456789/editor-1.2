@@ -1,3 +1,8 @@
+struct Relationship {
+    child: u32,
+    parent: u32,
+}
+
 struct Bone {
     position: vec2<f32>,
     scale: vec2<f32>,
@@ -55,7 +60,7 @@ mat3x3(
 @group(0) @binding(0) var<storage, read_write> boneMatrixs: array<f32>; // 出力
 @group(0) @binding(1) var<storage, read_write> baseBone: array<Bone>; // ローカルベースボーン
 @group(0) @binding(2) var<storage, read_write> physicsAttachmentDatas: array<PhysicsAttachmentData>; // 物理アタッチメント
-@group(1) @binding(0) var<storage, read> boneIndexs: array<u32>; // 適応するboneのindex
+@group(1) @binding(0) var<storage, read> relationships: array<Relationship>; // 親のindex
 
 fn getMatrix(index: u32) -> mat3x3<f32> {
     let fixIndex = index * 9u;
@@ -82,10 +87,10 @@ fn setMatrix(index: u32, m: mat3x3<f32>) {
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let index = global_id.x;
-    if (index >= arrayLength(&boneIndexs)) {
+    if (index >= arrayLength(&relationships)) {
         return ;
     }
-    let boneIndex = boneIndexs[index];
+    let boneIndex = relationships[index].child;
     var attachmentData = physicsAttachmentDatas[boneIndex];
     let mix = attachmentData.mix;
     if (mix == 0.0) {

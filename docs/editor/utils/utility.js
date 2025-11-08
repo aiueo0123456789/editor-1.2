@@ -1,5 +1,5 @@
 import { managerForDOMs } from "./ui/util.js";
-import { mathVec2 } from "./mathVec.js";
+import { MathVec2 } from "./mathVec.js";
 
 export function clearPlainObject(plainObject) {
     for (const key in plainObject) {
@@ -28,18 +28,18 @@ export function indexOfSplice(array, deleteValue) {
 }
 
 export function hitTestPointTriangle(a, b, c, p) {
-    let ab = mathVec2.subR(b, a);
-    let bp = mathVec2.subR(p, b);
+    let ab = MathVec2.subR(b, a);
+    let bp = MathVec2.subR(p, b);
 
-    let bc = mathVec2.subR(c, b);
-    let cp = mathVec2.subR(p, c);
+    let bc = MathVec2.subR(c, b);
+    let cp = MathVec2.subR(p, c);
 
-    let ca = mathVec2.subR(a, c);
-    let ap = mathVec2.subR(p, a);
+    let ca = MathVec2.subR(a, c);
+    let ap = MathVec2.subR(p, a);
 
-    let c1 = mathVec2.crossR(ab, bp);
-    let c2 = mathVec2.crossR(bc, cp);
-    let c3 = mathVec2.crossR(ca, ap);
+    let c1 = MathVec2.crossR(ab, bp);
+    let c2 = MathVec2.crossR(bc, cp);
+    let c3 = MathVec2.crossR(ca, ap);
     return (c1 > 0.0 && c2 > 0.0 && c3 > 0.0) || (c1 < 0.0 && c2 < 0.0 && c3 < 0.0);
 }
 
@@ -195,7 +195,7 @@ export function boolTo0or1(bool) {
 
 export function calculateLocalMousePosition(/** @type {HTMLElement} */dom, position, pixelDensity = 1) {
     const rect = dom.getBoundingClientRect();
-    return mathVec2.scaleR(mathVec2.subR(position, [rect.left, rect.top]), pixelDensity);
+    return MathVec2.scaleR(MathVec2.subR(position, [rect.left, rect.top]), pixelDensity);
 }
 
 export function createArrayFromHashKeys(hash) {
@@ -207,6 +207,7 @@ export function createArrayFromHashKeys(hash) {
 }
 
 export function changeParameter(object, parameter, newValue) {
+    // if (Array.isArray(object)) console.log({o: object, i: parameter}, newValue);
     object[parameter] = newValue;
     managerForDOMs.update({o: object, i: parameter});
 }

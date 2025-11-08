@@ -2,7 +2,7 @@ import { CustomTag } from "../customTag.js";
 import { createTag } from "../util.js";
 
 export class PanelTag extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.element = createTag(t, "div", {class: "sectionOrPanel"});
         this.element.setAttribute("name", child.name);
@@ -39,7 +39,7 @@ export class PanelTag extends CustomTag {
         });
         this.children = [];
         if (child.children) {
-            this.children = creatorForUI.createFromChildren(this.main, child.children, searchTarget, flag);
+            this.children = creatorForUI.createFromChildren(this.main, this, child.children, searchTarget, flag);
         }
     }
 }

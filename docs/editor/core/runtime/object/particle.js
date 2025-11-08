@@ -17,13 +17,10 @@ export class ParticleData extends RuntimeDataBase {
         this.animationApplyGroup = null;
         this.animationApplyParentGroup = null;
 
-        this.blockByteLength = 2 * 4 * 3; // データ一塊のバイト数: vec2<f32> * 3
-        this.weightBlockByteLength = (4 + 4) * 4 * 3;
-
         this.offsetCreate();
     }
 
-    updateBaseData(/** @type {Particle} */particle) {
+    update(/** @type {Particle} */particle) {
         this.updateAllocationData(particle);
     }
 

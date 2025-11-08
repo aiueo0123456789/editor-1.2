@@ -43,7 +43,7 @@ function createUtil(t, name) {
 }
 
 export class CodeEditorTag extends CustomTag {
-    constructor (creatorForUI,t,searchTarget,child,flag) {
+    constructor (creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         const builtInFunction = [{name: "noise", return: "f32"}, {name: "arrayLength", return: "u32"}, {name: "vec2f", return: "f32"}, {name: "vec3f", return: "f32"}, {name: "vec4f", return: "f32"}, {name: "fract", return: "f32"}, {name: "floor", return: "f32"}, {name: "mix", return: "f32"}, {name: "abs", return: "f32"}, {name: "dot", return: "f32"}];
         this.sourceCode = creatorForUI.getParameter(searchTarget, child.source, 1);

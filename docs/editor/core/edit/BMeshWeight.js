@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
-import { mathMat3x3 } from "../../utils/mathMat.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathMat3x3 } from "../../utils/mathMat.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { createArrayNAndFill, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
@@ -80,12 +80,12 @@ export class BMeshWeight {
         return this.vertices.map((vertex, vertexIndex) => {
             let vertexCo = [0,0];
             this.weightBlocks.forEach((weightBlock, boneIndex) => {
-                mathVec2.add(vertexCo,vertexCo,
-                    mathVec2.scaleR(
-                        mathMat3x3.multiplyMatrix3x3WithVec2(
+                MathVec2.add(vertexCo,vertexCo,
+                    MathVec2.scaleR(
+                        MathMat3x3.multiplyMatrix3x3WithVec2(
                             this.bones[boneIndex].poseMatrix,
-                            mathMat3x3.multiplyMatrix3x3WithVec2(
-                                mathMat3x3.invertMatrix3x3(
+                            MathMat3x3.multiplyMatrix3x3WithVec2(
+                                MathMat3x3.invertMatrix3x3(
                                     this.bones[boneIndex].baseMatrix
                                 ),
                                 vertex.co
@@ -121,7 +121,7 @@ export class BMeshWeight {
             armatureData.baseBoneMatrix.getObjectData(object.parent),
             armatureData.renderingBoneMatrix.getObjectData(object.parent),
         ]);
-        this.weightBlocks = object.parent.bonesMetaData.map((bone, boneIndex) => new WeightBlock({name: bone.name, index: boneIndex, weights: createArrayNAndFill(coordinate.length, 0)}));
+        this.weightBlocks = object.parent.boneMetaDatas.map((bone, boneIndex) => new WeightBlock({name: bone.name, index: boneIndex, weights: createArrayNAndFill(coordinate.length, 0)}));
         for (let vertexIndex = 0; vertexIndex < coordinate.length; vertexIndex ++) {
             vertexWeightBlocks[vertexIndex].slice(0,4).forEach((boneIndex, localIndex) => {
                 const weightValue = vertexWeightBlocks[vertexIndex].slice(4,8)[localIndex];
@@ -132,7 +132,7 @@ export class BMeshWeight {
             this.vertices.push(new Vert({co: coordinate[vertexIndex], uv: uvs[vertexIndex]}));
         }
         for (let boneIndex = 0; boneIndex < boneBaseMatrixs.length; boneIndex ++) {
-            this.bones.push(new Bone({baseMatrix: mathMat3x3.mat3x3ToArray(boneBaseMatrixs[boneIndex]), poseMatrix: mathMat3x3.mat3x3ToArray(bonePoseMatrixs[boneIndex])}));
+            this.bones.push(new Bone({baseMatrix: MathMat3x3.mat3x3ToArray(boneBaseMatrixs[boneIndex]), poseMatrix: MathMat3x3.mat3x3ToArray(bonePoseMatrixs[boneIndex])}));
         }
         for (let i = 0; i < meshes.length; i ++) {
             this.meshes.push(new Mesh({indexs: meshes[i]}));

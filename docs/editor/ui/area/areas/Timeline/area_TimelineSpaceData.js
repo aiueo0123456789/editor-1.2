@@ -3,7 +3,7 @@ import { BArmatureAnimation } from "../../../../core/edit/BArmatureAnimation.js"
 import { BKeyframeBlockManager } from "../../../../core/edit/BKeyframeBlockManager.js";
 import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
 import { Keyframe, KeyframeBlock } from "../../../../core/objects/keyframe.js";
-import { mathVec2 } from "../../../../utils/mathVec.js";
+import { MathVec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {
     constructor() {
@@ -31,7 +31,7 @@ export class TimelineSpaceData {
     }
 
     getSelectVerticesCenter() {
-        return mathVec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
+        return MathVec2.averageR(this.selectVertices.map(vertex => vertex.worldPosition));
     }
 
     /** @type {KeyframeBlock[]} */

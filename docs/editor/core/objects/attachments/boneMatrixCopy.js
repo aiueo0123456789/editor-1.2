@@ -27,7 +27,6 @@ export class Attachment_BoneMatrixCopy {
         this.targetBone = targetBone;
         /** @type {Bone} */
         this.sourceBone = null;
-        this.editor = new Editor(this);
         this.encoderType = "command";
     }
 

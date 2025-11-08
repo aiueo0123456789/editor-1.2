@@ -42,21 +42,27 @@ export class CustomTag {
         this.customTag = true;
         this.isRemoved = false;
         this.dataBlocks = [];
+        this.notRemoveList = [];
     }
 
     remove() {
         if (this.isRemoved) {
-            console.warn("すでに削除済みです")
+            console.trace("すでに削除済みです", this);
+        } else {
+            // console.trace("削除されました", this);
         }
         for (const key in this) {
-            if (this[key] instanceof HTMLElement) {
-                this[key].remove();
-                this[key] = null;
+            if (!this.notRemoveList.includes(key)) {
+                if (this[key] instanceof HTMLElement) {
+                    this[key].remove();
+                    this[key] = null;
+                }
             }
         }
         for (const dataBlock of this.dataBlocks) {
             managerForDOMs.deleteDataBlock(dataBlock);
         }
+        this.dataBlocks.length = 0;
         this.children?.forEach(tag => {
             if (isFunction(tag?.remove)) tag.remove()
         });

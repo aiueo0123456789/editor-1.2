@@ -1,7 +1,7 @@
 import { app } from "../../../../../main.js";
 import { InputManager } from "../../../../app/inputManager/inputManager.js";
 import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
-import { mathVec2 } from "../../../../utils/mathVec.js";
+import { MathVec2 } from "../../../../utils/mathVec.js";
 import { resizeObserver } from "../../../../utils/ui/resizeObserver.js";
 import { createID, managerForDOMs } from "../../../../utils/ui/util.js";
 import { calculateLocalMousePosition, changeParameter, errorCut, isPointInEllipse } from "../../../../utils/utility.js";
@@ -49,7 +49,7 @@ function update(object, groupID, others, DOMs) {
 
     const gridRender = (gap, offset, width, color, string = false) => {
         const leftDown = o.canvasToWorld([0,o.canvasSize[1]]);
-        const decimalOffset = mathVec2.modR(mathVec2.subR([0,0],leftDown), gap);
+        const decimalOffset = MathVec2.modR(MathVec2.subR([0,0],leftDown), gap);
         for (let x = 0; x < o.canvas.width / o.zoom[0]; x += gap[0]) {
             const wx = o.worldToCanvas([x + leftDown[0] + decimalOffset[0] + offset[0],0])[0];
             line([wx, o.canvas.height], [wx,0], width, color);
@@ -93,7 +93,7 @@ function update(object, groupID, others, DOMs) {
     }
 
     const gap = [getGridStep(o.zoom[0]),getGridStep(o.zoom[1])];
-    const bigGap = mathVec2.scaleR(gap, 5);
+    const bigGap = MathVec2.scaleR(gap, 5);
 
     gridRender(gap, [0,0], 4, "rgb(72, 72, 72)");
     gridRender(bigGap, [0,0], 5, "rgb(18, 18, 18)", true);
@@ -200,68 +200,68 @@ export class Area_Timeline {
                         ]},
                     ]},
                     {tagType: "grid", axis: "c", child1: [
-                        {tagType: "outliner", name: "outliner", id: "overview",
-                            updateEventTarget: "選択物",
-                            options: {
-                                arrange: false,
-                                clickEventFn: (event, object) => {
-                                    // app.context.setSelectedObject(object, app.input.keysDown["Ctrl"]);
-                                    // app.context.setActiveObject(object);
-                                    event.stopPropagation();
-                                }, rangeSelectEventFn: (event, array, startIndex, endIndex) => {
-                                    // let minIndex = Math.min(startIndex, endIndex);
-                                    // let maxIndex = Math.max(startIndex, endIndex);
-                                    // for (let i = minIndex; i < maxIndex; i ++) {
-                                    //     app.context.setSelectedObject(array[i], true);
-                                    // }
-                                    // app.context.setActiveObject(array[endIndex]);
-                                },
-                                activeSource: {object: "context", parameter: "activeObject"}, selectSource: {object: "context/selectedObjects"}
-                            },
-                            withObject: "context/getSelcetInSelectedObject",
-                            updateEventTarget: ["頂点選択","ボーン選択"],
-                            loopTarget: {
-                                parameter: "type",
-                                loopTargets: {
-                                    "アーマチュア": ["/allBone"],
-                                    "ボーン": ["/keyframeBlockManager/blocks"],
-                                    "ベジェモディファイア": ["/allPoint"],
-                                    "ポイント": ["/basePoint/keyframeBlockManager/blocks", "/baseLeftControlPoint/keyframeBlockManager/blocks", "/baseRightControlPoint/keyframeBlockManager/blocks"],
-                                    "キーフレームブロックマネージャー": ["/blocks"],
-                                    others: ["/animationBlock/animations","/keyframeBlockManager/blocks"]
-                                }
-                            },
-                            structures: [
-                                {tagType: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
-                                    true: [
-                                        {tagType: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
-                                            {tagType: "icon", src: {path: "/type"}},
-                                            {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
-                                            {tagType: "padding", size: "10px"},
-                                            {tagType: "dblClickInput", value: "/targetValue", options: {tagType: "text"}},
-                                        ]}
-                                    ],
-                                    false: [
-                                        {tagType: "if", formula: {source: "/type", conditions: "==", value: "ボーン"},
-                                            true: [
-                                                {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {tagType: "icon", src: {path: "/type"}},
-                                                    {tagType: "padding", size: "10px"},
-                                                    {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
-                                                ]}
-                                            ],
-                                            false: [
-                                                {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
-                                                    {tagType: "icon", src: {path: "/type"}},
-                                                    {tagType: "padding", size: "10px"},
-                                                    {tagType: "dblClickInput", value: "/name", options: {tagType: "text"}},
-                                                ]}
-                                            ]
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
+                        // {tagType: "outliner", name: "outliner", id: "overview",
+                        //     updateEventTarget: "選択物",
+                        //     options: {
+                        //         arrange: false,
+                        //         clickEventFn: (event, object) => {
+                        //             // app.context.setSelectedObject(object, app.input.keysDown["Ctrl"]);
+                        //             // app.context.setActiveObject(object);
+                        //             event.stopPropagation();
+                        //         }, rangeSelectEventFn: (event, array, startIndex, endIndex) => {
+                        //             // let minIndex = Math.min(startIndex, endIndex);
+                        //             // let maxIndex = Math.max(startIndex, endIndex);
+                        //             // for (let i = minIndex; i < maxIndex; i ++) {
+                        //             //     app.context.setSelectedObject(array[i], true);
+                        //             // }
+                        //             // app.context.setActiveObject(array[endIndex]);
+                        //         },
+                        //         activeSource: {object: "context", parameter: "activeObject"}, selectSource: {object: "context/selectedObjects"}
+                        //     },
+                        //     withObject: "context/getSelcetInSelectedObject",
+                        //     updateEventTarget: ["頂点選択","ボーン選択"],
+                        //     loopTarget: {
+                        //         parameter: "type",
+                        //         loopTargets: {
+                        //             "アーマチュア": ["/allBone"],
+                        //             "ボーン": ["/keyframeBlockManager/blocks"],
+                        //             "ベジェモディファイア": ["/allPoint"],
+                        //             "ポイント": ["/basePoint/keyframeBlockManager/blocks", "/baseLeftControlPoint/keyframeBlockManager/blocks", "/baseRightControlPoint/keyframeBlockManager/blocks"],
+                        //             "キーフレームブロックマネージャー": ["/blocks"],
+                        //             others: ["/keyframeBlockManager/blocks"]
+                        //         }
+                        //     },
+                        //     structures: [
+                        //         {tagType: "if", formula: {source: "/type", conditions: "==", value: "キーフレームブロック"},
+                        //             true: [
+                        //                 {tagType: "gridBox", axis: "c", allocation: "auto auto 1fr 50%", children: [
+                        //                     {tagType: "icon", src: {path: "/type"}},
+                        //                     {tagType: "input", type: "checkbox", checked: "/visible", look: {check: "display", uncheck: "hide"}},
+                        //                     {tagType: "padding", size: "10px"},
+                        //                     {tagType: "dblClickInput", value: "/targetValue"},
+                        //                 ]}
+                        //             ],
+                        //             false: [
+                        //                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "ボーン"},
+                        //                     true: [
+                        //                         {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                        //                             {tagType: "icon", src: {path: "/type"}},
+                        //                             {tagType: "padding", size: "10px"},
+                        //                             {tagType: "dblClickInput", value: "/name"},
+                        //                         ]}
+                        //                     ],
+                        //                     false: [
+                        //                         {tagType: "gridBox", axis: "c", allocation: "auto 1fr 50%", children: [
+                        //                             {tagType: "icon", src: {path: "/type"}},
+                        //                             {tagType: "padding", size: "10px"},
+                        //                             {tagType: "dblClickInput", value: "/name"},
+                        //                         ]}
+                        //                     ]
+                        //                 }
+                        //             ]
+                        //         }
+                        //     ]
+                        // },
                     ],child2: [
                         {tagType: "box", id: "canvasContainer", style: "width: 100%; height: 100%; position: relative;", children: [
                             {tagType: "html", tag: "canvas", id: "timelineCanvasForGrid", style: "width: 100%; height: 100%; position: absolute; backgroundColor: var(--sub3Color);"},
@@ -308,29 +308,29 @@ export class Area_Timeline {
     }
 
     clipToCanvas(p) {
-        return mathVec2.mulR([p[0] / 2 + 0.5, 1 - (p[1] / 2 + 0.5)], this.canvasSize); // -1 ~ 1を0 ~ 1にしてyを0 ~ 1から1 ~ 0にしてcanvasSizeをかける
+        return MathVec2.mulR([p[0] / 2 + 0.5, 1 - (p[1] / 2 + 0.5)], this.canvasSize); // -1 ~ 1を0 ~ 1にしてyを0 ~ 1から1 ~ 0にしてcanvasSizeをかける
     }
 
     worldToCamera(p) {
-        return mathVec2.mulR(mathVec2.subR(p, this.camera), mathVec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
+        return MathVec2.mulR(MathVec2.subR(p, this.camera), MathVec2.scaleR(this.zoom, this.pixelDensity)); // (p - camera) * (zoom * pixelDensity)
     }
 
     cameraToWorld(p) {
-        return mathVec2.addR(mathVec2.divR(p, mathVec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
+        return MathVec2.addR(MathVec2.divR(p, MathVec2.scaleR(this.zoom,this.pixelDensity)), this.camera); // p / (zoom * pixelDensity) + camera
     }
 
     worldToClip(p) {
-        return mathVec2.divR(this.worldToCamera(p), mathVec2.reverseScaleR(this.canvasSize, 2)); // worldToCamera(p) / (canvasSize / 2)
+        return MathVec2.divR(this.worldToCamera(p), MathVec2.reverseScaleR(this.canvasSize, 2)); // worldToCamera(p) / (canvasSize / 2)
     }
 
     clipToWorld(p) {
-        return this.cameraToWorld(mathVec2.mulR(p, mathVec2.reverseScaleR(this.canvasSize, 2))); // cameraToWorld(y * (canvasSize / 2)) = p
+        return this.cameraToWorld(MathVec2.mulR(p, MathVec2.reverseScaleR(this.canvasSize, 2))); // cameraToWorld(y * (canvasSize / 2)) = p
     }
 
     canvasToClip(p) {
-        const a = mathVec2.divR(p,this.canvasSize);
+        const a = MathVec2.divR(p,this.canvasSize);
         a[1] = 1 - a[1];
-        return mathVec2.subR(mathVec2.scaleR(a, 2), [1,1]); // canvasで割ってyを1 ~ 0から 0 ~ 1にして-1 ~ 1
+        return MathVec2.subR(MathVec2.scaleR(a, 2), [1,1]); // canvasで割ってyを1 ~ 0から 0 ~ 1にして-1 ~ 1
     }
 
     canvasToWorld(p) {
@@ -371,13 +371,13 @@ export class Area_Timeline {
         }
         if (inputManager.keysDown["c"]) {
             for (const keyData of this.spaceData.getAllKeyframe) {
-                if (isPointInEllipse(world, keyData.point.worldPosition, mathVec2.divR([10,10],this.zoom))) {
+                if (isPointInEllipse(world, keyData.point.worldPosition, MathVec2.divR([10,10],this.zoom))) {
                     keyData.pointSelected = true;
                 }
-                if (isPointInEllipse(world, keyData.leftHandle.worldPosition, mathVec2.divR([10,10],this.zoom))) {
+                if (isPointInEllipse(world, keyData.leftHandle.worldPosition, MathVec2.divR([10,10],this.zoom))) {
                     keyData.leftHandleSelected = true;
                 }
-                if (isPointInEllipse(world, keyData.rightHandle.worldPosition, mathVec2.divR([10,10],this.zoom))) {
+                if (isPointInEllipse(world, keyData.rightHandle.worldPosition, MathVec2.divR([10,10],this.zoom))) {
                     keyData.rightHandleSelected = true;
                 }
             }
@@ -386,19 +386,19 @@ export class Area_Timeline {
             let minKey = null;
             let minPoint = null;
             for (const keyData of this.spaceData.getAllKeyframe) {
-                let dist = mathVec2.distanceR(world, keyData.point.worldPosition);
+                let dist = MathVec2.distanceR(world, keyData.point.worldPosition);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
                     minPoint = "point";
                 }
-                dist = mathVec2.distanceR(world, keyData.wLeftHandle);
+                dist = MathVec2.distanceR(world, keyData.wLeftHandle);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
                     minPoint = "leftHandle";
                 }
-                dist = mathVec2.distanceR(world, keyData.wRightHandle);
+                dist = MathVec2.distanceR(world, keyData.wRightHandle);
                 if (dist < minDist) {
                     minDist = dist;
                     minKey = keyData;
@@ -425,10 +425,10 @@ export class Area_Timeline {
         managerForDOMs.update({o: "タイムライン-canvas", g: this.groupID});
     }
     async mousemove(inputManager) {
-        const local = mathVec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.position), this.pixelDensity);
+        const local = MathVec2.scaleR(calculateLocalMousePosition(this.canvas, inputManager.position), this.pixelDensity);
         const world = this.canvasToWorld(local);
         this.inputs.lastPosition = [...this.inputs.position];
-        mathVec2.sub(this.inputs.movement, world, this.inputs.position);
+        MathVec2.sub(this.inputs.movement, world, this.inputs.position);
         this.inputs.position = world;
 
         if (this.frameBarDrag) {

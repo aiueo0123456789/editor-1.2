@@ -20,7 +20,7 @@ function isFilterIncluded(object, filter = "all") {
 }
 
 export class OutlinerTag extends CustomTag {
-    constructor(creatorForUI,t,searchTarget,child,flag) {
+    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         const options = child.options;
         const isSourceFunction = isFunction(child.withObject);
@@ -78,7 +78,7 @@ export class OutlinerTag extends CustomTag {
                         const targetType = child[loopTarget.parameter];
                         const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"] ? loopTarget.loopTargets["others"] : [];
                         for (const l of loopTargets) {
-                            const nextChildren = creatorForUI.getParameter(child, l);
+                            const nextChildren = creatorForUI.getParameter({normal: child, special: {}}, l);
                             if (nextChildren) { // 子要素がある場合ループする
                                 const fnResult = getLoopChildren(nextChildren, resultObject);
                                 if (fnResult.filter) {
@@ -88,7 +88,7 @@ export class OutlinerTag extends CustomTag {
                         }
                     } else {
                         for (const l of loopTarget) {
-                            const nextChildren = creatorForUI.getParameter(child, l);
+                            const nextChildren = creatorForUI.getParameter({normal: child, special: {}}, l);
                             if (nextChildren) { // 子要素がある場合ループする
                                 const fnResult = getLoopChildren(nextChildren, resultObject);
                                 if (fnResult.filter) {
@@ -119,24 +119,24 @@ export class OutlinerTag extends CustomTag {
             const allObject = getAllObject();
             // 削除があった場合対応するDOMを削除
             for (const object of lastUpdateObjects) {
-                const data = managerForDOMs.get({o: object, g: creatorForUI.groupID, i: outlinerID});
                 /** @type {HTMLElement} */
-                const childrenElement = data[0].others.childrenContainer;
-                this.scrollable.append(...childrenElement.children);
+                // const childrenElement = data[0].others.childrenContainer;
+                // this.scrollable.append(...childrenElement.children);
                 if (!allObject.includes(object)) {
+                    const container = this.objectDomMap.get(object);
+                    container.remove();
+                    // data[0].others.container.remove();
+                    // data[0].others.container = null;
+                    // data[0].others.myContainer.remove();
+                    // data[0].others.myContainer = null;
+                    // data[0].others.childrenContainer.remove();
+                    // data[0].others.childrenContainer = null;
+                    // for (const tag of data[0].others.children) {
+                    //     tag.remove();
+                    // }
+                    // data[0].others.children.length = 0;
+                    // data[0].others = null;
                     this.objectDomMap.delete(object);
-                    data[0].others.container.remove();
-                    data[0].others.container = null;
-                    data[0].others.myContainer.remove();
-                    data[0].others.myContainer = null;
-                    data[0].others.childrenContainer.remove();
-                    data[0].others.childrenContainer = null;
-                    for (const tag of data[0].others.children) {
-                        tag.remove();
-                    }
-                    data[0].others.children.length = 0;
-                    data[0].others = null;
-                    managerForDOMs.delete({o: object, g: creatorForUI.groupID, i: outlinerID});
                 }
             }
             // 追加があった場合新規作成
@@ -168,41 +168,42 @@ export class OutlinerTag extends CustomTag {
                     });
 
                     const upContainer = createTag(container, "div", {style: "display: grid; gridTemplateColumns: auto 1fr; height: fit-content;"});
-                    const visibleCheck = new InputCheckboxTag(this,upContainer,{}, {tagType: "input", type: "checkbox", look: {check: "down", uncheck: "right"}},"defo");
+                    const visibleCheck = new InputCheckboxTag(null,upContainer,this,{}, {tagType: "input", type: "checkbox", look: {check: "down", uncheck: "right"}},"defo");
                     visibleCheck.checkbox.checked = true;
                     /** @type {HTMLElement} */
                     const myContainer = createTag(upContainer, "div");
                     const childrenContainer = createTag(container, "div", {style: "marginLeft: 10px; height: fit-content;"});
-                    const children = creatorForUI.createFromChildren(myContainer, structures, object, flag);
+                    const children = creatorForUI.createFromChildren(myContainer, this, structures, {normal: object, special: {}}, flag);
                     visibleCheck.checkbox.addEventListener("change", () => {
                         childrenContainer.classList.toggle("hidden");
                     })
                     this.objectDomMap.set(object, container);
-                    managerForDOMs.set({o: object, g: creatorForUI.groupID, i: outlinerID, f: flag}, null, {container, myContainer, childrenContainer, children}); // セット
                 }
             }
             lastUpdateObjects = [...allObject];
             // ヒエラルキーをセット
-            const looper = (children,targetDOM = this.scrollable) => {
+            const looper = (children, targetDOM = this.scrollable) => {
                 const fn0 = (child) => {
                     if (allObject.includes(child)) {
                         try {
-                            const managerObject = managerForDOMs.get({o: child, g: creatorForUI.groupID, i: outlinerID})[0].others;
-                            targetDOM.append(managerObject.container);
+                            // const managerObject = managerForDOMs.get({o: child, g: creatorForUI.groupID, i: outlinerID})[0].others;
+                            /** @type {HTMLElement} */
+                            const container = this.objectDomMap.get(child);
+                            targetDOM.append(container);
                             if (loopTargetIsPlainObject) {
                                 const targetType = child[loopTarget.parameter];
                                 const loopTargets = loopTarget.loopTargets[targetType] ? loopTarget.loopTargets[targetType] : loopTarget.loopTargets["others"];
                                 for (const l of loopTargets) {
-                                    const nextChildren = creatorForUI.getParameter(child, l);
+                                    const nextChildren = creatorForUI.getParameter({normal: child, special: {}}, l);
                                     if (nextChildren) { // 子要素がある場合ループする
-                                        looper(nextChildren, managerObject.childrenContainer);
+                                        looper(nextChildren, container.children[1]);
                                     }
                                 }
                             } else {
                                 for (const l of loopTarget) {
-                                    const nextChildren = creatorForUI.getParameter(child, l);
+                                    const nextChildren = creatorForUI.getParameter({normal: child, special: {}}, l);
                                     if (nextChildren) { // 子要素がある場合ループする
-                                        looper(nextChildren, managerObject.childrenContainer);
+                                        looper(nextChildren, container.children[1]);
                                     }
                                 }
                             }

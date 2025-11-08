@@ -2,7 +2,7 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { ResizeCommand } from "../../commands/transform/transform.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class ResizeModal {
@@ -70,7 +70,7 @@ export class ResizeModal {
     mousemove(/** @type {InputManager} */inputManager) {
         // this.values[0] += inputManager.position[0];
         // this.values[1] += inputManager.position[1];
-        mathVec2.div(this.values, mathVec2.subR(inputManager.position, this.center), mathVec2.subR(this.startPosition, this.center));
+        MathVec2.div(this.values, MathVec2.subR(inputManager.position, this.center), MathVec2.subR(this.startPosition, this.center));
         managerForDOMs.update({o: this.values});
         return true;
     }

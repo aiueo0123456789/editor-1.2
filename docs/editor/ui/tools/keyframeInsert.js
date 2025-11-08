@@ -1,6 +1,4 @@
 import { app } from "../../../main.js";
-import { DeleteVerticesCommand } from "../../commands/mesh/mesh.js";
-import { BoneDelete } from "../../commands/bone/bone.js";
 import { KeyframeInsertCommand } from "../../commands/animation/keyframeInsert.js";
 
 export class KeyframeInsertModal {

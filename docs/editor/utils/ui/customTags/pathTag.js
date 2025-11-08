@@ -4,52 +4,53 @@ import { CustomTag } from "../customTag.js";
 import { createID, createTag, managerForDOMs, removeHTMLElementInObject } from "../util.js";
 
 export class PathTag extends CustomTag {
-    constructor(/** @type {CreatorForUI} */creatorForUI,t,searchTarget,child,flag) {
+    constructor(/** @type {CreatorForUI} */creatorForUI,/** @type {HTMLElement}} */t,parent,searchTarget,child,flag) {
         super();
-        const elementInsertIndex = t.children.length;
+        if (parent instanceof PathTag) { // 親がpathTagの場合特殊
+            this.element = parent.element;
+            this.parentElement = parent.parentElement;
+            this.notRemoveList = ["element", "parentElement"];
+        } else {
+            this.notRemoveList = ["parentElement"];
+            this.parentElement = t;
+            this.element = createTag(t, "div", {style: "width: 0px; height: 0px; position: absolute;"})
+        };
         this.children = [];
         const myFlag = createID();
         this.isRemoved = false;
         const childrenReset = () => {
             // managerForDOMs.delete({f: myFlag});
-            console.log(child);
-            console.log([...this.children]);
             // 関連づけられていない小要素を削除
             for (const childTag of this.children) {
-                if (isFunction(childTag.remove)) {
-                    childTag.remove();
-                }
-                removeHTMLElementInObject(childTag);
+                if (isFunction(childTag.remove)) childTag.remove();
             }
             this.children.length = 0;
-            const keep = createTag(null, "div");
+            const keep = createTag(null, "div", {style: "width: 0px; height: 0px;"});
             if (child.children) {
                 const o = creatorForUI.getParameter(searchTarget, child.sourceObject, 2);
-                console.log(searchTarget, child.sourceObject,o);
                 if (o) {
                     if (isFunction(o)) {
-                        this.children = creatorForUI.createFromChildren(keep, child.children, o(), myFlag);
+                        this.children = creatorForUI.createFromChildren(keep, this, child.children, {normal: o(), special: {}}, myFlag);
                     } else if (o instanceof ParameterReference) {
-                        // console.warn("伝播できません", o)
+                        console.warn("伝播できません", o)
                         if ("errorChildren" in child) {
-                            this.children = creatorForUI.createFromChildren(keep, child.errorChildren, {}, myFlag);
+                            this.children = creatorForUI.createFromChildren(keep, this, child.errorChildren, {normal: {}, special: {}}, myFlag);
                         }
                     } else {
-                        this.children = creatorForUI.createFromChildren(keep, child.children, o, myFlag);
+                        this.children = creatorForUI.createFromChildren(keep, this, child.children, {normal: o, special: {}}, myFlag);
                     }
                 }
-                // console.log();
             }
-            for (const childTag of Array.from(keep.children).reverse()) {
-                t.insertBefore(childTag, t.children[elementInsertIndex]);
+            for (const childTag of Array.from(keep.children)) {
+                this.parentElement.insertBefore(childTag, this.element);
             }
             keep.remove();
         }
         const setUpdateEventTarget = (updateEventTarget) => {
             if (updateEventTarget.path) {
-                creatorForUI.setUpdateEventByPath(searchTarget, updateEventTarget.path, childrenReset, flag);
+                this.dataBlocks = [creatorForUI.setUpdateEventByPath(searchTarget, updateEventTarget.path, childrenReset, flag)];
             } else { // 文字列に対応
-                managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag},childrenReset);
+                this.dataBlocks = [managerForDOMs.set({o: updateEventTarget, g: creatorForUI.groupID, f: flag},childrenReset)];
             }
         }
         if (Array.isArray(child.updateEventTarget)) {

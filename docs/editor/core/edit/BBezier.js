@@ -1,5 +1,4 @@
 import { app } from "../../../main.js";
-import { mathVec2 } from "../../utils/mathVec.js";
 import { roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { BezierModifier } from "../objects/bezierModifier.js";
@@ -110,16 +109,10 @@ export class BBezier {
 
     toRutime() {
         this.object.allVertices.length = 0;
-        this.object.allUVs.length = 0;
         this.object.allWeightBlocks.length = 0;
-        this.object.allMeshes.length = 0;
         for (const vert of this.vertices) {
             this.object.allVertices.push(...vert.co);
-            this.object.allUVs.push(...vert.uv);
             this.object.allWeightBlocks.push(...vert.weightBlock);
-        }
-        for (const mesh of this.meshes) {
-            this.object.allMeshes.push(...this.getMeshLoop(mesh));
         }
         const bezierModifierData = app.scene.runtimeData.bezierModifierData;
         bezierModifierData.update(this.object);

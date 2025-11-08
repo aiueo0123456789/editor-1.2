@@ -1,7 +1,6 @@
 import { app } from "../../../main.js";
-import { ChangeParameterCommand } from "../../commands/utile/utile.js";
-import { mathMat3x3 } from "../../utils/mathMat.js";
-import { mathVec2 } from "../../utils/mathVec.js";
+import { MathMat3x3 } from "../../utils/mathMat.js";
+import { MathVec2 } from "../../utils/mathVec.js";
 import { changeParameter, range, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
@@ -20,11 +19,11 @@ class Bone {
         this.color = data.color;
 
         this.baseWorldBoneData = {x: data.base[0], y: data.base[1], sx: data.base[2], sy: data.base[3], r: data.base[4], l: data.base[5]};
-        this.baseWorldMatrix = Armature.getWorldMatrixByBoneData(this.baseWorldBoneData);
+        this.baseWorldMatrix = Armature.getMatrixByBoneData(this.baseWorldBoneData);
         if (this.parent) {
             this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrixs(this.baseWorldMatrix, this.parent.baseWorldMatrix);
         } else {
-            this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrixs(this.baseWorldMatrix, mathMat3x3.createMatrix());
+            this.baseLocalMatrix = Armature.getLocalMatrixByWorldMatrixs(this.baseWorldMatrix, MathMat3x3.createMatrix());
         }
         const baseLocalArray = Armature.getBoneDataByMatrix(this.baseLocalMatrix, this.baseWorldBoneData.l);
         this.baseLocalBoneData = {x: baseLocalArray[0], y: baseLocalArray[1], sx: baseLocalArray[2], sy: baseLocalArray[3], r: baseLocalArray[4], l: baseLocalArray[5]};
@@ -38,15 +37,15 @@ class Bone {
 
         let position1 = this.headVertex;
         let position2 = this.tailVertex;
-        let sub = mathVec2.subR(position2, position1);
-        let normal = mathVec2.normalizeR([-sub[1], sub[0]]); // 仮の法線
-        let sectionPosition = mathVec2.mixR(position1, position2, ratio);
+        let sub = MathVec2.subR(position2, position1);
+        let normal = MathVec2.normalizeR([-sub[1], sub[0]]); // 仮の法線
+        let sectionPosition = MathVec2.mixR(position1, position2, ratio);
 
-        let k = mathVec2.scaleR(normal, size * mathVec2.lengthR(sub));
+        let k = MathVec2.scaleR(normal, size * MathVec2.lengthR(sub));
         const result = [];
         result.push(position1);
-        result.push(mathVec2.subR(sectionPosition, k));
-        result.push(mathVec2.addR(sectionPosition, k));
+        result.push(MathVec2.subR(sectionPosition, k));
+        result.push(MathVec2.addR(sectionPosition, k));
         result.push(position2);
         return result;
     }
@@ -63,17 +62,17 @@ class Bone {
         return this.poseWorldMatrix[2].slice(0,2);
     }
     get tailVertex() {
-        return mathVec2.addR(this.poseWorldMatrix[2].slice(0,2), mathVec2.scaleR(this.poseWorldMatrix[0].slice(0,2), this.baseWorldBoneData.l));
+        return MathVec2.addR(this.poseWorldMatrix[2].slice(0,2), MathVec2.scaleR(this.poseWorldMatrix[0].slice(0,2), this.baseWorldBoneData.l));
     }
 
     get poseLocalMatrix() {
-        return Armature.getWorldMatrixByBoneData(this.poseLocalBoneData);
+        return Armature.getMatrixByBoneData(this.poseLocalBoneData);
     }
     get poseWorldMatrix() {
         if (this.parent) {
-            return mathMat3x3.multiplyMat3x3(this.poseLocalMatrix, this.parent.poseWorldMatrix);
+            return MathMat3x3.multiplyMat3x3(this.poseLocalMatrix, this.parent.poseWorldMatrix);
         } else { // 親がない場合
-            return mathMat3x3.multiplyMat3x3(this.poseLocalMatrix, mathMat3x3.createMatrix());
+            return MathMat3x3.multiplyMat3x3(this.poseLocalMatrix, MathMat3x3.createMatrix());
         }
     }
 }
@@ -94,12 +93,12 @@ export class BArmatureAnimation {
         return this.object.id;
     }
 
-    get selectedBones() {
-        return this.bones.filter(bone => bone.selected);
+    get bonesSelectData() {
+        return this.bones.map(bone => bone.selected);
     }
 
-    get verticesSelectData() {
-        return this.vertices.map(vertex => vertex.selected);
+    get selectedBones() {
+        return this.bones.filter(bone => bone.selected);
     }
 
     get vertices() {
@@ -140,10 +139,6 @@ export class BArmatureAnimation {
         return this.bones.map(bone => bone.polygon);
     }
 
-    get selectedVertices() {
-        return this.vertices.filter(vert => vert.selected);
-    }
-
     get verticesNum() {
         return this.vertices.length;
     }
@@ -153,7 +148,7 @@ export class BArmatureAnimation {
     }
 
     updateGPUData() {
-        this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.map(vertex => vertex.co).flat(), ["f32", "f32"]);
+        this.verticesBuffer = GPU.createStorageBuffer(roundUp(this.vertices.length * 2 * 4, 2 * 4), this.vertices.flat(), ["f32", "f32"]);
         this.boneColorsBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.color).flat(), ["f32", "f32", "f32", "f32"]);
         this.boneSelectedBuffer = GPU.createStorageBuffer(roundUp(this.bones.length * 4 * 4, 4 * 4), this.bones.map(bone => bone.selected ? 1 : 0).flat(), ["u32"]);
         this.renderingGroup = GPU.createGroup(GPU.getGroupLayout("Vsr_VFsr_Vsr"), [this.verticesBuffer, this.boneColorsBuffer, this.boneSelectedBuffer]);
@@ -187,7 +182,7 @@ export class BArmatureAnimation {
             for (const childData of children) {
                 const boneIndex = childData.index;
                 const bone = new Bone({
-                    name: object.bonesMetaData[boneIndex].name,
+                    name: object.boneMetaDatas[boneIndex].name,
                     parent: parent,
                     base: Armature.getWorldBoneDataByVertices(coordinate[boneIndex].slice(0,2), coordinate[boneIndex].slice(2,4)),
                     color: colors[boneIndex],
@@ -198,7 +193,7 @@ export class BArmatureAnimation {
                     }
                 });
                 this.bones[boneIndex] = bone;
-                createBones(childData.children, bone);
+                createBones(object.getBoneChildren(childData), bone);
             }
         }
         createBones(object.root, null);
