@@ -1,10 +1,9 @@
 import { app } from "../../../main.js";
 import { MathVec2 } from "../../utils/mathVec.js";
-import { managerForDOMs } from "../../utils/ui/util.js";
+import { createID, managerForDOMs } from "../../utils/ui/util.js";
 import { pushToArray, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { BezierModifier } from "../objects/bezierModifier.js";
-import { GraphicMesh } from "../objects/graphicMesh.js";
 
 class Vert {
     constructor(data) {
@@ -16,6 +15,7 @@ class Vert {
 
 class ShapeKey {
     constructor(data) {
+        this.id = data.id ? data.id : createID();
         this.name = data.name;
         /** @type {ShapeKeyVert[]} */
         this.data = data.data;
@@ -125,7 +125,7 @@ export class BBezierShapeKey {
                 data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(2,4), coordinate[vertrxIndex].slice(2,4))}));
                 data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(4,6), coordinate[vertrxIndex].slice(4,6))}));
             }
-            pushToArray(this.shapeKeys, new ShapeKey({name: shapeKeyMetaDta.name, data: data}));
+            pushToArray(this.shapeKeys, new ShapeKey({name: shapeKeyMetaDta.name, data: data, id: shapeKeyMetaDta.id}));
         })
         this.activeShapeKey = this.shapeKeys[0];
         // this.edges.push(new Edge({vertices: [this.vertices[0],this.vertices[1]]}));
@@ -141,7 +141,7 @@ export class BBezierShapeKey {
         this.shapeKeys.forEach((shapeKey, shapeKeyIndex) => {
             this.object.allShapeKeyWeights.push(1);
             this.object.allShapeKeys.push(...shapeKey.data.map((vertex, vertexIndex) => MathVec2.subR(vertex.co, this.vertices[vertexIndex].co)).flat());
-            this.object.shapeKeyMetaDatas.push(this.object.createShapeKeyMetaData(shapeKey.name, shapeKeyIndex));
+            this.object.shapeKeyMetaDatas.push(this.object.createShapeKeyMetaData(shapeKey.name, shapeKeyIndex, shapeKey.id));
         })
         const bezierModifierData = app.scene.runtimeData.bezierModifierData;
         bezierModifierData.update(this.object);

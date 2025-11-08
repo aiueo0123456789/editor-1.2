@@ -68,7 +68,10 @@ export class EditDatas {
     }
 
     deleteEditObject(object) {
-        this.editObjects.delete(object.id);
+        if (!this.editObjects.delete(object.id)) {
+            console.log(this, object);
+            console.warn(`${object.id}の編集オブジェクトが削除できませんでした`);
+        }
     }
 
     get allEditObjects() {
