@@ -161,14 +161,14 @@ export class BMesh {
     async fromMesh(object) {
         const graphicMeshData = app.scene.runtimeData.graphicMeshData;
         this.object = object;
-        const [coordinate,meshes,weightBlocks,uvs] = await Promise.all([
+        const [coordinates,meshes,weightBlocks,uvs] = await Promise.all([
             graphicMeshData.baseVertices.getObjectData(object),
             graphicMeshData.meshes.getObjectData(object),
             graphicMeshData.weightBlocks.getObjectData(object),
             graphicMeshData.uv.getObjectData(object)
         ]);
-        for (let i = 0; i < coordinate.length; i ++) {
-            this.vertices.push(new Vert({co: coordinate[i], uv: uvs[i], weightBlock: weightBlocks[i]}));
+        for (let i = 0; i < coordinates.length; i ++) {
+            this.vertices.push(new Vert({co: coordinates[i], uv: uvs[i], weightBlock: weightBlocks[i]}));
         }
         for (let i = 0; i < meshes.length; i ++) {
             this.meshes.push(new Mesh({vertices: meshes[i].map(vertexIndex => this.vertices[vertexIndex])}));

@@ -3,6 +3,7 @@ import { BArmature } from "./BArmature.js";
 import { BArmatureAnimation } from "./BArmatureAnimation.js";
 import { BBezier } from "./BBezier.js";
 import { BBezierShapeKey } from "./BBezierShapeKey.js";
+import { BBezierWeight } from "./BBezierWeight.js";
 import { BMesh } from "./BMesh.js";
 import { BMeshShapeKey } from "./BMeshShapeKey.js";
 import { BMeshWeight } from "./BMeshWeight.js";
@@ -53,6 +54,10 @@ export class EditDatas {
                 const baa = new BArmatureAnimation("weightPaint");
                 baa.fromArmature(object);
                 return baa;
+            } else if (mode == "ベジェウェイト編集") {
+                const baa = new BArmatureAnimation("weightPaint");
+                baa.fromArmature(object);
+                return baa;
             }
         } else if (object.type == "ベジェモディファイア") {
             if (mode == "ベジェ編集") {
@@ -63,6 +68,10 @@ export class EditDatas {
                 const bbs = new BBezierShapeKey();
                 bbs.fromBezier(object);
                 return bbs;
+            } else if ("ベジェウェイト編集") {
+                const bbw = new BBezierWeight();
+                bbw.fromBezier(object);
+                return bbw;
             }
         }
     }

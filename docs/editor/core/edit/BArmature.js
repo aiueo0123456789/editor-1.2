@@ -119,7 +119,7 @@ export class BArmature {
         console.log(object)
         const armatureData = app.scene.runtimeData.armatureData;
         this.object = object;
-        const [coordinate, colors, physics] = await Promise.all([
+        const [coordinates, colors, physics] = await Promise.all([
             armatureData.baseVertices.getObjectData(object),
             armatureData.colors.getObjectData(object),
             armatureData.physicsData.getObjectData(object),
@@ -127,7 +127,7 @@ export class BArmature {
         const createBones = (children, parent) => {
             for (const childData of children) {
                 const boneIndex = childData.index;
-                const bone = new Bone({name: object.boneMetaDatas[boneIndex].name, parent: parent, headVertex: {co: coordinate[boneIndex].slice(0,2)}, tailVertex: {co: coordinate[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
+                const bone = new Bone({name: object.boneMetaDatas[boneIndex].name, parent: parent, headVertex: {co: coordinates[boneIndex].slice(0,2)}, tailVertex: {co: coordinates[boneIndex].slice(2,4)}, color: colors[boneIndex], physics: physics[boneIndex].slice(0, 13)});
                 this.bones[boneIndex] = bone;
                 createBones(object.getBoneChildren(childData), bone);
             }

@@ -94,7 +94,7 @@ export class BBezierShapeKey {
         return this.vertices.length;
     }
 
-    get anchorPointsNum() {
+    get pointsNum() {
         return this.vertices.length / 3;
     }
 
@@ -108,22 +108,22 @@ export class BBezierShapeKey {
     async fromBezier(/** @type {BezierModifier} */object) {
         const bezierModifierData = app.scene.runtimeData.bezierModifierData;
         this.object = object;
-        const [coordinate,shape] = await Promise.all([
+        const [coordinates,shape] = await Promise.all([
             bezierModifierData.baseVertices.getObjectData(object),
             bezierModifierData.shapeKeys.getObjectData(object)
         ]);
-        for (let i = 0; i < coordinate.length; i ++) {
-            this.vertices.push(new Vert({co: coordinate[i].slice(0,2), index: i * 3}));
-            this.vertices.push(new Vert({co: coordinate[i].slice(2,4), index: i * 3 + 1}));
-            this.vertices.push(new Vert({co: coordinate[i].slice(4,6), index: i * 3 + 2}));
+        for (let i = 0; i < coordinates.length; i ++) {
+            this.vertices.push(new Vert({co: coordinates[i].slice(0,2), index: i * 3}));
+            this.vertices.push(new Vert({co: coordinates[i].slice(2,4), index: i * 3 + 1}));
+            this.vertices.push(new Vert({co: coordinates[i].slice(4,6), index: i * 3 + 2}));
         }
         console.log(shape)
         this.object.shapeKeyMetaDatas.forEach((shapeKeyMetaDta, shapeKeyIndex) => {
             const data = [];
-            for (let vertrxIndex = 0; vertrxIndex < coordinate.length; vertrxIndex ++) {
-                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(0,2), coordinate[vertrxIndex].slice(0,2))}));
-                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(2,4), coordinate[vertrxIndex].slice(2,4))}));
-                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex].slice(4,6), coordinate[vertrxIndex].slice(4,6))}));
+            for (let vertrxIndex = 0; vertrxIndex < coordinates.length; vertrxIndex ++) {
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinates.length + vertrxIndex].slice(0,2), coordinates[vertrxIndex].slice(0,2))}));
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinates.length + vertrxIndex].slice(2,4), coordinates[vertrxIndex].slice(2,4))}));
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinates.length + vertrxIndex].slice(4,6), coordinates[vertrxIndex].slice(4,6))}));
             }
             pushToArray(this.shapeKeys, new ShapeKey({name: shapeKeyMetaDta.name, data: data, id: shapeKeyMetaDta.id}));
         })

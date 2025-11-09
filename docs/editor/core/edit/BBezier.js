@@ -80,7 +80,7 @@ export class BBezier {
         return this.vertices.filter(vert => vert.selected);
     }
 
-    get anchorPointsNum() {
+    get pointsNum() {
         return this.anchorPoints.length;
     }
     get verticesNum() {
@@ -96,12 +96,12 @@ export class BBezier {
     async fromBezier(object) {
         const bezierModifierData = app.scene.runtimeData.bezierModifierData;
         this.object = object;
-        const [coordinate,weightBlocks] = await Promise.all([
+        const [coordinates,weightBlocks] = await Promise.all([
             bezierModifierData.baseVertices.getObjectData(object),
             bezierModifierData.weightBlocks.getObjectData(object),
         ]);
-        for (let i = 0; i < coordinate.length; i ++) {
-            this.anchorPoints.push(new AnchorPoint({point: {co: coordinate[i].slice(0,2), weightBlock: weightBlocks[i].slice(0, 8)}, leftControlHandle: {co: coordinate[i].slice(2,4), weightBlock: weightBlocks[i].slice(8, 16)}, rightControlHandle: {co: coordinate[i].slice(4,6), weightBlock: weightBlocks[i].slice(16, 24)}}));
+        for (let i = 0; i < coordinates.length; i ++) {
+            this.anchorPoints.push(new AnchorPoint({point: {co: coordinates[i].slice(0,2), weightBlock: weightBlocks[i].slice(0, 8)}, leftControlHandle: {co: coordinates[i].slice(2,4), weightBlock: weightBlocks[i].slice(8, 16)}, rightControlHandle: {co: coordinates[i].slice(4,6), weightBlock: weightBlocks[i].slice(16, 24)}}));
         }
         console.log(this)
         this.updateGPUData();

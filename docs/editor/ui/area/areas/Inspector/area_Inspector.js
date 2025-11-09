@@ -69,6 +69,7 @@ export class Area_Inspector {
                                     true: [
                                         {tagType: "input", label: "名前", value: "/name", type: "text"},
                                         {tagType: "input", label: "頂点数", value: "/pointsNum", type: "number", custom: {collision: false, visual: "1"}},
+                                        {tagType: "input", label: "自動のウェイト", type: "checkbox", checked:  "/autoWeight", look: {check: "check", uncheck: "uncheck"}},
                                     ],
                                     false: [
                                         {tagType: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},

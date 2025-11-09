@@ -30,6 +30,7 @@ import { ActiveBonePanel } from './toolBar/panel/bone.js';
 import { ActiveMeshPanel } from './toolBar/panel/mesh.js';
 import { ActiveEdgePanel } from './toolBar/panel/edge.js';
 import { WeightPaintPanel } from './toolBar/panel/weight.js';
+import { BBezierWeight } from '../../../../core/edit/BBezierWeight.js';
 
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");
@@ -64,7 +65,7 @@ const selectObjectOutlineBezierRenderPipeline = GPU.createRenderPipelineFromOneF
 const bezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bezier/bezier.wgsl"), [], "2d", "s");
 const BBezierBezierRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr")], await loadFile("./editor/shader/render/bezier/BBezier.wgsl"), [], "2d", "s");
 const BBezierVerticesRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr")], await loadFile("./editor/shader/render/bezier/vertices.wgsl"), [], "2d", "t");
-const bezierWeightRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr_Vsr"),GPU.getGroupLayout("Vu"),GPU.getGroupLayout("Vu")], await loadFile("./editor/shader/render/bezier/weight.wgsl"), [], "2d", "s");
+const BBezierWeightsRenderPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Vu_Fts"), GPU.getGroupLayout("Vsr_Vsr")], await loadFile("./editor/shader/render/bezier/bbw/weights.wgsl"), [], "2d", "s");
 
 const alphaBuffers = {
     "0.5": GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [0.5], ["f32"])]),
@@ -381,9 +382,8 @@ export class Area_Viewer {
             }
         } else if (context.currentMode == "ベジェウェイト編集") {
             if (inputManager.consumeKeys(["Alt"])) {
-                await app.scene.runtimeData.armatureData.selectedForBone(app.context.activeObject.parent, {circle: [...this.inputs.clickPosition, 100 / this.camera.zoom]}, {add: boolTo0or1(inputManager.keysDown["Shift"])});
-                const bone = app.scene.runtimeData.armatureData.getSelectBones();
-                changeParameter(this.areasConfig.weightPaintMetaData, "weightBlockIndex", bone[0].index);
+                app.operator.appendCommand(new SelectOnlyBoneCommand(this.inputs.position, !inputManager.keysDown["Shift"]));
+                app.operator.execute();
             } else {
                 this.toolPanelOperator.setPanel(WeightPaintModal, this.inputs);
             }
@@ -686,9 +686,20 @@ export class Renderer {
                     const bb = app.scene.editData.getEditObjectByObject(bezierModifier);
                     renderPass.setBindGroup(1, bb.renderingGroup);
                     renderPass.setPipeline(BBezierVerticesRenderPipeline);
-                    renderPass.draw(2 * 3 * 3, bb.anchorPointsNum, 0, 0);
+                    renderPass.draw(2 * 3 * 3, bb.pointsNum, 0, 0);
                     renderPass.setPipeline(BBezierBezierRenderPipeline);
-                    renderPass.draw(2 * 50, bb.anchorPointsNum - 1, 0, 0);
+                    renderPass.draw(2 * 50, bb.pointsNum - 1, 0, 0);
+
+                    renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
+                    renderPass.setPipeline(bezierRenderPipeline);
+                } else if (bezierModifier.mode == "ベジェウェイト編集") {
+                    /** @type {BBezierWeight} */
+                    const bbw = app.scene.editData.getEditObjectByObject(bezierModifier);
+                    renderPass.setBindGroup(1, bbw.renderingGroup);
+                    renderPass.setPipeline(BBezierWeightsRenderPipeline);
+                    renderPass.draw(4, bbw.verticesNum, 0, 0);
+                    renderPass.setPipeline(BBezierBezierRenderPipeline);
+                    renderPass.draw(2 * 50, bbw.pointsNum - 1, 0, 0);
 
                     renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
                     renderPass.setPipeline(bezierRenderPipeline);

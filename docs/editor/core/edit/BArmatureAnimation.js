@@ -4,6 +4,7 @@ import { MathVec2 } from "../../utils/mathVec.js";
 import { changeParameter, range, roundUp } from "../../utils/utility.js";
 import { GPU } from "../../utils/webGPU.js";
 import { Armature } from "../objects/armature.js";
+import { BBezierWeight } from "./BBezierWeight.js";
 import { BKeyframeBlockManager } from "./BKeyframeBlockManager.js";
 import { BMeshWeight } from "./BMeshWeight.js";
 
@@ -127,7 +128,7 @@ export class BArmatureAnimation {
             this.activeBone = this.bones[index];
             if (this.mode == "weightPaint") {
                 changeParameter(app.appConfig.areasConfig["Viewer"].weightPaintMetaData, "weightBlockIndex", this.getBoneIndex(this.activeBone));
-                app.scene.editData.allEditObjects.forEach(editObject => editObject instanceof BMeshWeight && editObject.updateGPUData()); // 編集中のメッシュの表示用データを更新
+                app.scene.editData.allEditObjects.forEach(editObject => (editObject instanceof BMeshWeight || editObject instanceof BBezierWeight) && editObject.updateGPUData()); // 編集中のメッシュの表示用データを更新
             }
             GPU.writeBuffer(this.boneSelectedBuffer, GPU.createBitData([1], ["u32"]), index * 4);
         });
@@ -173,7 +174,7 @@ export class BArmatureAnimation {
         const armatureData = app.scene.runtimeData.armatureData;
         this.object = object;
         console.log(object);
-        const [coordinate, colors, physics] = await Promise.all([
+        const [coordinates, colors, physics] = await Promise.all([
             armatureData.baseVertices.getObjectData(object),
             armatureData.colors.getObjectData(object),
             armatureData.physicsData.getObjectData(object),
@@ -184,7 +185,7 @@ export class BArmatureAnimation {
                 const bone = new Bone({
                     name: object.boneMetaDatas[boneIndex].name,
                     parent: parent,
-                    base: Armature.getWorldBoneDataByVertices(coordinate[boneIndex].slice(0,2), coordinate[boneIndex].slice(2,4)),
+                    base: Armature.getWorldBoneDataByVertices(coordinates[boneIndex].slice(0,2), coordinates[boneIndex].slice(2,4)),
                     color: colors[boneIndex],
                     physics: physics[boneIndex].slice(0, 13),
                     animation: {

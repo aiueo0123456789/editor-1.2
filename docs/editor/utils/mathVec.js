@@ -19,13 +19,11 @@ export class MathVec2 {
     static set(t,a) {
         t[0] = a[0];
         t[1] = a[1];
-        managerForDOMs.update({o: t});
     }
 
     static add(t,a,b) {
         t[0] = a[0] + b[0];
         t[1] = a[1] + b[1];
-        managerForDOMs.update({o: t});
     }
 
     static addR(a,b) {
@@ -35,7 +33,6 @@ export class MathVec2 {
     static sub(t,a,b) {
         t[0] = a[0] - b[0];
         t[1] = a[1] - b[1];
-        managerForDOMs.update({o: t});
     }
 
     static subR(a,b) {
@@ -45,7 +42,6 @@ export class MathVec2 {
     static scale(t,a,b) {
         t[0] = a[0] * b;
         t[1] = a[1] * b;
-        managerForDOMs.update({o: t});
     }
 
     static scaleR(a,b) {
@@ -55,7 +51,6 @@ export class MathVec2 {
     static reverseScale(t,a,b) {
         t[0] = a[0] / b;
         t[1] = a[1] / b;
-        managerForDOMs.update({o: t});
     }
 
     static reverseScaleR(a,b) {
@@ -65,7 +60,6 @@ export class MathVec2 {
     static mul(t,a,b) {
         t[0] = a[0] * b[0];
         t[1] = a[1] * b[1];
-        managerForDOMs.update({o: t});
     }
 
     static mulR(a,b) {
@@ -75,7 +69,6 @@ export class MathVec2 {
     static div(t,a,b) {
         t[0] = a[0] / b[0];
         t[1] = a[1] / b[1];
-        managerForDOMs.update({o: t});
     }
 
     static divR(a,b) {
@@ -148,22 +141,17 @@ export class MathVec2 {
     static getAngularVelocity(A, B, C) {
         // ベクトルABを計算
         const AB = this.subR(B, A);
-
         // ABベクトルの長さを取得
         const distance = this.lengthR(AB);
         if (distance === 0) { // 地点ABが同じ
             return 0.0;
         }
-
         // AB方向の単位ベクトル
         const AB_normalized = this.normalizeR(AB);
-
         // Cの垂直成分（角速度成分）を求めるための外積の大きさ
         const perpendicularVelocityMagnitude = this.crossR(AB_normalized, C);
-
         // 角速度の大きさを計算（|v_perpendicular| / |AB|）
         const angularVelocityMagnitude = perpendicularVelocityMagnitude / distance;
-
         return angularVelocityMagnitude;
     }
 

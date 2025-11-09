@@ -236,6 +236,7 @@ class AppOptions {
                 GPU.runComputeShader(calculateMeshParentWeightByBezier, [group], Math.ceil(object.verticesNum / 64));
             }
         } else if (object instanceof BezierModifier) {
+            console.log("ベジェウェイト更新", object)
             const runtimeObject = this.app.scene.runtimeData.bezierModifierData;
             const group = GPU.createGroup(GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu"), [runtimeObject.weightBlocks.buffer, runtimeObject.baseVertices.buffer, object.objectDataBuffer, parentVerticesBuffer, parentAllocationBuffer]);
             if (object.parent.type == "アーマチュア") {

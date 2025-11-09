@@ -21,8 +21,6 @@ export class GraphicMesh extends ObjectBase {
         this.zIndexBuffer = GPU.createUniformBuffer(4, [this.zIndex], ["f32"]);
         this.delete = false;
 
-        this.autoWeight = true;
-
         this.editRock = false;
 
         // バッファの宣言
@@ -56,11 +54,10 @@ export class GraphicMesh extends ObjectBase {
         this.objectMeshData = GPU.createUniformBuffer(4 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
-        this.shapeKeyMetaDatas.length = 0;
+        this.autoWeight = data.autoWeight ? data.autoWeight : true;
         this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         this.zIndex = data.zIndex;
         GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));
-        this.autoWeight = data.autoWeight ? data.autoWeight : true;
         copyToArray(this.allVertices, data.vertices.flat());
         copyToArray(this.allUVs, data.uv.flat());
         copyToArray(this.allMeshes, data.meshes.flat());

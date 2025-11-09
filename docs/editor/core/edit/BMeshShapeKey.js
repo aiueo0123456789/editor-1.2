@@ -122,20 +122,20 @@ export class BMeshShapeKey {
     async fromMesh(object) {
         const graphicMeshData = app.scene.runtimeData.graphicMeshData;
         this.object = object;
-        const [coordinate,meshes,uvs,shape] = await Promise.all([
+        const [coordinates,meshes,uvs,shape] = await Promise.all([
             graphicMeshData.baseVertices.getObjectData(object),
             graphicMeshData.meshes.getObjectData(object),
             graphicMeshData.uv.getObjectData(object),
             graphicMeshData.shapeKeys.getObjectData(object)
         ]);
-        for (let i = 0; i < coordinate.length; i ++) {
-            this.vertices.push(new Vert({co: coordinate[i], uv: uvs[i], index: i}));
+        for (let i = 0; i < coordinates.length; i ++) {
+            this.vertices.push(new Vert({co: coordinates[i], uv: uvs[i], index: i}));
         }
         console.log(shape)
         this.object.shapeKeyMetaDatas.forEach((shapeKeyMetaDta, shapeKeyIndex) => {
             const data = [];
-            for (let vertrxIndex = 0; vertrxIndex < coordinate.length; vertrxIndex ++) {
-                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinate.length + vertrxIndex], coordinate[vertrxIndex])}));
+            for (let vertrxIndex = 0; vertrxIndex < coordinates.length; vertrxIndex ++) {
+                data.push(new ShapeKeyVert({co: MathVec2.addR(shape[shapeKeyIndex * coordinates.length + vertrxIndex], coordinates[vertrxIndex])}));
             }
             pushToArray(this.shapeKeys, new ShapeKey({name: shapeKeyMetaDta.name, data: data, id: shapeKeyMetaDta.id}));
         })

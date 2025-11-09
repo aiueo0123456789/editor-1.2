@@ -109,7 +109,6 @@ export class InputManager {
         });
         document.addEventListener("keyup",(eveet) => {
             this.keysDown[eveet.key] = false;
-            // console.log(eveet.key,"up")
         });
         document.addEventListener("contextmenu", (eveet) => {
             app.contextmenu.showContextmenu([eveet.clientX,eveet.clientY]);

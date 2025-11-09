@@ -42,7 +42,9 @@ export class ObjectBase extends NameAndTypeAndID{
         managerForDOMs.update({o: "親変更"});
         this.parent = parent;
         if (!(parent instanceof UnfixedReference)) {
-            app.options.assignWeights(this);
+            if (this.autoWeight) {
+                app.options.assignWeights(this);
+            }
             if (isFunction(this.runtimeData.updateAllocationData)) {
                 if (this.runtimeData) this.runtimeData.updateAllocationData(this);
             }

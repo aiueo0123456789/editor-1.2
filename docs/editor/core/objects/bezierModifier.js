@@ -14,8 +14,6 @@ export class BezierModifier extends ObjectBase {
 
         this.baseTransformIsLock = false;
 
-        this.autoWeight = true;
-
         /** @type {ShapeKeyMetaData[]} */
         this.shapeKeyMetaDatas = [];
         this.allVertices = [];
@@ -29,14 +27,15 @@ export class BezierModifier extends ObjectBase {
 
         this.mode = "オブジェクト";
 
+        this.autoWeight = data.autoWeight ? data.autoWeight : true;
+        this.autoWeight = false;
         this.changeParent(app.scene.objects.getObjectFromID(data.parent));
-        console.log(data)
         copyToArray(this.allVertices, data.vertices.flat());
         copyToArray(this.allWeightBlocks, data.weightBcloks.flat());
         copyToArray(this.shapeKeyMetaDatas, data.shapeKeyMetaDatas.map(shapeKeyMetaData => this.createShapeKeyMetaData(shapeKeyMetaData.name, shapeKeyMetaData.index, shapeKeyMetaData.id)));
         copyToArray(this.allShapeKeyWeights, createArrayNAndFill(this.shapeKeyMetaDatas.length, 0));
         copyToArray(this.allShapeKeys, data.shapeKeys.flat());
-        console.log(this)
+        console.log(this);
     }
 
     get shapeKeysNum() {
@@ -68,6 +67,7 @@ export class BezierModifier extends ObjectBase {
             id: this.id,
             parent: this.parent ? this.parent.id : null,
             type: this.type,
+            autoWeight: this.autoWeight,
             vertices: await this.runtimeData.baseVertices.getObjectData(this),
             weightBcloks: await this.runtimeData.weightBlocks.getObjectData(this),
             shapeKeyMetaDatas: this.shapeKeyMetaDatas.map(shapeKeyMetaData => shapeKeyMetaData.getSaveData()),

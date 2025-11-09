@@ -1,4 +1,5 @@
 import { app } from "../../../main.js";
+import { BBezierWeight } from "../../core/edit/BBezierWeight.js";
 import { BMeshWeight } from "../../core/edit/BMeshWeight.js";
 import { MathVec2 } from "../../utils/mathVec.js";
 import { createArrayNAndFill } from "../../utils/utility.js";
@@ -25,89 +26,79 @@ export class WeightPaintCommand {
         this.decayType = decayType;
         this.decaySize = decaySize;
         this.bezierType = bezierType;
-        this.editObjects = app.scene.editData.allEditObjects.filter(editObject => editObject instanceof BMeshWeight);
-        if (this.editObjects[0] instanceof BMeshWeight) {
-            this.isBMeshWeight = true;
-        }
-        if (this.isBMeshWeight) {
-            this.editObject_WeightBlocks = this.editObjects.map(editObject => editObject.weightBlocks);
-            this.originalWeightBlocks = this.editObject_WeightBlocks.map(weightBlocks => weightBlocks.map(weightBlock => [...weightBlock.weights]));
-            this.paintWeightValue = this.editObject_WeightBlocks.map((weightBlocks,objectIndex) => createArrayNAndFill(this.editObjects[objectIndex].verticesNum, 0));
-            this.minDistDecays = this.editObject_WeightBlocks.map((weightBlocks,objectIndex) => createArrayNAndFill(this.editObjects[objectIndex].verticesNum, 0));
-        }
+        this.editObject = app.scene.editData.getEditObjectByObject(app.context.activeObject);
+        if (this.editObject instanceof BMeshWeight) this.isBMeshWeight = true;
+        if (this.editObject instanceof BBezierWeight) this.isBBezierWeight = true;
+        if (this.isBMeshWeight || this.isBBezierWeight) {
+            this.weightBlocks = this.editObject.weightBlocks;
+            this.originalWeightBlocks = this.weightBlocks.map(weightBlock => [...weightBlock.weights]);
+            this.paintWeightValue = createArrayNAndFill(this.editObject.verticesNum, 0);
+            this.minDistDecays = createArrayNAndFill(this.editObject.verticesNum, 0);
+        } else this.error = true;
         console.log(this)
     }
 
     update(point) {
-        const decaysList = this.editObjects.map(editObject => editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (MathVec2.distanceR(point, co) / this.decaySize))));
-        decaysList.forEach((decays, objectIndex) => decays.forEach((decay, vertexIndex) => {
-            if (this.minDistDecays[objectIndex][vertexIndex] < decay) {
-                this.minDistDecays[objectIndex][vertexIndex] = decay;
+        const decays = this.editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (MathVec2.distanceR(point, co) / this.decaySize)));
+        decays.forEach((decay, vertexIndex) => {
+            if (this.minDistDecays[vertexIndex] < decay) {
+                this.minDistDecays[vertexIndex] = decay;
             }
-            if (this.decayType == "ミックス") this.paintWeightValue[objectIndex][vertexIndex] = this.minDistDecays[objectIndex][vertexIndex] * this.weightvalue + this.originalWeightBlocks[objectIndex][this.weightBlockIndex][vertexIndex] * (1 - this.minDistDecays[objectIndex][vertexIndex]);
-        }))
-        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
-            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
-                weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[objectIndex][vertexIndex];
-            }
+            if (this.decayType == "ミックス") this.paintWeightValue[vertexIndex] = this.minDistDecays[vertexIndex] * this.weightvalue + this.originalWeightBlocks[this.weightBlockIndex][vertexIndex] * (1 - this.minDistDecays[vertexIndex]);
         })
+        for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
+            this.weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[vertexIndex];
+        }
         // 正規化
-        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
-            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
-                let availableWeight = 1 - this.paintWeightValue[objectIndex][vertexIndex]; // ターゲット以外が使える重み
-                let sumWeight = 0; // ターゲット以外の重み
-                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
-                    if (this.weightBlockIndex != boneIndex) {
-                        sumWeight += this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                        weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                    }
-                }
-                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
-                    if (this.weightBlockIndex != boneIndex) {
-                        weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                    }
+        for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
+            let availableWeight = 1 - this.paintWeightValue[vertexIndex]; // ターゲット以外が使える重み
+            let sumWeight = 0; // ターゲット以外の重み
+            for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
+                if (this.weightBlockIndex != boneIndex) {
+                    sumWeight += this.originalWeightBlocks[boneIndex][vertexIndex];
+                    this.weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[boneIndex][vertexIndex];
                 }
             }
-            this.editObjects[objectIndex].updateGPUData();
-        })
+            for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
+                if (this.weightBlockIndex != boneIndex) {
+                    this.weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[boneIndex][vertexIndex];
+                }
+            }
+        }
+        this.editObject.updateGPUData();
     }
 
     execute() {
-        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
-            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
-                weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[objectIndex][vertexIndex];
-            }
-        })
+        for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
+            this.weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[vertexIndex];
+        }
         // 正規化
-        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
-            for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
-                let availableWeight = 1 - this.paintWeightValue[objectIndex][vertexIndex]; // ターゲット以外が使える重み
-                let sumWeight = 0; // ターゲット以外の重み
-                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
-                    if (this.weightBlockIndex != boneIndex) {
-                        sumWeight += this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                        weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                    }
-                }
-                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks[objectIndex].length; boneIndex ++) {
-                    if (this.weightBlockIndex != boneIndex) {
-                        weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                    }
+        // 正規化
+        for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
+            let availableWeight = 1 - this.paintWeightValue[vertexIndex]; // ターゲット以外が使える重み
+            let sumWeight = 0; // ターゲット以外の重み
+            for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
+                if (this.weightBlockIndex != boneIndex) {
+                    sumWeight += this.originalWeightBlocks[boneIndex][vertexIndex];
+                    this.weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[boneIndex][vertexIndex];
                 }
             }
-            this.editObjects[objectIndex].updateGPUData();
-        })
+            for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
+                if (this.weightBlockIndex != boneIndex) {
+                    this.weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[boneIndex][vertexIndex];
+                }
+            }
+        }
+        this.editObject.updateGPUData();
         return {consumed: true};
     }
 
     undo() {
-        this.editObject_WeightBlocks.forEach((weightBlocks, objectIndex) => {
-            for (let boneIndex = 0; boneIndex < originalWeightBlocks[objectIndex].length; boneIndex ++) {
-                for (let vertexIndex = 0; vertexIndex < this.editObjects[objectIndex].verticesNum; vertexIndex ++) {
-                    weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[objectIndex][boneIndex][vertexIndex];
-                }
+        for (let boneIndex = 0; boneIndex < originalWeightBlocks.length; boneIndex ++) {
+            for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
+                this.weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[boneIndex][vertexIndex];
             }
-            this.editObjects[objectIndex].updateGPUData();
-        })
+        }
+        this.editObject.updateGPUData();
     }
 }
