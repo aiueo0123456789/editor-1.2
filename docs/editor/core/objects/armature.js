@@ -4,7 +4,7 @@ import { KeyframeBlockManager } from "./keyframeBlockManager.js";
 import { app } from "../../../main.js";
 import { MathVec2 } from "../../utils/mathVec.js";
 import { MathMat3x3 } from "../../utils/mathMat.js";
-import { copyToArray, createArrayNAndFill, isNumber } from "../../utils/utility.js";
+import { copyToArray, createArrayN, createArrayNAndFill, isNumber } from "../../utils/utility.js";
 
 class BoneMetaData {
     constructor(data) {
@@ -114,8 +114,6 @@ export class Armature extends ObjectBase {
         this.boneMetaDatas = [];
 
         this.allAnimations = [];
-        /** @type {KeyframeBlockManager} */
-        this.keyframeBlockManager = new KeyframeBlockManager({type: "キーフレームブロックマネージャー", object: this.allAnimations, parameters: []});
 
         this.mode = "オブジェクト";
 
@@ -132,6 +130,9 @@ export class Armature extends ObjectBase {
         copyToArray(this.allColors, data.boneColors.flat());
         copyToArray(this.allPhysics, data.physicsDatas.flat());
         copyToArray(this.allVertices, data.vertices.flat());
+
+        /** @type {KeyframeBlockManager} */
+        this.keyframeBlockManager = new KeyframeBlockManager({type: "キーフレームブロックマネージャー", object: this.allAnimations, parameters: createArrayN(this.allAnimations.length)});
         console.log(this)
     }
 

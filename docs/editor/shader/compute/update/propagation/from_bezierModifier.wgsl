@@ -1,9 +1,9 @@
 struct Allocation {
-    vertexBufferOffset: u32,
-    animationBufferOffset: u32,
-    weightBufferOffset: u32,
-    MAX_VERTICES: u32,
-    MAX_ANIMATIONS: u32,
+    pointsOffset: u32,
+    shapesOffset: u32,
+    shapeKeyWeightsOffset: u32,
+    pointsNum: u32,
+    shapeKeysNum: u32,
     parentType: u32, // 親がなければ0
     parentIndex: u32, // 親がなければ0
     myType: u32,
@@ -128,16 +128,16 @@ fn isNaN(x: f32) -> bool {
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let vertexIndex = global_id.x;
-    if (allocation.MAX_VERTICES <= vertexIndex) { // 頂点数を超えているか
+    if (allocation.pointsNum * 3u <= vertexIndex) { // 頂点数を超えているか
         return ;
     }
 
-    let fixVertexIndex = allocation.vertexBufferOffset * 3 + vertexIndex;
+    let fixVertexIndex = allocation.pointsOffset * 3u + vertexIndex;
     let targetVertices = renderingBezier[fixVertexIndex];
     var newPosition = vec2<f32>(0.0);
     if (allocation.parentType == 2) { // 親がベジェモディファイア
         let weightBlock = bezierWeightBlocks[fixVertexIndex];
-        let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocation.parentIndex].vertexBufferOffset; // ベジェのindex
+        let bezierIndex = weightBlock.indexs[0] + bezierAllocationArray[allocation.parentIndex].pointsOffset; // ベジェのindex
         let t = weightBlock.weights[0]; // ベジェのt
 
         // 元のベジェ
@@ -165,7 +165,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         for (var i = 0u; i < 4u; i = i + 1u) {
             let weight = weights[i];
             if (0.0 < weight) {
-                let boneIndex = indexs[i] + boneAllocationArray[allocation.parentIndex].vertexBufferOffset;
+                let boneIndex = indexs[i] + boneAllocationArray[allocation.parentIndex].pointsOffset;
                 newPosition += weight * (getPoseMatrix(boneIndex) * inverseMat3x3(getBaseMatrix(boneIndex)) * position).xy;
             }
         }

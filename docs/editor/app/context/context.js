@@ -25,6 +25,16 @@ export class Context {
         this.app.operator.execute();
     }
 
+    selectByAttribute() {
+        if (!this.activeObject) return ;
+        this.app.scene.objects.allObject.filter(object => object.type == this.activeObject.type).forEach(object => {
+            if ("selected" in object) {
+                this.app.operator.appendCommand(new SelectObjectsCommand(object, true));
+            }
+        });
+        this.app.operator.execute();
+    }
+
     setSelectedObject(object, append = false) {
         this.app.operator.appendCommand(new SelectObjectsCommand(object, append));
         this.app.operator.execute();

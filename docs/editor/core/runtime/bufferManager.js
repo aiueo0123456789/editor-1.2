@@ -65,7 +65,6 @@ export class BufferManager {
     }
 
     reset() {
-        // GPU.writeBuffer(this.buffer, GPU.createBitData(createArrayN(this.runtimeData.order.length * this.struct, [])));
         this.buffer.destroy();
         this.buffer = GPU.createBuffer(0, ["v","s"]);
     }

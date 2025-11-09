@@ -84,7 +84,6 @@ export class BArmatureAnimation {
         this.object = null;
         /** @type {Bone[]} */
         this.bones = [];
-        this.meshRenderingGroup = null;
 
         this.activeBone = null;
     }
@@ -173,6 +172,7 @@ export class BArmatureAnimation {
     async fromArmature(/** @type {Armature} */ object) {
         const armatureData = app.scene.runtimeData.armatureData;
         this.object = object;
+        console.log(object);
         const [coordinate, colors, physics] = await Promise.all([
             armatureData.baseVertices.getObjectData(object),
             armatureData.colors.getObjectData(object),

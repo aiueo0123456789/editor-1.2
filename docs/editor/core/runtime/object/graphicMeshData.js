@@ -1,5 +1,6 @@
 import { Application } from "../../../app/app.js";
 import { objectToNumber } from "../../../app/scene/scene.js";
+import { UnfixedReference } from "../../../utils/objects/util.js";
 import { GPU } from "../../../utils/webGPU.js";
 import { GraphicMesh } from "../../objects/graphicMesh.js";
 import { BufferManager } from "../bufferManager.js";
@@ -27,18 +28,6 @@ export class GraphicMeshData extends RuntimeDataBase {
         this.offsetCreate();
     }
 
-    async getBaseVerticesFromObject(/** @type {GraphicMesh} */graphicMesh) {
-        return await GPU.getBufferDataFromIndexs(this.baseVertices, {start: graphicMesh.runtimeOffsetData.start.verticesOffset, end: graphicMesh.runtimeOffsetData.start.verticesOffset + graphicMesh.verticesNum}, ["f32", "f32"]);
-    }
-
-    async getVerticesUVFromObject(/** @type {GraphicMesh} */graphicMesh) {
-        return await GPU.getBufferDataFromIndexs(this.uv, {start: graphicMesh.runtimeOffsetData.start.verticesOffset, end: graphicMesh.runtimeOffsetData.start.verticesOffset + graphicMesh.verticesNum}, ["u32", "u32", "u32"]);
-    }
-
-    async getMeshFromObject(/** @type {GraphicMesh} */graphicMesh) {
-        return await GPU.getBufferDataFromIndexs(this.meshes, {start: graphicMesh.runtimeOffsetData.start.verticesOffset, end: graphicMesh.runtimeOffsetData.start.verticesOffset + graphicMesh.verticesNum}, ["f32", "f32"]);
-    }
-
     getObjectDataForGPU(/** @type {GraphicMesh} */graphicMesh) {
         const map = new Map();
         map.set(this.baseVertices, graphicMesh.allVertices);
@@ -51,8 +40,8 @@ export class GraphicMeshData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {GraphicMesh} */graphicMesh) {
-        if (graphicMesh.parent) return new Uint32Array([graphicMesh.runtimeOffsetData.start.verticesOffset, graphicMesh.runtimeOffsetData.start.shapeKeysOffset, graphicMesh.runtimeOffsetData.start.shapeKeyWeightsOffset, graphicMesh.verticesNum, graphicMesh.shapeKeysNum, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.start.allocationOffset, GPU.padding]);
-        else return new Uint32Array([graphicMesh.runtimeOffsetData.start.verticesOffset, graphicMesh.runtimeOffsetData.start.shapeKeysOffset, graphicMesh.runtimeOffsetData.start.shapeKeyWeightsOffset, graphicMesh.verticesNum, graphicMesh.shapeKeysNum, 0, 0, GPU.padding]);
+        if (!graphicMesh.parent || graphicMesh.parent instanceof UnfixedReference) return new Uint32Array([graphicMesh.runtimeOffsetData.start.verticesOffset, graphicMesh.runtimeOffsetData.start.shapeKeysOffset, graphicMesh.runtimeOffsetData.start.shapeKeyWeightsOffset, graphicMesh.verticesNum, graphicMesh.shapeKeysNum, 0, 0, GPU.padding]);
+        else return new Uint32Array([graphicMesh.runtimeOffsetData.start.verticesOffset, graphicMesh.runtimeOffsetData.start.shapeKeysOffset, graphicMesh.runtimeOffsetData.start.shapeKeyWeightsOffset, graphicMesh.verticesNum, graphicMesh.shapeKeysNum, objectToNumber[graphicMesh.parent.type], graphicMesh.parent.runtimeOffsetData.start.allocationOffset, GPU.padding]);
     }
 
     updateAllocationData(/** @type {GraphicMesh} */graphicMesh) {
@@ -62,13 +51,6 @@ export class GraphicMeshData extends RuntimeDataBase {
         GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
         const meshAllocationData = new Uint32Array([graphicMesh.runtimeOffsetData.start.verticesOffset, graphicMesh.runtimeOffsetData.start.meshesOffset, graphicMesh.meshesNum, 0]);
         GPU.writeBuffer(graphicMesh.objectMeshData, meshAllocationData);
-    }
-
-    setAllocation(/** @type {GraphicMesh} */graphicMesh) {
-        for (const object of this.order) {
-        }
-        let allocationData = this.getAllocationData(graphicMesh);
-        GPU.writeBuffer(graphicMesh.objectDataBuffer, allocationData);
     }
 
     setGroup() {

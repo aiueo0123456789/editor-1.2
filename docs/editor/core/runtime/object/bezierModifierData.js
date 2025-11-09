@@ -1,5 +1,6 @@
 import { Application } from "../../../app/app.js";
 import { objectToNumber } from "../../../app/scene/scene.js";
+import { UnfixedReference } from "../../../utils/objects/util.js";
 import { GPU } from "../../../utils/webGPU.js";
 import { BezierModifier } from "../../objects/bezierModifier.js";
 import { BufferManager } from "../bufferManager.js";
@@ -24,10 +25,6 @@ export class BezierModifierData extends RuntimeDataBase {
         this.offsetCreate();
     }
 
-    async getBaseVerticesFromObject(/** @type {BezierModifier} */bezierModifier) {
-        return await GPU.getBufferDataFromIndexs(this.baseVertices.buffer, {start: bezierModifier.runtimeOffsetData.start.pointsOffset, end: bezierModifier.runtimeOffsetData.start.pointsOffset + bezierModifier.verticesNum}, ["f32", "f32"]);
-    }
-
     updateAllocationData(/** @type {BezierModifier} */bezierModifier) {
         // 頂点オフセット, アニメーションオフセット, ウェイトオフセット, 頂点数, 最大アニメーション数, 親の型, 親のインデックス, パディング
         let allocationData = this.getAllocationData(bezierModifier);
@@ -36,7 +33,7 @@ export class BezierModifierData extends RuntimeDataBase {
     }
 
     getAllocationData(/** @type {BezierModifier} */bezierModifier) {
-        if (!bezierModifier.parent || bezierModifier.parent.isRoot) {
+        if (!bezierModifier.parent || bezierModifier.parent instanceof UnfixedReference) {
             return new Uint32Array([bezierModifier.runtimeOffsetData.start.pointsOffset, bezierModifier.runtimeOffsetData.start.shapeKeysOffset, bezierModifier.runtimeOffsetData.start.shapeKeyWeightsOffset, bezierModifier.pointsNum, bezierModifier.shapeKeysNum, 0, 0, this.myType]);
         } else {
             return new Uint32Array([bezierModifier.runtimeOffsetData.start.pointsOffset, bezierModifier.runtimeOffsetData.start.shapeKeysOffset, bezierModifier.runtimeOffsetData.start.shapeKeyWeightsOffset, bezierModifier.pointsNum, bezierModifier.shapeKeysNum, objectToNumber[bezierModifier.parent.type], bezierModifier.parent.runtimeOffsetData.start.allocationOffset, this.myType]);

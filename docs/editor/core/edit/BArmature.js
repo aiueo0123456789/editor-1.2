@@ -42,11 +42,15 @@ export class BArmature {
         this.object = null;
         /** @type {Bone[]} */
         this.bones = [];
-        this.meshRenderingGroup = null;
     }
 
     get id() {
         return this.object.id;
+    }
+
+    // 頂点の参照からボーンを見つける
+    getBoneByVertex(vertex) {
+        return this.bones.filter(bone => bone.headVertex === vertex || bone.tailVertex === vertex)[0];
     }
 
     get verticesSelectData() {
@@ -165,19 +169,14 @@ export class BArmature {
             this.object.allBoneWorldMatrix.push(...boneData.worldMatrix.flat());
             this.object.allColors.push(...bone.color);
             this.object.allAnimations.push(0,0,0,0,0,0); // x y sx sy r l
+
+            this.object.keyframeBlockManager.appendParameter(this.object.allAnimations.length - 5);
+            this.object.keyframeBlockManager.appendParameter(this.object.allAnimations.length - 4);
+            this.object.keyframeBlockManager.appendParameter(this.object.allAnimations.length - 3);
+            this.object.keyframeBlockManager.appendParameter(this.object.allAnimations.length - 2);
+            this.object.keyframeBlockManager.appendParameter(this.object.allAnimations.length - 1);
+            this.object.keyframeBlockManager.appendParameter(this.object.allAnimations.length);
         }
-        // const loopChildren = (bones, parent = null) => {
-        //     for (const bone of bones) {
-        //         const boneMetaData = Armature.createBoneMetaData(bone.name, this.getBoneIndex(bone), parent, false);
-        //         if (parent) {
-        //             parent.children.push(boneMetaData);
-        //         } else {
-        //             this.object.root.push(boneMetaData);
-        //         }
-        //         loopChildren(this.getBoneChildren(bone), boneMetaData);
-        //     }
-        // }
-        // loopChildren(this.root);
         const armatureData = app.scene.runtimeData.armatureData;
         armatureData.update(this.object);
     }

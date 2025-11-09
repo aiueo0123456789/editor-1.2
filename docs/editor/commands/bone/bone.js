@@ -17,11 +17,11 @@ export class BoneExtrudeMoveCommand {
         if (this.editObjects[0] instanceof BArmature) {
             this.isBArmature = true;
             this.createBonesIneditObject = {};
-            for (const editObject of this.editObjects) {
+            for (const /** @type {BArmature} */ editObject of this.editObjects) {
                 const bones = [];
                 this.createBonesIneditObject[editObject.id] = bones;
                 editObject.selectedVertices.forEach(vertex => {
-                    const bone = BArmature.createBone(vertex.co, vertex.co);
+                    const bone = BArmature.createBone(vertex.co, vertex.co, editObject.getBoneByVertex(vertex));
                     editObject.bones.push(bone);
                     bones.push({bone: bone, baseCo: vertex.co});
                 });

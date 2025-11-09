@@ -154,7 +154,8 @@ export class Area_Viewer {
                                 ]},
                                 {tagType: "heightCenter", children: [
                                     {tagType: "menu", title: "選択", struct: [
-                                        {label: "すべて選択", children: []},
+                                        {label: "すべて選択", children: [], submitFunction: () => app.context.selectAll()},
+                                        {label: "属性選択", children: [], submitFunction: () => app.context.selectByAttribute()},
                                         {label: "選択解除", children: []},
                                         {label: "反転", children: []},
                                         {label: "ランダム選択", children: []},

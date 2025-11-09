@@ -1,9 +1,9 @@
 struct Allocation {
-    vertexBufferOffset: u32,
-    animationBufferOffset: u32,
-    weightBufferOffset: u32,
-    MAX_VERTICES: u32,
-    MAX_ANIMATIONS: u32,
+    pointsOffset: u32,
+    shapesOffset: u32,
+    shapeKeyWeightsOffset: u32,
+    pointsNum: u32,
+    shapeKeysNum: u32,
     parentType: u32, // 親がなければ0
     parentIndex: u32, // 親がなければ0
     myType: u32,
@@ -63,62 +63,45 @@ fn mathWeight(dist: f32) -> f32 {
 }
 
 fn calculateWeight(position: vec2<f32>) -> WeightBlock {
+    let falloff = 1.5; // 数字を大きくすると近距離重視になる
+    // 一番近いボーン二つを見つける
     var output: WeightBlock;
-    let inf = 999999999u;
-    output.indexs = vec4<u32>(inf);
-    output.weights = vec4<f32>(99999999999.0);
+    var fIndex = 0u;
+    var fWeight = 0.0;
+    var tIndex = 0u;
+    var tWeight = 0.0;
     for (var boneIndex = allocationBone.boneOffset; boneIndex < allocationBone.boneOffset + allocationBone.MAX_BONES; boneIndex ++) {
         let bone = boneVertices[boneIndex];
-        let lineStart = bone.h;
-        let lineEnd = bone.t;
-        let dist = pointToLineDistance(position, lineStart, lineEnd);
+        let dist = pointToLineDistance(position, bone.h, bone.t);
+        let weight = exp(-falloff * dist);
 
-        let weight = mathWeight(dist);
-
-        var maxIndex = 0u;
-        var maxValue = 0.0;
-        for (var i = 0u; i < 4u; i ++) {
-            if (output.weights[i] >= maxValue) {
-                maxIndex = i;
-                maxValue = output.weights[i];
-            }
-        }
-        if (weight < maxValue) {
-            output.indexs[maxIndex] = boneIndex - allocationBone.boneOffset;
-            output.weights[maxIndex] = weight;
+        if (fWeight <= weight) {
+            // 1位を2位に降格
+            tIndex = fIndex;
+            tWeight = fWeight;
+            // 1位に自分を代入
+            fIndex = boneIndex - allocationBone.boneOffset;
+            fWeight = weight;
+        } else if (tWeight <= weight) {
+            // 2位に自分を代入
+            tIndex = boneIndex - allocationBone.boneOffset;
+            tWeight = weight;
         }
     }
-    // 見つからなかったものは無効にする
-    var sumWeight = 0.0;
-    for (var i = 0u; i < 4u; i ++) {
-        if (inf != output.indexs[i]) {
-            sumWeight += output.weights[i];
-        }
-    }
-    for (var i = 0u; i < 4u; i ++) {
-        if (inf == output.indexs[i]) {
-            output.indexs[i] = 0u;
-            output.weights[i] = 0.0;
-        } else {
-            output.weights[i] = sumWeight - output.weights[i]; // 正規化
-        }
-    }
-    sumWeight = 0.0;
-    for (var i = 0u; i < 4u; i ++) {
-        sumWeight += output.weights[i];
-    }
-    for (var i = 0u; i < 4u; i ++) {
-        output.weights[i] /= sumWeight;
-    }
+    let sumWeight = fWeight + tWeight;
+    output.indexs = vec4<u32>(fIndex, tIndex, 0u, 0u);
+    output.weights = vec4<f32>(fWeight / sumWeight, tWeight / sumWeight, 0.0, 0.0);
     return output;
 }
 
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
-    if (allocation.MAX_VERTICES <= global_id.x) {
+    let verticesNum = allocation.pointsNum * 3u;
+    if (verticesNum <= global_id.x) {
         return;
     }
-    let verticesIndex = global_id.x + allocation.vertexBufferOffset;
+    let verticesOffset = allocation.pointsOffset * 3u;
+    let verticesIndex = global_id.x + verticesOffset;
 
     weightBlocks[verticesIndex] = calculateWeight(baseVertices[verticesIndex]);
 }
