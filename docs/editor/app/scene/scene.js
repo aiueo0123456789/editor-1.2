@@ -20,26 +20,20 @@ import { KeyframeBlock } from '../../core/objects/keyframe.js';
 import { BArmatureAnimation } from '../../core/edit/BArmatureAnimation.js';
 import { BlendShape } from '../../core/objects/blendShape.js';
 
-const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_graphicMesh.wgsl"));
-const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/propagation/from_bezierModifier.wgsl"));
+const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/graphicMesh/parent.wgsl"));
+const treeAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Cu"), GPU.getGroupLayout("Csrw_Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/bezierModifier/parent.wgsl"));
 
-const meshShapeKeyApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_graphicMesh.wgsl"));
-const bezierShapeKeyApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_bezierModifier.wgsl"));
+const meshShapeKeyApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/graphicMesh/shapeKey.wgsl"));
+const bezierShapeKeyApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/bezierModifier/shapeKey.wgsl"));
 
-const boneAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/update/applyAnimation/from_bone.wgsl"));
+const boneAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/bone/animation.wgsl"));
 const propagateBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csrw"),GPU.getGroupLayout("Csr")], await loadFile("./editor/shader/compute/object/bone/propagation.wgsl"));
-const physicsBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csrw"),GPU.getGroupLayout("Csr")], await loadFile("./editor/shader/compute/object/bone/attachments/physics.wgsl"));
+const physicsBonePipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw_Csrw"),GPU.getGroupLayout("Csr")], await loadFile("./editor/shader/compute/object/bone/physics.wgsl"));
 const calculateBoneVerticesPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/bone/calculateVertices.wgsl"));
 
 const boneHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu")], await loadFile("./editor/shader/compute/select/armature/hitTest.wgsl"));
 const bezierModifierHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Cu_Cu_Cu")], await loadFile("./editor/shader/compute/select/bezierModifier/hitTest.wgsl"));
 const polygonsHitTestPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr_Cu_Cu_Cu")], await loadFile("./editor/shader/compute/select/graphicMesh/hitTest.wgsl"));
-
-const calculateLimitBoneBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Csr_Csr")], await loadFile("./editor/shader/compute/utils/boundingBox/from_bone.wgsl"));
-const calculateLimitVerticesBBoxPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csrw"),GPU.getGroupLayout("Csr_Csr")], await loadFile("./editor/shader/compute/utils/boundingBox/from_vertex.wgsl"));
-const BBoxResultBuffer = GPU.createStorageBuffer(2 * 4 * 2, undefined, ["f32"]);
-const BBoxCalculateBuffer = GPU.createStorageBuffer(4 * 4, undefined, ["i32"]);
-const BBoxGroup0 = GPU.createGroup(GPU.getGroupLayout("Csrw_Csrw"), [BBoxResultBuffer,BBoxCalculateBuffer]);
 
 const templateParticleUpdateCode = `
 // MIT License. © Stefan Gustavson, Munrocket
@@ -337,30 +331,6 @@ export class Scene {
         this.app.operator.execute();
     }
 
-    // 選択している頂点のBBoxを取得
-    async getSelectVerticesBBox(verticesBuffer, selectBuffer) {
-        GPU.runComputeShader(calculateLimitVerticesBBoxPipeline, [BBoxGroup0, GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [verticesBuffer, selectBuffer])], Math.ceil(verticesBuffer.size / 4 / 2 / 64));
-        return await GPU.getBBoxBuffer(BBoxResultBuffer);
-    }
-
-    // 選択しているボーンのBBoxを取得
-    async getSelectBonesBBox(bonesBuffer, selectBuffer) {
-        GPU.runComputeShader(calculateLimitBoneBBoxPipeline, [BBoxGroup0, GPU.createGroup(GPU.getGroupLayout("Csr_Csr"), [bonesBuffer, selectBuffer])], Math.ceil(bonesBuffer.size / 4 / 2 / 64));
-        return await GPU.getBBoxBuffer(BBoxResultBuffer);
-    }
-
-    // 選択している頂点の中央点を取得
-    async getSelectVerticesCenter(verticesBuffer, selectBuffer) {
-        const BBox = await this.getSelectVerticesBBox(verticesBuffer, selectBuffer);
-        return MathVec2.averageR(BBox);
-    }
-
-    // 選択している頂点の中央点を取得
-    async getSelectBonesCenter(bonesBuffer, selectBuffer) {
-        const BBox = await this.getSelectBonesBBox(bonesBuffer, selectBuffer);
-        return MathVec2.averageR(BBox);
-    }
-
     // オブジェクトとの当たり判定
     async rayCast(point, option = {types: ["グラフィックメッシュ", "アーマチュア", "ベジェモディファイア"], depth: true}) {
         const optionBuffer = GPU.createUniformBuffer(4, [0], ["u32"]);
@@ -570,10 +540,6 @@ export class Scene {
         device.queue.submit([computeCommandEncoder.finish()]);
         // GPU.consoleBufferData(this.runtimeData.armatureData.renderingBoneMatrix.buffer, this.runtimeData.armatureData.renderingBoneMatrix.struct);
         // GPU.consoleBufferData(this.runtimeData.armatureData.baseBoneMatrix.buffer, this.runtimeData.armatureData.baseBoneMatrix.struct);
-    }
-
-    getAllObjectFromType(types) {
-        return this.objects.allObject.filter(object => types.includes(object.type));
     }
 
     async getSaveData() {
