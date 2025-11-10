@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { BMeshShapeKey } from "../../core/edit/BMeshShapeKey.js";
+import { BMeshShapeKey } from "../../core/edit/objects/BMeshShapeKey.js";
 import { BlendShape, ShapeKeyMetaData } from "../../core/objects/blendShape.js";
 import { pushToArray, indexOfSplice, insertToArray, indexRemoveToArray } from "../../utils/utility.js";
 

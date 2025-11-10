@@ -1,7 +1,7 @@
-import { app } from "../../../main.js";
-import { roundUp } from "../../utils/utility.js";
-import { GPU } from "../../utils/webGPU.js";
-import { BezierModifier } from "../objects/bezierModifier.js";
+import { app } from "../../../../main.js";
+import { roundUp } from "../../../utils/utility.js";
+import { GPU } from "../../../utils/webGPU.js";
+import { BezierModifier } from "../../objects/bezierModifier.js";
 
 class Vert {
     constructor(data) {
@@ -103,7 +103,6 @@ export class BBezier {
         for (let i = 0; i < coordinates.length; i ++) {
             this.anchorPoints.push(new AnchorPoint({point: {co: coordinates[i].slice(0,2), weightBlock: weightBlocks[i].slice(0, 8)}, leftControlHandle: {co: coordinates[i].slice(2,4), weightBlock: weightBlocks[i].slice(8, 16)}, rightControlHandle: {co: coordinates[i].slice(4,6), weightBlock: weightBlocks[i].slice(16, 24)}}));
         }
-        console.log(this)
         this.updateGPUData();
     }
 

@@ -17,7 +17,7 @@ import { MaskTexture } from '../../core/objects/maskTexture.js';
 import { UnfixedReference } from '../../utils/objects/util.js';
 import { EditDatas } from '../../core/edit/editData.js';
 import { KeyframeBlock } from '../../core/objects/keyframe.js';
-import { BArmatureAnimation } from '../../core/edit/BArmatureAnimation.js';
+import { BArmatureAnimation } from '../../core/edit/objects/BArmatureAnimation.js';
 import { BlendShape } from '../../core/objects/blendShape.js';
 
 const parallelAnimationApplyPipeline = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr"), GPU.getGroupLayout("Csr_Csr_Csr")], await loadFile("./editor/shader/compute/object/graphicMesh/parent.wgsl"));

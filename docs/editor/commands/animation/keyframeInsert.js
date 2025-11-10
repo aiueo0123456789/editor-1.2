@@ -1,6 +1,6 @@
 import { app } from "../../../main.js";
-import { BArmatureAnimation } from "../../core/edit/BArmatureAnimation.js";
-import { BKeyframeBlockManager } from "../../core/edit/BKeyframeBlockManager.js";
+import { BArmatureAnimation } from "../../core/edit/objects/BArmatureAnimation.js";
+import { BKeyframeBlockManager } from "../../core/edit/objects/BKeyframeBlockManager.js";
 import { KeyframeBlock } from "../../core/objects/keyframe.js";
 
 export class KeyframeInsertCommand {

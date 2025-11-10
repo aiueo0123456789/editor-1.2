@@ -1,8 +1,8 @@
-import { app } from "../../../main.js";
-import { MathVec2 } from "../../utils/mathVec.js";
-import { roundUp } from "../../utils/utility.js";
-import { GPU } from "../../utils/webGPU.js";
-import { GraphicMesh } from "../objects/graphicMesh.js";
+import { app } from "../../../../main.js";
+import { MathVec2 } from "../../../utils/mathVec.js";
+import { roundUp } from "../../../utils/utility.js";
+import { GPU } from "../../../utils/webGPU.js";
+import { GraphicMesh } from "../../objects/graphicMesh.js";
 
 class Vert {
     constructor(data) {
@@ -173,9 +173,6 @@ export class BMesh {
         for (let i = 0; i < meshes.length; i ++) {
             this.meshes.push(new Mesh({vertices: meshes[i].map(vertexIndex => this.vertices[vertexIndex])}));
         }
-        // this.edges.push(new Edge({vertices: [this.vertices[0],this.vertices[1]]}));
-        // this.silhouetteEdges.push(new Edge({vertices: [this.vertices[1],this.vertices[2]]}));
-        console.log(this)
         this.texture = object.texture;
         this.zIndex = object.zIndex;
         this.updateGPUData();

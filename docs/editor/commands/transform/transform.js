@@ -1,10 +1,10 @@
 import { app } from "../../../main.js";
-import { BArmature } from "../../core/edit/BArmature.js";
-import { BArmatureAnimation } from "../../core/edit/BArmatureAnimation.js";
-import { BBezier } from "../../core/edit/BBezier.js";
-import { BBezierShapeKey } from "../../core/edit/BBezierShapeKey.js";
-import { BMesh } from "../../core/edit/BMesh.js";
-import { BMeshShapeKey } from "../../core/edit/BMeshShapeKey.js";
+import { BArmature } from "../../core/edit/objects/BArmature.js";
+import { BArmatureAnimation } from "../../core/edit/objects/BArmatureAnimation.js";
+import { BBezier } from "../../core/edit/objects/BBezier.js";
+import { BBezierShapeKey } from "../../core/edit/objects/BBezierShapeKey.js";
+import { BMesh } from "../../core/edit/objects/BMesh.js";
+import { BMeshShapeKey } from "../../core/edit/objects/BMeshShapeKey.js";
 import { Armature } from "../../core/objects/armature.js";
 import { MathMat3x3 } from "../../utils/mathMat.js";
 import { MathVec2 } from "../../utils/mathVec.js";

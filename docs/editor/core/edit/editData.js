@@ -1,12 +1,12 @@
 import { Application } from "../../app/app.js";
-import { BArmature } from "./BArmature.js";
-import { BArmatureAnimation } from "./BArmatureAnimation.js";
-import { BBezier } from "./BBezier.js";
-import { BBezierShapeKey } from "./BBezierShapeKey.js";
-import { BBezierWeight } from "./BBezierWeight.js";
-import { BMesh } from "./BMesh.js";
-import { BMeshShapeKey } from "./BMeshShapeKey.js";
-import { BMeshWeight } from "./BMeshWeight.js";
+import { BArmature } from "./objects/BArmature.js";
+import { BArmatureAnimation } from "./objects/BArmatureAnimation.js";
+import { BBezier } from "./objects/BBezier.js";
+import { BBezierShapeKey } from "./objects/BBezierShapeKey.js";
+import { BBezierWeight } from "./objects/BBezierWeight.js";
+import { BMesh } from "./objects/BMesh.js";
+import { BMeshShapeKey } from "./objects/BMeshShapeKey.js";
+import { BMeshWeight } from "./objects/BMeshWeight.js";
 
 export class EditDatas {
     constructor(/** @type {Application} */ app) {

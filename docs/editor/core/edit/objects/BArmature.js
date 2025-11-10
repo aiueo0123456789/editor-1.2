@@ -1,7 +1,7 @@
-import { app } from "../../../main.js";
-import { createArrayNAndFill, roundUp } from "../../utils/utility.js";
-import { GPU } from "../../utils/webGPU.js";
-import { Armature } from "../objects/armature.js";
+import { app } from "../../../../main.js";
+import { createArrayNAndFill, roundUp } from "../../../utils/utility.js";
+import { GPU } from "../../../utils/webGPU.js";
+import { Armature } from "../../objects/armature.js";
 
 class Vert {
     constructor(data) {
@@ -133,7 +133,6 @@ export class BArmature {
             }
         }
         createBones(object.root, null);
-        console.log(this)
         this.updateGPUData();
     }
 

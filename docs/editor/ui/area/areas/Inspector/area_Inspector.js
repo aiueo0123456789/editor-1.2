@@ -2,7 +2,7 @@ import { app } from "../../../../../main.js";
 import { CreateShapeKeyCommand, DeleteShapeKeyCommand } from "../../../../commands/mesh/shapeKey.js";
 import { ChangeParentCommand } from "../../../../commands/object/object.js";
 import { ChangeParameterCommand } from "../../../../commands/utile/utile.js";
-import { BMeshShapeKey } from "../../../../core/edit/BMeshShapeKey.js";
+import { BMeshShapeKey } from "../../../../core/edit/objects/BMeshShapeKey.js";
 import { changeParameter } from "../../../../utils/utility.js";
 
 export class Area_Inspector {

@@ -1,9 +1,9 @@
-import { app } from "../../../main.js";
-import { MathVec2 } from "../../utils/mathVec.js";
-import { createID, managerForDOMs } from "../../utils/ui/util.js";
-import { pushToArray, roundUp } from "../../utils/utility.js";
-import { GPU } from "../../utils/webGPU.js";
-import { BezierModifier } from "../objects/bezierModifier.js";
+import { app } from "../../../../main.js";
+import { MathVec2 } from "../../../utils/mathVec.js";
+import { createID, managerForDOMs } from "../../../utils/ui/util.js";
+import { pushToArray, roundUp } from "../../../utils/utility.js";
+import { GPU } from "../../../utils/webGPU.js";
+import { BezierModifier } from "../../objects/bezierModifier.js";
 
 class Vert {
     constructor(data) {
@@ -117,7 +117,6 @@ export class BBezierShapeKey {
             this.vertices.push(new Vert({co: coordinates[i].slice(2,4), index: i * 3 + 1}));
             this.vertices.push(new Vert({co: coordinates[i].slice(4,6), index: i * 3 + 2}));
         }
-        console.log(shape)
         this.object.shapeKeyMetaDatas.forEach((shapeKeyMetaDta, shapeKeyIndex) => {
             const data = [];
             for (let vertrxIndex = 0; vertrxIndex < coordinates.length; vertrxIndex ++) {
@@ -128,9 +127,6 @@ export class BBezierShapeKey {
             pushToArray(this.shapeKeys, new ShapeKey({name: shapeKeyMetaDta.name, data: data, id: shapeKeyMetaDta.id}));
         })
         this.activeShapeKey = this.shapeKeys[0];
-        // this.edges.push(new Edge({vertices: [this.vertices[0],this.vertices[1]]}));
-        // this.silhouetteEdges.push(new Edge({vertices: [this.vertices[1],this.vertices[2]]}));
-        console.log(this)
         this.updateGPUData();
     }
 

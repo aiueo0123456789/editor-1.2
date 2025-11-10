@@ -1,6 +1,6 @@
 import { app } from "../../../../../main.js";
-import { BArmatureAnimation } from "../../../../core/edit/BArmatureAnimation.js";
-import { BKeyframeBlockManager } from "../../../../core/edit/BKeyframeBlockManager.js";
+import { BArmatureAnimation } from "../../../../core/edit/objects/BArmatureAnimation.js";
+import { BKeyframeBlockManager } from "../../../../core/edit/objects/BKeyframeBlockManager.js";
 import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
 import { Keyframe, KeyframeBlock } from "../../../../core/objects/keyframe.js";
 import { MathVec2 } from "../../../../utils/mathVec.js";

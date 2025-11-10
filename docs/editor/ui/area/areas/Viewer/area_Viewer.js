@@ -22,7 +22,7 @@ import { Particle } from '../../../../core/objects/particle.js';
 import { app } from '../../../../../main.js';
 import { SelectOnlyVertexCommand } from '../../../../commands/utile/selectVertices.js';
 import { managerForDOMs } from '../../../../utils/ui/util.js';
-import { BBezier } from '../../../../core/edit/BBezier.js';
+import { BBezier } from '../../../../core/edit/objects/BBezier.js';
 import { SelectOnlyBoneCommand } from '../../../../commands/utile/selectBone.js';
 import { KeyframeInsertModal } from '../../../tools/keyframeInsert.js';
 import { ActiveVertexPanel } from './toolBar/panel/vertex.js';
@@ -30,7 +30,7 @@ import { ActiveBonePanel } from './toolBar/panel/bone.js';
 import { ActiveMeshPanel } from './toolBar/panel/mesh.js';
 import { ActiveEdgePanel } from './toolBar/panel/edge.js';
 import { WeightPaintPanel } from './toolBar/panel/weight.js';
-import { BBezierWeight } from '../../../../core/edit/BBezierWeight.js';
+import { BBezierWeight } from '../../../../core/edit/objects/BBezierWeight.js';
 
 const selectObjectOutlinePipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("VFu_Fts"), GPU.getGroupLayout("Vsr_Vsr"), GPU.getGroupLayout("Vu_Ft"), GPU.getGroupLayout("Fu")], await loadFile("./editor/shader/render/selectObjectOutline/selectObjectOutlineMeshRenderPipeline.wgsl"), [["u"]], "mask", "t");
 const selectObjectOutlineMixPipeline = GPU.createRenderPipelineFromOneFile([GPU.getGroupLayout("Fts_Ft_Fu")], await loadFile("./editor/shader/render/selectObjectOutline/mix.wgsl"), [], "2d", "s");

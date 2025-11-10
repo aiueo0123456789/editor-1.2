@@ -1,5 +1,5 @@
 import { app } from "../../../../../../../main.js";
-import { BArmatureAnimation } from "../../../../../../core/edit/BArmatureAnimation.js";
+import { BArmatureAnimation } from "../../../../../../core/edit/objects/BArmatureAnimation.js";
 import { changeParameter } from "../../../../../../utils/utility.js";
 
 export class WeightPaintPanel {

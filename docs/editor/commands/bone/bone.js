@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { BArmature } from "../../core/edit/BArmature.js";
+import { BArmature } from "../../core/edit/objects/BArmature.js";
 import { MathVec2 } from "../../utils/mathVec.js";
 import { indexOfSplice, removeDuplicates } from "../../utils/utility.js";
 

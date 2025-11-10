@@ -1,9 +1,9 @@
-import { app } from "../../../main.js";
-import { MathMat3x3 } from "../../utils/mathMat.js";
-import { MathVec2 } from "../../utils/mathVec.js";
-import { changeParameter, range, roundUp } from "../../utils/utility.js";
-import { GPU } from "../../utils/webGPU.js";
-import { Armature } from "../objects/armature.js";
+import { app } from "../../../../main.js";
+import { MathMat3x3 } from "../../../utils/mathMat.js";
+import { MathVec2 } from "../../../utils/mathVec.js";
+import { changeParameter, range, roundUp } from "../../../utils/utility.js";
+import { GPU } from "../../../utils/webGPU.js";
+import { Armature } from "../../objects/armature.js";
 import { BBezierWeight } from "./BBezierWeight.js";
 import { BKeyframeBlockManager } from "./BKeyframeBlockManager.js";
 import { BMeshWeight } from "./BMeshWeight.js";
@@ -198,7 +198,6 @@ export class BArmatureAnimation {
             }
         }
         createBones(object.root, null);
-        console.log(this)
         this.updateGPUData();
         console.log(await armatureData.baseBone.getObjectData(object));
         console.log(await armatureData.baseBoneMatrix.getObjectData(object));
