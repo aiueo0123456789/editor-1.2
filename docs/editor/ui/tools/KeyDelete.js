@@ -1,9 +1,7 @@
 import { app } from "../../../main.js";
-import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class KeyDelete {
-    constructor(/** @type {ToolPanelOperator} */operator) {
-        this.operator = operator;
+    constructor(/** @type {InputManager} */inputManager) {
         this.selectKeys = app.appConfig.areasConfig["Timeline"].getSelectKey();
         this.activateKey = "x";
     }

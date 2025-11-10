@@ -1,12 +1,10 @@
 import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
-import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 import { KeyframeTranslateCommand } from "../../commands/animation/keyframeTransform.js";
 
 export class KeyframeTranslate {
-    constructor(/** @type {ToolPanelOperator} */operator) {
-        this.operator = operator;
+    constructor(/** @type {InputManager} */inputManager) {
         this.command = null;
         this.values = [
             0,0, // スライド量

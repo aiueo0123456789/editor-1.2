@@ -2,11 +2,9 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { TranslateCommand } from "../../commands/transform/transform.js";
-import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class TranslateModal {
-    constructor(/** @type {ToolPanelOperator} */operator) {
-        this.operator = operator;
+    constructor(/** @type {InputManager} */inputManager) {
         this.command = null;
         this.values = [
             0,0, // スライド量

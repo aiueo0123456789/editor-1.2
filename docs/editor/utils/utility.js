@@ -72,8 +72,8 @@ export function createArrayN(N, data = undefined) {
     }
 }
 
-export function createArrayNAndFill(N, data) {
-    return [...Array(N)].map(() => data);
+export function createArrayNAndFill(N, value) {
+    return [...Array(N)].map(() => value);
 }
 
 export function createStructArrayN(N, data) {

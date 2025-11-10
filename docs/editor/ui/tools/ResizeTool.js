@@ -3,11 +3,9 @@ import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { ResizeCommand } from "../../commands/transform/transform.js";
 import { MathVec2 } from "../../utils/mathVec.js";
-import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class ResizeModal {
-    constructor(/** @type {ToolPanelOperator} */operator) {
-        this.operator = operator;
+    constructor(/** @type {InputManager} */inputManager) {
         this.command = null;
         this.startPosition = [0,0];
         this.values = [

@@ -2,16 +2,13 @@ import { app } from "../../../main.js";
 import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { WeightPaintCommand } from "../../commands/mesh/weightPaint.js";
-import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
-ToolPanelOperator
 
 export class WeightPaintModal {
-    constructor(/** @type {ToolPanelOperator} */operator) {
-        this.operator = operator;
+    constructor(/** @type {InputManager} */inputManager) {
         console.log(app.appConfig.areasConfig["Viewer"].weightPaintMetaData)
-        this.command = new WeightPaintCommand();
+        this.command = new WeightPaintCommand(inputManager.position);
         this.values = [
-            0,0, // スライド量
+            ...inputManager.position // スライド量
         ];
         this.modal = {
             inputObject: {"value": this.values},

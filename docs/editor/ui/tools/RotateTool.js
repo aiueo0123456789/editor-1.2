@@ -3,11 +3,9 @@ import { InputManager } from "../../app/inputManager/inputManager.js";
 import { managerForDOMs } from "../../utils/ui/util.js";
 import { RotateCommand } from "../../commands/transform/transform.js";
 import { MathVec2 } from "../../utils/mathVec.js";
-import { ToolPanelOperator } from "../../operators/toolPanelOperator.js";
 
 export class RotateModal {
-    constructor(/** @type {ToolPanelOperator} */operator) {
-        this.operator = operator;
+    constructor(/** @type {InputManager} */inputManager) {
         this.command = null;
         this.values = [
             0,0, // 回転量, dummy

@@ -6,14 +6,18 @@ import { createArrayNAndFill } from "../../utils/utility.js";
 
 class WeightBlock {
     constructor(data) {
+        /** @type {String} */
         this.name = data.name;
+        /** @type {Number} */
         this.index = data.index;
+        /** @type {Array} */
         this.weights = data.weights;
     }
 }
 
 export class WeightPaintCommand {
     constructor(
+        point = [0,0],
         weightBlockIndex = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightBlockIndex,
         weightValue = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.weightValue,
         decayType = app.appConfig.areasConfig["Viewer"].weightPaintMetaData.decayType,
@@ -30,28 +34,31 @@ export class WeightPaintCommand {
         if (this.editObject instanceof BMeshWeight) this.isBMeshWeight = true;
         if (this.editObject instanceof BBezierWeight) this.isBBezierWeight = true;
         if (this.isBMeshWeight || this.isBBezierWeight) {
+            /** @type {WeightBlock[]} */
             this.weightBlocks = this.editObject.weightBlocks;
+            /** @type {Number[]} */
             this.originalWeightBlocks = this.weightBlocks.map(weightBlock => [...weightBlock.weights]);
-            this.paintWeightValue = createArrayNAndFill(this.editObject.verticesNum, 0);
-            this.minDistDecays = createArrayNAndFill(this.editObject.verticesNum, 0);
+            /** @type {Number[]} */
+            this.resultWegithValues = createArrayNAndFill(this.editObject.verticesNum, 0);
+            /** @type {Number[]} */
+            this.maxDecays = createArrayNAndFill(this.editObject.verticesNum, 0);
         } else this.error = true;
         console.log(this)
+        this.update(point);
     }
 
     update(point) {
         const decays = this.editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (MathVec2.distanceR(point, co) / this.decaySize)));
         decays.forEach((decay, vertexIndex) => {
-            if (this.minDistDecays[vertexIndex] < decay) {
-                this.minDistDecays[vertexIndex] = decay;
-            }
-            if (this.decayType == "ミックス") this.paintWeightValue[vertexIndex] = this.minDistDecays[vertexIndex] * this.weightvalue + this.originalWeightBlocks[this.weightBlockIndex][vertexIndex] * (1 - this.minDistDecays[vertexIndex]);
+            // if (this.maxDecays[vertexIndex] < decay) this.maxDecays[vertexIndex] = decay;
+            if (this.decayType == "ミックス") this.resultWegithValues[vertexIndex] = this.maxDecays[vertexIndex] * this.weightvalue + this.originalWeightBlocks[this.weightBlockIndex][vertexIndex] * (1 - this.maxDecays[vertexIndex]);
         })
         for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
-            this.weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[vertexIndex];
+            this.weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.resultWegithValues[vertexIndex];
         }
         // 正規化
         for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
-            let availableWeight = 1 - this.paintWeightValue[vertexIndex]; // ターゲット以外が使える重み
+            let availableWeight = 1 - this.resultWegithValues[vertexIndex]; // ターゲット以外が使える重み
             let sumWeight = 0; // ターゲット以外の重み
             for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
                 if (this.weightBlockIndex != boneIndex) {
@@ -59,9 +66,11 @@ export class WeightPaintCommand {
                     this.weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[boneIndex][vertexIndex];
                 }
             }
-            for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
-                if (this.weightBlockIndex != boneIndex) {
-                    this.weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[boneIndex][vertexIndex];
+            if (sumWeight > 0) {
+                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
+                    if (this.weightBlockIndex != boneIndex) {
+                        this.weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[boneIndex][vertexIndex];
+                    }
                 }
             }
         }
@@ -70,12 +79,11 @@ export class WeightPaintCommand {
 
     execute() {
         for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
-            this.weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.paintWeightValue[vertexIndex];
+            this.weightBlocks[this.weightBlockIndex].weights[vertexIndex] = this.resultWegithValues[vertexIndex];
         }
         // 正規化
-        // 正規化
         for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
-            let availableWeight = 1 - this.paintWeightValue[vertexIndex]; // ターゲット以外が使える重み
+            let availableWeight = 1 - this.resultWegithValues[vertexIndex]; // ターゲット以外が使える重み
             let sumWeight = 0; // ターゲット以外の重み
             for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
                 if (this.weightBlockIndex != boneIndex) {
@@ -83,9 +91,11 @@ export class WeightPaintCommand {
                     this.weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[boneIndex][vertexIndex];
                 }
             }
-            for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
-                if (this.weightBlockIndex != boneIndex) {
-                    this.weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[boneIndex][vertexIndex];
+            if (sumWeight > 0) {
+                for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
+                    if (this.weightBlockIndex != boneIndex) {
+                        this.weightBlocks[boneIndex].weights[vertexIndex] = availableWeight / sumWeight * this.originalWeightBlocks[boneIndex][vertexIndex];
+                    }
                 }
             }
         }

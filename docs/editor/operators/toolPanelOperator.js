@@ -31,7 +31,7 @@ export class ToolPanelOperator {
             await this.nowPanel.execute();
             this.reset();
         }
-        this.nowPanel = new model(this);
+        this.nowPanel = new model(inputManager);
         if (this.dom) {
             this.creatorForUI.remove();
             if (this.nowPanel.modal) {

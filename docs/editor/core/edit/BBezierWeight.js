@@ -115,7 +115,8 @@ export class BBezierWeight {
         for (let vertexIndex = 0; vertexIndex < coordinates.length; vertexIndex ++) {
             vertexWeightBlocks[vertexIndex].slice(0,4).forEach((boneIndex, localIndex) => {
                 const weightValue = vertexWeightBlocks[vertexIndex].slice(4,8)[localIndex];
-                this.weightBlocks[boneIndex].weights[vertexIndex] = weightValue;
+                if (isNaN(weightValue)) this.weightBlocks[boneIndex].weights[vertexIndex] = 0;
+                else this.weightBlocks[boneIndex].weights[vertexIndex] = weightValue;
             })
             this.vertices.push(new Vert({co: coordinates[vertexIndex]}));
         }
