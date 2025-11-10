@@ -50,7 +50,7 @@ export class WeightPaintCommand {
     update(point) {
         const decays = this.editObject.renderingVerticesCoordinates.map(co => Math.max(0, 1 - (MathVec2.distanceR(point, co) / this.decaySize)));
         decays.forEach((decay, vertexIndex) => {
-            // if (this.maxDecays[vertexIndex] < decay) this.maxDecays[vertexIndex] = decay;
+            if (this.maxDecays[vertexIndex] < decay) this.maxDecays[vertexIndex] = decay;
             if (this.decayType == "ミックス") this.resultWegithValues[vertexIndex] = this.maxDecays[vertexIndex] * this.weightvalue + this.originalWeightBlocks[this.weightBlockIndex][vertexIndex] * (1 - this.maxDecays[vertexIndex]);
         })
         for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
@@ -104,7 +104,7 @@ export class WeightPaintCommand {
     }
 
     undo() {
-        for (let boneIndex = 0; boneIndex < originalWeightBlocks.length; boneIndex ++) {
+        for (let boneIndex = 0; boneIndex < this.originalWeightBlocks.length; boneIndex ++) {
             for (let vertexIndex = 0; vertexIndex < this.editObject.verticesNum; vertexIndex ++) {
                 this.weightBlocks[boneIndex].weights[vertexIndex] = this.originalWeightBlocks[boneIndex][vertexIndex];
             }

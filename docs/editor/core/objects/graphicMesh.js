@@ -54,7 +54,7 @@ export class GraphicMesh extends ObjectBase {
         this.objectMeshData = GPU.createUniformBuffer(4 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
-        this.autoWeight = data.autoWeight ? data.autoWeight : true;
+        this.autoWeight = "autoWeight" in data ? data.autoWeight : true;
         this.changeParent(app.scene.objects.getObjectFromID(data.parent));
         this.zIndex = data.zIndex;
         GPU.writeBuffer(this.zIndexBuffer, new Float32Array([1 / (this.zIndex + 1)]));

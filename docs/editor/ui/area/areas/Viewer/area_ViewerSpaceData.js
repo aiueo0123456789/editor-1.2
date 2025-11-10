@@ -1,7 +1,3 @@
-import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
-import { managerForDOMs } from "../../../../utils/ui/util.js";
-import { GPU } from "../../../../utils/webGPU.js";
-
 export class ViewerSpaceData {
     constructor() {
         this.mode = "オブジェクト";
@@ -26,12 +22,10 @@ export class ViewerSpaceData {
             bezierType: 0,
             weightValue: 1,
             decayType: "ミックス",
-            decaySize: 200,
+            decaySize: 50,
         }
 
         this.areas = [];
-
-        // this.modalOperator = new ModalOperator(this.creatorForUI.getDOMFromID("canvasContainer"), {});
 
         this.weightBezierType = 0;
     }

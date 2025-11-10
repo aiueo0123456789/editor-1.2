@@ -347,17 +347,17 @@ export async function createEdgeFromTexture(texture, pixelDensity, padding, simp
         return simplifyPolygon(x, simplEpsilon, MathVec2.max(imageBufferSize) / 3);
     });
 
-    let maxLenghtLine = [];
+    let maxLengthLine = [];
     for (const line of collectedLines) {
-        if (maxLenghtLine.length < line.length) {
-            maxLenghtLine = line;
+        if (maxLengthLine.length < line.length) {
+            maxLengthLine = line;
         }
     }
 
     const resultData = {vertices: [], uv: [], edges: []};
     let verticesNumOffset = 0;
     // for (const data of collectedLines) {
-    for (const data of [maxLenghtLine]) {
+    for (const data of [maxLengthLine]) {
         if (2 < data.length) {
             // 膨らませる
             // const vertices = fixSelfIntersectingPolygon(data.map((vert, i) => {
