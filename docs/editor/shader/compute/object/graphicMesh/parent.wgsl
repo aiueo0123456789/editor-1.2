@@ -148,8 +148,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else if (allocation.parentType == 3u) { // 親がアーマチュア
         let weightBlock = weightBlocks[fixVertexIndex];
         let position = vec3<f32>(renderingVertices[fixVertexIndex],1.0);
-        // let indexs = weightBlock.indexs + boneAllocationArray[allocation.parentIndex].vertexBufferOffset;
-        let indexs = weightBlock.indexs;
+        let indexs = weightBlock.indexs + boneAllocationArray[allocation.parentIndex].vertexBufferOffset;
         let weights = weightBlock.weights;
         var skinnedPosition = vec3<f32>(0.0,0.0,1.0);
         // 各ボーンのワールド行列を用いてスキニング

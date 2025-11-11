@@ -122,8 +122,8 @@ class TransformCommand {
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
             } else if (this.processType == "bone") {
                 this.targetBones.forEach((bone, index) => {
-                    // mathVec2.add(bone, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index]))
-                    const localValue = MathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
+                    let localValue = this.value;
+                    if (bone.parent) localValue = MathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
                     Armature.addBoneData(bone.animationLocalBoneData, this.originalBones[index], {x: localValue[0], y: localValue[1]});
                 });
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
@@ -151,8 +151,8 @@ class TransformCommand {
                 this.editObjects.forEach(editObject => editObject.updateGPUData());
             } else if (this.processType == "bone") {
                 this.targetBones.forEach((bone, index) => {
-                    // mathVec2.add(bone, this.originalVertices[index], mathVec2.scaleR(this.value, this.weights[index]))
-                    const localValue = MathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
+                    let localValue = this.value;
+                    if (bone.parent) localValue = MathMat3x3.getLocalVec2(bone.parent.poseWorldMatrix, this.value);
                     Armature.addBoneData(bone.animationLocalBoneData, this.originalBones[index], {x: localValue[0], y: localValue[1]});
                 });
                 this.editObjects.forEach(editObject => editObject.updateGPUData());

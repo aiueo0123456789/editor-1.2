@@ -81,7 +81,6 @@ export class ListTag extends CustomTag {
         const isPrimitive = data.isPrimitive;
         const itemUpdate = () => {
             if (isPrimitive && items.length === lastItems.length) return ;
-            console.log("list更新", this)
             this.list.replaceChildren();
             for (const lastItem of lastItems) {
                 if (!items.includes(lastItem)) { // 削除
@@ -158,7 +157,6 @@ export class ListTag extends CustomTag {
             lastItems = [...items];
         }
         this.dataBlocks = [managerForDOMs.set({o: items, g: creatorForUI.groupID}, itemUpdate)];
-        console.log("list作成", this)
         itemUpdate();
     }
 }

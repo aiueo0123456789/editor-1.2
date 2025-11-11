@@ -477,7 +477,8 @@ export class Renderer {
                 });
                 // オブジェクト表示
                 selectObjectOutlineRenderPass.setBindGroup(0, this.staticGroup);
-                app.scene.allRenderingOrder.filter(object => app.context.selectedObjects.includes(object)).forEach((object, index) => {
+                const selectedObjects = app.context.selectedObjects;
+                app.scene.allRenderingOrder.filter(object => selectedObjects.includes(object)).forEach((object, index) => {
                     if (object == app.context.activeObject) {
                         // selectObjectOutlineRenderPass.setBindGroup(3, GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [244 / 255], ["f32"])]));
                         selectObjectOutlineRenderPass.setBindGroup(3, GPU.createGroup(GPU.getGroupLayout("Fu"), [GPU.createUniformBuffer(4, [1 / 255], ["f32"])]));

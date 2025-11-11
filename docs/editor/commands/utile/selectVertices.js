@@ -12,8 +12,8 @@ export class SelectOnlyVertexCommand {
         this.multiple = multiple;
         this.editObjects = app.scene.editData.allEditObjects.filter(editData => editData instanceof BMesh || editData instanceof BMeshShapeKey || editData instanceof BBezier || editData instanceof BBezierShapeKey || editData instanceof BArmature); // オブジェクトモードに移行する場合は前のモードで使っていた編集用オブジェクトを保持
         let minDis = Infinity;
-        let minIndex = 0;
-        let minObjectID = 0;
+        let minIndex = [0];
+        let minObjectID = [0];
         this.originalSelectData = {};
         this.editObjects.forEach(editObject => {
             const objectID = editObject.id;
@@ -23,15 +23,20 @@ export class SelectOnlyVertexCommand {
             else verticesCoordinates = editObject.vertices.map(vertex => vertex.co);
             for (const vertex of verticesCoordinates) {
                 const dist = MathVec2.distanceR(vertex, point);
-                if (dist < minDis) {
+                if (dist <= minDis) {
+                    if (dist < minDis) { // ==じゃないなら配列の長さをリセット
+                        minIndex.length = 0;
+                        minObjectID.length = 0;
+                    }
                     minDis = dist;
-                    minIndex = verticesCoordinates.indexOf(vertex);
-                    minObjectID = objectID;
+                    minIndex.push(verticesCoordinates.indexOf(vertex));
+                    minObjectID.push(objectID);
                 }
             }
         })
         this.selectData = {};
-        this.selectData[minObjectID] = [minIndex];
+        let index = Math.floor(Math.random() * minObjectID.length); // 同じ位置に複数あった場合どれを選択するか使うか
+        this.selectData[minObjectID[index]] = [minIndex[index]];
     }
 
     execute() {

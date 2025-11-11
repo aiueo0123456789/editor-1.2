@@ -68,27 +68,26 @@ export class Area_Inspector {
                                 {tagType: "if", formula: {source: "/type", conditions: "==", value: "ベジェモディファイア"},
                                     true: [
                                         {tagType: "input", label: "名前", value: "/name", type: "text"},
-                                        {tagType: "input", label: "頂点数", value: "/pointsNum", type: "number", custom: {collision: false, visual: "1"}},
+                                        {tagType: "select", label: "親",
+                                            value: (value) => {
+                                                app.operator.appendCommand(new ChangeParentCommand([app.context.activeObject], app.scene.objects.getObjectFromID(value)));
+                                                app.operator.execute();
+                                            },
+                                            sourceObject: () => {
+                                                return app.scene.objects.getObjectsFromeTypes(["ベジェモディファイア", "アーマチュア"]).map(object => {return {name: object.name, id: object.id}});
+                                            },
+                                            options: {initValue: {path: "context/activeObject/parent/name"}}
+                                        },
+                                        {tagType: "input", label: "ポイント数", value: "/pointsNum", type: "number", custom: {collision: false, visual: "1"}},
                                         {tagType: "input", label: "自動のウェイト", type: "checkbox", checked:  "/autoWeight", look: {check: "check", uncheck: "uncheck"}},
                                     ],
                                     false: [
                                         {tagType: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},
                                             true: [
                                                 {tagType: "input", label: "名前", value: "/name", type: "text"},
-                                                {tagType: "input", label: "最大ボーン数", value: "/bonesNum", type: "number", custom: {visual: "1"}},
                                                 {tagType: "input", label: "ボーン数", value: "/bonesNum", type: "number", custom: {collision: false, visual: "1"}},
                                             ],
                                             false: [
-                                                {tagType: "if", formula: {source: "/type", conditions: "==", value: "テクスチャ"},
-                                                    true: [
-                                                        {tagType: "input", label: "名前", value: "/name", type: "text"},
-                                                        {tagType: "viewr", label: "テクスチャ", value: "/texture"},
-                                                    ],
-                                                    false: [
-                                                        {tagType: "input", label: "対象オブジェクト", value: "/targetObjec/name", type: "text"},
-                                                        {tagType: "input", label: "対象値", value: "/targetValue", type: "text"},
-                                                    ]
-                                                }
                                             ]
                                         }
                                     ]

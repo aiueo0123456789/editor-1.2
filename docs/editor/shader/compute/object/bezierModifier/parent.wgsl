@@ -159,7 +159,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     } else if (allocation.parentType == 3) { // 親がアーマチュア
         let weightBlock = bezierWeightBlocks[fixVertexIndex];
         let position = vec3<f32>(targetVertices,1.0);
-        let indexs = weightBlock.indexs;
+        let indexs = weightBlock.indexs + boneAllocationArray[allocation.parentIndex].pointsOffset;
         let weights = weightBlock.weights;
         // 各ボーンのワールド行列を用いてスキニング
         for (var i = 0u; i < 4u; i = i + 1u) {

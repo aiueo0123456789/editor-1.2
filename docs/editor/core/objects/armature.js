@@ -125,7 +125,7 @@ export class Armature extends ObjectBase {
             this.boneMetaDatas.push(Armature.createBoneMetaData(boneMetaData.name, boneMetaData.index, boneMetaData.parentIndex, boneMetaData.depth, false));
         }
         copyToArray(this.allBone, data.bones.flat());
-        copyToArray(this.allAnimations, createArrayNAndFill(data.bones.length, 0));
+        copyToArray(this.allAnimations, createArrayNAndFill(this.allBone.length, 0));
         copyToArray(this.allBoneWorldMatrix, data.worldMatrix.flat());
         copyToArray(this.allColors, data.boneColors.flat());
         copyToArray(this.allPhysics, data.physicsDatas.flat());

@@ -8,7 +8,7 @@ import { Area_Timeline } from "../ui/area/areas/Timeline/area_Timeline.js";
 import { ViewerSpaceData } from "../ui/area/areas/Viewer/area_ViewerSpaceData.js";
 import { TimelineSpaceData } from "../ui/area/areas/Timeline/area_TimelineSpaceData.js";
 import { InputManager } from "./inputManager/inputManager.js";
-import { changeParameter, loadFile } from "../utils/utility.js";
+import { changeParameter, createArrayNAndFill, loadFile } from "../utils/utility.js";
 import { ContextmenuOperator } from "../operators/contextmenuOperator.js";
 import { OutlinerSpaceData } from "../ui/area/areas/Outliner/area_OutlinerSpaceData.js";
 import { Area_Property } from "../ui/area/areas/Property/area_Property.js";
@@ -27,6 +27,7 @@ import { Area_BlendShape } from "../ui/area/areas/BlendShapes/area_BlendShape.js
 import { Area_BlendShapeSpaceData } from "../ui/area/areas/BlendShapes/area_BlendShapeSpaceData.js";
 import { BezierModifier } from "../core/objects/bezierModifier.js";
 import { GraphicMesh } from "../core/objects/graphicMesh.js";
+import { Armature } from "../core/objects/armature.js";
 
 const allLanguageData = await loadFile("./config/language/language.json");
 const calculateMeshParentWeightByBone = GPU.createComputePipeline([GPU.getGroupLayout("Csrw_Csr_Cu_Csr_Cu")], await loadFile("./editor/shader/compute/objectUtil/setWeight/mesh/byBone.wgsl"));
@@ -54,37 +55,18 @@ class AppOptions {
                 "normal": {
                     type: "アーマチュア",
                     bonesNum: 1,
-                    bones: [{
-                        index: 0,
-                        childrenBone: [],
-                        baseHead: {co: [0,0]},
-                        baseTail: {co: [0,100]},
-                        animations: {blocks: []},
-                        attachments: {
-                            type: "アタッチメント",
-                            list: [
-                                {
-                                    type: "物理アタッチメント",
-                                    x: 0,
-                                    y: 0,
-                                    rotate: 0,
-                                    shearX: 0,
-                                    scaleX: 0,
-                                    inertia: 0,
-                                    strength: 0,
-                                    damping: 0,
-                                    mass: 0,
-                                    wind: 0,
-                                    gravity: 0,
-                                    mix: 0,
-                                    limit: 0,
-                                }
-                            ]
-                        }
-                    }],
-                    editor: {
-                        boneColor: [0,0,0,1]
-                    }
+                    boneMetaDatas: [{name: "ボーン0", index: 0, parentIndex: -1, depth: 0}],
+                    bones: [[0,0, 1,1, 1.5707963267948966, 100]],
+                    worldMatrix: [
+                        [
+                            6.123233995736766e-17,1,0,
+                            -0.9999999999932537,-0.000003673205103507386,0,
+                            0,0,1
+                        ]
+                    ],
+                    boneColors: [[0,0,0,1]],
+                    physicsDatas: [createArrayNAndFill(30, 0).map((x,index) => index == 14 ? 1 : 0)],
+                    vertices: [[0,0, 0,100]]
                 },
                 "body": {
                     type: "アーマチュア",
@@ -325,8 +307,7 @@ class AppConfig {
                         ]},
                         {label: "アーマチュア", children: [
                             {label: "normal", eventFn: () => {
-                                const command = new CreateObjectCommand(this.app.options.getPrimitiveData("アーマチュア", "normal"));
-                                this.app.operator.appendCommand(command);
+                                this.app.operator.appendCommand(new CreateObjectCommand(this.app.options.getPrimitiveData("アーマチュア", "normal")));
                                 this.app.operator.execute();
                             }},
                             {label: "body", eventFn: () => {
