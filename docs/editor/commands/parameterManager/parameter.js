@@ -30,6 +30,7 @@ export class DeleteParameterInParameterManager {
     }
 
     undo() {
+        console.log("巻き戻し",this)
         insertToArray(this.parameterManager.parameters, this.deleteIndex, this.deleteParameter);
     }
 }

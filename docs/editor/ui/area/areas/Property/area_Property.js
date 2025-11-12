@@ -54,17 +54,12 @@ export class Area_Property {
                             {tagType: "list", appendEvent: (object) => {
                                 app.operator.appendCommand(new AppendParameterInParameterManager(object.normal));
                                 app.operator.execute();
-                            }, deleteEvent: (parameterManagers) => {
-                                app.operator.appendCommand(new DeleteObjectCommand(parameterManagers));
-                                app.operator.execute();
                             }, src: "/parameters", options: {}, notUseActiveAndSelect: true, type: "noScroll", liStruct:[
                                 {tagType: "gridBox", axis: "c",  allocation: "auto 1fr auto", children: [
                                     {tagType: "dblClickInput", value: "/label"},
                                     {tagType: "input", value: "/value", type: "number"},
                                     {tagType: "button", textContent: "削除", submitFunction: (object) => {
-                                        console.log(object);
-                                        // app.operator.appendCommand(new AppendParameterInParameterManager(object.normal));
-                                        app.operator.appendCommand(new DeleteParameterInParameterManager(object.normal));
+                                        app.operator.appendCommand(new DeleteParameterInParameterManager(object.special.searchTarget.normal, object.normal));
                                         app.operator.execute();
                                     }},
                                 ]}

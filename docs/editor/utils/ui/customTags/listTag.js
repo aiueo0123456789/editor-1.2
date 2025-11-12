@@ -21,8 +21,8 @@ export class ListTag extends CustomTag {
             // アクション
             if (data.appendEvent || data.deleteEvent) {
                 this.actionBar = createTag(this.element, "div", {style: "width: 20px;"});
-                this.appendButton = createMinButton(this.actionBar, "+");
-                this.deleteButton = createMinButton(this.actionBar, "-");
+                if (data.appendEvent) this.appendButton = createMinButton(this.actionBar, "+");
+                if (data.deleteEvent) this.deleteButton = createMinButton(this.actionBar, "-");
             }
         } else if (data.type == "noScroll") {
             this.listNameTag = createTag(t, "p", {textContent: data.label});
@@ -30,8 +30,8 @@ export class ListTag extends CustomTag {
             // アクション
             if (data.appendEvent || data.deleteEvent) {
                 this.actionBar = createTag(this.element, "div", {style: "display: flex; height: 20px;"});
-                this.appendButton = createButton(this.actionBar, null, "新しい値を追加");
-                this.deleteButton = createMinButton(this.actionBar, "-");
+                if (data.appendEvent) this.appendButton = createButton(this.actionBar, null, "新しい値を追加");
+                if (data.deleteEvent) this.deleteButton = createMinButton(this.actionBar, "-");
             }
 
             this.listContainer = createTag(this.element, "div", {style: "height: fit-content;"});
@@ -44,8 +44,8 @@ export class ListTag extends CustomTag {
             // アクション
             if (data.appendEvent || data.deleteEvent) {
                 this.actionBar = createTag(this.element, "div", {style: "display: flex; height: 20px;"});
-                this.appendButton = createMinButton(this.actionBar, "+");
-                this.deleteButton = createMinButton(this.actionBar, "-");
+                if (data.appendEvent) this.appendButton = createMinButton(this.actionBar, "+");
+                if (data.deleteEvent) this.deleteButton = createMinButton(this.actionBar, "-");
             }
 
             this.listContainer = createTag(this.element, "div", {style: "height: 200px;"});
@@ -59,9 +59,6 @@ export class ListTag extends CustomTag {
                     data.appendEvent(searchTarget);
                 });
             }
-        } else {
-            this.appendButton.classList.add("color2");
-            this.appendButton.style.pointerEvents = "none";
         }
         if (data.deleteEvent) {
             if (isFunction(data.deleteEvent)) {
@@ -69,9 +66,6 @@ export class ListTag extends CustomTag {
                     data.deleteEvent(this.selected);
                 });
             }
-        } else {
-            this.deleteButton.classList.add("color2");
-            this.deleteButton.style.pointerEvents = "none";
         }
 
         let lastItems = [];
@@ -139,14 +133,14 @@ export class ListTag extends CustomTag {
                 let child = [];
                 if (isPrimitive) {
                     if (!lastItems.includes(item)) { // 新規追加
-                        child = creatorForUI.createFromChildren(li, this, data.liStruct, {normal: items, special: {index: index}}, flag);
+                        child = creatorForUI.createFromChildren(li, this, data.liStruct, {normal: items, special: {index: index, list: items, searchTarget: searchTarget}}, flag);
                         tags.set(index, child);
                     } else {
                         CreatorForUI.tagAppendChildren(li, tags.get(index));
                     }
                 } else {
                     if (!lastItems.includes(item)) { // 新規追加
-                        child = creatorForUI.createFromChildren(li, this, data.liStruct, {normal: item, special: {index: index}}, flag);
+                        child = creatorForUI.createFromChildren(li, this, data.liStruct, {normal: item, special: {index: index, list: items, searchTarget: searchTarget}}, flag);
                         tags.set(item, child);
                     } else {
                         CreatorForUI.tagAppendChildren(li, tags.get(item));
