@@ -1,9 +1,9 @@
 import { app } from "../../../main.js";
 import { BArmatureAnimation } from "../../core/edit/objects/BArmatureAnimation.js";
 import { BKeyframeBlockManager } from "../../core/edit/objects/BKeyframeBlockManager.js";
-import { KeyframeBlock } from "../../core/objects/keyframe.js";
+import { KeyframeBlock } from "../../core/objects/keyframeBlock.js";
 
-export class KeyframeInsertCommand {
+export class KeyframeInsertInSelectedElementCommand {
     constructor() {
         this.editObjects = app.scene.editData.allEditObjects;
         if (this.editObjects[0] instanceof BArmatureAnimation) {
@@ -15,7 +15,7 @@ export class KeyframeInsertCommand {
                 const values = bone.keyframeBlockManager.valuesInObject;
                 /** @type {BKeyframeBlockManager} */
                 const keyframeBlockManager = bone.keyframeBlockManager;
-                return keyframeBlockManager.blocks.map((keyframeBlock, valueIndex) => KeyframeBlock.createKeyframe(app.scene.frame_current, values[valueIndex]));
+                return keyframeBlockManager.keyframeBlocks.map((keyframeBlock, valueIndex) => KeyframeBlock.createKeyframe(app.scene.frame_current, values[valueIndex]));
             });
         }
     }
@@ -24,7 +24,7 @@ export class KeyframeInsertCommand {
         this.selectedBones.forEach((bone, boneIndex) => {
             /** @type {BKeyframeBlockManager} */
             const keyframeBlockManager = bone.keyframeBlockManager;
-            keyframeBlockManager.blocks.forEach((keyframeBlock, keyframeIndex) => {
+            keyframeBlockManager.keyframeBlocks.forEach((keyframeBlock, keyframeIndex) => {
                 keyframeBlock.addKeyframe(this.createdKeyframes[boneIndex][keyframeIndex]);
             });
         });
@@ -35,9 +35,25 @@ export class KeyframeInsertCommand {
         this.selectedBones.forEach((bone, boneIndex) => {
             /** @type {BKeyframeBlockManager} */
             const keyframeBlockManager = bone.keyframeBlockManager;
-            keyframeBlockManager.blocks.forEach((keyframeBlock, keyframeIndex) => {
+            keyframeBlockManager.keyframeBlocks.forEach((keyframeBlock, keyframeIndex) => {
                 keyframeBlock.removeKeyframe(this.createdKeyframes[boneIndex][keyframeIndex]);
             });
         });
+    }
+}
+
+export class KeyframeInsertInKeyframeCommand {
+    constructor(/** @type {KeyframeBlock} */ keyframeBlock, frame, value) {
+        this.keyframeBlock = keyframeBlock;
+        this.newKey = KeyframeBlock.createKeyframe(frame, value);
+    }
+
+    execute() {
+        this.keyframeBlock.addKeyframe(this.newKey);
+        return {consumed: true};
+    }
+
+    undo() {
+        this.keyframeBlock.removeKeyframe(this.newKey);
     }
 }

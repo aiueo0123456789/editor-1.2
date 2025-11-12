@@ -1,7 +1,7 @@
 import { app } from "../../../../../main.js";
 import { InputManager } from "../../../../app/inputManager/inputManager.js";
 import { SelectOnlyKeyframeCommand } from "../../../../commands/utile/selectKeyframe.js";
-import { Keyframe } from "../../../../core/objects/keyframe.js";
+import { Keyframe } from "../../../../core/objects/keyframeBlock.js";
 import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
 import { MathVec2 } from "../../../../utils/mathVec.js";
 import { OutlinerTag } from "../../../../utils/ui/customTags/outlinerTag.js";

@@ -1,5 +1,5 @@
 import { ChecksTag, CustomTag } from "./customTag.js";
-import { createButton, createDoubleClickInput, createGroupButton, createIcon, createID, createMinList, createRadios, createRange, createSection, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
+import { createGroupButton, createID, createRadios, createTag, managerForDOMs, setClass, setLabel, setStyle, updateRangeStyle } from "./util.js";
 import { changeParameter, hexToRgba, isFunction, isNumber, isPassByReference, isPlainObject, rgbToHex } from "../utility.js";
 import { app } from "../../../main.js";
 import { MenuTag } from "./customTags/menuTag.js";
@@ -27,6 +27,7 @@ import { PanelTag } from "./customTags/panelTag.js";
 import { ListTag } from "./customTags/listTag.js";
 import { CanvasTag } from "./customTags/canvasTag.js";
 import { DualListboxTag } from "./customTags/dualListbox.js";
+import { ParameterManagerTag } from "./customTags/parameterManagerTag.js";
 
 function isFocus(t) {
     return document.hasFocus() && document.activeElement === t;
@@ -79,7 +80,7 @@ export const tagCreater = {
     },
     "text": (/** @type {CreatorForUI} */ creatorForUI,t,parent,searchTarget,child,flag) => {
         let element = createTag(t, "p");
-        setClass(element, "text")
+        setClass(element, "text");
         const update = () => {
             element.textContent = creatorForUI.getParameter(searchTarget, child.withObject);
         }
@@ -279,14 +280,13 @@ export const tagCreater = {
         return new DualListboxTag(creatorForUI,t,parent,searchTarget,child,flag);
     },
     "color": (/** @type {CreatorForUI} */ creatorForUI,t,parent,searchTarget,child,flag) => {
-        console.log("colorTag",t)
-        if (t instanceof HTMLElement) {
-            t.style.backgroundColor = creatorForUI.getParameter(searchTarget, child.src);
-        } else {
-            t.element.style.backgroundColor = creatorForUI.getParameter(searchTarget, child.src);
-        }
+        if (t instanceof HTMLElement) t.style.backgroundColor = creatorForUI.getParameter(searchTarget, child.src);
+        else t.element.style.backgroundColor = creatorForUI.getParameter(searchTarget, child.src);
         return null;
-    }
+    },
+    "parameterManager": (/** @type {CreatorForUI} */ creatorForUI,t,parent,searchTarget,child,flag) => {
+        return new ParameterManagerTag(creatorForUI,t,parent,searchTarget,child,flag);
+    },
 }
 
 export class ParameterReference {
@@ -451,7 +451,7 @@ export class CreatorForUI {
             } else {
                 return null;
             }
-            if (option == 1) {
+            if (option == 1) { // optionが1ならParameterReference型で返す
                 return new ParameterReference(object, lastRoot);
             } else {
                 if (isFunction(final)) {
@@ -467,8 +467,8 @@ export class CreatorForUI {
                 }
             }
         } catch(e) {
-            console.error(e);
-            // console.trace("値の取得", path, searchTarget, "でエラーが出ました");
+            // console.error(e);
+            console.warn("値の取得", path, searchTarget, "でエラーが出ました");
         }
     }
 

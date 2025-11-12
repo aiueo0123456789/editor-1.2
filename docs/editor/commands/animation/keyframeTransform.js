@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { Keyframe } from "../../core/objects/keyframe.js";
+import { Keyframe } from "../../core/objects/keyframeBlock.js";
 import { MathVec2 } from "../../utils/mathVec.js";
 
 class KeyframeTransformCommand {

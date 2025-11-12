@@ -80,12 +80,14 @@ export class Area_Inspector {
                                         },
                                         {tagType: "input", label: "ポイント数", value: "/pointsNum", type: "number", custom: {collision: false, visual: "1"}},
                                         {tagType: "input", label: "自動のウェイト", type: "checkbox", checked:  "/autoWeight", look: {check: "check", uncheck: "uncheck"}},
+                                        {tagType: "input", label: "表示/非表示", type: "checkbox", checked:  "/visible", look: {check: "display", uncheck: "hide"}},
                                     ],
                                     false: [
                                         {tagType: "if", formula: {source: "/type", conditions: "==", value: "アーマチュア"},
                                             true: [
                                                 {tagType: "input", label: "名前", value: "/name", type: "text"},
                                                 {tagType: "input", label: "ボーン数", value: "/bonesNum", type: "number", custom: {collision: false, visual: "1"}},
+                                                {tagType: "input", label: "表示/非表示", type: "checkbox", checked:  "/visible", look: {check: "display", uncheck: "hide"}},
                                             ],
                                             false: [
                                             ]

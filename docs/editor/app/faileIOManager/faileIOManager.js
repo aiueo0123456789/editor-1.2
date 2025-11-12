@@ -65,7 +65,7 @@ export class FaileIOManager {
             this.app.ui.updateLoadingModal(loadingModalID,50,"テクスチャの読み込み完了");
 
             console.log(json)
-            const objectTypes = ["maskTextures", "textures", "scripts", "particles", "bezierModifiers", "armatures", "graphicMeshs", "blendShapes"];
+            const objectTypes = ["maskTextures", "textures", "scripts", "particles", "bezierModifiers", "armatures", "graphicMeshs", "blendShapes", "keyframeBlocks", "parameterManagers"];
             for (const objectType of objectTypes) {
                 for (const objectData of json.scene.objects[objectType]) {
                     this.app.scene.objects.createObjectAndSetUp(objectData);

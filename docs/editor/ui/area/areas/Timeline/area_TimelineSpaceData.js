@@ -2,7 +2,7 @@ import { app } from "../../../../../main.js";
 import { BArmatureAnimation } from "../../../../core/edit/objects/BArmatureAnimation.js";
 import { BKeyframeBlockManager } from "../../../../core/edit/objects/BKeyframeBlockManager.js";
 import { GraphicMesh } from "../../../../core/objects/graphicMesh.js";
-import { Keyframe, KeyframeBlock } from "../../../../core/objects/keyframe.js";
+import { Keyframe, KeyframeBlock } from "../../../../core/objects/keyframeBlock.js";
 import { MathVec2 } from "../../../../utils/mathVec.js";
 
 export class TimelineSpaceData {
@@ -67,7 +67,7 @@ export class TimelineSpaceData {
                     object.selectedBones.forEach(bone => result.push({name: bone.name, type: "ボーン", children: looper([bone.keyframeBlockManager], {object: bone}), object: object}))
                     // object.bones.forEach(bone => result.push({name: bone.name, type: "ボーン", children: looper([bone.keyframeBlockManager], {object: bone})}))
                 } else if (object instanceof BKeyframeBlockManager) {
-                    object.blocksMap.forEach((keyframeBlcok, parameter) => result.push({parameter: parameter, type: "キーフレームブロック", pathID: `${othersData.object.id}/${keyframeBlcok.id}`, object: keyframeBlcok}))
+                    object.parameters.forEach((parameter, index) => result.push({parameter: parameter, type: "キーフレームブロック", pathID: `${othersData.object.id}/${object.keyframeBlocks[index].id}`, object: object.keyframeBlocks[index]}))
                 }
             }
             return result;

@@ -5,7 +5,6 @@ import { BezierModifier } from '../../core/objects/bezierModifier.js';
 import { Armature } from '../../core/objects/armature.js';
 import { indexOfSplice, loadFile, pushToArray } from '../../utils/utility.js';
 import { Application } from '../app.js';
-import { MathVec2 } from '../../utils/mathVec.js';
 import { RuntimeDatas } from '../../core/runtime/runtimeDatas.js';
 import { ParameterManager } from '../../core/objects/parameterManager.js';
 import { Particle } from '../../core/objects/particle.js';
@@ -16,7 +15,7 @@ import { Texture } from '../../core/objects/texture.js';
 import { MaskTexture } from '../../core/objects/maskTexture.js';
 import { UnfixedReference } from '../../utils/objects/util.js';
 import { EditDatas } from '../../core/edit/editData.js';
-import { KeyframeBlock } from '../../core/objects/keyframe.js';
+import { KeyframeBlock } from '../../core/objects/keyframeBlock.js';
 import { BArmatureAnimation } from '../../core/edit/objects/BArmatureAnimation.js';
 import { BlendShape } from '../../core/objects/blendShape.js';
 
@@ -162,6 +161,7 @@ class Objects {
 
     get allObject() {
         return this.previewCamera.concat(this.bezierModifiers).concat(this.graphicMeshs).concat(this.armatures).concat(this.keyframeBlocks).concat(this.parameterManagers).concat(this.particles).concat(this.scripts).concat(this.textures).concat(this.maskTextures).concat(this.blendShapes).concat(this.shapeKeys);
+        // return [...this.previewCamera, ...this.bezierModifiers, ...this.graphicMeshs, ...this.armatures, ...this.keyframeBlocks, ...this.parameterManagers, ...this.particles, ...this.scripts, ...this.textures, ...this.maskTextures, ...this.blendShapes, ...this.shapeKeys];
     }
 
     get shapeKeys() {
@@ -486,14 +486,16 @@ export class Scene {
 
             const childrenRoop = (children) => {
                 for (const child of children) {
-                    if (child.type == "ベジェモディファイア") {
+                    if (child instanceof BezierModifier) {
                         // ベジェモディファイア親の変形を適応
                         computePassEncoder.setBindGroup(0, child.individualGroup);
                         computePassEncoder.dispatchWorkgroups(Math.ceil(child.verticesNum / 64), 1, 1); // ワークグループ数をディスパッチ
                     }
-                    const children = child.children;
-                    if (children && children.length) { // 子要素がある場合ループする
-                        childrenRoop(children);
+                    if (!(child instanceof GraphicMesh)) {
+                        const children = child.children;
+                        if (children && children.length) { // 子要素がある場合ループする
+                            childrenRoop(children);
+                        }
                     }
                 }
             }
@@ -583,6 +585,9 @@ export class Scene {
         }
         for (const armatures of this.objects.armatures) {
             armatures.keyframeBlockManager.update();
+        }
+        for (const blendShape of this.objects.blendShapes) {
+            blendShape.keyframeBlockManager.update();
         }
         for (const editObject of this.editData.allEditObjects) {
             if (editObject instanceof BArmatureAnimation) {

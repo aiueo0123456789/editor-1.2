@@ -29,7 +29,7 @@ class Bone {
         const baseLocalArray = Armature.getBoneDataByMatrix(this.baseLocalMatrix, this.baseWorldBoneData.l);
         this.baseLocalBoneData = {x: baseLocalArray[0], y: baseLocalArray[1], sx: baseLocalArray[2], sy: baseLocalArray[3], r: baseLocalArray[4], l: baseLocalArray[5]};
         this.animationLocalBoneData = {x: data.animation.values[0], y: data.animation.values[1], sx: data.animation.values[2], sy: data.animation.values[3], r: data.animation.values[4], l: data.animation.values[5]};
-        this.keyframeBlockManager = new BKeyframeBlockManager({object: this.animationLocalBoneData, parameters: ["x", "y", "sx", "sy", "r", "l"], blocks: data.animation.blocks});
+        this.keyframeBlockManager = new BKeyframeBlockManager({object: this.animationLocalBoneData, parameters: ["x", "y", "sx", "sy", "r", "l"], keyframeBlocks: data.animation.keyframeBlocks});
     }
 
     get polygon() {
@@ -189,7 +189,7 @@ export class BArmatureAnimation {
                     color: colors[boneIndex],
                     physics: physics[boneIndex].slice(0, 13),
                     animation: {
-                        blocks: object.keyframeBlockManager.blocks.slice(boneIndex * 6, boneIndex * 6 + 6),
+                        keyframeBlocks: object.keyframeBlockManager.keyframeBlocks.slice(boneIndex * 6, boneIndex * 6 + 6),
                         values: object.allAnimations.slice(boneIndex * 6, boneIndex * 6 + 6)
                     }
                 });
@@ -209,7 +209,7 @@ export class BArmatureAnimation {
         this.object.allPhysics.length = 0;
         this.object.allAnimations.length = 0;
         for (const bone of this.bones) {
-            keyframeBlocks.push(...bone.keyframeBlockManager.blocks); // x y sx sy r l
+            // keyframeBlocks.push(...bone.keyframeBlockManager.keyframeBlocks); // x y sx sy r l
             this.object.allPhysics.push(...bone.physics,
                 0, 1, 0,
 
@@ -232,7 +232,7 @@ export class BArmatureAnimation {
                 bone.animationLocalBoneData.l,
             );
         }
-        this.object.keyframeBlockManager.setKeyframeBlocks(range(0, keyframeBlocks.length), keyframeBlocks);
+        // this.object.keyframeBlockManager.setKeyframeBlocks(range(0, keyframeBlocks.length), keyframeBlocks);
         const armatureData = app.scene.runtimeData.armatureData;
         armatureData.update(this.object);
     }

@@ -100,7 +100,6 @@ export class InputManager {
                 if (e.key === "Tab" || e.key === "Shift" || e.key === "Meta") {
                     // デフォルト動作を無効化
                     e.preventDefault();
-                    // console.log(e.key,"のデフォルト動作を無効化しました");
                 }
                 if (app.activeArea.uiModel.keyInput) {
                     app.activeArea.uiModel.keyInput(this);

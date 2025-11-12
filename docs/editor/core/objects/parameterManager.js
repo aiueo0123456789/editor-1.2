@@ -1,42 +1,30 @@
-import { createID, managerForDOMs } from "../../utils/ui/util.js";
-import { indexOfSplice, pushToArray } from "../../utils/utility.js";
+import { createID } from "../../utils/ui/util.js";
+
+class Parameter {
+    constructor(data) {
+        this.label = data.label;
+        this.value = data.value;
+    }
+
+    getSaveData() {
+        return {
+            label: this.label,
+            value: this.value,
+        };
+    }
+}
 
 export class ParameterManager {
+    static createParameter(label = "名称未設定", value = 0) {
+        return new Parameter({label: label, value: value});
+    }
     constructor(data) {
         this.type = "パラメーターマネージャー";
         this.name = data.name ? data.name : "名称未設定";
         this.id = data.id ? data.id : createID();
-        this.parameters = [
-            {tagType: "number", label: "test", value: 0, targetValue: null},
-            {tagType: "text", label: "test2", value: "aaa", targetValue: null}
-        ];
-        this.targets = [];
-        managerForDOMs.set({o: this.parameters, id: "&all"}, () => {
-            for (const data of this.parameters) {
-                for (const object of this.targets) {
-                    if (data.targetValue in object) {
-                        object[data.targetValue] = data.value;
-                    }
-                }
-            }
-        });
-    }
-
-    getNodeData() {
-        const node = {tagType: "section", name: this.name, children: []};
-        // for (const data of this.parameters) {
-        this.parameters.forEach((data,index) => {
-            node.children.push({tagType: "input", label: data.label, value: `/parameters/${index}/value`, type: data.type});
-        })
-        return [node];
-    }
-
-    append(object) {
-        pushToArray(this.targets, object);
-    }
-
-    remove(object) {
-        indexOfSplice(this.targets, object);
+        this.parameters = data.parameters ? data.parameters.map(parameterData => new Parameter(parameterData)) : [];
+        console.log(data)
+        console.log(this)
     }
 
     getSaveData() {
@@ -44,8 +32,7 @@ export class ParameterManager {
             type: this.type,
             name: this.name,
             id: this.id,
-            parameters: this.parameters,
-            targets: this.targets.map(target => target.id),
+            parameters: this.parameters.map(parameter => parameter.getSaveData()),
         };
     }
 }

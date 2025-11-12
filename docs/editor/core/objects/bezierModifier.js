@@ -14,6 +14,8 @@ export class BezierModifier extends ObjectBase {
 
         this.baseTransformIsLock = false;
 
+        this.visible = true;
+
         /** @type {ShapeKeyMetaData[]} */
         this.shapeKeyMetaDatas = [];
         this.allVertices = [];

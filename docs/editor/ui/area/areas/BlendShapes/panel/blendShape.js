@@ -15,9 +15,9 @@ export class BlendShapePanel {
                             {tagType: "input", label: "maxX", value: "/max/0", type: "number"},
                             {tagType: "input", label: "maxY", value: "/max/1", type: "number"},
                             {tagType: "input", label: "valueX", value: "/value/0", type: "number"},
-                            {tagType: "hasKeyframeCheck", src: "/keyframeBlockManager/blocksMap/0"},
+                            {tagType: "hasKeyframeCheck", src: "/keyframeBlockManager/keyframeBlocks/0", value: "/value/0"},
                             {tagType: "input", label: "valueY", value: "/value/1", type: "number"},
-                            {tagType: "hasKeyframeCheck", src: "/keyframeBlockManager/blocksMap/1"},
+                            {tagType: "hasKeyframeCheck", src: "/keyframeBlockManager/keyframeBlocks/1", value: "/value/1"},
 
                             {tagType: "button", textContent: "追加", submitFunction: (object) => {
                                 app.operator.appendCommand(new AppendBlendShapePointCommand(object.normal));

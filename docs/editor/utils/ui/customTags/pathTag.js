@@ -32,7 +32,7 @@ export class PathTag extends CustomTag {
                     if (isFunction(o)) {
                         this.children = creatorForUI.createFromChildren(keep, this, child.children, {normal: o(), special: {}}, myFlag);
                     } else if (o instanceof ParameterReference) {
-                        console.warn("伝播できません", o)
+                        // console.warn("伝播できません", o)
                         if ("errorChildren" in child) {
                             this.children = creatorForUI.createFromChildren(keep, this, child.errorChildren, {normal: {}, special: {}}, myFlag);
                         }

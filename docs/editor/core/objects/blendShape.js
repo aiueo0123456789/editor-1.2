@@ -60,7 +60,12 @@ export class BlendShape {
         this.weights = createArrayNAndFill(this.shapeKeys.length, 0);
         this.triangles = []; // ドロネーで自動生成
         /** @type {KeyframeBlockManager} */
-        this.keyframeBlockManager = new KeyframeBlockManager({type: "キーフレームブロックマネージャー", object: this.value, parameters: createArrayN(this.dimension)});
+        this.keyframeBlockManager = new KeyframeBlockManager({
+            type: "キーフレームブロックマネージャー",
+            object: this.value,
+            parameters: createArrayN(this.dimension),
+            keyframeBlocks: createArrayN(this.dimension).map(x => app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}))
+        });
 
         // エディターデータ
         this.activePoint = null;
@@ -71,13 +76,12 @@ export class BlendShape {
     }
 
     resolvePhase() {
-        console.log("参照の修正")
         this.shapeKeys.forEach((shapeKey, index) => {
             if (shapeKey instanceof UnfixedReference) {
                 this.shapeKeys[index] = shapeKey.getObject();
             }
         })
-        console.log(this)
+        this.keyframeBlockManager.resolvePhase();
     }
 
     updateTriangle() {

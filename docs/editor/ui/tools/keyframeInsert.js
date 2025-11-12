@@ -1,5 +1,5 @@
 import { app } from "../../../main.js";
-import { KeyframeInsertCommand } from "../../commands/animation/keyframeInsert.js";
+import { KeyframeInsertInSelectedElementCommand } from "../../commands/animation/keyframeInsert.js";
 
 export class KeyframeInsertModal {
     constructor(operator) {
@@ -12,7 +12,7 @@ export class KeyframeInsertModal {
     }
 
     init() {
-        this.command = new KeyframeInsertCommand();
+        this.command = new KeyframeInsertInSelectedElementCommand();
         return {complete: true};
     }
 }

@@ -157,8 +157,8 @@ export class Area_Viewer {
                                 ]},
                                 {tagType: "heightCenter", children: [
                                     {tagType: "menu", title: "選択", struct: [
-                                        {label: "すべて選択", children: [], submitFunction: () => app.context.selectAll()},
-                                        {label: "属性選択", children: [], submitFunction: () => app.context.selectByAttribute()},
+                                        {label: "すべて選択", children: [], submitFunction: () => {app.context.selectAll()}},
+                                        {label: "属性選択", children: [], submitFunction: () => {app.context.selectByAttribute()}},
                                         {label: "選択解除", children: []},
                                         {label: "反転", children: []},
                                         {label: "ランダム選択", children: []},
@@ -321,11 +321,6 @@ export class Area_Viewer {
                         this.toolPanelOperator.changePanels({"p": ParentPickModal});
                     }
                 }
-            }
-        }
-        if (context.currentMode == "オブジェクト") {
-            if (inputManager.consumeKeys(["a"])) {
-                app.context.selectAll();
             }
         }
     }
@@ -554,7 +549,7 @@ export class Renderer {
             renderPass.setPipeline(renderGridPipeline);
             renderPass.draw(4, 1, 0, 0);
         }
-        // オブジェクト表示
+        // メイン表示
         if (app.scene.objects.graphicMeshs.length) {
             renderPass.setPipeline(renderPipeline);
             renderPass.setBindGroup(1, app.scene.runtimeData.graphicMeshData.renderGroup);
@@ -602,6 +597,7 @@ export class Renderer {
                 renderPass.draw(4, particle.particlesNum, 0, 0);
             }
         }
+        // エディット表示
         if (app.scene.objects.graphicMeshs.length) {
             if (this.viewer.spaceData.visibleObjects.graphicMesh) {
                 for (const graphicMesh of app.scene.renderingOrder) {
@@ -640,91 +636,67 @@ export class Renderer {
             renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
             renderPass.setPipeline(boneBoneRenderPipeline);
             for (const armature of app.scene.objects.armatures) {
-                if (armature.mode == "ボーン編集") {
-                    const ba = app.scene.editData.getEditObjectByObject(armature);
-                    renderPass.setBindGroup(1, ba.renderingGroup);
-                    renderPass.setPipeline(BArmatureBonesRenderPipeline);
-                    renderPass.draw(4, ba.bonesNum, 0, 0);
-                    renderPass.setPipeline(BArmatureVerticesRenderPipeline);
-                    renderPass.draw(6 * 2, ba.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
-                    // renderPass.setPipeline(boneRelationshipsRenderPipeline);
-                    // renderPass.draw(4, bm.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
-
-                    renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
-                    renderPass.setPipeline(boneBoneRenderPipeline);
-                } else if (armature.mode == "ボーンアニメーション編集" || armature.mode == "メッシュウェイト編集" || armature.mode == "ベジェウェイト編集") {
-                    const baa = app.scene.editData.getEditObjectByObject(armature);
-                    renderPass.setBindGroup(1, baa.renderingGroup);
-                    renderPass.setPipeline(BAABoneRenderPipeline);
-                    renderPass.draw(4, baa.bonesNum, 0, 0);
-
-                    renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
-                    renderPass.setPipeline(boneBoneRenderPipeline);
-                } else {
-                    renderPass.setBindGroup(2, armature.objectDataGroup);
-                    renderPass.draw(4, armature.bonesNum, 0, 0);
+                if (armature.visible) {
+                    if (armature.mode == "ボーン編集") {
+                        const ba = app.scene.editData.getEditObjectByObject(armature);
+                        renderPass.setBindGroup(1, ba.renderingGroup);
+                        renderPass.setPipeline(BArmatureBonesRenderPipeline);
+                        renderPass.draw(4, ba.bonesNum, 0, 0);
+                        renderPass.setPipeline(BArmatureVerticesRenderPipeline);
+                        renderPass.draw(6 * 2, ba.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
+                        // renderPass.setPipeline(boneRelationshipsRenderPipeline);
+                        // renderPass.draw(4, bm.bonesNum, 0, 0); // 4つの頂点から四角形で表示する
+    
+                        renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
+                        renderPass.setPipeline(boneBoneRenderPipeline);
+                    } else if (armature.mode == "ボーンアニメーション編集" || armature.mode == "メッシュウェイト編集" || armature.mode == "ベジェウェイト編集") {
+                        const baa = app.scene.editData.getEditObjectByObject(armature);
+                        renderPass.setBindGroup(1, baa.renderingGroup);
+                        renderPass.setPipeline(BAABoneRenderPipeline);
+                        renderPass.draw(4, baa.bonesNum, 0, 0);
+    
+                        renderPass.setBindGroup(1, app.scene.runtimeData.armatureData.renderingGizumoGroup);
+                        renderPass.setPipeline(boneBoneRenderPipeline);
+                    } else {
+                        renderPass.setBindGroup(2, armature.objectDataGroup);
+                        renderPass.draw(4, armature.bonesNum, 0, 0);
+                    }
                 }
             }
-            // renderPass.setPipeline(boneVerticesRenderPipeline);
-            // for (const armature of app.scene.objects.armatures) {
-            //     if (armature.mode == "ボーン編集") {
-            //         renderPass.setBindGroup(2, armature.objectDataGroup);
-            //         renderPass.draw(6 * 2, armature.bonesNum, 0, 0);
-            //     }
-            // }
-            // renderPass.setPipeline(boneRelationshipsRenderPipeline);
-            // for (const armature of app.scene.objects.armatures) {
-            //     if (armature.mode == "ボーン編集" || armature.mode == "ボーンアニメーション編集") {
-            //         renderPass.setBindGroup(2, armature.objectDataGroup);
-            //         renderPass.draw(4, armature.bonesNum, 0, 0);
-            //     }
-            // }
         }
         if (this.viewer.spaceData.visibleObjects.bezierModifier && app.scene.objects.bezierModifiers.length) {
             renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
             renderPass.setPipeline(bezierRenderPipeline);
             for (const bezierModifier of app.scene.objects.bezierModifiers) {
-                if (bezierModifier.mode == "ベジェ編集" || bezierModifier.mode == "ベジェシェイプキー編集") {
-                    /** @type {BBezier} */
-                    const bb = app.scene.editData.getEditObjectByObject(bezierModifier);
-                    renderPass.setBindGroup(1, bb.renderingGroup);
-                    renderPass.setPipeline(BBezierVerticesRenderPipeline);
-                    renderPass.draw(2 * 3 * 3, bb.pointsNum, 0, 0);
-                    renderPass.setPipeline(BBezierBezierRenderPipeline);
-                    renderPass.draw(2 * 50, bb.pointsNum - 1, 0, 0);
+                if (bezierModifier.visible) {
+                    if (bezierModifier.mode == "ベジェ編集" || bezierModifier.mode == "ベジェシェイプキー編集") {
+                        /** @type {BBezier} */
+                        const bb = app.scene.editData.getEditObjectByObject(bezierModifier);
+                        renderPass.setBindGroup(1, bb.renderingGroup);
+                        renderPass.setPipeline(BBezierVerticesRenderPipeline);
+                        renderPass.draw(2 * 3 * 3, bb.pointsNum, 0, 0);
+                        renderPass.setPipeline(BBezierBezierRenderPipeline);
+                        renderPass.draw(2 * 50, bb.pointsNum - 1, 0, 0);
 
-                    renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
-                    renderPass.setPipeline(bezierRenderPipeline);
-                } else if (bezierModifier.mode == "ベジェウェイト編集") {
-                    /** @type {BBezierWeight} */
-                    const bbw = app.scene.editData.getEditObjectByObject(bezierModifier);
-                    renderPass.setBindGroup(1, bbw.renderingGroup);
-                    renderPass.setPipeline(BBezierWeightsRenderPipeline);
-                    renderPass.draw(4, bbw.verticesNum, 0, 0);
-                    renderPass.setPipeline(BBezierBezierRenderPipeline);
-                    renderPass.draw(2 * 50, bbw.pointsNum - 1, 0, 0);
+                        renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
+                        renderPass.setPipeline(bezierRenderPipeline);
+                    } else if (bezierModifier.mode == "ベジェウェイト編集") {
+                        /** @type {BBezierWeight} */
+                        const bbw = app.scene.editData.getEditObjectByObject(bezierModifier);
+                        renderPass.setBindGroup(1, bbw.renderingGroup);
+                        renderPass.setPipeline(BBezierWeightsRenderPipeline);
+                        renderPass.draw(4, bbw.verticesNum, 0, 0);
+                        renderPass.setPipeline(BBezierBezierRenderPipeline);
+                        renderPass.draw(2 * 50, bbw.pointsNum - 1, 0, 0);
 
-                    renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
-                    renderPass.setPipeline(bezierRenderPipeline);
-                } else {
-                    renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
-                    renderPass.draw(2 * 50, bezierModifier.pointsNum - 1, 0, 0);
+                        renderPass.setBindGroup(1, app.scene.runtimeData.bezierModifierData.renderingGizumoGroup);
+                        renderPass.setPipeline(bezierRenderPipeline);
+                    } else {
+                        renderPass.setBindGroup(2, bezierModifier.objectDataGroup);
+                        renderPass.draw(2 * 50, bezierModifier.pointsNum - 1, 0, 0);
+                    }
                 }
             }
-            // for (const bezierModifier of app.scene.objects.bezierModifiers) {
-            //     if (bezierModifier.mode == "ベジェ編集") {
-            //         const ba = app.scene.editData.getEditObjectByObject(armature);
-            //         renderPass.setPipeline(BBezierVerticesRenderPipeline);
-            //         renderPass.draw(2 * 3 * 3, bezierModifier.pointsNum, 0, 0);
-            //     } else if (bezierModifier.mode == "ベジェウェイト編集") {
-            //         renderPass.setPipeline(bezierWeightRenderPipeline);
-            //         renderPass.setBindGroup(3, this.viewer.areasConfig.targetWeightIndexGroup);
-            //         renderPass.draw(4, bezierModifier.verticesNum, 0, 0);
-            //     } else if (bezierModifier.mode == "ベジェ頂点アニメーション編集") {
-            //         renderPass.setPipeline(BBezierVerticesRenderPipeline);
-            //         renderPass.draw(2 * 3 * 3, bezierModifier.pointsNum, 0, 0);
-            //     }
-            // }
         }
         // if (true && app.scene.objects.maskTextures.length > 1) {
         //     renderPass.setBindGroup(0, GPU.createGroup(GPU.getGroupLayout("Fts_Ft"), [GPU.sampler, app.scene.objects.maskTextures[1].view]));

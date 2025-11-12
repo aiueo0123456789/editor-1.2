@@ -69,6 +69,7 @@ export class Keyframe {
 
     getSaveData() {
         return {
+            type: "キーフレーム",
             point: this.point,
             leftHandle: this.leftHandle,
             rightHandle: this.rightHandle,
@@ -86,12 +87,12 @@ export class KeyframeBlock {
             }
         );
     }
-    constructor(data = {keys: []}) {
+    constructor(data) {
         this.type = "キーフレームブロック";
         this.id = data.id ? data.id : createID();
         this.visible = true;
         /** @type {Keyframe[]} */
-        this.keys = [];
+        this.keys = data.keys ? data.keys.map(key => new Keyframe(key)) : [];
         this.value = 0;
     }
 
@@ -151,7 +152,7 @@ export class KeyframeBlock {
 
     getSaveData() {
         return {
-            type: "キーブロック",
+            type: "キーフレームブロック",
             id: this.id,
             keys: this.keys.map(key => key.getSaveData()),
         };

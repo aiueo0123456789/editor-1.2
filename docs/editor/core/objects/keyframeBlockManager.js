@@ -1,52 +1,48 @@
 import { app } from "../../../main.js";
-import { KeyframeBlock } from "./keyframe.js";
+import { UnfixedReference } from "../../utils/objects/util.js";
+import { copyToArray, pushToArray } from "../../utils/utility.js";
+import { KeyframeBlock } from "./keyframeBlock.js";
 
 export class KeyframeBlockManager {
     constructor(data = {object: null, parameters: null}) {
         this.type = "キーフレームブロックマネージャー";
         this.object = data.object;
+        /** @type {Array} */
         this.parameters = data.parameters;
+        /** @type {KeyframeBlock[]} */
+        this.keyframeBlocks = data.keyframeBlocks.map(keyframeBlock => {
+            if (keyframeBlock instanceof KeyframeBlock) return keyframeBlock;
+            else return app.scene.objects.getObjectFromID(keyframeBlock);
+        });
+    }
 
-        this.blocksMap = new Map();
-        for (let i = 0; i < this.parameters.length; i ++) {
-            this.blocksMap.set(this.parameters[i], app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}));
-        }
+    resolvePhase() {
+        this.keyframeBlocks.forEach((keyframeBlock, index) => {
+            if (keyframeBlock instanceof UnfixedReference) this.keyframeBlocks[index] = keyframeBlock.getObject();
+        })
     }
 
     setKeyframeBlocks(parameters, keyframeBlocks) {
-        this.parameters = parameters;
-        this.blocksMap.clear();
-        for (let i = 0; i < this.parameters.length; i ++) {
-            this.blocksMap.set(this.parameters[i], keyframeBlocks[i]);
-        }
+        copyToArray(this.parameters, parameters);
+        copyToArray(this.keyframeBlocks, keyframeBlocks);
     }
 
-    /** @type {KeyframeBlock[]} */
-    get blocks() {
-        return [...this.blocksMap.values()];
-    }
-
-    appendParameter(targetValue) {
-        this.blocksMap.set(targetValue, app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}));
+    appendParameter(parameter, keyframeBlcok = app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"})) {
+        pushToArray(this.parameters, parameter);
+        pushToArray(this.keyframeBlocks, keyframeBlcok);
     }
 
     update() {
-        for (const parameter of this.parameters) {
-            this.object[parameter] = this.blocksMap.get(parameter).value;
-        }
-    }
-
-    clearAnimatoin() {
-        for (const parameter of this.parameters) {
-            this.object[parameter] = 0;
-        }
+        this.parameters.forEach((parameter, index) => {
+            this.object[parameter] = this.keyframeBlocks[index].value;
+        })
     }
 
     getSaveData() {
         return {
             type: this.type,
             parameters: this.parameters,
-            keyframeBlocks: this.parameters.map(key => this.blocksMap.get(key).getSaveData())
+            keyframeBlocks: this.keyframeBlocks.map(keyframeBlock => keyframeBlock.id)
         };
     }
 }

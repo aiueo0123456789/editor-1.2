@@ -1,5 +1,5 @@
 import { isFunction } from "../utility.js";
-import { createIcon, createTag, managerForDOMs, removeHTMLElementInObject, setClass } from "./util.js";
+import { createIcon, createID, createTag, managerForDOMs, removeHTMLElementInObject, setClass } from "./util.js";
 
 export class ChecksTag {
     constructor(target, list, options = {}) {
@@ -43,6 +43,7 @@ export class CustomTag {
         this.isRemoved = false;
         this.dataBlocks = [];
         this.notRemoveList = [];
+        this.id = createID();
     }
 
     remove() {

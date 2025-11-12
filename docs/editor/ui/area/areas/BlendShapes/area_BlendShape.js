@@ -5,7 +5,7 @@ import { ChangeParameterCommand } from "../../../../commands/utile/utile.js";
 import { ToolPanelOperator } from "../../../../operators/toolPanelOperator.js";
 import { ToolsBarOperator } from "../../../../operators/toolsBarOperator.js";
 import { MathVec2 } from "../../../../utils/mathVec.js";
-import { calculateLocalMousePosition, changeParameter } from "../../../../utils/utility.js";
+import { calculateLocalMousePosition, changeParameter, copyToArray } from "../../../../utils/utility.js";
 import { Area_BlendShapeSpaceData } from "./area_BlendShapeSpaceData.js";
 import { BlendShapePanel } from "./panel/blendShape.js";
 import { BlendShapePointPanel } from "./panel/blendShapePoint.js";
@@ -109,16 +109,16 @@ export class Area_BlendShape {
             }
         }
         this.isMouseContentAndMouseDown = true;
-        MathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
+        copyToArray(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
     }
 
     mousemove(/** @type {InputManager} */ inputManager) {
-        if (this.isMouseContentAndMouseDown) MathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
+        if (this.isMouseContentAndMouseDown) copyToArray(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
     }
 
     mouseup(inputManager) {
         this.isMouseContentAndMouseDown = false;
-        MathVec2.set(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
+        copyToArray(this.activeBlendShape.value,this.getValueByLocalMousePosition(calculateLocalMousePosition(this.canvas, inputManager.position, this.pixelDensity)));
     }
 
     update() {

@@ -96,6 +96,8 @@ export class Armature extends ObjectBase {
 
         this.baseTransformIsLock = false;
 
+        this.visible = true;
+
         this.objectDataBuffer = GPU.createUniformBuffer(8 * 4, undefined, ["u32"]); // GPUでオブジェクトを識別するためのデータを持ったbuffer
         this.objectDataGroup = GPU.createGroup(GPU.getGroupLayout("Vu"), [this.objectDataBuffer]);
 
@@ -128,11 +130,16 @@ export class Armature extends ObjectBase {
         copyToArray(this.allAnimations, createArrayNAndFill(this.allBone.length, 0));
         copyToArray(this.allBoneWorldMatrix, data.worldMatrix.flat());
         copyToArray(this.allColors, data.boneColors.flat());
-        copyToArray(this.allPhysics, data.physicsDatas.flat());
+        copyToArray(this.allPhysics, data.physicsDatas.flat().map(x => Math.abs(x - 0.4) < 0.01 ? 0.2 : x));
         copyToArray(this.allVertices, data.vertices.flat());
 
         /** @type {KeyframeBlockManager} */
-        this.keyframeBlockManager = new KeyframeBlockManager({type: "キーフレームブロックマネージャー", object: this.allAnimations, parameters: createArrayN(this.allAnimations.length)});
+        this.keyframeBlockManager = new KeyframeBlockManager({
+            type: "キーフレームブロックマネージャー",
+            object: this.allAnimations,
+            parameters: createArrayN(this.allAnimations.length),
+            keyframeBlocks: createArrayN(this.allAnimations.length).map(x => app.scene.objects.createObjectAndSetUp({type: "キーフレームブロック"}))
+        });
         console.log(this)
     }
 
@@ -148,6 +155,7 @@ export class Armature extends ObjectBase {
         if (this.parent instanceof UnfixedReference) {
             this.changeParent(this.parent.getObject());
         }
+        this.keyframeBlockManager.resolvePhase();
     }
 
     get VERTEX_OFFSET() {

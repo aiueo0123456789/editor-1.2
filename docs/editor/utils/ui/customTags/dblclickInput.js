@@ -1,8 +1,10 @@
 import { CreatorForUI } from "../creatorForUI.js";
+import { CustomTag } from "../customTag.js";
 import { createTag } from "../util.js";
 
-export class DblClickInput {
+export class DblClickInput extends CustomTag {
     constructor(/** @type {CreatorForUI} */creatorForUI,t,parent,searchTarget,child,flag) {
+        super();
         this.element = createTag(t, "input");
         this.element.type = "text";
         this.element.classList.add("dblClickInput");
@@ -15,6 +17,6 @@ export class DblClickInput {
         this.element.addEventListener('blur', () => {
             this.element.setAttribute('readonly', true);
         });
-        creatorForUI.setWith(this.element, child.value, searchTarget, flag);
+        this.dataBlocks = [creatorForUI.setWith(this.element, child.value, searchTarget, flag)];
     }
 }

@@ -1,16 +1,21 @@
+import { IsString } from "../../utility.js";
+import { CreatorForUI } from "../creatorForUI.js";
 import { CustomTag } from "../customTag.js";
 import { createTag } from "../util.js";
 
 export class SectionTag extends CustomTag {
-    constructor(creatorForUI,t,parent,searchTarget,child,flag) {
+    constructor(/** @type {CreatorForUI} */  creatorForUI,t,parent,searchTarget,child,flag) {
         super();
         this.element = createTag(t, "div", {class: child?.options?.min ? "minSection" : "sectionOrPanel"});
-        this.element.setAttribute("name", child.name);
         this.header = createTag(this.element, "div", {class: "sectionOrPanel-header"});
 
         this.arrow = createTag(this.header, "span", {class: "downArrow"});
         this.sectionName = createTag(this.header, "p");
-        this.sectionName.textContent = child.name;
+        if (IsString(child.name)) {
+            this.sectionName.textContent = child.name;
+        } else {
+            this.sectionName.textContent = creatorForUI.getParameter(searchTarget, child.name.path);
+        }
 
         this.mainContainer = createTag(this.element, "div", {class: "sectionOrPanel-mainContainer"});
         this.main = createTag(this.mainContainer, "div", {class: "section-main"});

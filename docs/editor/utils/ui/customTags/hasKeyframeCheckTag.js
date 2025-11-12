@@ -1,4 +1,5 @@
 import { app } from "../../../../main.js";
+import { KeyframeInsertInKeyframeCommand } from "../../../commands/animation/keyframeInsert.js";
 import { CustomTag } from "../customTag.js";
 import { managerForDOMs } from "../util.js";
 
@@ -19,12 +20,13 @@ export class HasKeyframeCheck extends CustomTag {
         this.element.append(this.checkbox,this.span);
 
         this.targetKeyframeBlock = creatorForUI.getParameter(searchTarget, child.src);
-        // this.checkbox.addEventListener("click", () => {
-        //     if (object.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
-        //     } else {
-        //         object.insert(app.scene.frame_current, this.targetKeyframeBlock.src[object.parameter], 0.2);
-        //     }
-        // });
+        this.checkbox.addEventListener("click", () => {
+            if (this.targetKeyframeBlock.hasKeyFromFrame(app.scene.frame_current, 0.2)) {
+            } else {
+                app.operator.appendCommand(new KeyframeInsertInKeyframeCommand(this.targetKeyframeBlock, app.scene.frame_current, creatorForUI.getParameter(searchTarget, child.value)));
+                app.operator.execute();
+            }
+        });
         update(null,null,{targetKeyframeBlock: this.targetKeyframeBlock, checkbox: this.checkbox});
         this.dataBlocks = [
             managerForDOMs.set({o: app.scene, i: "frame_current", f: flag, g: creatorForUI.groupID}, update, {targetKeyframeBlock: this.targetKeyframeBlock, checkbox: this.checkbox}),

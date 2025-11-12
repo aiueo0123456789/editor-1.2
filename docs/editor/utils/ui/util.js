@@ -241,7 +241,7 @@ export function createRadio(target, radioName, icon, text) {
 // ボタン
 export function createButton(target, icon, text = "") {
     const button = document.createElement("button");
-    createIcon(button, icon);
+    if (icon) createIcon(button, icon);
     const textNode = document.createTextNode(text);
     button.append(textNode);
     target.append(button);

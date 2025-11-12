@@ -19,6 +19,7 @@ export class UI {
                     {tagType: "html", id: "contextmenu", class: "contextmenu hidden", tag: "ul"},
                     {tagType: "html", id: "custom-menu-items", class: "custom-menu-items hidden", tag: "ul"},
                     {tagType: "html", id: "custom-select-items", class: "custom-select-items hidden", tag: "ul"},
+                    {tagType: "html", id: "parameterManagerSelecter", class: "custom-select-items hidden", tag: "ul"},
                     {tagType: "html", id: "loadingModalsContainer", class: "loadingModalsContainer hidden", tag: "ul"},
                     {tagType: "div", id: "headMenubar", class: "menubar", children: [
                         {tagType: "input", label: "プロジェクト名", value: "app/appConfig/projectName", type: "text"},
